@@ -1,3 +1,4 @@
 Flask
 Scrapy
-openpyxl    
+openpyxl
+tqdm    
