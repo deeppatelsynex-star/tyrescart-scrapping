@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block Pagename %}
+URL Queue
+{% endblock Pagename %}
+
+{% block MainContent %}
+<div class="content flex-1 overflow-auto p-6">
+  <div class="space-y-6 min-h-full">
+    <section class="bg-white shadow-sm border border-slate-200 rounded-[1.5rem] overflow-hidden">
+      <div class="flex flex-col gap-3 p-6 border-b border-slate-200 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 class="mt-1 text-2xl font-semibold text-slate-900">URL Queue</h2>
+          <p class="mt-1 text-sm text-slate-500">Live progress for each scraped URL.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
+            <span>Status:</span>
+            <span id="scraper-status" class="ml-2 px-3 py-1 rounded-full bg-slate-200 font-semibold">Idle</span>
+          </div>
+          <button id="start-scraper" type="button"
+            class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            <span class="ml-2">Start</span>
+          </button>
+          <button id="stop-scraper" type="button"
+            class="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="6" y="6" width="12" height="12" rx="2" />
+            </svg>
+            <span class="ml-2">Stop</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div>
+          <div class="mb-3 flex items-center justify-between gap-4 text-sm text-slate-500">
+            <span>Progress</span>
+            <span id="progress-percentage" class="font-semibold text-slate-700">0%</span>
+          </div>
+          <div class="relative h-3 overflow-hidden rounded-full bg-slate-100">
+            <div id="progress-bar" class="h-full rounded-full bg-emerald-500 transition-all duration-300"
+              style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <div id="url-summary" class="flex flex-wrap items-center gap-2 text-sm text-slate-600"></div>
+          <a id="download-report" href="#" style="display: none;"
+            class="ml-auto inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>Download</span>
+          </a>
+        </div>
+        <ul id="url-status-list" class="space-y-2 max-h-[530px] overflow-y-auto"></ul>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock MainContent %}

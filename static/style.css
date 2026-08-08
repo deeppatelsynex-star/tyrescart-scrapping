@@ -1,0 +1,96 @@
+a {
+    text-decoration: none;
+}
+
+ol,
+ul {
+    list-style: none;
+}
+
+.container-fluid {
+    width: 100%;
+    margin: 0 auto;
+    background-color: #F4F7FA;
+}
+
+body {
+    font-family: "Poppins", system-ui, -apple-system, sans-serif;
+}
+
+aside {
+
+    padding: .75rem 0 .75rem 0;
+
+}
+
+aside .user {
+    height: 2.25rem;
+    width: 2.25rem;
+}
+
+nav {
+    padding: 0 0.5rem;
+}
+
+nav a {
+    padding: .625rem 0 .625rem 0;
+
+}
+
+nav a span {
+    margin-top: .25rem;
+}
+
+aside img {
+    width: 40px;
+    height: 40px;
+}
+
+main header {
+    padding: 0 .75rem;
+}
+
+@media (min-width:640px) {
+    main header {
+        padding: 0 1.5rem;
+    }
+}
+
+.action-btn button {
+    padding: 0 .625rem;
+}
+.qa{
+    padding:.5rem;
+}
+.btn-online{
+    padding:0 .625rem;
+}
+@media (min-width:1536px) {
+    .action-btn button {
+        padding: 0 .75rem;
+    }
+}
+
+.content{
+    padding: 1.5rem;
+}
+.grid .col
+{
+    padding: 1.25rem;
+}
+
+.col .info p{
+    margin-bottom: .25rem;
+}
+.col .info span{
+    margin-top: .25rem;
+}
+.space-y-6>:not([hidden])~:not([hidden]) {
+    --tw-space-y-reverse: 0;
+    margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+    -bottom: calc(1.5rem * var(--tw-space-y-reverse));
+}
+
+.rounded-2xl {
+    border-radius: 1rem;
+}
