@@ -7,6 +7,7 @@
 
 import re
 import os
+import sys
 import csv
 from datetime import datetime
 from collections import OrderedDict
@@ -20,10 +21,12 @@ class TyreScraper(Spider):
     # =========================
     # OUTPUT FILE
     # =========================
+    # A per-run output path can be passed as the first CLI arg so concurrent
+    # runs (one per user session) don't overwrite each other's file.
     base_dir = os.path.dirname(os.path.abspath(__file__))
     today = datetime.now().strftime("%d-%m-%Y")
 
-    output_file = os.path.join(
+    output_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
         base_dir,
         f"pitstoparabia_data_{today}.xlsx"
     )
@@ -31,7 +34,7 @@ class TyreScraper(Spider):
     # =========================
     # CSV FILE
     # =========================
-    csv_file = os.path.join(
+    csv_file = sys.argv[2] if len(sys.argv) > 2 else os.path.join(
         base_dir,
         "testurls.csv"
     )
