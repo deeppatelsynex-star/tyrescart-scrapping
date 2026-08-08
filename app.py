@@ -10,7 +10,11 @@ from flask import Flask, Response, jsonify, render_template, send_from_directory
 from scraper_status_utils import build_status_summary, parse_status_line
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY') or secrets.token_hex(32)
+# A random fallback key here would change on every process restart (e.g. Render's
+# free-tier spin-down/cold-start), invalidating every existing session cookie and
+# making the app look like it "reset" on refresh. Set FLASK_SECRET_KEY in the
+# hosting environment so sessions survive restarts.
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-only-insecure-key-set-FLASK_SECRET_KEY-in-production')
 app.permanent_session_lifetime = timedelta(days=7)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
