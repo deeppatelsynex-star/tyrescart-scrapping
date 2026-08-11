@@ -137,15 +137,31 @@ window.AdminShared = (function () {
     return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-500">Inactive</span>';
   }
 
-  // Splits a "11 Aug 2026 10:08"-style string (see serialize_user's strftime
-  // format) into date + time and colors each differently, so the time isn't
+  // Takes a UTC ISO timestamp (createdAtRaw/deletedAtRaw -- the server and DB
+  // both run in UTC) and converts it to the viewer's own local timezone
+  // before formatting, rather than showing raw server time. Without this, a
+  // user anywhere ahead of UTC sees timestamps that look hours "in the past".
+  function formatLocalDateTime(isoString) {
+    if (!isoString) return null;
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return null;
+    return {
+      datePart: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      timePart: d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    };
+  }
+
+  function dateTimeText(isoString) {
+    const parts = formatLocalDateTime(isoString);
+    return parts ? `${parts.datePart}, ${parts.timePart}` : '—';
+  }
+
+  // Splits into date + time and colors each differently, so the time isn't
   // lost among the date at a glance.
-  function dateTimeHtml(value) {
-    if (!value) return '<span class="text-slate-400">—</span>';
-    const parts = String(value).trim().split(' ');
-    const time = parts.pop();
-    const date = parts.join(' ');
-    return `<span class="text-slate-700 font-medium">${escapeHtml(date)}</span> <span class="text-emerald-600">${escapeHtml(time)}</span>`;
+  function dateTimeHtml(isoString) {
+    const parts = formatLocalDateTime(isoString);
+    if (!parts) return '<span class="text-slate-400">—</span>';
+    return `<span class="text-slate-700 font-medium">${escapeHtml(parts.datePart)}</span> <span class="text-emerald-600">${escapeHtml(parts.timePart)}</span>`;
   }
 
   function openViewModal(row) {
@@ -156,11 +172,11 @@ window.AdminShared = (function () {
     document.getElementById('admin-view-email').textContent = row.email || '—';
     document.getElementById('admin-view-role').textContent = row.role || '—';
     document.getElementById('admin-view-status').textContent = statusText(row);
-    document.getElementById('admin-view-created').textContent = row.createdAt || '—';
+    document.getElementById('admin-view-created').textContent = dateTimeText(row.createdAtRaw);
 
     const deletedRow = document.getElementById('admin-view-deleted-row');
     if (row.isDeleted) {
-      document.getElementById('admin-view-deleted').textContent = row.deletedAt || '—';
+      document.getElementById('admin-view-deleted').textContent = dateTimeText(row.deletedAtRaw);
       deletedRow.classList.remove('hidden');
     } else {
       deletedRow.classList.add('hidden');
@@ -222,6 +238,7 @@ window.AdminShared = (function () {
     statusBadgeHtml,
     statusText,
     dateTimeHtml,
+    dateTimeText,
     openViewModal,
     commonDataTableOptions,
   };
@@ -308,7 +325,7 @@ window.AdminShared = (function () {
         {
           data: null,
           render: (data, type, row) => {
-            if (type === 'display') return Shared.dateTimeHtml(row.createdAt);
+            if (type === 'display') return Shared.dateTimeHtml(row.createdAtRaw);
             return row.createdAtRaw || '';
           },
         },

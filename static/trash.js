@@ -62,7 +62,7 @@
         {
           data: null,
           render: (data, type, row) => {
-            if (type === 'display') return Shared.dateTimeHtml(row.deletedAt);
+            if (type === 'display') return Shared.dateTimeHtml(row.deletedAtRaw);
             return row.deletedAtRaw || '';
           },
         },

@@ -70,11 +70,16 @@ def serialize_user(user):
         'updatedAt': user['updated_at'].strftime('%d %b %Y %H:%M') if user.get('updated_at') else None,
         'createdAt': user['created_at'].strftime('%d %b %Y %H:%M') if user.get('created_at') else None,
         # Raw ISO timestamps alongside the human-readable strings above, so the
-        # admin/trash tables can sort chronologically instead of alphabetically
-        # on the formatted display text.
-        'createdAtRaw': user['created_at'].isoformat() if user.get('created_at') else None,
+        # admin/trash tables can sort chronologically and render in the
+        # viewer's own local timezone instead of the server's. The DB (and
+        # this server) run in UTC, but MySQL's TIMESTAMP values come back as
+        # timezone-naive datetimes -- the explicit 'Z' tells the browser's
+        # Date parser these are UTC, not "local time with no offset given"
+        # (its default assumption for a bare ISO string), which would silently
+        # skip the UTC->local conversion entirely.
+        'createdAtRaw': user['created_at'].isoformat() + 'Z' if user.get('created_at') else None,
         'deletedAt': user['deleted_at'].strftime('%d %b %Y %H:%M') if user.get('deleted_at') else None,
-        'deletedAtRaw': user['deleted_at'].isoformat() if user.get('deleted_at') else None,
+        'deletedAtRaw': user['deleted_at'].isoformat() + 'Z' if user.get('deleted_at') else None,
     }
 
 
