@@ -44,7 +44,7 @@
       columns: [
         {
           data: null, orderable: false, searchable: false, className: 'text-center',
-          render: (data, type, row, meta) => (type === 'display' ? Shared.rowNumberHtml(meta) : ''),
+          render: () => '',
         },
         {
           data: null,
@@ -72,6 +72,7 @@
         },
       ],
     }));
+    table.on('draw', () => Shared.renumberRows(table, 0));
   }
 
   async function loadMe() {

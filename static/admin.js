@@ -116,13 +116,20 @@ window.AdminShared = (function () {
     return `<span class="inline-flex w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 items-center justify-center text-xs font-semibold align-middle">${safeInitial}</span>`;
   }
 
-  // Sequential row number for the leftmost column, continuous across pages
-  // (page 2 at 10/page starts at #11, not #1 again) -- meta.row is the index
-  // within the current filtered/sorted set; _iDisplayStart is the current
-  // page's starting offset.
-  function rowNumberHtml(meta) {
-    const num = meta.row + meta.settings._iDisplayStart + 1;
-    return `<span class="text-xs font-medium text-slate-400">#${num}</span>`;
+  // Fills the leftmost "#" column with a sequential row number based on
+  // actual current display order (after sort + search), continuous across
+  // pages (page 2 at 10/page starts at #11, not #1 again). Must be called
+  // after every draw (sort/search/page-change all redraw), since a fixed
+  // per-row value computed at render time can't reflect where a row ends up
+  // once the user sorts by a different column.
+  function renumberRows(table, columnIndex) {
+    const pageStart = table.page.info().start;
+    // page: 'current' is essential -- without it .nodes() returns matching
+    // rows across ALL pages (not just the visible one), which would throw
+    // the pageStart + i arithmetic off for every page after the first.
+    table.column(columnIndex, { page: 'current', order: 'applied', search: 'applied' }).nodes().each((cell, i) => {
+      cell.innerHTML = `<span class="text-xs font-medium text-slate-400">#${pageStart + i + 1}</span>`;
+    });
   }
 
   function roleBadgeHtml(role) {
@@ -243,7 +250,7 @@ window.AdminShared = (function () {
     escapeHtml,
     showToast,
     avatarHtml,
-    rowNumberHtml,
+    renumberRows,
     roleBadgeHtml,
     statusBadgeHtml,
     statusText,
@@ -314,7 +321,7 @@ window.AdminShared = (function () {
       columns: [
         {
           data: null, orderable: false, searchable: false, className: 'text-center',
-          render: (data, type, row, meta) => (type === 'display' ? Shared.rowNumberHtml(meta) : ''),
+          render: () => '',
         },
         {
           data: null,
@@ -345,6 +352,7 @@ window.AdminShared = (function () {
         },
       ],
     }));
+    table.on('draw', () => Shared.renumberRows(table, 0));
   }
 
   async function loadMe() {

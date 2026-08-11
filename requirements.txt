@@ -6,3 +6,4 @@ tqdm
 PyMySQL
 python-dotenv
 bcrypt
+resend
