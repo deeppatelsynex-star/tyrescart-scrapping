@@ -3,7 +3,7 @@ import sys
 
 import pymysql
 
-from auth import hash_password
+from auth import VALID_ROLES, hash_password
 from db import get_connection
 
 
@@ -12,7 +12,7 @@ def main():
     email = input('Email: ').strip()
     password = getpass.getpass('Password: ')
     confirm = getpass.getpass('Confirm password: ')
-    role = input('Role [User]: ').strip() or 'User'
+    role = input(f"Role [{'/'.join(VALID_ROLES)}] (default User): ").strip() or 'User'
 
     if not name or not email or not password:
         print('Name, email and password are required.')
@@ -20,6 +20,10 @@ def main():
 
     if password != confirm:
         print('Passwords do not match.')
+        sys.exit(1)
+
+    if role not in VALID_ROLES:
+        print(f"Role must be one of: {', '.join(VALID_ROLES)}.")
         sys.exit(1)
 
     conn = get_connection()

@@ -13,16 +13,21 @@ from flask import Flask, Response, jsonify, redirect, render_template, request, 
 
 from auth import (
     RESET_TOKEN_TTL_MINUTES,
+    VALID_ROLES,
     bit_to_bool,
     consume_reset_token,
     create_password_reset_token,
     get_user_by_email,
     get_user_by_id,
     get_user_id_for_reset_token,
+    has_superadmin,
     hash_password,
+    list_users,
     login_required_api,
     login_required_page,
     require_csrf,
+    role_required_api,
+    role_required_page,
     serialize_user,
     verify_password,
 )
@@ -406,6 +411,180 @@ def api_change_password():
     session['csrf_token'] = secrets.token_hex(16)
 
     return jsonify({'message': 'Password changed successfully.'})
+
+
+@app.route('/Admin')
+@login_required_page
+@role_required_page('SuperAdmin', 'Admin')
+def admin_page():
+    return render_template('admin.html', page='admin')
+
+
+@app.route('/api/admin/users', methods=['GET'])
+@login_required_api
+@role_required_api('SuperAdmin', 'Admin')
+def api_admin_list_users():
+    return jsonify({'users': [serialize_user(u) for u in list_users()]})
+
+
+@app.route('/api/admin/users', methods=['POST'])
+@login_required_api
+@role_required_api('SuperAdmin')
+@require_csrf
+def api_admin_create_user():
+    data = request.get_json(silent=True) or {}
+    name = (data.get('name') or '').strip()
+    email = (data.get('email') or '').strip()
+    password = data.get('password') or ''
+    role = (data.get('role') or '').strip()
+    status = data.get('status', True)
+
+    if not name:
+        return jsonify({'error': 'Name is required.'}), 400
+    if not email or not EMAIL_RE.match(email):
+        return jsonify({'error': 'A valid email is required.'}), 400
+    if not password or len(password) < 8:
+        return jsonify({'error': 'Password must be at least 8 characters.'}), 400
+    if role not in VALID_ROLES:
+        return jsonify({'error': f"Role must be one of: {', '.join(VALID_ROLES)}."}), 400
+    # Exactly one SuperAdmin may ever exist in the system.
+    if role == 'SuperAdmin' and has_superadmin():
+        return jsonify({'error': 'A SuperAdmin already exists. Only one SuperAdmin account is allowed.'}), 409
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            try:
+                cursor.execute(
+                    'INSERT INTO userTbl (Name, Email, password, Status, IsDeleted, Role) '
+                    'VALUES (%s, %s, %s, %s, 0, %s)',
+                    (name, email, hash_password(password), 1 if status else 0, role),
+                )
+            except pymysql.err.IntegrityError:
+                return jsonify({'error': 'A user with that email already exists.'}), 409
+            new_user_id = cursor.lastrowid
+    finally:
+        conn.close()
+
+    return jsonify({'user': serialize_user(get_user_by_id(new_user_id))}), 201
+
+
+@app.route('/api/admin/users/<int:user_id>', methods=['PUT'])
+@login_required_api
+@role_required_api('SuperAdmin', 'Admin')
+@require_csrf
+def api_admin_update_user(user_id):
+    target = get_user_by_id(user_id)
+    if not target:
+        return jsonify({'error': 'User not found.'}), 404
+
+    actor_role = session.get('role')
+    # An Admin can manage other Admins/Users, but never touch a SuperAdmin's
+    # account -- that's reserved for SuperAdmins only.
+    if target['Role'] == 'SuperAdmin' and actor_role != 'SuperAdmin':
+        return jsonify({'error': 'Only a SuperAdmin can modify a SuperAdmin account.'}), 403
+
+    data = request.get_json(silent=True) or {}
+    name = (data.get('name') or '').strip()
+    email = (data.get('email') or '').strip()
+    role = (data.get('role') or '').strip()
+    password = data.get('password') or ''
+    status = data.get('status', True)
+
+    if not name:
+        return jsonify({'error': 'Name is required.'}), 400
+    if not email or not EMAIL_RE.match(email):
+        return jsonify({'error': 'A valid email is required.'}), 400
+    if role not in VALID_ROLES:
+        return jsonify({'error': f"Role must be one of: {', '.join(VALID_ROLES)}."}), 400
+    if role == 'SuperAdmin' and actor_role != 'SuperAdmin':
+        return jsonify({'error': 'Only a SuperAdmin can grant the SuperAdmin role.'}), 403
+    # Exactly one SuperAdmin may ever exist -- only exempt this check when the
+    # target already holds the role (i.e. this edit isn't creating a new one).
+    if role == 'SuperAdmin' and target['Role'] != 'SuperAdmin' and has_superadmin():
+        return jsonify({'error': 'A SuperAdmin already exists. Only one SuperAdmin account is allowed.'}), 409
+    if password and len(password) < 8:
+        return jsonify({'error': 'Password must be at least 8 characters.'}), 400
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            try:
+                if password:
+                    cursor.execute(
+                        'UPDATE userTbl SET Name = %s, Email = %s, Role = %s, Status = %s, password = %s '
+                        'WHERE userid = %s',
+                        (name, email, role, 1 if status else 0, hash_password(password), user_id),
+                    )
+                else:
+                    cursor.execute(
+                        'UPDATE userTbl SET Name = %s, Email = %s, Role = %s, Status = %s WHERE userid = %s',
+                        (name, email, role, 1 if status else 0, user_id),
+                    )
+            except pymysql.err.IntegrityError:
+                return jsonify({'error': 'That email is already in use.'}), 409
+    finally:
+        conn.close()
+
+    updated = get_user_by_id(user_id)
+    # Keep the acting user's own session in sync if they just edited themselves.
+    if user_id == session.get('user_id'):
+        session['name'] = updated['Name']
+        session['email'] = updated['Email']
+        session['role'] = updated['Role']
+
+    return jsonify({'user': serialize_user(updated)})
+
+
+@app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+@login_required_api
+@role_required_api('SuperAdmin', 'Admin')
+@require_csrf
+def api_admin_delete_user(user_id):
+    target = get_user_by_id(user_id)
+    if not target:
+        return jsonify({'error': 'User not found.'}), 404
+
+    # A SuperAdmin account can never be deleted -- not by another SuperAdmin,
+    # and not by an Admin.
+    if target['Role'] == 'SuperAdmin':
+        return jsonify({'error': 'SuperAdmin accounts can never be deleted.'}), 403
+
+    # No one -- SuperAdmin or Admin -- can delete their own account.
+    if user_id == session.get('user_id'):
+        return jsonify({'error': 'You cannot delete your own account.'}), 403
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Soft delete (matches how login/forgot-password already treat
+            # IsDeleted) rather than removing the row outright.
+            cursor.execute('UPDATE userTbl SET IsDeleted = 1 WHERE userid = %s', (user_id,))
+    finally:
+        conn.close()
+
+    return jsonify({'message': 'User deleted.'})
+
+
+@app.route('/api/admin/users/<int:user_id>/recover', methods=['POST'])
+@login_required_api
+@role_required_api('SuperAdmin')
+@require_csrf
+def api_admin_recover_user(user_id):
+    target = get_user_by_id(user_id)
+    if not target:
+        return jsonify({'error': 'User not found.'}), 404
+    if not bit_to_bool(target['IsDeleted']):
+        return jsonify({'error': 'This account is not deleted.'}), 400
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute('UPDATE userTbl SET IsDeleted = 0 WHERE userid = %s', (user_id,))
+    finally:
+        conn.close()
+
+    return jsonify({'message': 'User recovered.'})
 
 
 def _read_scraper_output(state, process):

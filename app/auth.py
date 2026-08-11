@@ -9,6 +9,7 @@ from flask import jsonify, redirect, request, session
 from db import get_connection
 
 RESET_TOKEN_TTL_MINUTES = 30
+VALID_ROLES = ('SuperAdmin', 'Admin', 'User')
 
 
 def hash_password(plain_password):
@@ -64,9 +65,31 @@ def serialize_user(user):
         'email': user['Email'],
         'role': user['Role'],
         'status': bit_to_bool(user['Status']),
+        'isDeleted': bit_to_bool(user['IsDeleted']),
         'avatar': user.get('avatar'),
         'updatedAt': user['updated_at'].strftime('%d %b %Y %H:%M') if user.get('updated_at') else None,
     }
+
+
+def list_users():
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(f'SELECT {USER_COLUMNS} FROM userTbl ORDER BY userid')
+            return cursor.fetchall()
+    finally:
+        conn.close()
+
+
+def has_superadmin():
+    """Whether a SuperAdmin already exists -- caps the system to exactly one."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT 1 FROM userTbl WHERE Role = 'SuperAdmin' AND IsDeleted = 0 LIMIT 1")
+            return cursor.fetchone() is not None
+    finally:
+        conn.close()
 
 
 def _hash_reset_token(raw_token):
@@ -148,6 +171,34 @@ def login_required_api(view):
             return jsonify({'error': 'Authentication required.'}), 401
         return view(*args, **kwargs)
     return wrapped
+
+
+def role_required_page(*roles):
+    """Protects a page route: sends users without an allowed role back to the dashboard.
+
+    Must sit inside @login_required_page (closer to the view function) so
+    session['role'] is already known to exist by the time this runs.
+    """
+    def decorator(view):
+        @functools.wraps(view)
+        def wrapped(*args, **kwargs):
+            if session.get('role') not in roles:
+                return redirect('/')
+            return view(*args, **kwargs)
+        return wrapped
+    return decorator
+
+
+def role_required_api(*roles):
+    """Protects a JSON/API route: returns 403 for users without an allowed role."""
+    def decorator(view):
+        @functools.wraps(view)
+        def wrapped(*args, **kwargs):
+            if session.get('role') not in roles:
+                return jsonify({'error': 'You do not have permission to do that.'}), 403
+            return view(*args, **kwargs)
+        return wrapped
+    return decorator
 
 
 def require_csrf(view):
