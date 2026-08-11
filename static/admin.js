@@ -116,6 +116,15 @@ window.AdminShared = (function () {
     return `<span class="inline-flex w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 items-center justify-center text-xs font-semibold align-middle">${safeInitial}</span>`;
   }
 
+  // Sequential row number for the leftmost column, continuous across pages
+  // (page 2 at 10/page starts at #11, not #1 again) -- meta.row is the index
+  // within the current filtered/sorted set; _iDisplayStart is the current
+  // page's starting offset.
+  function rowNumberHtml(meta) {
+    const num = meta.row + meta.settings._iDisplayStart + 1;
+    return `<span class="text-xs font-medium text-slate-400">#${num}</span>`;
+  }
+
   function roleBadgeHtml(role) {
     const classes = role === 'SuperAdmin'
       ? 'bg-violet-100 text-violet-700'
@@ -234,6 +243,7 @@ window.AdminShared = (function () {
     escapeHtml,
     showToast,
     avatarHtml,
+    rowNumberHtml,
     roleBadgeHtml,
     statusBadgeHtml,
     statusText,
@@ -304,7 +314,7 @@ window.AdminShared = (function () {
       columns: [
         {
           data: null, orderable: false, searchable: false, className: 'text-center',
-          render: (data, type, row) => (type === 'display' ? Shared.avatarHtml(row) : ''),
+          render: (data, type, row, meta) => (type === 'display' ? Shared.rowNumberHtml(meta) : ''),
         },
         {
           data: null,

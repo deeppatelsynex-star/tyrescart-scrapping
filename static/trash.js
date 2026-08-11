@@ -44,7 +44,7 @@
       columns: [
         {
           data: null, orderable: false, searchable: false, className: 'text-center',
-          render: (data, type, row) => (type === 'display' ? Shared.avatarHtml(row) : ''),
+          render: (data, type, row, meta) => (type === 'display' ? Shared.rowNumberHtml(meta) : ''),
         },
         {
           data: null,
