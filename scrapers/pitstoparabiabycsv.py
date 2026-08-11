@@ -23,7 +23,10 @@ class TyreScraper(Spider):
     # =========================
     # A per-run output path can be passed as the first CLI arg so concurrent
     # runs (one per user session) don't overwrite each other's file.
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # This script lives in scrapers/, but its default output/CSV paths stay
+    # anchored to the project root (one level up) to match where app.py and
+    # testurls.csv actually live.
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     today = datetime.now().strftime("%d-%m-%Y")
 
     output_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(

@@ -3,3 +3,6 @@ Scrapy
 openpyxl
 scrapy-xlsx
 tqdm
+PyMySQL
+python-dotenv
+bcrypt
