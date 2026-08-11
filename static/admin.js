@@ -24,39 +24,10 @@
   });
 })();
 
-(function () {
-  const rowsEl = document.getElementById('admin-user-rows');
-  if (!rowsEl) return; // Not on the admin page.
-
-  const emptyState = document.getElementById('admin-empty-state');
-  const errorEl = document.getElementById('admin-error');
-  const newUserBtn = document.getElementById('admin-new-user-btn');
-
-  const modal = document.getElementById('admin-user-modal');
-  const modalTitle = document.getElementById('admin-modal-title');
-  const modalError = document.getElementById('admin-modal-error');
-  const form = document.getElementById('admin-user-form');
-  const idInput = document.getElementById('admin-user-id');
-  const nameInput = document.getElementById('admin-user-name');
-  const emailInput = document.getElementById('admin-user-email');
-  const passwordInput = document.getElementById('admin-user-password');
-  const passwordHint = document.getElementById('admin-user-password-hint');
-  const roleSelect = document.getElementById('admin-user-role');
-  const statusInput = document.getElementById('admin-user-status');
-  const submitBtn = document.getElementById('admin-user-submit');
-  const submitLabel = document.getElementById('admin-user-submit-label');
-
-  const deleteModal = document.getElementById('admin-delete-modal');
-  const deleteText = document.getElementById('admin-delete-text');
-  const deleteError = document.getElementById('admin-delete-error');
-  const deleteConfirmBtn = document.getElementById('admin-delete-confirm');
-
-  let csrfToken = null;
-  let currentRole = null;
-  let currentUserId = null;
-  let users = [];
-  let pendingDeleteId = null;
-
+// Shared helpers used by both the User Management page (below) and
+// static/trash.js -- toasts, badges, the View modal, and common DataTable
+// options, all in one place so the two pages render identically.
+window.AdminShared = (function () {
   const openModal = (el) => el.classList.remove('hidden');
   const closeModal = (el) => el.classList.add('hidden');
 
@@ -73,12 +44,6 @@
     const div = document.createElement('div');
     div.textContent = str == null ? '' : String(str);
     return div.innerHTML;
-  };
-
-  const roleBadgeClasses = (role) => {
-    if (role === 'SuperAdmin') return 'bg-violet-100 text-violet-700';
-    if (role === 'Admin') return 'bg-sky-100 text-sky-700';
-    return 'bg-slate-100 text-slate-600';
   };
 
   // --- Toast notifications: brief floating confirmations for action results,
@@ -131,83 +96,279 @@
     }, 3500);
   }
 
-  function renderRows() {
-    rowsEl.innerHTML = '';
-    emptyState.classList.toggle('hidden', users.length > 0);
+  function initial(row) {
+    const source = (row.name || row.email || '?').trim();
+    return (source.charAt(0) || '?').toUpperCase();
+  }
 
-    users.forEach((user) => {
-      const isSelf = user.userId === currentUserId;
-      const canDelete = (currentRole === 'SuperAdmin' || currentRole === 'Admin') && user.role !== 'SuperAdmin' && !isSelf;
-      const deleteDisabledReason = user.role === 'SuperAdmin'
-        ? 'SuperAdmin accounts can never be deleted'
-        : isSelf
-          ? 'You cannot delete your own account'
-          : '';
-      const statusBadge = user.isDeleted
-        ? '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-500">Deleted</span>'
-        : user.status
-          ? '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Active</span>'
-          : '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Disabled</span>';
+  function avatarHtml(row) {
+    const safeInitial = escapeHtml(initial(row));
+    if (row.avatar) {
+      const safeUrl = escapeHtml(row.avatar);
+      // Initials sit behind the <img>; if the image 404s, onerror hides it and
+      // the initials underneath show through -- no broken-image icon.
+      return `
+        <span class="relative inline-flex w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 items-center justify-center text-xs font-semibold overflow-hidden align-middle">
+          <span class="absolute inset-0 flex items-center justify-center">${safeInitial}</span>
+          <img src="${safeUrl}" alt="" class="relative w-8 h-8 rounded-full object-cover" onerror="this.style.display='none'" />
+        </span>`;
+    }
+    return `<span class="inline-flex w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 items-center justify-center text-xs font-semibold align-middle">${safeInitial}</span>`;
+  }
 
-      // A deleted account swaps Delete for Recover -- and only a SuperAdmin
-      // may bring an account back.
-      const canRecover = currentRole === 'SuperAdmin';
-      const deleteOrRecoverButton = user.isDeleted
-        ? `<button type="button" data-recover="${user.userId}" ${canRecover ? '' : 'disabled title="Only a SuperAdmin can recover this account"'}
-            class="text-xs font-semibold ${canRecover ? 'text-emerald-600 hover:underline cursor-pointer' : 'text-slate-300 cursor-not-allowed'}">Recover</button>`
-        : `<button type="button" data-delete="${user.userId}" ${canDelete ? '' : `disabled title="${deleteDisabledReason}"`}
-            class="text-xs font-semibold ${canDelete ? 'text-rose-600 hover:underline cursor-pointer' : 'text-slate-300 cursor-not-allowed'}">Delete</button>`;
+  function roleBadgeHtml(role) {
+    const classes = role === 'SuperAdmin'
+      ? 'bg-violet-100 text-violet-700'
+      : role === 'Admin'
+        ? 'bg-sky-100 text-sky-700'
+        : 'bg-slate-100 text-slate-600';
+    return `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${classes}">${escapeHtml(role)}</span>`;
+  }
 
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="px-6 py-3 font-medium text-slate-800">${escapeHtml(user.name)}</td>
-        <td class="px-6 py-3 text-slate-600">${escapeHtml(user.email)}</td>
-        <td class="px-6 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-semibold ${roleBadgeClasses(user.role)}">${escapeHtml(user.role)}</span></td>
-        <td class="px-6 py-3">${statusBadge}</td>
-        <td class="px-6 py-3 text-right whitespace-nowrap">
-          <button type="button" data-edit="${user.userId}" class="text-xs font-semibold text-emerald-600 hover:underline cursor-pointer mr-3">Edit</button>
-          ${deleteOrRecoverButton}
-        </td>
-      `;
-      rowsEl.appendChild(tr);
-    });
+  // Active -> green, Inactive -> gray, Deleted -> red. The Trash page always
+  // passes isDeleted:true rows here, so it always renders the red badge.
+  function statusText(row) {
+    return row.isDeleted ? 'Deleted' : row.status ? 'Active' : 'Inactive';
+  }
+
+  function statusBadgeHtml(row) {
+    if (row.isDeleted) return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">Deleted</span>';
+    if (row.status) return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Active</span>';
+    return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-500">Inactive</span>';
+  }
+
+  // Splits a "11 Aug 2026 10:08"-style string (see serialize_user's strftime
+  // format) into date + time and colors each differently, so the time isn't
+  // lost among the date at a glance.
+  function dateTimeHtml(value) {
+    if (!value) return '<span class="text-slate-400">—</span>';
+    const parts = String(value).trim().split(' ');
+    const time = parts.pop();
+    const date = parts.join(' ');
+    return `<span class="text-slate-700 font-medium">${escapeHtml(date)}</span> <span class="text-emerald-600">${escapeHtml(time)}</span>`;
+  }
+
+  function openViewModal(row) {
+    const modal = document.getElementById('admin-view-modal');
+    if (!modal) return;
+
+    document.getElementById('admin-view-name').textContent = row.name || '—';
+    document.getElementById('admin-view-email').textContent = row.email || '—';
+    document.getElementById('admin-view-role').textContent = row.role || '—';
+    document.getElementById('admin-view-status').textContent = statusText(row);
+    document.getElementById('admin-view-created').textContent = row.createdAt || '—';
+
+    const deletedRow = document.getElementById('admin-view-deleted-row');
+    if (row.isDeleted) {
+      document.getElementById('admin-view-deleted').textContent = row.deletedAt || '—';
+      deletedRow.classList.remove('hidden');
+    } else {
+      deletedRow.classList.add('hidden');
+    }
+
+    const avatarEl = document.getElementById('admin-view-avatar');
+    avatarEl.innerHTML = '';
+    if (row.avatar) {
+      const img = document.createElement('img');
+      img.src = row.avatar;
+      img.alt = '';
+      img.className = 'w-full h-full object-cover';
+      img.onerror = () => {
+        avatarEl.innerHTML = '';
+        avatarEl.textContent = initial(row);
+      };
+      avatarEl.appendChild(img);
+    } else {
+      avatarEl.textContent = initial(row);
+    }
+
+    openModal(modal);
+  }
+
+  // Shared DataTables config: search, sort, paging, page-length selector
+  // (10/25/50/100, default 10), responsive collapsing, and First/Prev/Next/Last
+  // pagination controls (pagingType: full_numbers).
+  function commonDataTableOptions(overrides) {
+    return Object.assign(
+      {
+        pageLength: 10,
+        lengthMenu: [10, 25, 50, 100],
+        pagingType: 'full_numbers',
+        responsive: true,
+        autoWidth: false,
+        language: {
+          search: '',
+          searchPlaceholder: 'Search name, email, status…',
+          lengthMenu: 'Show _MENU_ per page',
+          info: 'Showing _START_ to _END_ of _TOTAL_',
+          infoEmpty: 'No users to show',
+          infoFiltered: '(filtered from _MAX_ total)',
+          paginate: { first: 'First', last: 'Last', next: 'Next', previous: 'Previous' },
+        },
+      },
+      overrides
+    );
+  }
+
+  return {
+    openModal,
+    closeModal,
+    showError,
+    hideError,
+    escapeHtml,
+    showToast,
+    avatarHtml,
+    roleBadgeHtml,
+    statusBadgeHtml,
+    statusText,
+    dateTimeHtml,
+    openViewModal,
+    commonDataTableOptions,
+  };
+})();
+
+// --- User Management ("All Users") page ---
+(function () {
+  const tableEl = document.getElementById('users-table');
+  if (!tableEl) return; // Not on the User Management page.
+
+  const Shared = window.AdminShared;
+  const errorEl = document.getElementById('admin-error');
+  const newUserBtn = document.getElementById('admin-new-user-btn');
+  const loadingEl = document.getElementById('admin-loading');
+
+  const modal = document.getElementById('admin-user-modal');
+  const modalTitle = document.getElementById('admin-modal-title');
+  const modalError = document.getElementById('admin-modal-error');
+  const form = document.getElementById('admin-user-form');
+  const idInput = document.getElementById('admin-user-id');
+  const nameInput = document.getElementById('admin-user-name');
+  const emailInput = document.getElementById('admin-user-email');
+  const passwordInput = document.getElementById('admin-user-password');
+  const passwordHint = document.getElementById('admin-user-password-hint');
+  const roleSelect = document.getElementById('admin-user-role');
+  const statusInput = document.getElementById('admin-user-status');
+  const submitBtn = document.getElementById('admin-user-submit');
+  const submitLabel = document.getElementById('admin-user-submit-label');
+
+  const deleteModal = document.getElementById('admin-delete-modal');
+  const deleteText = document.getElementById('admin-delete-text');
+  const deleteError = document.getElementById('admin-delete-error');
+  const deleteConfirmBtn = document.getElementById('admin-delete-confirm');
+
+  let csrfToken = null;
+  let currentRole = null;
+  let currentUserId = null;
+  let users = [];
+  let pendingDeleteId = null;
+  let table = null;
+
+  function actionsCellHtml(row) {
+    const isSelf = row.userId === currentUserId;
+    const canDelete = (currentRole === 'SuperAdmin' || currentRole === 'Admin') && row.role !== 'SuperAdmin' && !isSelf;
+    const deleteDisabledReason = row.role === 'SuperAdmin'
+      ? 'SuperAdmin accounts can never be deleted'
+      : isSelf
+        ? 'You cannot delete your own account'
+        : '';
+    return `
+      <div class="flex items-center justify-end gap-3">
+        <button type="button" data-action="view" data-id="${row.userId}" class="text-xs font-semibold text-slate-500 hover:underline cursor-pointer">View</button>
+        <button type="button" data-action="edit" data-id="${row.userId}" class="text-xs font-semibold text-emerald-600 hover:underline cursor-pointer">Edit</button>
+        <button type="button" data-action="delete" data-id="${row.userId}" ${canDelete ? '' : `disabled title="${deleteDisabledReason}"`}
+          class="text-xs font-semibold ${canDelete ? 'text-rose-600 hover:underline cursor-pointer' : 'text-slate-300 cursor-not-allowed'}">Delete</button>
+      </div>`;
+  }
+
+  function initTable() {
+    table = $(tableEl).DataTable(Shared.commonDataTableOptions({
+      data: [],
+      order: [[1, 'asc']],
+      columns: [
+        {
+          data: null, orderable: false, searchable: false, className: 'text-center',
+          render: (data, type, row) => (type === 'display' ? Shared.avatarHtml(row) : ''),
+        },
+        {
+          data: null,
+          render: (data, type, row) => (type === 'display' ? Shared.escapeHtml(row.name) : row.name),
+        },
+        {
+          data: null,
+          render: (data, type, row) => (type === 'display' ? Shared.escapeHtml(row.email) : row.email),
+        },
+        {
+          data: null,
+          render: (data, type, row) => (type === 'display' ? Shared.roleBadgeHtml(row.role) : row.role),
+        },
+        {
+          data: null,
+          render: (data, type, row) => (type === 'display' ? Shared.statusBadgeHtml(row) : Shared.statusText(row)),
+        },
+        {
+          data: null,
+          render: (data, type, row) => {
+            if (type === 'display') return Shared.dateTimeHtml(row.createdAt);
+            return row.createdAtRaw || '';
+          },
+        },
+        {
+          data: null, orderable: false, searchable: false, className: 'text-right',
+          render: (data, type, row) => (type === 'display' ? actionsCellHtml(row) : ''),
+        },
+      ],
+    }));
   }
 
   async function loadMe() {
-    const response = await fetch('/api/me');
-    if (!response.ok) return;
-    const data = await response.json();
-    csrfToken = data.csrfToken;
-    currentRole = data.user ? data.user.role : null;
-    currentUserId = data.user ? data.user.userId : null;
-    // Only a SuperAdmin can add a user -- an Admin can still view/edit/delete,
-    // so hide the button that would otherwise just 403.
-    newUserBtn.classList.toggle('hidden', currentRole !== 'SuperAdmin');
+    try {
+      const response = await fetch('/api/me');
+      if (!response.ok) return;
+      const data = await response.json();
+      csrfToken = data.csrfToken;
+      currentRole = data.user ? data.user.role : null;
+      currentUserId = data.user ? data.user.userId : null;
+      // Only a SuperAdmin can add a user -- an Admin can still view/edit/delete,
+      // so hide the button that would otherwise just 403.
+      newUserBtn.classList.toggle('hidden', currentRole !== 'SuperAdmin');
+    } catch (err) {
+      // Leave currentRole/currentUserId null -- loadUsers() will still run and
+      // any action attempted without a CSRF token will just get a clear 403.
+    }
+  }
+
+  function showTable() {
+    loadingEl.classList.add('hidden');
+    tableEl.classList.remove('hidden');
   }
 
   async function loadUsers() {
-    hideError(errorEl);
+    Shared.hideError(errorEl);
     try {
       const response = await fetch('/api/admin/users');
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to load users.';
-        showError(errorEl, message);
-        showToast(message, 'error');
+        Shared.showError(errorEl, message);
+        Shared.showToast(message, 'error');
         return;
       }
       users = data.users || [];
-      renderRows();
+      table.clear();
+      table.rows.add(users);
+      table.draw(false);
     } catch (err) {
-      showError(errorEl, 'Network error while loading users.');
-      showToast('Network error while loading users.', 'error');
+      Shared.showError(errorEl, 'Network error while loading users.');
+      Shared.showToast('Network error while loading users.', 'error');
+    } finally {
+      showTable();
     }
   }
 
   function resetForm() {
     form.reset();
     idInput.value = '';
-    hideError(modalError);
+    Shared.hideError(modalError);
     roleSelect.value = 'User';
     statusInput.checked = true;
   }
@@ -218,7 +379,7 @@
     submitLabel.textContent = 'Create User';
     passwordInput.required = true;
     passwordHint.classList.add('hidden');
-    openModal(modal);
+    Shared.openModal(modal);
   }
 
   function openEditModal(user) {
@@ -232,12 +393,12 @@
     statusInput.checked = !!user.status;
     passwordInput.required = false;
     passwordHint.classList.remove('hidden');
-    openModal(modal);
+    Shared.openModal(modal);
   }
 
   async function handleFormSubmit(event) {
     event.preventDefault();
-    hideError(modalError);
+    Shared.hideError(modalError);
 
     const id = idInput.value;
     const payload = {
@@ -260,16 +421,16 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to save user.';
-        showError(modalError, message);
-        showToast(message, 'error');
+        Shared.showError(modalError, message);
+        Shared.showToast(message, 'error');
         return;
       }
-      closeModal(modal);
-      showToast(id ? 'User updated successfully.' : 'User created successfully.', 'success');
+      Shared.closeModal(modal);
+      Shared.showToast(id ? 'User updated successfully.' : 'User created successfully.', 'success');
       await loadUsers();
     } catch (err) {
-      showError(modalError, 'Network error. Please try again.');
-      showToast('Network error. Please try again.', 'error');
+      Shared.showError(modalError, 'Network error. Please try again.');
+      Shared.showToast('Network error. Please try again.', 'error');
     } finally {
       submitBtn.disabled = false;
     }
@@ -277,7 +438,7 @@
 
   async function handleDeleteConfirm() {
     if (!pendingDeleteId) return;
-    hideError(deleteError);
+    Shared.hideError(deleteError);
     deleteConfirmBtn.disabled = true;
     try {
       const response = await fetch(`/api/admin/users/${pendingDeleteId}`, {
@@ -287,76 +448,56 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to delete user.';
-        showError(deleteError, message);
-        showToast(message, 'error');
+        Shared.showError(deleteError, message);
+        Shared.showToast(message, 'error');
         return;
       }
-      closeModal(deleteModal);
+      Shared.closeModal(deleteModal);
       pendingDeleteId = null;
-      showToast('User deleted successfully.', 'success');
+      Shared.showToast('User moved to Trash.', 'success');
       await loadUsers();
     } catch (err) {
-      showError(deleteError, 'Network error. Please try again.');
-      showToast('Network error. Please try again.', 'error');
+      Shared.showError(deleteError, 'Network error. Please try again.');
+      Shared.showToast('Network error. Please try again.', 'error');
     } finally {
       deleteConfirmBtn.disabled = false;
     }
   }
 
-  async function handleRecover(userId, btn) {
-    btn.disabled = true;
-    try {
-      const response = await fetch(`/api/admin/users/${userId}/recover`, {
-        method: 'POST',
-        headers: { 'X-CSRF-Token': csrfToken },
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        showToast(data.error || 'Unable to recover user.', 'error');
-        btn.disabled = false;
-        return;
-      }
-      showToast('User recovered successfully.', 'success');
-      await loadUsers();
-    } catch (err) {
-      showToast('Network error. Please try again.', 'error');
-      btn.disabled = false;
-    }
-  }
+  document.addEventListener('DOMContentLoaded', () => {
+    initTable();
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    await loadMe();
-    await loadUsers();
-
+    // Wired up synchronously, before the async data load below -- so even if
+    // loadMe()/loadUsers() fails, every button already does something instead
+    // of silently appearing dead.
     newUserBtn.addEventListener('click', openCreateModal);
     form.addEventListener('submit', handleFormSubmit);
     deleteConfirmBtn.addEventListener('click', handleDeleteConfirm);
 
-    rowsEl.addEventListener('click', (event) => {
-      const editId = event.target.getAttribute('data-edit');
-      const deleteId = event.target.getAttribute('data-delete');
+    $(tableEl.tBodies[0]).on('click', 'button[data-action]', function () {
+      const btn = this;
+      if (btn.disabled) return;
+      const action = btn.getAttribute('data-action');
+      const id = btn.getAttribute('data-id');
+      const user = users.find((u) => String(u.userId) === id);
+      if (!user) return;
 
-      if (editId) {
-        const user = users.find((u) => String(u.userId) === editId);
-        if (user) openEditModal(user);
+      if (action === 'view') {
+        Shared.openViewModal(user);
         return;
       }
-
-      if (deleteId && !event.target.disabled) {
-        pendingDeleteId = deleteId;
-        const user = users.find((u) => String(u.userId) === deleteId);
-        deleteText.textContent = user
-          ? `This will disable "${user.name}"'s account. They will no longer be able to log in.`
-          : 'This will disable this account.';
-        hideError(deleteError);
-        openModal(deleteModal);
+      if (action === 'edit') {
+        openEditModal(user);
         return;
       }
-
-      const recoverId = event.target.getAttribute('data-recover');
-      if (recoverId && !event.target.disabled) {
-        handleRecover(recoverId, event.target);
+      if (action === 'delete') {
+        pendingDeleteId = id;
+        deleteText.textContent = `This will move "${user.name}"'s account to Trash. They will no longer be able to log in.`;
+        Shared.hideError(deleteError);
+        Shared.openModal(deleteModal);
       }
     });
+
+    loadMe().then(loadUsers);
   });
 })();

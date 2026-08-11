@@ -11,8 +11,9 @@
     <link rel="stylesheet" href="/static/style.css" />
     <link rel="shortcut icon" href="../static/assets/images/favicon-color.webp" type="image/x-icon">
     <title>
-      Scraping Data - TyresCart 
+      Scraping Data - TyresCart
     </title>
+    {% block ExtraHead %}{% endblock ExtraHead %}
   </head>
 
   <body>
@@ -55,6 +56,17 @@
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
               <span class="text-[10px] tracking-tight">Admin</span>
+            </a>
+            <a href="/trash" class="flex flex-col items-center justify-center rounded-lg w-full relative group focus:outline-none {% if page == 'trash' %}bg-red-50{% endif %} transition-all hover:bg-red-100 hover:text-red-800 text-red-500">
+              {% if page == 'trash' %}<span class="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-6 bg-red-500 rounded-b-full"></span>{% endif %}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+              </svg>
+              <span class="text-[10px] tracking-tight">Trash</span>
             </a>
             {% endif %}
           </nav>
@@ -238,5 +250,6 @@
     <script src="/static/script.js"></script>
     <script src="/static/profile.js"></script>
     <script src="/static/admin.js"></script>
+    {% block ExtraScripts %}{% endblock ExtraScripts %}
   </body>
 </html>

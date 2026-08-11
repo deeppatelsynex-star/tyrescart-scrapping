@@ -29,7 +29,7 @@ def bit_to_bool(value):
     return bool(value)
 
 
-USER_COLUMNS = 'userid, Name, Email, password, Status, IsDeleted, Role, avatar, updated_at'
+USER_COLUMNS = 'userid, Name, Email, password, Status, IsDeleted, Role, avatar, updated_at, created_at, deleted_at'
 
 
 def get_user_by_email(email):
@@ -68,6 +68,13 @@ def serialize_user(user):
         'isDeleted': bit_to_bool(user['IsDeleted']),
         'avatar': user.get('avatar'),
         'updatedAt': user['updated_at'].strftime('%d %b %Y %H:%M') if user.get('updated_at') else None,
+        'createdAt': user['created_at'].strftime('%d %b %Y %H:%M') if user.get('created_at') else None,
+        # Raw ISO timestamps alongside the human-readable strings above, so the
+        # admin/trash tables can sort chronologically instead of alphabetically
+        # on the formatted display text.
+        'createdAtRaw': user['created_at'].isoformat() if user.get('created_at') else None,
+        'deletedAt': user['deleted_at'].strftime('%d %b %Y %H:%M') if user.get('deleted_at') else None,
+        'deletedAtRaw': user['deleted_at'].isoformat() if user.get('deleted_at') else None,
     }
 
 
@@ -76,6 +83,28 @@ def list_users():
     try:
         with conn.cursor() as cursor:
             cursor.execute(f'SELECT {USER_COLUMNS} FROM userTbl ORDER BY userid')
+            return cursor.fetchall()
+    finally:
+        conn.close()
+
+
+def list_active_users():
+    """Users for the main User Management table -- never includes soft-deleted rows."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(f'SELECT {USER_COLUMNS} FROM userTbl WHERE IsDeleted = 0 ORDER BY userid')
+            return cursor.fetchall()
+    finally:
+        conn.close()
+
+
+def list_deleted_users():
+    """Users for the Trash table -- only soft-deleted rows."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(f'SELECT {USER_COLUMNS} FROM userTbl WHERE IsDeleted = 1 ORDER BY deleted_at DESC')
             return cursor.fetchall()
     finally:
         conn.close()

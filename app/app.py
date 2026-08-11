@@ -22,7 +22,8 @@ from auth import (
     get_user_id_for_reset_token,
     has_superadmin,
     hash_password,
-    list_users,
+    list_active_users,
+    list_deleted_users,
     login_required_api,
     login_required_page,
     require_csrf,
@@ -420,11 +421,27 @@ def admin_page():
     return render_template('admin.html', page='admin')
 
 
+@app.route('/trash')
+@login_required_page
+@role_required_page('SuperAdmin', 'Admin')
+def trash_page():
+    return render_template('trash.html', page='trash')
+
+
 @app.route('/api/admin/users', methods=['GET'])
 @login_required_api
 @role_required_api('SuperAdmin', 'Admin')
 def api_admin_list_users():
-    return jsonify({'users': [serialize_user(u) for u in list_users()]})
+    # Soft-deleted accounts never appear in the main User Management list --
+    # they only show up on the Trash page (see api_admin_list_trash).
+    return jsonify({'users': [serialize_user(u) for u in list_active_users()]})
+
+
+@app.route('/api/admin/users/trash', methods=['GET'])
+@login_required_api
+@role_required_api('SuperAdmin', 'Admin')
+def api_admin_list_trash():
+    return jsonify({'users': [serialize_user(u) for u in list_deleted_users()]})
 
 
 @app.route('/api/admin/users', methods=['POST'])
@@ -558,8 +575,12 @@ def api_admin_delete_user(user_id):
     try:
         with conn.cursor() as cursor:
             # Soft delete (matches how login/forgot-password already treat
-            # IsDeleted) rather than removing the row outright.
-            cursor.execute('UPDATE userTbl SET IsDeleted = 1 WHERE userid = %s', (user_id,))
+            # IsDeleted) rather than removing the row outright -- this is what
+            # moves the user into Trash.
+            cursor.execute(
+                'UPDATE userTbl SET IsDeleted = 1, deleted_at = UTC_TIMESTAMP() WHERE userid = %s',
+                (user_id,),
+            )
     finally:
         conn.close()
 
@@ -580,7 +601,7 @@ def api_admin_recover_user(user_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute('UPDATE userTbl SET IsDeleted = 0 WHERE userid = %s', (user_id,))
+            cursor.execute('UPDATE userTbl SET IsDeleted = 0, deleted_at = NULL WHERE userid = %s', (user_id,))
     finally:
         conn.close()
 

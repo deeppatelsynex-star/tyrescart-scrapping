@@ -24,14 +24,21 @@ CREATE TABLE IF NOT EXISTS password_reset_tbl (
 )
 """
 
-# Additive columns for the profile/avatar feature. Existence is checked via
-# information_schema before adding, so this stays safe to re-run.
+# Additive columns for the profile/avatar and trash features. Existence is
+# checked via information_schema before adding, so this stays safe to re-run.
 NEW_COLUMNS = {
     "avatar": "ALTER TABLE userTbl ADD COLUMN avatar VARCHAR(500) NULL",
     "updated_at": (
         "ALTER TABLE userTbl ADD COLUMN updated_at TIMESTAMP NULL "
         "DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
     ),
+    # Fixed at insert time (no ON UPDATE) so editing a user later doesn't
+    # change when their account was originally created.
+    "created_at": "ALTER TABLE userTbl ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP",
+    # Set when a user is soft-deleted, cleared on restore. NULL for accounts
+    # that have never been deleted (and for rows soft-deleted before this
+    # column existed).
+    "deleted_at": "ALTER TABLE userTbl ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL",
 }
 
 
