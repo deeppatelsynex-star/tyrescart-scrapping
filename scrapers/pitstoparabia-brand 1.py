@@ -1,4 +1,7 @@
+import csv
+import os
 import re
+import sys
 import datetime
 from collections import OrderedDict
 from scrapy import Spider, Request, Selector # type: ignore
@@ -113,12 +116,48 @@ BRAND_URLS = [
 class pitstoparabiabrands(Spider):
     name = 'pitstoparabiabrands'
 
+    # This script lives in scrapers/, but its default output stays anchored to
+    # the project root (one level up) to match where the other scraper scripts
+    # write their .xlsx files -- not wherever this happens to be run from.
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     _timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+
+    # An output path can be passed as the first CLI arg, same convention as
+    # pitstoparabiabycsv.py.
+    output_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
+        base_dir,
+        f'pitstoparabia_brands_data_{_timestamp}.xlsx'
+    )
+
+    @staticmethod
+    def _load_brand_urls():
+        """A CSV of specific brand URLs (one per line, same format
+        pitstoparabiabycsv.py reads) can be passed as the second CLI arg so a
+        caller can scrape only a chosen subset of brands instead of the full
+        hardcoded BRAND_URLS list below.
+        """
+        if len(sys.argv) > 2:
+            urls = []
+            with open(sys.argv[2], newline='', encoding='utf-8') as f:
+                for row in csv.reader(f):
+                    if row and row[0].strip():
+                        urls.append(row[0].strip())
+            if urls:
+                return urls
+        return BRAND_URLS
 
     custom_settings = {
         'FEED_EXPORTERS': {'xlsx': 'scrapy_xlsx.XlsxItemExporter'},
-        'FEED_FORMAT': 'xlsx',
-        'FEED_URI': f'pitstoparabia_brands_data_{_timestamp}.xlsx',
+        # FEEDS replaces the deprecated FEED_URI/FEED_FORMAT settings (still
+        # technically supported by Scrapy 2.17 with a deprecation warning, but
+        # this matches the convention already used in pitstoparabiabycsv.py).
+        'FEEDS': {
+            output_file: {
+                'format': 'xlsx',
+                'encoding': 'utf8',
+                'store_empty': False,
+            }
+        },
         'DOWNLOAD_DELAY': 0.3,
         'LOG_LEVEL': 'INFO',
     }
@@ -143,6 +182,8 @@ class pitstoparabiabrands(Spider):
         super().__init__(*args, **kwargs)
         self.seen_products = set()   # dedupe product detail URLs
         self.seen_listings = set()   # dedupe brand/pagination listing URLs
+        self.running_emitted = set()  # brand-root URLs we've already emitted 'running' for
+        self.done_sources = set()     # brand-root URLs we've already emitted 'done'/'blocked' for
         self.pbar = None
         if tqdm is not None:
             # total starts at 0 and grows as listing pages reveal more
@@ -150,12 +191,34 @@ class pitstoparabiabrands(Spider):
             self.pbar = tqdm(total=0, unit='product', desc='Scraping products',
                               dynamic_ncols=True)
 
+    def emit_status(self, url, status, parent=None, url_type=None):
+        print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}")
+
+    def finish_source(self, source_url, blocked=False):
+        if source_url in self.done_sources:
+            return
+        self.done_sources.add(source_url)
+        self.emit_status(source_url, 'blocked' if blocked else 'done')
+
+    def request_failed(self, failure):
+        source_url = failure.request.meta.get('source_url', failure.request.url)
+        self.logger.error('Request failed for %s: %s', failure.request.url, failure.value)
+        self.finish_source(source_url, blocked=True)
+
     async def start(self):
         meta = {'dont_merge_cookies': True}
-        for url in BRAND_URLS:
-            yield Request(url.strip(), self.parse_listing, meta=meta, headers=self.headers)
+        for url in self._load_brand_urls():
+            url = url.strip()
+            self.emit_status(url, 'pending', url_type='brand')
+            yield Request(url, self.parse_listing, errback=self.request_failed,
+                          meta={**meta, 'source_url': url}, headers=self.headers)
 
     def parse_listing(self, response):
+        source_url = response.meta.get('source_url', response.url)
+        if source_url not in self.running_emitted:
+            self.running_emitted.add(source_url)
+            self.emit_status(source_url, 'running')
+
         if response.url in self.seen_listings:
             return
         self.seen_listings.add(response.url)
@@ -177,6 +240,8 @@ class pitstoparabiabrands(Spider):
                 self.pbar.total += 1
                 self.pbar.refresh()
 
+            full_url = response.urljoin(url)
+            self.emit_status(full_url, 'pending', parent=source_url, url_type='product')
             yield response.follow(url, self.parse_detail,
                                   meta=response.meta, headers=self.headers)
 
@@ -192,8 +257,17 @@ class pitstoparabiabrands(Spider):
             if next_url and next_url not in self.seen_listings:
                 yield response.follow(next_url, self.parse_listing,
                                       meta=response.meta, headers=self.headers)
+                return
+
+        # No further pages -- this brand root is done being discovered. Its
+        # status may still flip back and forth as product detail pages finish,
+        # but the tree needs a terminal signal for the root row itself.
+        self.finish_source(source_url)
 
     def parse_detail(self, response):
+        source_url = response.meta.get('source_url', response.url)
+        self.emit_status(response.url, 'running', parent=source_url, url_type='product')
+
         add_to_cart_btn = response.css('button#product-addtocart-button, div.actions.add-to-cart button, button.tocart, button.add-to-cart')
         out_of_stock_div = response.css('div.stock.unavailable, .stock.unavailable')
 
@@ -246,6 +320,7 @@ class pitstoparabiabrands(Spider):
             self.pbar.update(1)
             self.pbar.set_postfix_str(f"pending={self.pbar.total - self.pbar.n}")
 
+        self.emit_status(response.url, 'done', parent=source_url, url_type='product')
         yield item
 
     def closed(self, reason):
@@ -280,3 +355,13 @@ class pitstoparabiabrands(Spider):
 
         results = list(filter(None, results))
         return results
+
+
+from scrapy.crawler import CrawlerProcess
+
+if __name__ == "__main__":
+    process = CrawlerProcess(pitstoparabiabrands.custom_settings)
+    process.crawl(pitstoparabiabrands)
+    process.start()
+
+
