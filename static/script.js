@@ -1,5 +1,4 @@
 // --- DOM element references used throughout this file ---
-const startButton = document.getElementById('start-scraper');
 const stopButton = document.getElementById('stop-scraper');
 const downloadButton = document.getElementById('download-report');
 const statusElement = document.getElementById('scraper-status');
@@ -39,19 +38,19 @@ const setStatus = (text, classes) => {
   statusElement.className = `ml-2 py-0.2 px-1 border-rounded-2x1 ${classes}`;
 };
 
-// Enables/disables the Start/Stop buttons and the download link based on the current scraper state.
+// Enables/disables the Stop button and the download link based on the current scraper state,
+// and hides the Scraper Input panel while a job is running (shown again once it stops/finishes).
 const updateControls = (state) => {
-  if (startButton) {
-    startButton.disabled = state.running;
-    startButton.style.display = state.running ? 'none' : '';
-  }
   if (stopButton) {
     stopButton.disabled = !state.running;
     stopButton.style.display = state.running ? '' : 'none';
   }
   if (downloadButton) {
-    // downloadButton.style.display = state.outputAvailable ? 'inline-flex' : 'none';
     downloadButton.href = state.outputAvailable ? '/download-output' : '#';
+  }
+  const inputSection = document.getElementById('scraper-input-section');
+  if (inputSection) {
+    inputSection.style.display = state.running ? 'none' : '';
   }
 };
 
@@ -381,25 +380,214 @@ if (stopButton) {
   });
 }
 
-// Start button: calls /StartScraper, flips the status pill to "Running", and starts polling.
-if (startButton) {
-  startButton.addEventListener('click', async (e) => {
-    e.preventDefault();
+// ---------------------------------------------------------------------------
+// Scraper Input: Upload CSV | Upload JSON | Enter URL, with an "Analyze URLs"
+// preview step before anything actually starts scraping. The backend alone
+// decides which scraper handles which URL (see detect_scraper_type in
+// scrapers/scraper_config.py) -- this UI only ever shows what the backend
+// already decided, it never sends a scraper choice of its own.
+// ---------------------------------------------------------------------------
+const inputTabButtons = document.querySelectorAll('[data-input-tab]');
+const inputPanels = document.querySelectorAll('[data-input-panel]');
+const inputErrorBox = document.getElementById('input-error-box');
+const previewSection = document.getElementById('preview-section');
+const previewTableBody = document.getElementById('preview-table-body');
+const previewSkippedNote = document.getElementById('preview-skipped-note');
+const analyzeUrlsButton = document.getElementById('analyze-urls-btn');
+const urlPasteTextarea = document.getElementById('url-paste-textarea');
+const analyzeJsonButton = document.getElementById('analyze-json-btn');
+const jsonPasteTextarea = document.getElementById('json-paste-textarea');
+const startScrapingButton = document.getElementById('start-scraping-btn');
 
-    startButton.disabled = true;
+// Remembers exactly what was last analyzed so "Start Scraping" can resubmit
+// the identical input (file or pasted text/JSON) rather than trying to
+// serialize the already-parsed preview rows back into a request.
+let lastAnalyzedSource = null; // { kind: 'file', file: File } | { kind: 'text', text: string } | { kind: 'json-text', text: string }
+
+const showInputError = (message) => {
+  if (!inputErrorBox) return;
+  if (!message) {
+    inputErrorBox.classList.add('hidden');
+    inputErrorBox.textContent = '';
+    return;
+  }
+  inputErrorBox.textContent = message;
+  inputErrorBox.classList.remove('hidden');
+};
+
+const scraperLabel = (scraperFile) => (scraperFile || '').replace(/\.py$/i, '');
+
+// Escapes a value pulled from user-supplied input (the URL itself) before it
+// is inserted as innerHTML -- a "URL" is otherwise free-form text as far as
+// the browser is concerned, so this is the only thing standing between a
+// crafted row and stored/reflected XSS in the preview table.
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+}[ch]));
+
+const renderPreview = (data) => {
+  const entries = data.entries || [];
+  const errors = data.errors || [];
+  const unsupported = data.unsupported || [];
+
+  if (!entries.length) {
+    previewSection?.classList.add('hidden');
+  } else if (previewSection && previewTableBody) {
+    previewTableBody.innerHTML = entries.map((entry, index) => `
+      <tr>
+        <td class="px-4 py-2 text-slate-500">${index + 1}</td>
+        <td class="px-4 py-2 break-all text-slate-700">${escapeHtml(entry.url)}</td>
+        <td class="px-4 py-2"><span class="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">${escapeHtml(entry.type)}</span></td>
+        <td class="px-4 py-2 text-slate-500">${escapeHtml(scraperLabel(entry.scraper))}</td>
+      </tr>
+    `).join('');
+
+    const skippedCount = errors.length + unsupported.length;
+    if (previewSkippedNote) {
+      previewSkippedNote.textContent = skippedCount
+        ? `${skippedCount} row(s) skipped -- see message below`
+        : '';
+    }
+    previewSection.classList.remove('hidden');
+  }
+
+  showInputError(data.message || '');
+};
+
+// Sends the currently-selected input (file or pasted text) to `endpoint`
+// (either /api/scraper/analyze for a preview, or /StartScraper to actually
+// launch the job) using the same request shape for both.
+const submitScraperInput = async (endpoint, source) => {
+  let response;
+  if (source.kind === 'file') {
+    const formData = new FormData();
+    formData.append('file', source.file);
+    response = await fetch(endpoint, { method: 'POST', body: formData });
+  } else {
+    const bodyKey = source.kind === 'json-text' ? 'json' : 'text';
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [bodyKey]: source.text }),
+    });
+  }
+  const data = await response.json().catch(() => ({}));
+  return { ok: response.ok, status: response.status, data };
+};
+
+const analyzeSource = async (source) => {
+  showInputError('');
+  previewSection?.classList.add('hidden');
+  lastAnalyzedSource = source;
+
+  try {
+    const { ok, data } = await submitScraperInput('/api/scraper/analyze', source);
+    if (!ok) {
+      showInputError(data.error || 'Unable to analyze the submitted URLs.');
+      return;
+    }
+    renderPreview(data);
+  } catch (error) {
+    console.error(error);
+    showInputError('Network error while analyzing URLs.');
+  }
+};
+
+// --- Tab switching ---
+inputTabButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    const tab = button.dataset.inputTab;
+    inputTabButtons.forEach((b) => b.classList.toggle('is-active', b === button));
+    inputPanels.forEach((panel) => panel.classList.toggle('hidden', panel.dataset.inputPanel !== tab));
+  });
+});
+
+// --- Upload CSV / Upload JSON: drag-and-drop + "Choose File", per panel ---
+document.querySelectorAll('[data-dropzone]').forEach((zone) => {
+  const fileInput = zone.querySelector('[data-file-input]');
+  const chooseBtn = zone.querySelector('[data-choose-file]');
+  const filenameLabel = zone.querySelector('[data-dropzone-filename]');
+  const accept = zone.dataset.accept;
+
+  const handleFile = (file) => {
+    if (!file) return;
+    if (accept && !file.name.toLowerCase().endsWith(accept)) {
+      showInputError(`Please choose a ${accept} file.`);
+      return;
+    }
+    if (filenameLabel) filenameLabel.textContent = file.name;
+    analyzeSource({ kind: 'file', file });
+  };
+
+  chooseBtn?.addEventListener('click', () => fileInput?.click());
+  fileInput?.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+  zone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    zone.classList.add('is-dragover');
+  });
+  zone.addEventListener('dragleave', () => zone.classList.remove('is-dragover'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('is-dragover');
+    handleFile(e.dataTransfer.files[0]);
+  });
+});
+
+// --- Enter URL: "Analyze URLs" button ---
+if (analyzeUrlsButton) {
+  analyzeUrlsButton.addEventListener('click', () => {
+    const text = (urlPasteTextarea?.value || '').trim();
+    if (!text) {
+      showInputError('Paste at least one URL first.');
+      return;
+    }
+    analyzeSource({ kind: 'text', text });
+  });
+}
+
+// --- Upload JSON: "Analyze JSON" button (pasted JSON, as an alternative to the file upload above) ---
+if (analyzeJsonButton) {
+  analyzeJsonButton.addEventListener('click', () => {
+    const text = (jsonPasteTextarea?.value || '').trim();
+    if (!text) {
+      showInputError('Paste some JSON first.');
+      return;
+    }
+    analyzeSource({ kind: 'json-text', text });
+  });
+}
+
+// --- Start Scraping: resubmits the last-analyzed input to /StartScraper ---
+if (startScrapingButton) {
+  startScrapingButton.addEventListener('click', async () => {
+    if (!lastAnalyzedSource) {
+      showInputError('Analyze your URLs first.');
+      return;
+    }
+
+    startScrapingButton.disabled = true;
     try {
-      const response = await fetch('/StartScraper', { method: 'POST' });
-      if (!response.ok) {
-        throw new Error(`Scraper start failed: ${response.status}`);
+      const { ok, status, data } = await submitScraperInput('/StartScraper', lastAnalyzedSource);
+      if (!ok) {
+        if (status === 409) {
+          showInputError('A scraper job is already running.');
+        } else {
+          showInputError(data.error || 'Unable to start the scraper.');
+        }
+        return;
       }
+
+      showInputError('');
+      previewSection?.classList.add('hidden');
       setStatus('Running', 'bg-emerald-100 text-emerald-700');
       startStatusPolling();
       await refreshStatus();
     } catch (error) {
       console.error(error);
-      alert(error.message);
+      showInputError('Network error while starting the scraper.');
     } finally {
-      startButton.disabled = false;
+      startScrapingButton.disabled = false;
     }
   });
 }

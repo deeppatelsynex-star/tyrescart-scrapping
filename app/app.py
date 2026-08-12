@@ -1,3 +1,4 @@
+import csv
 import os
 import re
 import secrets
@@ -6,10 +7,12 @@ import sys
 import threading
 import time
 import uuid
+from collections import OrderedDict
 from datetime import datetime, timedelta
 
 import pymysql
 from flask import Flask, Response, jsonify, redirect, render_template, request, send_from_directory, session
+from openpyxl import Workbook, load_workbook
 
 from auth import (
     RESET_TOKEN_TTL_MINUTES,
@@ -43,6 +46,19 @@ EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 # that needs a filesystem path is anchored to BASE_DIR, not this file's own directory.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# scraper_config.py and scraper_input.py live in scrapers/, not app/ -- put that
+# folder on sys.path so they can be bare-imported the same way auth/db/mailer
+# are (see the module docstring note about sys.path[0] in CLAUDE.md).
+sys.path.insert(0, os.path.join(BASE_DIR, 'scrapers'))
+from scraper_config import SCRIPT_MAP  # noqa: E402
+from scraper_input import (  # noqa: E402
+    InputError,
+    build_entries,
+    extract_input_source,
+    format_invalid_url_message,
+    format_unsupported_message,
+)
+
 app = Flask(
     __name__,
     template_folder=os.path.join(BASE_DIR, 'templates'),
@@ -58,7 +74,7 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
 
-SCRIPT_PATH = os.path.join(BASE_DIR, 'scrapers', 'pitstoparabiabycsv.py')
+TMP_SCRAPERS_DIR = os.path.join(BASE_DIR, 'tmp', 'scrapers')
 
 
 class ScraperSession:
@@ -69,6 +85,12 @@ class ScraperSession:
     The completed/failed_unseen states are reported exactly once (by /scraper-status)
     then immediately archived back to idle, so a job that finished is never treated
     as "active" again on a later poll or a fresh page load (browser refresh).
+
+    A single job can involve up to three different scraper scripts (one per
+    detected URL type). pending_groups holds one entry per type still to run;
+    they execute sequentially in a background thread (_run_job_groups), with
+    `process` always pointing at whichever group's subprocess is currently
+    active so /stop-scraper and /scraper-status keep working unchanged.
     """
 
     def __init__(self):
@@ -80,6 +102,8 @@ class ScraperSession:
         self.job_status = 'idle'
         self.stopped = False
         self.output_file = None
+        self.pending_groups = []
+        self.skipped = {'invalid': [], 'unsupported': []}
 
 
 scraper_sessions = {}
@@ -608,39 +632,142 @@ def api_admin_recover_user(user_id):
     return jsonify({'message': 'User recovered.'})
 
 
-def _read_scraper_output(state, process):
-    try:
+def _record_status_line(state, cleaned_line):
+    parsed_status = parse_status_line(cleaned_line)
+    if not parsed_status:
+        return
+    with state.lock:
+        existing = next((item for item in state.url_statuses if item['url'] == parsed_status['url']), None)
+        if existing:
+            existing['status'] = parsed_status['status']
+            if parsed_status.get('parent'):
+                existing['parent'] = parsed_status['parent']
+            if parsed_status.get('type'):
+                existing['type'] = parsed_status['type']
+        else:
+            state.url_statuses.append({
+                'url': parsed_status['url'],
+                'status': parsed_status['status'],
+                'parent': parsed_status.get('parent') or '',
+                'type': parsed_status.get('type') or 'root',
+            })
+
+
+def _merge_xlsx_outputs(source_paths, destination):
+    """Concatenates the data rows of one-or-more group output workbooks (each
+    produced by a different scraper script but sharing the same column schema)
+    into a single workbook at `destination`, so the dashboard's one download
+    link keeps working regardless of how many scrapers actually ran.
+    """
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Products'
+    header_written = False
+
+    for path in source_paths:
+        try:
+            src_wb = load_workbook(path, read_only=True)
+        except Exception:
+            continue
+        try:
+            rows = src_wb.active.iter_rows(values_only=True)
+            header = next(rows, None)
+            if header is None:
+                continue
+            if not header_written:
+                ws.append(list(header))
+                header_written = True
+            for row in rows:
+                ws.append(list(row))
+        finally:
+            src_wb.close()
+
+    if not header_written:
+        ws.append(['No data'])
+
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+    wb.save(destination)
+
+
+def _run_job_groups(state):
+    """Runs each detected-type group's scraper subprocess in turn (brand, then
+    sitemap, then listing/product -- whatever the job actually contains),
+    merging their stdout into the same url_statuses list the frontend already
+    knows how to render as one tree, then merges their xlsx outputs into the
+    job's single downloadable file.
+    """
+    group_outputs = []
+    had_failure = False
+
+    for group in state.pending_groups:
+        with state.lock:
+            if state.stopped:
+                break
+
+        process = subprocess.Popen(
+            [sys.executable, '-u', group['script_path'], group['output_path'], group['input_path']],
+            cwd=BASE_DIR,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        with state.lock:
+            state.process = process
+
         for line in iter(process.stdout.readline, ''):
             if not line:
                 break
-            cleaned_line = line.rstrip('\n')
-            with state.lock:
-                parsed_status = parse_status_line(cleaned_line)
-                if parsed_status:
-                    existing = next((item for item in state.url_statuses if item['url'] == parsed_status['url']), None)
-                    if existing:
-                        existing['status'] = parsed_status['status']
-                        if parsed_status.get('parent'):
-                            existing['parent'] = parsed_status['parent']
-                        if parsed_status.get('type'):
-                            existing['type'] = parsed_status['type']
-                    else:
-                        state.url_statuses.append({
-                            'url': parsed_status['url'],
-                            'status': parsed_status['status'],
-                            'parent': parsed_status.get('parent') or '',
-                            'type': parsed_status.get('type') or 'root',
-                        })
+            _record_status_line(state, line.rstrip('\n'))
         process.stdout.close()
         process.wait()
-    finally:
+
         with state.lock:
-            if state.stopped:
-                state.job_status = 'idle'
-            elif process.returncode not in (0, None):
-                state.job_status = 'failed_unseen'
-            else:
-                state.job_status = 'completed_unseen'
+            state.process = None
+        if process.returncode not in (0, None) and not state.stopped:
+            had_failure = True
+        if os.path.exists(group['output_path']):
+            group_outputs.append(group['output_path'])
+
+    _merge_xlsx_outputs(group_outputs, state.output_file)
+
+    for group in state.pending_groups:
+        for path in (group['input_path'], group['output_path']):
+            try:
+                if os.path.exists(path):
+                    os.remove(path)
+            except OSError:
+                pass
+
+    with state.lock:
+        if state.stopped:
+            state.job_status = 'idle'
+        elif had_failure:
+            state.job_status = 'failed_unseen'
+        else:
+            state.job_status = 'completed_unseen'
+
+
+@app.route('/api/scraper/analyze', methods=['POST'])
+@login_required_api
+def analyze_scraper_input():
+    """Preview step: classifies the submitted URLs (file upload or pasted text)
+    without starting anything, so the frontend can show a # | URL | Type |
+    Scraper table and let the user confirm before any scraper runs.
+    """
+    try:
+        raw_items = extract_input_source(request)
+    except InputError as exc:
+        return jsonify({'error': str(exc)}), 400
+
+    entries, errors, unsupported = build_entries(raw_items)
+
+    return jsonify({
+        'entries': entries,
+        'errors': errors,
+        'unsupported': unsupported,
+        'message': format_invalid_url_message(errors) or format_unsupported_message(unsupported) or None,
+    })
 
 
 @app.route('/StartScraper', methods=['POST'])
@@ -648,37 +775,70 @@ def _read_scraper_output(state, process):
 def start_scraper():
     state = get_scraper_session()
 
+    try:
+        raw_items = extract_input_source(request)
+    except InputError as exc:
+        return jsonify({'error': str(exc)}), 400
+
+    entries, errors, unsupported = build_entries(raw_items)
+
+    if not entries:
+        message = (
+            format_invalid_url_message(errors)
+            or format_unsupported_message(unsupported)
+            or 'No valid URLs were provided.'
+        )
+        return jsonify({'error': message, 'errors': errors, 'unsupported': unsupported}), 400
+
     with state.lock:
-        if state.process and state.process.poll() is None:
-            return Response('Scraper is already running.', status=409, mimetype='text/plain')
+        process_running = state.process is not None and state.process.poll() is None
+        if process_running or state.job_status == 'running':
+            return jsonify({'error': 'Scraper is already running.'}), 409
 
         state.url_statuses.clear()
         state.stopped = False
         state.job_id = uuid.uuid4().hex
         state.job_status = 'running'
+        state.skipped = {'invalid': errors, 'unsupported': unsupported}
+
+        job_id_short = state.job_id[:8]
+
+        # Group URLs by detected type, in first-seen order, so each group can
+        # be handed to exactly the one scraper script SCRIPT_MAP says handles
+        # that type -- never a script name the request itself supplied.
+        groups_by_type = OrderedDict()
+        for entry in entries:
+            groups_by_type.setdefault(entry['type'], []).append(entry['url'])
+
+        os.makedirs(TMP_SCRAPERS_DIR, exist_ok=True)
+        pending_groups = []
+        for url_type, urls in groups_by_type.items():
+            input_path = os.path.join(TMP_SCRAPERS_DIR, f'job_{job_id_short}_{url_type}.csv')
+            with open(input_path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                for url in urls:
+                    writer.writerow([url])
+
+            pending_groups.append({
+                'type': url_type,
+                'input_path': input_path,
+                'output_path': os.path.join(TMP_SCRAPERS_DIR, f'job_{job_id_short}_{url_type}_output.xlsx'),
+                'script_path': os.path.join(BASE_DIR, 'scrapers', SCRIPT_MAP[url_type]),
+            })
+        state.pending_groups = pending_groups
 
         timestamp = datetime.now().strftime('%d-%m-%Y_%H%M%S')
-        output_file = os.path.join(BASE_DIR, f'pitstoparabia_data_{get_session_id()[:8]}_{timestamp}.xlsx')
-        state.output_file = output_file
+        state.output_file = os.path.join(BASE_DIR, f'pitstoparabia_data_{job_id_short}_{timestamp}.xlsx')
 
-        process = subprocess.Popen(
-            [sys.executable, '-u', SCRIPT_PATH, output_file],
-            cwd=BASE_DIR,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-        )
-
-        state.process = process
-        state.thread = threading.Thread(target=_read_scraper_output, args=(state, process), daemon=True)
+        state.thread = threading.Thread(target=_run_job_groups, args=(state,), daemon=True)
         state.thread.start()
 
-    return Response(
-        f'Background scraper started with PID {process.pid}. Job ID: {state.job_id}',
-        status=200,
-        mimetype='text/plain'
-    )
+    return jsonify({
+        'message': f'Scraper started. Job ID: {state.job_id}',
+        'jobId': state.job_id,
+        'groups': [g['type'] for g in pending_groups],
+        'skipped': {'invalid': errors, 'unsupported': unsupported},
+    })
 
 
 @app.route('/stop-scraper', methods=['POST'])
@@ -686,18 +846,25 @@ def start_scraper():
 def stop_scraper():
     state = get_scraper_session()
     with state.lock:
-        if not state.process or state.process.poll() is not None:
+        process_running = state.process is not None and state.process.poll() is None
+        # job_status stays 'running' for the whole multi-group job, even in the
+        # brief gap between one group's subprocess ending and the next one
+        # starting (state.process is momentarily None then) -- so a stop
+        # request landing in that gap must still take effect, not just be a
+        # no-op that lets the next group start anyway.
+        if not process_running and state.job_status != 'running':
             return jsonify({'stopped': False, 'message': 'No scraper process is running.'})
 
         state.stopped = True
-        try:
-            state.process.terminate()
-            state.process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            state.process.kill()
-            state.process.wait()
-        finally:
-            state.process = None
+        if process_running:
+            try:
+                state.process.terminate()
+                state.process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                state.process.kill()
+                state.process.wait()
+            finally:
+                state.process = None
 
     return jsonify({'stopped': True, 'message': 'Scraper has been stopped.'})
 

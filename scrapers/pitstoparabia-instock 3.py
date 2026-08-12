@@ -1,4 +1,8 @@
+import csv
+import os
 import re
+import sys
+import datetime
 from collections import OrderedDict
 from scrapy import Spider, Request, Selector # type: ignore
 
@@ -6,14 +10,51 @@ from scrapy import Spider, Request, Selector # type: ignore
 class pitstoparabia(Spider):
     name = 'pitstoparabia'
 
+    # This script lives in scrapers/, but its default output stays anchored to
+    # the project root (one level up) to match the other scraper scripts --
+    # not wherever this happens to be run from.
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+
+    # An output path can be passed as the first CLI arg, same convention as
+    # the other scraper scripts in this folder.
+    output_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
+        base_dir,
+        f'pitstoparabia_sitemap_data_{_timestamp}.xlsx'
+    )
+
     custom_settings = {
         'FEED_EXPORTERS': {'xlsx': 'scrapy_xlsx.XlsxItemExporter'},
-        'FEED_FORMAT': 'xlsx',
-        'FEED_URI': 'pitstoparabia_data.xlsx',
-        'DOWNLOAD_DELAY': 0.3
+        # FEEDS replaces the deprecated FEED_URI/FEED_FORMAT settings (still
+        # technically supported by Scrapy 2.17 with a deprecation warning, but
+        # this matches the convention already used by the other scrapers).
+        'FEEDS': {
+            output_file: {
+                'format': 'xlsx',
+                'encoding': 'utf8',
+                'store_empty': False,
+            }
+        },
+        'DOWNLOAD_DELAY': 0.3,
     }
 
     url = 'https://www.pitstoparabia.com/en/sitemap/tyre_sizes'
+
+    @classmethod
+    def _load_start_urls(cls):
+        """A CSV of specific sitemap URLs (one per line, same format
+        pitstoparabiabycsv.py reads) can be passed as the second CLI arg to
+        crawl only those starting points instead of the hardcoded default above.
+        """
+        if len(sys.argv) > 2:
+            urls = []
+            with open(sys.argv[2], newline='', encoding='utf-8') as f:
+                for row in csv.reader(f):
+                    if row and row[0].strip():
+                        urls.append(row[0].strip())
+            if urls:
+                return urls
+        return [cls.url]
 
     headers = {
         'Accept': 'text/html, */*; q=0.01',
@@ -44,11 +85,36 @@ class pitstoparabia(Spider):
         '/whatsapp.com', '/apple.com', '/google.com', '/play.google.com',
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.done_sources = set()  # start URLs we've already emitted a terminal status for
+
+    def emit_status(self, url, status, parent=None, url_type=None):
+        print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}")
+
+    def finish_source(self, source_url, blocked=False):
+        if source_url in self.done_sources:
+            return
+        self.done_sources.add(source_url)
+        self.emit_status(source_url, 'blocked' if blocked else 'done')
+
+    def request_failed(self, failure):
+        source_url = failure.request.meta.get('source_url', failure.request.url)
+        self.logger.error('Request failed for %s: %s', failure.request.url, failure.value)
+        self.finish_source(source_url, blocked=True)
+
     async def start(self):
         meta = {'dont_merge_cookies': True}
-        yield Request(self.url, self.parse_brands, meta=meta, headers=self.headers)
+        for start_url in self._load_start_urls():
+            start_url = start_url.strip()
+            self.emit_status(start_url, 'pending', url_type='sitemap')
+            yield Request(start_url, self.parse_brands, errback=self.request_failed,
+                          meta={**meta, 'source_url': start_url}, headers=self.headers)
 
     def parse_brands(self, response):
+        source_url = response.meta.get('source_url', response.url)
+        self.emit_status(source_url, 'running')
+
         sel = Selector(text=response.text)
 
         # Try XML sitemap format first (<loc>...</loc>)
@@ -78,20 +144,29 @@ class pitstoparabia(Spider):
             yield response.follow(url, self.parse_listing,
                                   meta=response.meta, headers=self.headers)
 
+        self.finish_source(source_url)
+
     def parse_listing(self, response):
         #print("Resoinse: ========================")
         #print(response.json())
 
+        source_url = response.meta.get('source_url', response.url)
+
         try:
             sel = Selector(text=response.json()['products'])
-        except:
+        except Exception:
             sel = Selector(text=response.text)
-            
+
         for url in sel.css('.product-item-link::attr(href)').getall():
+            full_url = response.urljoin(url)
+            self.emit_status(full_url, 'pending', parent=source_url, url_type='product')
             yield response.follow(url, self.parse_detail,
                                   meta=response.meta, headers=self.headers)
 
     def parse_detail(self, response):
+        source_url = response.meta.get('source_url', response.url)
+        self.emit_status(response.url, 'running', parent=source_url, url_type='product')
+
         # If an Add to Cart button exists with id "product-addtocart-button" or a tocart/add-to-cart class, we assume in-stock.
         add_to_cart_btn = response.css('button#product-addtocart-button, div.actions.add-to-cart button, button.tocart, button.add-to-cart')
         out_of_stock_div = response.css('div.stock.unavailable, .stock.unavailable')
@@ -132,15 +207,17 @@ class pitstoparabia(Spider):
        
         try:
             item['UTQG'] = ' '.join(self.get_sel_text(response.css('span:contains("UTQG")').xpath('parent::*/span/text()'))[1:])
-        except:
+        except Exception:
             item['UTQG'] = ' '.join([t.strip() for t in response.css('span:contains("UTQG")').xpath('parent::*/span/text()').getall()][1:])
         
         item['Fuel Efficiency Rating'] = (response.css('.tyres_labels .tyre_label::attr(title)').re_first('Fuel Efficiency Rating:(.+)') or '').strip()
         item['Wet Grip Rating'] = (response.css('.tyres_labels .tyre_label::attr(title)').re_first('Wet Grip Rating:(.+)') or '').strip()
         item['External Noise'] = (response.css('.tyres_labels .tyre_label::attr(title)').re_first('External Noise:(.+)') or '').strip()
         
-        item['Image'] = response.css('[property="og:image"]::attr(content)').getall()[-1]
+        images = response.css('[property="og:image"]::attr(content)').getall()
+        item['Image'] = images[-1] if images else ''
         item['Source'] = response.url
+        self.emit_status(response.url, 'done', parent=source_url, url_type='product')
         yield item
 
     def get_sel_text(self, selector, dont_skip=None):
@@ -171,3 +248,11 @@ class pitstoparabia(Spider):
 
         results = list(filter(None, results))
         return results
+
+
+from scrapy.crawler import CrawlerProcess
+
+if __name__ == "__main__":
+    process = CrawlerProcess(pitstoparabia.custom_settings)
+    process.crawl(pitstoparabia)
+    process.start()
