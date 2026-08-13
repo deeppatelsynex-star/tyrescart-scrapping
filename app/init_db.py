@@ -42,6 +42,20 @@ NEW_COLUMNS = {
 }
 
 
+CREATE_FILE_TBL = """
+CREATE TABLE IF NOT EXISTS fileTbl (
+    file_id INT AUTO_INCREMENT PRIMARY KEY,
+    logo VARCHAR(500) NULL,
+    site_name VARCHAR(255) NOT NULL,
+    python_file_path VARCHAR(255) NOT NULL UNIQUE,
+    urls_json TEXT NULL,
+    working BIT(1) NOT NULL DEFAULT 0,
+    create_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)
+"""
+
+
 def add_missing_columns(cursor):
     cursor.execute(
         "SELECT COLUMN_NAME FROM information_schema.COLUMNS "
@@ -60,7 +74,8 @@ def main():
             cursor.execute(CREATE_USER_TBL)
             add_missing_columns(cursor)
             cursor.execute(CREATE_PASSWORD_RESET_TBL)
-        print("userTbl and password_reset_tbl are ready.")
+            cursor.execute(CREATE_FILE_TBL)
+        print("userTbl, password_reset_tbl, and fileTbl are ready.")
     finally:
         conn.close()
 

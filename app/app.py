@@ -13,7 +13,10 @@ from datetime import datetime, timedelta
 import pymysql
 from flask import Flask, Response, jsonify, redirect, render_template, request, send_from_directory, session
 from openpyxl import Workbook, load_workbook
+from werkzeug.utils import secure_filename
 
+import file_scraper_runner
+import files_repo
 from auth import (
     RESET_TOKEN_TTL_MINUTES,
     VALID_ROLES,
@@ -57,6 +60,9 @@ from scraper_input import (  # noqa: E402
     extract_input_source,
     format_invalid_url_message,
     format_unsupported_message,
+    parse_csv_urls,
+    parse_text_urls,
+    validate_url_list,
 )
 
 app = Flask(
@@ -136,6 +142,12 @@ def get_scraper_session():
 @login_required_page
 def Scrap():
     return render_template("Scrap.html", page="scraping")
+
+
+@app.route('/files')
+@login_required_page
+def files_page():
+    return render_template('files.html', page='files')
 
 
 @app.route('/login', methods=['GET'])
@@ -938,6 +950,194 @@ def download_output():
         return Response('No output file found.', status=404, mimetype='text/plain')
 
     return send_from_directory(BASE_DIR, os.path.basename(output_file), as_attachment=True)
+
+
+def _parse_urls_text(urls_text):
+    """Returns (urls, error_message_or_None). Rejects the whole submission
+    (rather than silently dropping bad rows) so the caller can point the
+    error back at the URLs field for the user to fix.
+    """
+    raw_urls = parse_text_urls(urls_text)
+    urls, errors = validate_url_list(raw_urls)
+    if errors:
+        lines = [f"Invalid URL on row {e['row']}: {e['value']}" for e in errors]
+        return [], 'Invalid URL(s):\n' + '\n'.join(lines)
+    if not urls:
+        return [], 'At least one valid URL is required.'
+    return urls, None
+
+
+@app.route('/api/files', methods=['GET'])
+@login_required_api
+def api_list_files():
+    search = (request.args.get('search') or '').strip() or None
+    try:
+        page = int(request.args.get('page', 1))
+    except ValueError:
+        page = 1
+    try:
+        per_page = int(request.args.get('perPage', 20))
+    except ValueError:
+        per_page = 20
+
+    rows, total = files_repo.list_files(search=search, page=page, per_page=per_page)
+    return jsonify({
+        'files': [files_repo.serialize_file(r) for r in rows],
+        'total': total,
+        'page': page,
+        'perPage': per_page,
+    })
+
+
+@app.route('/api/files', methods=['POST'])
+@login_required_api
+@role_required_api('SuperAdmin', 'Admin')
+@require_csrf
+def api_create_file():
+    data = request.get_json(silent=True) or {}
+    site_name = (data.get('siteName') or '').strip()
+    python_file_path = (data.get('pythonFilePath') or '').strip()
+    logo = (data.get('logo') or '').strip() or None
+    urls_text = data.get('urlsText') or ''
+
+    if not site_name:
+        return jsonify({'error': 'Name is required.'}), 400
+    if not python_file_path:
+        return jsonify({'error': 'Python file is required.'}), 400
+
+    urls, url_error = _parse_urls_text(urls_text)
+    if url_error:
+        return jsonify({'error': url_error}), 400
+
+    try:
+        file_id = files_repo.create_file(logo, site_name, python_file_path)
+    except files_repo.FileValidationError as exc:
+        return jsonify({'error': str(exc)}), 400
+
+    files_repo.set_urls(file_id, urls)
+    return jsonify({'file': files_repo.serialize_file(files_repo.get_file(file_id))}), 201
+
+
+@app.route('/api/files/<int:file_id>', methods=['PUT'])
+@login_required_api
+@require_csrf
+def api_update_file(file_id):
+    record = files_repo.get_file(file_id)
+    if not record:
+        return jsonify({'error': 'Scraper not found.'}), 404
+    if file_scraper_runner.is_running(file_id) or files_repo.bit_to_bool(record['working']):
+        return jsonify({'error': 'Stop this scraper before editing it.'}), 409
+
+    data = request.get_json(silent=True) or {}
+    site_name = (data.get('siteName') or '').strip()
+    python_file_path = (data.get('pythonFilePath') or '').strip()
+    logo = (data.get('logo') or '').strip() or None
+    urls_text = data.get('urlsText') or ''
+
+    if not site_name:
+        return jsonify({'error': 'Name is required.'}), 400
+    if not python_file_path:
+        return jsonify({'error': 'Python file is required.'}), 400
+
+    urls, url_error = _parse_urls_text(urls_text)
+    if url_error:
+        return jsonify({'error': url_error}), 400
+
+    try:
+        files_repo.update_file(file_id, logo, site_name, python_file_path)
+    except files_repo.FileValidationError as exc:
+        return jsonify({'error': str(exc)}), 400
+
+    files_repo.set_urls(file_id, urls)
+    return jsonify({'file': files_repo.serialize_file(files_repo.get_file(file_id))})
+
+
+@app.route('/api/files/<int:file_id>', methods=['DELETE'])
+@login_required_api
+@require_csrf
+def api_delete_file(file_id):
+    record = files_repo.get_file(file_id)
+    if not record:
+        return jsonify({'error': 'Scraper not found.'}), 404
+    if file_scraper_runner.is_running(file_id) or files_repo.bit_to_bool(record['working']):
+        return jsonify({'error': 'Stop this scraper before deleting it.'}), 409
+
+    files_repo.delete_file(file_id)
+    return jsonify({'message': 'Scraper and its Python file were deleted.'})
+
+
+@app.route('/api/files/<int:file_id>/start', methods=['POST'])
+@login_required_api
+@require_csrf
+def api_start_file(file_id):
+    try:
+        file_scraper_runner.start(file_id)
+    except file_scraper_runner.StartError as exc:
+        return jsonify({'success': False, 'error': str(exc)}), 409
+    return jsonify({'success': True, 'message': 'Scraper started.'})
+
+
+@app.route('/api/files/<int:file_id>/stop', methods=['POST'])
+@login_required_api
+@require_csrf
+def api_stop_file(file_id):
+    record = files_repo.get_file(file_id)
+    if not record:
+        return jsonify({'success': False, 'error': 'Scraper not found.'}), 404
+
+    stopped = file_scraper_runner.stop(file_id)
+    if not stopped:
+        return jsonify({'success': False, 'message': 'This scraper is not currently running.'})
+    return jsonify({'success': True, 'message': 'Scraper stopped.'})
+
+
+@app.route('/api/files/upload-script', methods=['POST'])
+@login_required_api
+@role_required_api('SuperAdmin', 'Admin')
+@require_csrf
+def api_upload_script():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file was selected.'}), 400
+    upload = request.files['file']
+
+    # If this upload's (sanitized) name would overwrite an already-registered
+    # scraper, refuse while that scraper is currently running -- overwriting
+    # the code of a running process out from under it is unsafe.
+    candidate_name = secure_filename(upload.filename or '')
+    if candidate_name:
+        existing = files_repo.get_file_by_path(candidate_name)
+        if existing and (file_scraper_runner.is_running(existing['file_id']) or files_repo.bit_to_bool(existing['working'])):
+            return jsonify({'error': 'Stop this scraper before replacing its Python file.'}), 409
+
+    try:
+        filename = files_repo.save_uploaded_script(upload)
+    except files_repo.FileValidationError as exc:
+        return jsonify({'error': str(exc)}), 400
+
+    return jsonify({'fileName': filename})
+
+
+@app.route('/api/files/parse-urls', methods=['POST'])
+@login_required_api
+def api_parse_urls():
+    if request.files and 'file' in request.files:
+        upload = request.files['file']
+        filename = (upload.filename or '').lower()
+        if not filename.endswith('.csv'):
+            return jsonify({'error': 'Please upload a .csv file.'}), 400
+        raw_bytes = upload.read()
+        if not raw_bytes:
+            return jsonify({'error': 'The uploaded file is empty.'}), 400
+        raw_urls = [url for url, _declared_type in parse_csv_urls(raw_bytes)]
+    else:
+        data = request.get_json(silent=True) or {}
+        raw_urls = parse_text_urls(data.get('text') or '')
+
+    urls, errors = validate_url_list(raw_urls)
+    if not urls:
+        return jsonify({'error': 'No valid URLs were found.', 'errors': errors}), 400
+
+    return jsonify({'urls': urls, 'errors': errors})
 
 
 if __name__ == "__main__":

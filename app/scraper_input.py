@@ -222,3 +222,36 @@ def format_unsupported_message(unsupported):
     return '\n\n'.join(
         f"Unsupported URL\n\nUnable to determine a supported scraper for:\n{u['url']}" for u in unsupported
     )
+
+
+def validate_url_list(raw_urls):
+    """Generic (non-pitstoparabia-typed) URL list validation for fileTbl's
+    registered scrapers -- unlike build_entries(), this never classifies a
+    URL by scraper type or rejects it as "unsupported"; it only checks each
+    one is a well-formed http(s) URL and dedupes them.
+
+    raw_urls: an iterable of strings (already split into individual tokens,
+    e.g. by parse_text_urls() or parse_csv_urls()).
+
+    Returns (urls, errors):
+      urls   = [str, ...]                       -- valid, deduped, in order
+      errors = [{"row", "value", "reason"}, ...] -- malformed/non-http(s) URLs
+    """
+    urls = []
+    errors = []
+    seen = set()
+
+    for row, raw in enumerate(raw_urls, start=1):
+        cleaned = _clean_token(raw)
+        if not cleaned:
+            continue
+        if not _is_valid_url(cleaned):
+            errors.append({'row': row, 'value': cleaned, 'reason': 'Invalid URL'})
+            continue
+        key = cleaned.rstrip('/').lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        urls.append(cleaned)
+
+    return urls, errors
