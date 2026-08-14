@@ -183,7 +183,8 @@ class pitstoparabiabrands(Spider):
         self.seen_products = set()   # dedupe product detail URLs
         self.seen_listings = set()   # dedupe brand/pagination listing URLs
         self.running_emitted = set()  # brand-root URLs we've already emitted 'running' for
-        self.done_sources = set()     # brand-root URLs we've already emitted 'done'/'blocked' for
+        self.pending_requests = {}    # source URL -> queued requests that have not completed
+        self.failed_sources = set()
         self.pbar = None
         if tqdm is not None:
             # total starts at 0 and grows as listing pages reveal more
@@ -194,24 +195,41 @@ class pitstoparabiabrands(Spider):
     def emit_status(self, url, status, parent=None, url_type=None):
         print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}")
 
-    def finish_source(self, source_url, blocked=False):
-        if source_url in self.done_sources:
+    def make_tracked_request(self, url, source_url, callback, url_type, meta=None):
+        self.pending_requests[source_url] = self.pending_requests.get(source_url, 0) + 1
+        request_meta = dict(meta or {})
+        request_meta.update({
+            'source_url': source_url,
+            'display_url': url,
+            'status_type': url_type,
+        })
+        return Request(url, callback=callback, errback=self.request_failed,
+                       headers=self.headers, meta=request_meta)
+
+    def finish_source_request(self, source_url):
+        remaining = self.pending_requests.get(source_url, 1) - 1
+        if remaining > 0:
+            self.pending_requests[source_url] = remaining
             return
-        self.done_sources.add(source_url)
-        self.emit_status(source_url, 'blocked' if blocked else 'done')
+        self.pending_requests.pop(source_url, None)
+        self.emit_status(source_url, 'blocked' if source_url in self.failed_sources else 'done')
 
     def request_failed(self, failure):
         source_url = failure.request.meta.get('source_url', failure.request.url)
+        display_url = failure.request.meta.get('display_url', failure.request.url)
+        url_type = failure.request.meta.get('status_type')
         self.logger.error('Request failed for %s: %s', failure.request.url, failure.value)
-        self.finish_source(source_url, blocked=True)
+        if display_url != source_url:
+            self.emit_status(display_url, 'blocked', parent=source_url, url_type=url_type)
+        self.failed_sources.add(source_url)
+        self.finish_source_request(source_url)
 
     async def start(self):
         meta = {'dont_merge_cookies': True}
         for url in self._load_brand_urls():
             url = url.strip()
             self.emit_status(url, 'pending', url_type='brand')
-            yield Request(url, self.parse_listing, errback=self.request_failed,
-                          meta={**meta, 'source_url': url}, headers=self.headers)
+            yield self.make_tracked_request(url, url, self.parse_listing, 'brand', meta)
 
     def parse_listing(self, response):
         source_url = response.meta.get('source_url', response.url)

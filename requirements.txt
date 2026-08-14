@@ -1,12 +1,24 @@
-Flask
-Scrapy
-openpyxl
-scrapy-xlsx
-tqdm
-PyMySQL
-python-dotenv
-bcrypt
-resend
-curl_cffi
-lxml
-playwright
+# Web Framework & Core
+Flask>=3.0.0
+Werkzeug>=3.0.0
+python-dotenv>=1.0.0
+
+# Database & Security
+PyMySQL>=1.1.0
+bcrypt>=4.0.0
+
+# Email Delivery
+resend>=2.0.0
+
+# Scraping & Anti-Bot Bypass
+Scrapy>=2.11.0
+curl_cffi>=0.10.0
+lxml>=5.0.0
+requests>=2.31.0
+playwright>=1.40.0
+
+# Excel & Data Export
+openpyxl>=3.1.0
+scrapy-xlsx>=0.1.1
+tqdm>=4.66.0
+

@@ -6,3 +6,7 @@ promp.md
 TESTCASES.md
 scrapers/README.md
 TEST_FLOW.md
+__pycache__/
+*.pyc
+tmp/
+*.xlsx

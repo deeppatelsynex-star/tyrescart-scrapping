@@ -1,10 +1,21 @@
 {% extends "base.html" %}
 
 {% block Pagename %}
-File
+Scraper
 {% endblock Pagename %}
 
 {% block HeaderActions %}
+<a id="files-download-zip-btn" href="/api/files/download-zip"
+  class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+  title="Download a ZIP archive containing Excel reports for all finished scrapers">
+  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+  <span>Download ZIP</span>
+</a>
 <a href="/docs/scraper"
   class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"

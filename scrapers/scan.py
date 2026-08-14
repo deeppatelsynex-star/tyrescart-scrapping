@@ -13,6 +13,8 @@ from curl_cffi import requests as cffi_requests
 from lxml import etree
 
 
+import threading
+
 class TyreScraper(Spider):
     name = 'tireex'
 
@@ -37,26 +39,32 @@ class TyreScraper(Spider):
         # --- Export to XLSX ---
         "FEED_EXPORTERS": {"xlsx": "scrapy_xlsx.XlsxItemExporter"},
         "FEEDS": {output_file: {"format": "xlsx", "encoding": "utf8", "store_empty": False}},
-        "CONCURRENT_REQUESTS": 8,
+        "CONCURRENT_REQUESTS": 4,
         "DOWNLOAD_DELAY": 0.5,
         "LOG_LEVEL": "INFO",
     }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._bridge_lock = threading.Lock()
+
     @classmethod
-    def _load_sitemap_url(cls):
-        """A CSV with a single sitemap URL (same one-per-line format the
-        other scrapers in this folder read) can be passed as the second CLI
-        arg to override the hardcoded default above.
+    def _load_urls(cls):
+        """A CSV with URLs (sitemap or direct product URLs) can be passed
+        as the second CLI arg.
         """
-        if len(sys.argv) > 2:
+        if len(sys.argv) > 2 and os.path.exists(sys.argv[2]):
+            urls = []
             with open(sys.argv[2], newline='', encoding='utf-8') as f:
                 for row in csv.reader(f):
                     if row and row[0].strip():
-                        return row[0].strip()
-        return cls.DEFAULT_SITEMAP_URL
+                        urls.append(row[0].strip())
+            if urls:
+                return urls
+        return [cls.DEFAULT_SITEMAP_URL]
 
     def emit_status(self, url, status, parent=None, url_type=None):
-        print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}")
+        print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}", flush=True)
 
     def _start_browser_bridge(self):
         """Launch the persistent Playwright challenge-solver subprocess.
@@ -79,35 +87,29 @@ class TyreScraper(Spider):
     def _bridge_fetch(self, url, _retried=False):
         """Fetch a URL through the persistent browser, solving the
         Cloudflare/SG Security challenge if one is served.
-
-        The bridge subprocess can die outright under rare, severe failures
-        (e.g. its own Playwright driver connection dying -- see
-        _cf_cookie_fetcher.py's in-process recovery, which handles page/
-        browser-level crashes but can't recover from that). Without a
-        restart here, one such death would silently fail every subsequent
-        challenged product for the rest of the crawl instead of just this one.
+        Protected by _bridge_lock for thread safety across Scrapy workers.
         """
-        if self._bridge_proc.poll() is not None:
-            self.logger.warning("Browser bridge subprocess had exited; restarting it.")
-            self._start_browser_bridge()
-
-        self._bridge_proc.stdin.write(json.dumps({"url": url}) + "\n")
-        self._bridge_proc.stdin.flush()
-
-        line = self._bridge_proc.stdout.readline()
-        if not line:
-            stderr = self._bridge_proc.stderr.read()
-            if not _retried:
-                self.logger.warning("Browser bridge died mid-request; restarting and retrying once.")
+        with self._bridge_lock:
+            if self._bridge_proc.poll() is not None:
+                self.logger.warning("Browser bridge subprocess had exited; restarting it.")
                 self._start_browser_bridge()
-                return self._bridge_fetch(url, _retried=True)
-            raise RuntimeError(f"Browser bridge died: {stderr}")
 
-        data = json.loads(line)
-        if "error" in data:
-            raise RuntimeError(data["error"])
-        return data
+            self._bridge_proc.stdin.write(json.dumps({"url": url}) + "\n")
+            self._bridge_proc.stdin.flush()
 
+            line = self._bridge_proc.stdout.readline()
+            if not line:
+                stderr = self._bridge_proc.stderr.read()
+                if not _retried:
+                    self.logger.warning("Browser bridge died mid-request; restarting and retrying once.")
+                    self._start_browser_bridge()
+                    return self._bridge_fetch(url, _retried=True)
+                raise RuntimeError(f"Browser bridge died: {stderr}")
+
+            data = json.loads(line)
+            if "error" in data:
+                raise RuntimeError(data["error"])
+            return data
 
     def closed(self, reason):
         bridge = getattr(self, "_bridge_proc", None)
@@ -130,41 +132,64 @@ class TyreScraper(Spider):
             }
         )
 
-        sitemap_url = self._load_sitemap_url()
-        self.emit_status(sitemap_url, 'running', url_type='sitemap')
+        input_urls = self._load_urls()
+        for input_url in input_urls:
+            if input_url.endswith('.xml') or 'sitemap' in input_url.lower():
+                sitemap_url = input_url
+                self.emit_status(sitemap_url, 'running', url_type='sitemap')
 
-        # The sitemap route is always behind the JS challenge, so fetch it
-        # straight through the browser bridge instead of curl_cffi.
-        self.logger.info("Fetching product sitemap...")
-        sitemap = self._bridge_fetch(sitemap_url)
+                self.logger.info("Fetching product sitemap...")
+                try:
+                    sitemap = self._bridge_fetch(sitemap_url)
+                except Exception as e:
+                    self.logger.error(f"Failed to fetch sitemap: {e}")
+                    self.emit_status(sitemap_url, 'blocked', url_type='sitemap')
+                    continue
 
-        if sitemap["status"] != 200:
-            self.logger.error(f"Failed to fetch sitemap: HTTP {sitemap['status']}")
-            self.emit_status(sitemap_url, 'blocked')
-            return
+                if sitemap["status"] != 200:
+                    self.logger.error(f"Failed to fetch sitemap: HTTP {sitemap['status']}")
+                    self.emit_status(sitemap_url, 'blocked', url_type='sitemap')
+                    continue
 
-        # Seed the curl_cffi session with the resolved challenge cookies
-        self.session.cookies.update(sitemap["cookies"])
+                # Seed the curl_cffi session with the resolved challenge cookies
+                self.session.cookies.update(sitemap["cookies"])
 
-        # Parse XML and extract product URLs
-        root = etree.fromstring(sitemap["body"].encode("utf-8"))
-        ns = {'ns': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-        urls = [loc.text for loc in root.findall('.//ns:url/ns:loc', ns)
-                if loc.text and '/product/' in loc.text
-                and not loc.text.endswith(('.webp', '.jpg', '.png'))]
+                # Parse product URLs (supports raw XML and browser-rendered HTML sitemap tables)
+                body_text = sitemap["body"]
+                raw_urls = Selector(text=body_text).css("table#sitemap a::attr(href), a[href*='/product/']::attr(href), loc::text").getall()
+                if not raw_urls:
+                    raw_urls = re.findall(r'href=["\'](https?://[^"\']*/product/[^"\']*)["\']', body_text)
+                if not raw_urls:
+                    raw_urls = re.findall(r'<loc>\s*(https?://[^\s<]+/product/[^\s<]*)\s*</loc>', body_text)
 
-        self.logger.info(f"Found {len(urls)} product URLs in sitemap")
-        self.emit_status(sitemap_url, 'done')
+                urls = list(dict.fromkeys(
+                    u.strip() for u in raw_urls
+                    if u and '/product/' in u
+                    and not u.endswith(('.webp', '.jpg', '.png', '.svg', '.jpeg'))
+                ))
 
-        for url in urls:
-            # Insert /en/ if not already present, to get English content
-            if '/en/' not in url:
-                url = url.replace('tireex.com/product/', 'tireex.com/en/product/', 1)
-            yield Request(url, self.parse_detail, dont_filter=True,
-                          meta={'handle_httpstatus_list': [520]})
+                self.logger.info(f"Found {len(urls)} product URLs in sitemap")
+                for url in urls:
+                    if '/en/' not in url:
+                        url = url.replace('tireex.com/product/', 'tireex.com/en/product/', 1)
+                    self.emit_status(url, 'pending', parent=sitemap_url, url_type='product')
+                    yield Request(url, self.parse_detail, dont_filter=True,
+                                  meta={'source_url': sitemap_url, 'display_url': url, 'handle_httpstatus_list': [202, 403, 520]})
+                self.emit_status(sitemap_url, 'done', url_type='sitemap')
+            else:
+                prod_url = input_url
+                if '/en/' not in prod_url and '/product/' in prod_url:
+                    prod_url = prod_url.replace('tireex.com/product/', 'tireex.com/en/product/', 1)
+                self.emit_status(prod_url, 'pending', url_type='product')
+                yield Request(prod_url, self.parse_detail, dont_filter=True,
+                              meta={'source_url': prod_url, 'display_url': prod_url, 'handle_httpstatus_list': [202, 403, 520]})
 
     def parse_detail(self, response):
         url = response.url
+        source_url = response.meta.get('source_url', url)
+        display_url = response.meta.get('display_url', url)
+        parent_url = source_url if source_url != display_url else None
+        self.emit_status(display_url, 'running', parent=parent_url, url_type='product')
 
         # Fetch via curl_cffi first (fast); only some pages are challenged,
         # so fall back to the browser bridge when that happens.
@@ -177,18 +202,22 @@ class TyreScraper(Spider):
                 bridged = self._bridge_fetch(url)
                 if bridged["status"] != 200:
                     self.logger.warning(f"Browser also got {bridged['status']} for {url}")
+                    self.emit_status(display_url, 'blocked', parent=parent_url, url_type='product')
                     return
                 response = HtmlResponse(url=url, body=bridged["body"].encode("utf-8"), encoding='utf-8')
         except Exception as e:
             self.logger.error(f"Failed to fetch {url}: {e}")
+            self.emit_status(display_url, 'blocked', parent=parent_url, url_type='product')
             return
 
         # Skip non product pages
         if "/en/product/" not in response.url:
+            self.emit_status(display_url, 'blocked', parent=parent_url, url_type='product')
             return
 
         title = response.css('.product-title-wrapper h1.product_title::text').get()
         if not title:
+            self.emit_status(display_url, 'blocked', parent=parent_url, url_type='product')
             return
 
         stock_text = response.css('p.stock.in-stock span::text').get('').strip()
@@ -258,6 +287,7 @@ class TyreScraper(Spider):
 
         item['Source'] = response.url
 
+        self.emit_status(display_url, 'done', parent=parent_url, url_type='product')
         yield item
 from scrapy.crawler import CrawlerProcess
         

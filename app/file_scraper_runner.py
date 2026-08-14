@@ -146,27 +146,25 @@ def get_output_path(file_id):
     return path if path and os.path.exists(path) else None
 
 
+def get_all_output_paths():
+    with _outputs_lock:
+        return {fid: path for fid, path in _outputs.items() if path and os.path.exists(path)}
+
+
 def _run(file_id, script_path, urls):
     input_path = None
-    output_placeholder = None
+    os.makedirs(TMP_DIR, exist_ok=True)
+    output_placeholder = os.path.join(TMP_DIR, f'file_{file_id}_output.xlsx')
     if urls:
-        os.makedirs(TMP_DIR, exist_ok=True)
         input_path = os.path.join(TMP_DIR, f'file_{file_id}_urls.csv')
         with open(input_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             for url in urls:
                 writer.writerow([url])
-        output_placeholder = os.path.join(TMP_DIR, f'file_{file_id}_output.xlsx')
 
-    args = [sys.executable, '-u', script_path]
+    args = [sys.executable, '-u', script_path, output_placeholder]
     if input_path:
-        # Matches the "<output_file> <urls_csv>" argv convention
-        # pitstoparabiabycsv.py / pitstoparabia-brand-1.py /
-        # pitstoparabia-instock-3.py already use -- scripts that don't read
-        # argv at all (scan*.py) simply ignore the extra arguments and run
-        # with their own hardcoded defaults, per "do not unnecessarily
-        # modify scraper logic that already supports URL input."
-        args.extend([output_placeholder, input_path])
+        args.append(input_path)
 
     logger.info('Starting scraper file_id=%s (%s)', file_id, os.path.basename(script_path))
     try:

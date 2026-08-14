@@ -82,12 +82,12 @@ def main():
 
             url = req["url"]
             try:
-                page.goto(url, wait_until="load", timeout=60000)
+                page.goto(url, wait_until="domcontentloaded", timeout=60000)
                 wait_for_challenge(page)
-                resp = context.request.get(url)
+                body = page.content()
                 out = {
-                    "status": resp.status,
-                    "body": resp.text(),
+                    "status": 200 if "<html" in body.lower() else 500,
+                    "body": body,
                     "final_url": page.url,
                     "cookies": {c["name"]: c["value"] for c in context.cookies()},
                 }

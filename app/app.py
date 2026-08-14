@@ -1,4 +1,5 @@
 import csv
+import io
 import os
 import re
 import secrets
@@ -7,11 +8,12 @@ import sys
 import threading
 import time
 import uuid
+import zipfile
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
 import pymysql
-from flask import Flask, Response, jsonify, redirect, render_template, request, send_from_directory, session
+from flask import Flask, Response, jsonify, redirect, render_template, request, send_file, send_from_directory, session
 from openpyxl import Workbook, load_workbook
 from werkzeug.utils import secure_filename
 
@@ -70,6 +72,20 @@ app = Flask(
     template_folder=os.path.join(BASE_DIR, 'templates'),
     static_folder=os.path.join(BASE_DIR, 'static'),
 )
+
+
+def _reset_all_stale_working_flags():
+    try:
+        conn = get_connection()
+        with conn.cursor() as c:
+            c.execute("UPDATE fileTbl SET working = 0")
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+
+_reset_all_stale_working_flags()
 # A random fallback key here would change on every process restart (e.g. Render's
 # free-tier spin-down/cold-start), invalidating every existing session cookie and
 # making the app look like it "reset" on refresh. Set FLASK_SECRET_KEY in the
@@ -138,13 +154,13 @@ def get_scraper_session():
 #     return render_template("Dashboard.html", page="Dashboard")
 
 
-@app.route('/')
+@app.route('/scraperpage')
 @login_required_page
 def Scrap():
     return render_template("Scrap.html", page="scraping")
 
 
-@app.route('/files')
+@app.route('/')
 @login_required_page
 def files_page():
     return render_template('files.html', page='files')
@@ -1008,8 +1024,14 @@ def api_list_files():
         per_page = 20
 
     rows, total = files_repo.list_files(search=search, page=page, per_page=per_page)
+    serialized = []
+    for r in rows:
+        item = files_repo.serialize_file(r)
+        item['outputAvailable'] = bool(file_scraper_runner.get_output_path(r['file_id']))
+        serialized.append(item)
+
     return jsonify({
-        'files': [files_repo.serialize_file(r) for r in rows],
+        'files': serialized,
         'total': total,
         'page': page,
         'perPage': per_page,
@@ -1125,12 +1147,18 @@ def api_file_status(file_id):
     if not record:
         return jsonify({'error': 'Scraper not found.'}), 404
 
-    # Combines the in-memory process registry with the persisted `working`
-    # bit so a client polling right after Start (before the background
-    # thread has actually registered its Popen) still sees "running", not a
-    # premature "finished".
+    is_active = file_scraper_runner.is_running(file_id)
     working = files_repo.bit_to_bool(record['working'])
-    running = file_scraper_runner.is_running(file_id) or working
+
+    # If not active in memory but DB still had working=1, reconcile stale state
+    if not is_active and working:
+        try:
+            files_repo.set_working(file_id, False)
+        except Exception:
+            pass
+        working = False
+
+    running = is_active or working
     output_path = file_scraper_runner.get_output_path(file_id)
     return jsonify({
         'running': running,
@@ -1151,6 +1179,12 @@ def api_file_url_statuses(file_id):
     })
 
 
+def _format_scraper_output_filename(site_name, extension='xlsx'):
+    clean_site = re.sub(r'[^A-Za-z0-9]+', '_', site_name or '').strip('_').lower() or 'scraper'
+    today = datetime.now().strftime('%d-%m-%Y')
+    return f"{clean_site}_{today}.{extension}"
+
+
 @app.route('/api/files/<int:file_id>/download')
 @login_required_api
 def api_download_file_output(file_id):
@@ -1162,12 +1196,68 @@ def api_download_file_output(file_id):
     if not output_path:
         return Response('No output file found.', status=404, mimetype='text/plain')
 
-    safe_name = re.sub(r'[^A-Za-z0-9._-]+', '_', record['site_name']).strip('_') or 'scraper'
+    download_name = _format_scraper_output_filename(record['site_name'], 'xlsx')
     return send_from_directory(
         os.path.dirname(output_path),
         os.path.basename(output_path),
         as_attachment=True,
-        download_name=f'{safe_name}.xlsx',
+        download_name=download_name,
+    )
+
+
+@app.route('/api/files/download-zip')
+@login_required_api
+def api_download_files_zip():
+    """Builds and serves a .zip archive containing .xlsx outputs from all
+    available (or requested) finished scrapers.
+    Each file inside the zip is named <site_name>_<date>.xlsx.
+    """
+    raw_ids = request.args.get('ids', '').strip()
+    target_ids = []
+    if raw_ids:
+        for x in raw_ids.split(','):
+            x = x.strip()
+            if x.isdigit():
+                target_ids.append(int(x))
+
+    all_outputs = file_scraper_runner.get_all_output_paths()
+    if target_ids:
+        eligible_outputs = {fid: path for fid, path in all_outputs.items() if fid in target_ids}
+    else:
+        eligible_outputs = all_outputs
+
+    if not eligible_outputs:
+        return jsonify({'error': 'No completed scraper output files available to download.'}), 404
+
+    today = datetime.now().strftime('%d-%m-%Y')
+    zip_buffer = io.BytesIO()
+    used_names = set()
+
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for file_id, file_path in eligible_outputs.items():
+            if not os.path.exists(file_path):
+                continue
+            record = files_repo.get_file(file_id)
+            site_name = record['site_name'] if record else f'scraper_{file_id}'
+            clean_site = re.sub(r'[^A-Za-z0-9]+', '_', site_name or '').strip('_').lower() or 'scraper'
+            base_name = f"{clean_site}_{today}.xlsx"
+
+            final_name = base_name
+            counter = 1
+            while final_name in used_names:
+                final_name = f"{clean_site}_{today}_{counter}.xlsx"
+                counter += 1
+
+            used_names.add(final_name)
+            zip_file.write(file_path, arcname=final_name)
+
+    zip_buffer.seek(0)
+    zip_download_name = f"scraped_data_{today}.zip"
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=zip_download_name,
     )
 
 

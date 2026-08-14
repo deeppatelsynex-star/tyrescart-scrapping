@@ -107,7 +107,7 @@
 
   function statusBadgeHtml(row) {
     return row.working
-      ? '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Running</span>'
+      ? `<a href="/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors" title="Click to view live progress"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Running</a>`
       : '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-500">Not Running</span>';
   }
 
@@ -118,8 +118,16 @@
     const startStopBtn = row.working
       ? `<button type="button" data-action="stop" data-id="${row.fileId}" ${busy ? 'disabled' : ''} class="text-xs font-semibold ${busy ? 'text-slate-300 cursor-not-allowed' : 'text-rose-600 hover:underline cursor-pointer'}">${startStopLabel}</button>`
       : `<button type="button" data-action="start" data-id="${row.fileId}" ${busy ? 'disabled' : ''} class="text-xs font-semibold ${busy ? 'text-slate-300 cursor-not-allowed' : 'text-emerald-600 hover:underline cursor-pointer'}">${startStopLabel}</button>`;
+    const viewLiveBtn = row.working
+      ? `<a href="/scraperpage?fileId=${row.fileId}" class="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer">View Progress</a>`
+      : '';
+    const downloadBtn = row.outputAvailable && !row.working
+      ? `<a href="/api/files/${row.fileId}/download" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer" title="Download output Excel">Download</a>`
+      : '';
     return `
       <div class="flex items-center justify-end gap-3">
+        ${downloadBtn}
+        ${viewLiveBtn}
         ${startStopBtn}
         <button type="button" data-action="edit" data-id="${row.fileId}" ${row.working ? 'disabled title="Stop the scraper before editing it"' : ''} class="text-xs font-semibold ${row.working ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:underline cursor-pointer'}">Edit</button>
         <button type="button" data-action="delete" data-id="${row.fileId}" ${row.working ? 'disabled title="Stop the scraper before deleting it"' : ''} class="text-xs font-semibold ${row.working ? 'text-slate-300 cursor-not-allowed' : 'text-rose-600 hover:underline cursor-pointer'}">Delete</button>
@@ -480,6 +488,9 @@
     table.draw(false);
     let started = false;
     try {
+      if (!csrfToken) {
+        await loadMe();
+      }
       const response = await fetch(`/api/files/${fileId}/start`, {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
@@ -490,21 +501,18 @@
         return;
       }
       started = true;
-      Shared.showToast('Scraper started successfully.', 'success');
+      try {
+        localStorage.setItem('activeFileScraperId', String(fileId));
+      } catch (e) {}
+      Shared.showToast('Scraper started successfully. Redirecting…', 'success');
     } catch (err) {
       Shared.showToast('Network error while starting the scraper.', 'error');
     } finally {
       inFlightStarts.delete(fileId);
-      // loadFiles() skips its own rebuild when the fetched data is unchanged
-      // (e.g. a failed start/stop leaves `working` exactly as it was) -- draw
-      // here regardless, so the "Starting…"/"Stopping…" label always clears
-      // instead of getting stuck if that fetch happens to see no data change.
       table.draw(false);
       if (started) {
-        // Jump straight to the Scraper page so the user watches the run they
-        // just kicked off, instead of staying on /files and having to notice
-        // the row flip to "Running" on their own.
-        window.location.href = `/?fileId=${fileId}`;
+        // Jump straight to the Scraper process page so the user watches the run
+        window.location.href = `/scraperpage?fileId=${fileId}`;
       } else {
         await loadFiles({ silent: true });
       }
