@@ -8,7 +8,7 @@ from scrapy import Spider, Request, Selector # type: ignore
 
 
 class pitstoparabia(Spider):
-    name = 'pitstoparabia'
+    name = 'pitstoparabia-instock'
 
     # This script lives in scrapers/, but its default output stays anchored to
     # the project root (one level up) to match the other scraper scripts --
@@ -139,17 +139,12 @@ class pitstoparabia(Spider):
                 continue
 
             seen_urls.add(url)
-            print("URL: ========================")
-            print(url)
             yield response.follow(url, self.parse_listing,
                                   meta=response.meta, headers=self.headers)
 
         self.finish_source(source_url)
 
     def parse_listing(self, response):
-        #print("Resoinse: ========================")
-        #print(response.json())
-
         source_url = response.meta.get('source_url', response.url)
 
         try:

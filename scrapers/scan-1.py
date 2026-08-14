@@ -1,5 +1,7 @@
+import csv
 import re
 import os
+import sys
 from datetime import datetime
 from collections import OrderedDict
 from scrapy import Spider, Request, Selector # type: ignore
@@ -12,10 +14,17 @@ class TyreScraper(Spider):
     limit = 640
     pbar = None
 
-    # Save XLSX in the same folder as this file
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # This script lives in scrapers/, but its default output stays anchored
+    # to the project root (one level up), same convention as the other
+    # scrapers in this folder -- not the scrapers/ folder itself.
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     today = datetime.now().strftime("%d-%m-%Y")
-    output_file = os.path.join(base_dir, f"kafaratplus_data_{today}.xlsx")
+
+    # An output path can be passed as the first CLI arg, same convention as
+    # the other scraper scripts in this folder.
+    output_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
+        base_dir, f"kafaratplus_data_{today}.xlsx"
+    )
 
     custom_settings = {
         # --- Export to XLSX ---
@@ -25,7 +34,20 @@ class TyreScraper(Spider):
         "LOG_LEVEL": "WARNING",
     }
 
-    url = 'https://kafaratplus.com/sitemap/en/sitemap_products.xml'
+    DEFAULT_URL = 'https://kafaratplus.com/sitemap/en/sitemap_products.xml'
+
+    @classmethod
+    def _load_url(cls):
+        """A CSV with a single sitemap URL (same one-per-line format the
+        other scrapers in this folder read) can be passed as the second CLI
+        arg to override the hardcoded default above.
+        """
+        if len(sys.argv) > 2:
+            with open(sys.argv[2], newline='', encoding='utf-8') as f:
+                for row in csv.reader(f):
+                    if row and row[0].strip():
+                        return row[0].strip()
+        return cls.DEFAULT_URL
 
     headers = {
         'Accept': 'text/html, */*; q=0.01',
@@ -45,19 +67,27 @@ class TyreScraper(Spider):
 
     seen = []
 
+    def emit_status(self, url, status, parent=None, url_type=None):
+        print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}")
+
     def start_requests(self):
-        meta = {'dont_merge_cookies': True}
-        yield Request(self.url, self.parse_brands, meta=meta, headers=self.headers)
+        target_url = self._load_url()
+        self.emit_status(target_url, 'running', url_type='sitemap')
+        yield Request(target_url, self.parse_brands, errback=self.parse_error,
+                      meta={'dont_merge_cookies': True, 'source_url': target_url},
+                      headers=self.headers)
 
     async def start(self):
         for request in self.start_requests():
             yield request
 
     def parse_brands(self, response):
+        source_url = response.meta.get('source_url', response.url)
         urls = [
             url for url in Selector(text=response.text).css('loc::text').getall()
             if "/PCR-SUV-Tires/" in url
         ]
+        self.emit_status(source_url, 'done')
         self.pbar = tqdm(total=len(urls), desc="Scraping products", unit="page")
         for url in urls:
             yield response.follow(
@@ -66,6 +96,12 @@ class TyreScraper(Spider):
             )
 
     def parse_error(self, failure):
+        # Shared errback for both the initial sitemap request and every
+        # per-product request -- only report the root as blocked when it's
+        # the sitemap fetch itself that failed, not an individual product page.
+        source_url = failure.request.meta.get('source_url')
+        if source_url and failure.request.url == source_url:
+            self.emit_status(source_url, 'blocked')
         if self.pbar is not None:
             self.pbar.update(1)
 

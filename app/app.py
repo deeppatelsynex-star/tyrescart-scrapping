@@ -150,6 +150,17 @@ def files_page():
     return render_template('files.html', page='files')
 
 
+@app.route('/docs/scraper')
+@login_required_page
+def scraper_guide_page():
+    """Documentation only -- explains the existing scraper contract
+    (argv output/input paths, URL_STATUS protocol, FEEDS/xlsx export) using
+    scrapers/pitstoparabiabycsv.py as the reference implementation. Does not
+    change the scraper system, database, or upload flow in any way.
+    """
+    return render_template('scraper_guide.html', page='docs')
+
+
 @app.route('/login', methods=['GET'])
 def login_page():
     if 'user_id' in session:
@@ -967,6 +978,22 @@ def _parse_urls_text(urls_text):
     return urls, None
 
 
+@app.route('/api/files/running')
+@login_required_api
+def api_running_files():
+    """Every currently-running registered scraper (fileId + siteName only) --
+    powers the Scraper page's switcher for hopping between several jobs
+    started from /files without losing track of the others.
+    """
+    rows, _ = files_repo.list_files(per_page=200)
+    running = [
+        {'fileId': r['file_id'], 'siteName': r['site_name']}
+        for r in rows
+        if file_scraper_runner.is_running(r['file_id']) or files_repo.bit_to_bool(r['working'])
+    ]
+    return jsonify({'files': running})
+
+
 @app.route('/api/files', methods=['GET'])
 @login_required_api
 def api_list_files():
@@ -1089,6 +1116,59 @@ def api_stop_file(file_id):
     if not stopped:
         return jsonify({'success': False, 'message': 'This scraper is not currently running.'})
     return jsonify({'success': True, 'message': 'Scraper stopped.'})
+
+
+@app.route('/api/files/<int:file_id>/status')
+@login_required_api
+def api_file_status(file_id):
+    record = files_repo.get_file(file_id)
+    if not record:
+        return jsonify({'error': 'Scraper not found.'}), 404
+
+    # Combines the in-memory process registry with the persisted `working`
+    # bit so a client polling right after Start (before the background
+    # thread has actually registered its Popen) still sees "running", not a
+    # premature "finished".
+    working = files_repo.bit_to_bool(record['working'])
+    running = file_scraper_runner.is_running(file_id) or working
+    output_path = file_scraper_runner.get_output_path(file_id)
+    return jsonify({
+        'running': running,
+        'working': working,
+        'siteName': record['site_name'],
+        'fileId': file_id,
+        'outputAvailable': bool(output_path) and not running,
+    })
+
+
+@app.route('/api/files/<int:file_id>/url-statuses')
+@login_required_api
+def api_file_url_statuses(file_id):
+    statuses = file_scraper_runner.get_statuses(file_id)
+    return jsonify({
+        'statuses': statuses,
+        'summary': build_status_summary(statuses),
+    })
+
+
+@app.route('/api/files/<int:file_id>/download')
+@login_required_api
+def api_download_file_output(file_id):
+    record = files_repo.get_file(file_id)
+    if not record:
+        return Response('Scraper not found.', status=404, mimetype='text/plain')
+
+    output_path = file_scraper_runner.get_output_path(file_id)
+    if not output_path:
+        return Response('No output file found.', status=404, mimetype='text/plain')
+
+    safe_name = re.sub(r'[^A-Za-z0-9._-]+', '_', record['site_name']).strip('_') or 'scraper'
+    return send_from_directory(
+        os.path.dirname(output_path),
+        os.path.basename(output_path),
+        as_attachment=True,
+        download_name=f'{safe_name}.xlsx',
+    )
 
 
 @app.route('/api/files/upload-script', methods=['POST'])

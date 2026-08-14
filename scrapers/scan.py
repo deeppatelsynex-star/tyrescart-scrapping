@@ -1,3 +1,4 @@
+import csv
 import random
 import re
 import os
@@ -11,17 +12,26 @@ from scrapy.http import HtmlResponse
 from curl_cffi import requests as cffi_requests
 from lxml import etree
 
-print("=" * 50)
-print("scan.py loaded")
-print("=" * 50)
 
 class TyreScraper(Spider):
     name = 'tireex'
-    print("TyreScraper class created")
-    # Save XLSX in the same folder as this file
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # scrapers/ folder itself -- needed to locate the sibling
+    # _cf_cookie_fetcher.py bridge script regardless of where output goes.
+    scrapers_dir = os.path.dirname(os.path.abspath(__file__))
+    # This script lives in scrapers/, but its default output stays anchored
+    # to the project root (one level up), same convention as the other
+    # scrapers in this folder -- not the scrapers/ folder itself.
+    base_dir = os.path.dirname(scrapers_dir)
     today = datetime.now().strftime("%d-%m-%Y")
-    output_file = os.path.join(base_dir, f"tireex_data_{today}.xlsx")
+
+    # An output path can be passed as the first CLI arg, same convention as
+    # the other scraper scripts in this folder.
+    output_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
+        base_dir, f"tireex_data_{today}.xlsx"
+    )
+
+    DEFAULT_SITEMAP_URL = 'https://tireex.com/product-sitemap.xml'
 
     custom_settings = {
         # --- Export to XLSX ---
@@ -32,6 +42,21 @@ class TyreScraper(Spider):
         "LOG_LEVEL": "INFO",
     }
 
+    @classmethod
+    def _load_sitemap_url(cls):
+        """A CSV with a single sitemap URL (same one-per-line format the
+        other scrapers in this folder read) can be passed as the second CLI
+        arg to override the hardcoded default above.
+        """
+        if len(sys.argv) > 2:
+            with open(sys.argv[2], newline='', encoding='utf-8') as f:
+                for row in csv.reader(f):
+                    if row and row[0].strip():
+                        return row[0].strip()
+        return cls.DEFAULT_SITEMAP_URL
+
+    def emit_status(self, url, status, parent=None, url_type=None):
+        print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}")
 
     def _start_browser_bridge(self):
         """Launch the persistent Playwright challenge-solver subprocess.
@@ -41,7 +66,7 @@ class TyreScraper(Spider):
         Playwright launches its browser as one). Kept alive for the whole
         crawl since solving the JS proof-of-work challenge takes ~20-40s.
         """
-        fetcher_script = os.path.join(self.base_dir, "_cf_cookie_fetcher.py")
+        fetcher_script = os.path.join(self.scrapers_dir, "_cf_cookie_fetcher.py")
         self._bridge_proc = subprocess.Popen(
             [sys.executable, fetcher_script],
             stdin=subprocess.PIPE,
@@ -95,8 +120,6 @@ class TyreScraper(Spider):
                 bridge.terminate()
 
     async def start(self):
-        print("sesson start")
-
         self._start_browser_bridge()
 
         self.session = cffi_requests.Session(
@@ -107,16 +130,17 @@ class TyreScraper(Spider):
             }
         )
 
+        sitemap_url = self._load_sitemap_url()
+        self.emit_status(sitemap_url, 'running', url_type='sitemap')
+
         # The sitemap route is always behind the JS challenge, so fetch it
         # straight through the browser bridge instead of curl_cffi.
         self.logger.info("Fetching product sitemap...")
-        sitemap = self._bridge_fetch('https://tireex.com/product-sitemap.xml')
+        sitemap = self._bridge_fetch(sitemap_url)
 
-        print("STATUS:", sitemap["status"])
-        print("BODY:")
-        print(sitemap["body"][:1000])
         if sitemap["status"] != 200:
             self.logger.error(f"Failed to fetch sitemap: HTTP {sitemap['status']}")
+            self.emit_status(sitemap_url, 'blocked')
             return
 
         # Seed the curl_cffi session with the resolved challenge cookies
@@ -130,6 +154,7 @@ class TyreScraper(Spider):
                 and not loc.text.endswith(('.webp', '.jpg', '.png'))]
 
         self.logger.info(f"Found {len(urls)} product URLs in sitemap")
+        self.emit_status(sitemap_url, 'done')
 
         for url in urls:
             # Insert /en/ if not already present, to get English content

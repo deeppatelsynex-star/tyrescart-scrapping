@@ -7,3 +7,6 @@ PyMySQL
 python-dotenv
 bcrypt
 resend
+curl_cffi
+lxml
+playwright

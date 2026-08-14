@@ -7,6 +7,37 @@ const urlStatusList = document.getElementById('url-status-list'); // <ul> that h
 const urlSummaryElement = document.getElementById('url-summary'); // pending/running/blocked/done counters
 const progressBar = document.getElementById('progress-bar');
 const progressPercentage = document.getElementById('progress-percentage');
+const fileScraperSwitcher = document.getElementById('file-scraper-switcher');
+const fileScraperNameEl = document.getElementById('file-scraper-name');
+const fileScraperSelect = document.getElementById('file-scraper-select');
+
+// When the page is opened as /?fileId=<id> (redirected here from a "Start"
+// click on the /files page), watch that registered scraper's own live
+// status instead of this browser session's ad-hoc /StartScraper job -- the
+// two run through entirely separate engines (see CLAUDE.md), so this page
+// just points its existing polling/rendering at a different data source
+// rather than merging the two.
+//
+// The chosen fileId is remembered in localStorage (not just the URL query
+// string) so that navigating to another page and back -- including via the
+// sidebar's plain "/" link, which drops ?fileId -- keeps watching the same
+// still-running scraper instead of this page silently falling back to the
+// (idle) ad-hoc session state and looking like the scraper got stopped.
+const FILE_SCRAPER_STORAGE_KEY = 'activeFileScraperId';
+let fileScraperId = new URLSearchParams(window.location.search).get('fileId');
+if (!fileScraperId) {
+  fileScraperId = localStorage.getItem(FILE_SCRAPER_STORAGE_KEY) || null;
+}
+if (fileScraperId) {
+  localStorage.setItem(FILE_SCRAPER_STORAGE_KEY, fileScraperId);
+}
+// Called once a watched file scraper is confirmed no longer running (finished,
+// stopped, or its registration no longer exists) so a later page visit goes
+// back to normal idle instead of re-watching a job that's already over.
+const forgetFileScraper = () => {
+  localStorage.removeItem(FILE_SCRAPER_STORAGE_KEY);
+};
+let fileScraperCsrfToken = null;
 
 // Holds the setInterval id used to poll /scraper-status while the scraper is running; null when not polling.
 let statusIntervalId = null;
@@ -45,7 +76,18 @@ const updateControls = (state) => {
     stopButton.style.display = state.running ? '' : 'none';
   }
   if (downloadButton) {
-    downloadButton.href = state.outputAvailable ? '/download-output' : '#';
+    const downloadUrl = fileScraperId ? `/api/files/${fileScraperId}/download` : '/download-output';
+    // Visibility tracks the *current* state on every poll, not just a one-way
+    // reveal at 100% -- otherwise the link from a previously-finished job
+    // stays visible (and clickable, pointing at stale output) once a new job
+    // starts back at 0%.
+    if (state.outputAvailable) {
+      downloadButton.href = downloadUrl;
+      downloadButton.style.removeProperty('display');
+    } else {
+      downloadButton.href = '#';
+      downloadButton.style.display = 'none';
+    }
   }
 };
 
@@ -209,7 +251,8 @@ const renderRootNode = (root) => {
 // counters + progress bar, and re-renders the root/child URL tree.
 const refreshUrlStatuses = async () => {
   try {
-    const response = await fetch('/scraper-url-statuses');
+    const endpoint = fileScraperId ? `/api/files/${fileScraperId}/url-statuses` : '/scraper-url-statuses';
+    const response = await fetch(endpoint);
     if (!response.ok) throw new Error('Failed to fetch URL statuses');
     const data = await response.json();
     const statuses = data.statuses || [];
@@ -238,9 +281,6 @@ const refreshUrlStatuses = async () => {
     }
     if (progressPercentage) {
       progressPercentage.textContent = `${percent}%`;
-      if (percent === 100 && downloadButton) {
-        downloadButton.style.removeProperty('display');
-      }
     }
 
     if (!urlStatusList) return;
@@ -262,10 +302,37 @@ const refreshUrlStatuses = async () => {
 // Called on load, after Start/Stop, and every 3s while `statusIntervalId` is set.
 const refreshStatus = async () => {
   try {
-    const response = await fetch('/scraper-status');
-    if (!response.ok) throw new Error('Failed to fetch status');
-    const state = await response.json();
-    // console.log(state);
+    const endpoint = fileScraperId ? `/api/files/${fileScraperId}/status` : '/scraper-status';
+    const response = await fetch(endpoint);
+    if (!response.ok) {
+      // The watched scraper's registration is gone (e.g. deleted from
+      // /files while this page was open elsewhere) -- stop chasing it.
+      if (fileScraperId && response.status === 404) {
+        forgetFileScraper();
+        stopStatusPolling();
+        setStatus('Idle', 'bg-slate-100 text-slate-700');
+        return;
+      }
+      throw new Error('Failed to fetch status');
+    }
+    const rawState = await response.json();
+    // Since this page is only ever reached this way right after a Start
+    // click, "not running" always means it already finished (rather than
+    // "never started") -- treat that as done so the status pill reads
+    // "Finished" and polling actually stops.
+    const state = fileScraperId
+      ? { running: rawState.running, done: !rawState.running, outputAvailable: !!rawState.outputAvailable }
+      : rawState;
+
+    if (fileScraperSwitcher) {
+      if (fileScraperId && rawState.siteName) {
+        fileScraperNameEl.textContent = `Scraper: ${rawState.siteName}`;
+        fileScraperSwitcher.classList.remove('hidden');
+        refreshRunningFileScrapers();
+      } else {
+        fileScraperSwitcher.classList.add('hidden');
+      }
+    }
 
     if (state.running) {
       setStatus('Running', 'bg-emerald-100 text-emerald-700');
@@ -273,6 +340,7 @@ const refreshStatus = async () => {
     } else if (state.done) {
       setStatus('Finished', 'bg-slate-100 text-slate-700');
       stopStatusPolling();
+      if (fileScraperId) forgetFileScraper();
 
     } else {
       setStatus('Idle', 'bg-slate-100 text-slate-700');
@@ -284,6 +352,50 @@ const refreshStatus = async () => {
     console.error(error);
   }
 };
+
+// Populates the "switch to another running scraper" dropdown next to the
+// site-name badge, so starting a second scraper from /files while this page
+// is already watching one doesn't strand the first -- you can hop back to
+// check on it without needing /files' table.
+const refreshRunningFileScrapers = async () => {
+  if (!fileScraperId || !fileScraperSelect) return;
+  try {
+    const response = await fetch('/api/files/running');
+    if (!response.ok) return;
+    const data = await response.json();
+    const others = (data.files || []).filter((f) => String(f.fileId) !== String(fileScraperId));
+
+    if (!others.length) {
+      fileScraperSelect.classList.add('hidden');
+      return;
+    }
+
+    fileScraperSelect.innerHTML = '';
+    const currentOption = document.createElement('option');
+    currentOption.value = String(fileScraperId);
+    currentOption.textContent = 'Currently viewing';
+    fileScraperSelect.appendChild(currentOption);
+    others.forEach((f) => {
+      const opt = document.createElement('option');
+      opt.value = String(f.fileId);
+      opt.textContent = f.siteName;
+      fileScraperSelect.appendChild(opt);
+    });
+    fileScraperSelect.value = String(fileScraperId);
+    fileScraperSelect.classList.remove('hidden');
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+if (fileScraperSelect) {
+  fileScraperSelect.addEventListener('change', () => {
+    const target = fileScraperSelect.value;
+    if (target && target !== String(fileScraperId)) {
+      window.location.href = `/?fileId=${target}`;
+    }
+  });
+}
 
 // Copies `text` to the clipboard via the modern Clipboard API when available
 // (requires a secure context), falling back to the legacy hidden-textarea +
@@ -350,22 +462,52 @@ const resetScraperUI = () => {
   }
 };
 
-// Stop button: calls /stop-scraper, then resets the UI and stops polling on success.
+// Fetches a CSRF token for the file-scoped stop call below -- this page
+// normally never needs one (/stop-scraper doesn't require it), but
+// /api/files/<id>/stop does, same as every other mutating /api/files/* route.
+const ensureFileScraperCsrfToken = async () => {
+  if (fileScraperCsrfToken || !fileScraperId) return fileScraperCsrfToken;
+  try {
+    const response = await fetch('/api/me');
+    if (response.ok) {
+      const data = await response.json();
+      fileScraperCsrfToken = data.csrfToken;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+  return fileScraperCsrfToken;
+};
+if (fileScraperId) ensureFileScraperCsrfToken();
+
+// Stop button: calls /stop-scraper (or, when watching a /files scraper,
+// /api/files/<id>/stop), then resets the UI and stops polling on success.
 if (stopButton) {
   stopButton.addEventListener('click', async (e) => {
     e.preventDefault();
     stopButton.disabled = true;
 
     try {
-      const response = await fetch('/stop-scraper', { method: 'POST' });
+      let response;
+      if (fileScraperId) {
+        const token = await ensureFileScraperCsrfToken();
+        response = await fetch(`/api/files/${fileScraperId}/stop`, {
+          method: 'POST',
+          headers: { 'X-CSRF-Token': token },
+        });
+      } else {
+        response = await fetch('/stop-scraper', { method: 'POST' });
+      }
       if (!response.ok) throw new Error('Failed to stop scraper');
       const result = await response.json();
-      if (!result.stopped) {
-        throw new Error(result.message || 'Unable to stop scraper');
+      const stopped = fileScraperId ? result.success : result.stopped;
+      if (!stopped) {
+        throw new Error(result.message || result.error || 'Unable to stop scraper');
       }
       setStatus('Stopped', 'bg-rose-100 text-rose-700');
       resetScraperUI();
       stopStatusPolling();
+      if (fileScraperId) forgetFileScraper();
     } catch (error) {
       console.error(error);
       alert(error.message || 'Unable to stop scraper.');

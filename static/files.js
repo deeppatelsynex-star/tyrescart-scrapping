@@ -478,6 +478,7 @@
   async function startFile(fileId) {
     inFlightStarts.set(fileId, 'start');
     table.draw(false);
+    let started = false;
     try {
       const response = await fetch(`/api/files/${fileId}/start`, {
         method: 'POST',
@@ -488,6 +489,7 @@
         Shared.showToast(data.error || 'Unable to start scraper.', 'error');
         return;
       }
+      started = true;
       Shared.showToast('Scraper started successfully.', 'success');
     } catch (err) {
       Shared.showToast('Network error while starting the scraper.', 'error');
@@ -498,7 +500,14 @@
       // here regardless, so the "Starting…"/"Stopping…" label always clears
       // instead of getting stuck if that fetch happens to see no data change.
       table.draw(false);
-      await loadFiles({ silent: true });
+      if (started) {
+        // Jump straight to the Scraper page so the user watches the run they
+        // just kicked off, instead of staying on /files and having to notice
+        // the row flip to "Running" on their own.
+        window.location.href = `/?fileId=${fileId}`;
+      } else {
+        await loadFiles({ silent: true });
+      }
     }
   }
 

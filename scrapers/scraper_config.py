@@ -5,8 +5,8 @@ drift out of sync between the two.
 """
 
 SCRIPT_MAP = {
-    "brand": "pitstoparabia-brand 1.py",
-    "sitemap": "pitstoparabia-instock 3.py",
+    "brand": "pitstoparabia-brand-1.py",
+    "sitemap": "pitstoparabia-instock-3.py",
     "listing": "pitstoparabiabycsv.py",
     "product": "pitstoparabiabycsv.py",
 }

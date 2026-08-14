@@ -55,6 +55,8 @@ python -m venv venv
 venv\Scripts\pip install -r requirements.txt        # Windows
 # source venv/bin/activate && pip install -r requirements.txt   # macOS/Linux
 
+venv\Scripts\python -m playwright install chromium  # one-time browser download, needed by scan.py
+
 copy .env.example .env      # Windows -- or `cp .env.example .env`
 # then edit .env with real DB / Resend credentials
 ```

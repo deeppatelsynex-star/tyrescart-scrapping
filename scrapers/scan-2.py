@@ -2,7 +2,7 @@
 
 Run from this directory (or the repository root):
 
-    scrapy runspider "scan 2.py"
+    scrapy runspider scan-2.py
 
 Redesigned to no longer depend on GCCO's separate api.gcco.ae backend, which
 (as of this rewrite) is unreachable -- Cloudflare returns Error 525 (SSL
@@ -24,9 +24,11 @@ same approach the old API-based version already used as its own fallback
 when the API's specification fields were missing.
 """
 
+import csv
 import json
 import os
 import re
+import sys
 from collections import OrderedDict
 from datetime import datetime
 
@@ -41,11 +43,19 @@ YEAR_RE = re.compile(r"\((\d{4})\)")
 class GCCOScraper(Spider):
     name = "gcco"
 
-    SITEMAP_URL = "https://gcco.ae/sitemap.xml"
+    DEFAULT_SITEMAP_URL = "https://gcco.ae/sitemap.xml"
 
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # This script lives in scrapers/, but its default output stays anchored
+    # to the project root (one level up), same convention as the other
+    # scrapers in this folder -- not the scrapers/ folder itself.
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     today = datetime.now().strftime("%d-%m-%Y")
-    output_file = os.path.join(base_dir, f"gcco_data_{today}.xlsx")
+
+    # An output path can be passed as the first CLI arg, same convention as
+    # the other scraper scripts in this folder.
+    output_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
+        base_dir, f"gcco_data_{today}.xlsx"
+    )
 
     custom_settings = {
         "FEED_EXPORTERS": {"xlsx": "scrapy_xlsx.XlsxItemExporter"},
@@ -66,30 +76,70 @@ class GCCOScraper(Spider):
         "Accept-Language": "en-US,en;q=0.9",
     }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.done_sources = set()  # sitemap URLs we've already emitted a terminal status for
+
+    @classmethod
+    def _load_sitemap_url(cls):
+        """A CSV with a single sitemap URL (same one-per-line format the
+        other scrapers in this folder read) can be passed as the second CLI
+        arg to override the hardcoded default above.
+        """
+        if len(sys.argv) > 2:
+            with open(sys.argv[2], newline='', encoding='utf-8') as f:
+                for row in csv.reader(f):
+                    if row and row[0].strip():
+                        return row[0].strip()
+        return cls.DEFAULT_SITEMAP_URL
+
+    def emit_status(self, url, status, parent=None, url_type=None):
+        print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}")
+
+    def finish_source(self, source_url, blocked=False):
+        if source_url in self.done_sources:
+            return
+        self.done_sources.add(source_url)
+        self.emit_status(source_url, 'blocked' if blocked else 'done')
+
     async def start(self):
-        yield Request(self.SITEMAP_URL, headers=self.headers, callback=self.parse_sitemap,
-                      errback=self.handle_error)
+        sitemap_url = self._load_sitemap_url()
+        self.emit_status(sitemap_url, 'running', url_type='sitemap')
+        yield Request(sitemap_url, headers=self.headers, callback=self.parse_sitemap,
+                      errback=self.handle_error, meta={'source_url': sitemap_url})
 
     def handle_error(self, failure):
+        source_url = failure.request.meta.get('source_url', failure.request.url)
         response = getattr(failure.value, "response", None)
         if response is not None:
             self.logger.error("REQUEST ERROR: status=%s url=%s", response.status, response.url)
         else:
             self.logger.error("REQUEST ERROR: %s (%s)", failure.request.url, failure.value)
+        self.finish_source(source_url, blocked=True)
 
     def parse_sitemap(self, response):
+        source_url = response.meta.get('source_url', response.url)
         urls = Selector(text=response.text).css("loc::text").getall()
         product_urls = [u.strip() for u in urls if u and "/product/" in u]
         self.logger.info("Found %s product URLs in sitemap", len(product_urls))
 
         for url in product_urls:
+            self.emit_status(url, 'pending', parent=source_url, url_type='product')
             yield response.follow(url, headers=self.headers, callback=self.parse_detail,
-                                  errback=self.handle_error)
+                                  errback=self.handle_error,
+                                  meta={'source_url': source_url, 'display_url': url})
+
+        self.finish_source(source_url)
 
     def parse_detail(self, response):
+        source_url = response.meta.get('source_url', response.url)
+        display_url = response.meta.get('display_url', response.url)
+        self.emit_status(display_url, 'running', parent=source_url, url_type='product')
+
         product = self._product_ld_json(response)
         if not product:
             self.logger.warning("No Product JSON-LD found on %s", response.url)
+            self.emit_status(display_url, 'blocked', parent=source_url, url_type='product')
             return
 
         name = product.get("name", "").strip()
@@ -113,6 +163,8 @@ class GCCOScraper(Spider):
         item["Image URL"] = images[0] if images else ""
         item["Description"] = product.get("description", "")
         item["Source"] = response.url
+
+        self.emit_status(display_url, 'done', parent=source_url, url_type='product')
         yield item
 
     @staticmethod
