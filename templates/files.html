@@ -202,12 +202,12 @@ Scraper
 </div>
 
 <!-- Scraper Log Bottom-to-Top Drawer / Modal -->
-<div id="files-log-modal" class="fixed inset-0 z-50 flex flex-col justify-end pointer-events-none transition-opacity duration-300 opacity-0">
+<div id="files-log-modal" class="hidden fixed inset-0 z-50 flex flex-col justify-end">
   <!-- Backdrop overlay with blur -->
-  <div id="files-log-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity duration-300 opacity-0 pointer-events-auto"></div>
+  <div id="files-log-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity duration-300 opacity-0 cursor-pointer"></div>
   
   <!-- Slide-up Drawer -->
-  <div id="files-log-drawer" class="relative z-10 bg-white w-full max-w-4xl mx-auto rounded-t-3xl shadow-2xl border-t border-slate-200 pointer-events-auto transform translate-y-full transition-transform duration-300 ease-out flex flex-col max-h-[85vh] sm:max-h-[80vh]">
+  <div id="files-log-drawer" class="relative z-10 bg-white w-full max-w-4xl mx-auto rounded-t-3xl shadow-2xl border-t border-slate-200 transform translate-y-full transition-transform duration-300 ease-out flex flex-col max-h-[85vh] sm:max-h-[80vh]">
     <!-- Header -->
     <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
       <div class="flex items-center gap-3">

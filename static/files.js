@@ -576,8 +576,8 @@
     }
     if (logEmpty) logEmpty.classList.add('hidden');
 
-    logModal.classList.remove('pointer-events-none', 'opacity-0');
-    logModal.classList.add('pointer-events-auto', 'opacity-100');
+    logModal.classList.remove('hidden');
+    void logDrawer.offsetHeight;
 
     requestAnimationFrame(() => {
       logBackdrop.classList.remove('opacity-0');
@@ -597,8 +597,7 @@
     logBackdrop.classList.add('opacity-0');
 
     setTimeout(() => {
-      logModal.classList.remove('pointer-events-auto', 'opacity-100');
-      logModal.classList.add('pointer-events-none', 'opacity-0');
+      logModal.classList.add('hidden');
     }, 300);
   }
 
