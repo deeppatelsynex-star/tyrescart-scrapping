@@ -69,23 +69,26 @@ class GCCOScraper(Spider):
 
     headers = {
         "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/127.0.0.0 Safari/537.36"
         ),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
     }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.done_sources = set()  # sitemap URLs we've already emitted a terminal status for
+        self.done_sources = set()
 
     @classmethod
     def _load_sitemap_url(cls):
-        """A CSV with a single sitemap URL (same one-per-line format the
-        other scrapers in this folder read) can be passed as the second CLI
-        arg to override the hardcoded default above.
-        """
+        """A CSV with a single sitemap URL can be passed as the second CLI arg."""
         if len(sys.argv) > 2:
             with open(sys.argv[2], newline='', encoding='utf-8') as f:
                 for row in csv.reader(f):
@@ -94,40 +97,60 @@ class GCCOScraper(Spider):
         return cls.DEFAULT_SITEMAP_URL
 
     def emit_status(self, url, status, parent=None, url_type=None):
-        print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}")
+        print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}", flush=True)
 
     def finish_source(self, source_url, blocked=False):
         if source_url in self.done_sources:
             return
         self.done_sources.add(source_url)
-        self.emit_status(source_url, 'blocked' if blocked else 'done')
+        self.emit_status(source_url, 'blocked' if blocked else 'done', url_type='sitemap')
 
-    async def start(self):
+    def start_requests(self):
         sitemap_url = self._load_sitemap_url()
         self.emit_status(sitemap_url, 'running', url_type='sitemap')
-        yield Request(sitemap_url, headers=self.headers, callback=self.parse_sitemap,
-                      errback=self.handle_error, meta={'source_url': sitemap_url})
+        yield Request(
+            sitemap_url,
+            headers=self.headers,
+            callback=self.parse_sitemap,
+            errback=self.handle_error,
+            meta={'source_url': sitemap_url, 'dont_merge_cookies': True},
+        )
+
+    async def start(self):
+        for req in self.start_requests():
+            yield req
 
     def handle_error(self, failure):
         source_url = failure.request.meta.get('source_url', failure.request.url)
+        display_url = failure.request.meta.get('display_url', failure.request.url)
         response = getattr(failure.value, "response", None)
         if response is not None:
             self.logger.error("REQUEST ERROR: status=%s url=%s", response.status, response.url)
         else:
             self.logger.error("REQUEST ERROR: %s (%s)", failure.request.url, failure.value)
-        self.finish_source(source_url, blocked=True)
+
+        if display_url and display_url != source_url:
+            self.emit_status(display_url, 'blocked', parent=source_url, url_type='product')
+        else:
+            self.finish_source(source_url, blocked=True)
 
     def parse_sitemap(self, response):
         source_url = response.meta.get('source_url', response.url)
         urls = Selector(text=response.text).css("loc::text").getall()
+        if not urls:
+            urls = Selector(text=response.text).xpath("//*[local-name()='loc']/text()").getall()
         product_urls = [u.strip() for u in urls if u and "/product/" in u]
         self.logger.info("Found %s product URLs in sitemap", len(product_urls))
 
         for url in product_urls:
             self.emit_status(url, 'pending', parent=source_url, url_type='product')
-            yield response.follow(url, headers=self.headers, callback=self.parse_detail,
-                                  errback=self.handle_error,
-                                  meta={'source_url': source_url, 'display_url': url})
+            yield response.follow(
+                url,
+                headers=self.headers,
+                callback=self.parse_detail,
+                errback=self.handle_error,
+                meta={'source_url': source_url, 'display_url': url, 'dont_merge_cookies': True},
+            )
 
         self.finish_source(source_url)
 
@@ -136,36 +159,38 @@ class GCCOScraper(Spider):
         display_url = response.meta.get('display_url', response.url)
         self.emit_status(display_url, 'running', parent=source_url, url_type='product')
 
-        product = self._product_ld_json(response)
-        if not product:
-            self.logger.warning("No Product JSON-LD found on %s", response.url)
-            self.emit_status(display_url, 'blocked', parent=source_url, url_type='product')
-            return
+        try:
+            product = self._product_ld_json(response)
+            if not product:
+                self.logger.warning("No Product JSON-LD found on %s", response.url)
+                self.emit_status(display_url, 'blocked', parent=source_url, url_type='product')
+                return
 
-        name = product.get("name", "").strip()
-        offers = product.get("offers") or {}
-        images = product.get("image") or []
+            name = product.get("name", "").strip()
+            offers = product.get("offers") or {}
+            images = product.get("image") or []
 
-        item = OrderedDict()
-        item["Name"] = name
-        item["Brand"] = (product.get("brand") or {}).get("name", "")
-        item["SKU"] = product.get("sku", "")
-        item["Tire Size"] = self._tire_size(name)
-        item["Width"] = self._dimension(name, 1)
-        item["Aspect Ratio"] = self._dimension(name, 2)
-        item["Rim Diameter"] = self._dimension(name, 3)
-        item["Load/Speed Index"] = self._load_speed(name)
-        item["Year"] = self._year(name)
-        item["Category"] = product.get("category", "")
-        item["Price"] = offers.get("price", "")
-        item["Currency"] = offers.get("priceCurrency", "")
-        item["In Stock"] = self._in_stock(offers.get("availability", ""))
-        item["Image URL"] = images[0] if images else ""
-        item["Description"] = product.get("description", "")
-        item["Source"] = response.url
+            item = OrderedDict()
+            item["Name"] = name
+            item["Brand"] = (product.get("brand") or {}).get("name", "")
+            item["SKU"] = product.get("sku", "")
+            item["Tire Size"] = self._tire_size(name)
+            item["Width"] = self._dimension(name, 1)
+            item["Aspect Ratio"] = self._dimension(name, 2)
+            item["Rim Diameter"] = self._dimension(name, 3)
+            item["Load/Speed Index"] = self._load_speed(name)
+            item["Year"] = self._year(name)
+            item["Category"] = product.get("category", "")
+            item["Price"] = offers.get("price", "")
+            item["Currency"] = offers.get("priceCurrency", "")
+            item["In Stock"] = self._in_stock(offers.get("availability", ""))
+            item["Image URL"] = images[0] if images else ""
+            item["Description"] = product.get("description", "")
+            item["Source"] = response.url
 
-        self.emit_status(display_url, 'done', parent=source_url, url_type='product')
-        yield item
+            yield item
+        finally:
+            self.emit_status(display_url, 'done', parent=source_url, url_type='product')
 
     @staticmethod
     def _product_ld_json(response):
