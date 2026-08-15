@@ -28,6 +28,26 @@ TODAY = datetime.now().strftime("%d-%m-%Y")
 
 DEFAULT_SITEMAP_URL = "https://gcco.ae/sitemap.xml"
 
+DEFAULT_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/127.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9,ar;q=0.8",
+    "Sec-Ch-Ua": '"Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
+}
+
+IMPERSONATIONS = ["chrome124", "chrome120", "safari17_0", "edge101"]
+
 OUTPUT_FILE = (
     sys.argv[1]
     if len(sys.argv) > 1
@@ -53,69 +73,138 @@ def load_input_urls():
     return [DEFAULT_SITEMAP_URL]
 
 
+def fetch_with_impersonation(session, url, max_retries=3):
+    """Fetches URL with rotating browser TLS impersonations and exponential backoff."""
+    for attempt in range(max_retries):
+        imp = IMPERSONATIONS[attempt % len(IMPERSONATIONS)]
+        try:
+            r = session.get(
+                url,
+                impersonate=imp,
+                headers=DEFAULT_HEADERS,
+                timeout=25,
+            )
+            if r.status_code == 200 and len(r.text) > 100:
+                return r
+            time.sleep(0.25 * (attempt + 1))
+        except Exception:
+            time.sleep(0.25 * (attempt + 1))
+    return None
+
+
 def extract_product_urls_from_sitemap(session, sitemap_url):
     emit_status(sitemap_url, 'running', url_type='sitemap')
-    try:
-        r = session.get(sitemap_url, impersonate="chrome124", timeout=30)
-        if r.status_code != 200:
-            emit_status(sitemap_url, 'blocked', url_type='sitemap')
-            return []
+    r = fetch_with_impersonation(session, sitemap_url)
+    if not r:
+        emit_status(sitemap_url, 'blocked', url_type='sitemap')
+        return []
 
+    try:
         sel = Selector(text=r.text)
         urls = sel.css("loc::text").getall()
         if not urls:
             urls = sel.xpath("//*[local-name()='loc']/text()").getall()
 
-        product_urls = [u.strip() for u in urls if u and "/product/" in u]
-        for u in product_urls:
-            emit_status(u, 'pending', parent=sitemap_url, url_type='product')
+        product_urls = []
+        for u in urls:
+            u_clean = u.strip()
+            if not u_clean:
+                continue
+            if "/product/" in u_clean:
+                product_urls.append(u_clean)
+                emit_status(u_clean, 'pending', parent=sitemap_url, url_type='product')
+            elif ("sitemap" in u_clean.lower() or u_clean.endswith(".xml")) and u_clean != sitemap_url:
+                # Sub-sitemap
+                sub_r = fetch_with_impersonation(session, u_clean)
+                if sub_r:
+                    sub_sel = Selector(text=sub_r.text)
+                    sub_urls = sub_sel.css("loc::text").getall() or sub_sel.xpath("//*[local-name()='loc']/text()").getall()
+                    for su in sub_urls:
+                        su_clean = su.strip()
+                        if "/product/" in su_clean:
+                            product_urls.append(su_clean)
+                            emit_status(su_clean, 'pending', parent=u_clean, url_type='product')
 
         emit_status(sitemap_url, 'done', url_type='sitemap')
         return product_urls
-    except Exception as e:
+    except Exception:
         emit_status(sitemap_url, 'blocked', url_type='sitemap')
         return []
 
 
 def parse_product_page(session, url, parent_url):
     emit_status(url, 'running', parent=parent_url, url_type='product')
-    try:
-        r = session.get(url, impersonate="chrome124", timeout=30)
-        if r.status_code != 200:
-            emit_status(url, 'blocked', parent=parent_url, url_type='product')
-            return None
+    r = fetch_with_impersonation(session, url)
+    if not r:
+        emit_status(url, 'blocked', parent=parent_url, url_type='product')
+        return None
 
+    try:
         sel = Selector(text=r.text)
         product = None
+
+        # 1. Try application/ld+json extraction
         for script in sel.css('script[type="application/ld+json"]::text').getall():
             try:
                 data = json.loads(script)
-                if data.get("@type") == "Product":
-                    product = data
-                    break
+                if isinstance(data, dict):
+                    if data.get("@type") == "Product":
+                        product = data
+                        break
+                    if "@graph" in data:
+                        for g in data["@graph"]:
+                            if isinstance(g, dict) and g.get("@type") == "Product":
+                                product = g
+                                break
+                        if product:
+                            break
             except Exception:
                 continue
 
-        if not product:
+        # 2. Fallback to HTML CSS extraction
+        name = ""
+        brand = ""
+        sku = ""
+        category = ""
+        price = ""
+        currency = "AED"
+        stock = "Yes"
+        image_url = ""
+        description = ""
+
+        if product:
+            name = product.get("name", "").strip()
+            brand = (product.get("brand") or {}).get("name", "") if isinstance(product.get("brand"), dict) else str(product.get("brand") or "")
+            sku = str(product.get("sku") or "")
+            category = str(product.get("category") or "")
+            offers = product.get("offers") or {}
+            if isinstance(offers, dict):
+                price = str(offers.get("price") or "")
+                currency = str(offers.get("priceCurrency") or "AED")
+                avail = (offers.get("availability") or "").lower()
+                if "outofstock" in avail or "discontinued" in avail:
+                    stock = "No"
+                elif "instock" in avail or "available" in avail:
+                    stock = "Yes"
+            images = product.get("image") or []
+            image_url = images[0] if isinstance(images, list) and images else (images if isinstance(images, str) else "")
+            description = product.get("description", "")
+        else:
+            # HTML fallback
+            name = sel.css('h1.product_title::text, h1::text, title::text').get() or ''
+            name = name.split('|')[0].strip()
+            price = sel.css('.price .amount bdi::text, .price::text, span.price::text').get() or ''
+            sku = sel.css('.sku::text').get() or ''
+            image_url = sel.css('.woocommerce-product-gallery__image img::attr(src), img.wp-post-image::attr(src)').get() or ''
+
+        if not name:
             emit_status(url, 'blocked', parent=parent_url, url_type='product')
             return None
 
-        name = product.get("name", "").strip()
-        offers = product.get("offers") or {}
-        images = product.get("image") or []
-
-        def in_stock(availability):
-            availability = (availability or "").lower()
-            if "outofstock" in availability or "discontinued" in availability:
-                return "No"
-            if "instock" in availability or "limitedavailability" in availability or "preorder" in availability:
-                return "Yes"
-            return "Unknown"
-
         item = OrderedDict()
         item["Name"] = name
-        item["Brand"] = (product.get("brand") or {}).get("name", "")
-        item["SKU"] = product.get("sku", "")
+        item["Brand"] = brand
+        item["SKU"] = sku
 
         size_m = SIZE_RE.search(name)
         item["Tire Size"] = size_m.group(0) if size_m else ""
@@ -129,12 +218,12 @@ def parse_product_page(session, url, parent_url):
         year_m = YEAR_RE.search(name)
         item["Year"] = year_m.group(1) if year_m else ""
 
-        item["Category"] = product.get("category", "")
-        item["Price"] = offers.get("price", "")
-        item["Currency"] = offers.get("priceCurrency", "")
-        item["In Stock"] = in_stock(offers.get("availability", ""))
-        item["Image URL"] = images[0] if images else ""
-        item["Description"] = product.get("description", "")
+        item["Category"] = category
+        item["Price"] = price
+        item["Currency"] = currency
+        item["In Stock"] = stock
+        item["Image URL"] = image_url
+        item["Description"] = description
         item["Source"] = url
 
         emit_status(url, 'done', parent=parent_url, url_type='product')
