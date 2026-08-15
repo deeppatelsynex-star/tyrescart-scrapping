@@ -65,32 +65,22 @@
       case 'SUCCESS':
       case 'FINISHED':
         return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-700 border border-sky-200/60">SUCCESS</span>`;
-      case 'STOPPED':
-        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200/60">STOPPED</span>`;
       case 'FAIL':
       case 'FAILED':
-        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 border border-rose-200/60">FAIL</span>`;
+      case 'STOPPED':
       default:
-        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">${st}</span>`;
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 border border-rose-200/60">FAIL</span>`;
     }
   }
 
   function messageCellHtml(row) {
-    const msg = row.errorMessage || '';
-    if (!msg) return '<span class="text-slate-400">—</span>';
-    return `<span class="text-xs text-slate-600 max-w-[240px] inline-block truncate" title="${Shared.escapeHtml(msg)}">${Shared.escapeHtml(msg)}</span>`;
-  }
-
-  function actionsCellHtml(row) {
     const isRunning = (row.status || '').toUpperCase() === 'RUNNING';
+    const msg = row.errorMessage || '';
     if (isRunning && row.fileId) {
-      return `
-        <div class="flex items-center justify-end gap-3">
-          <a href="/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer">Live Progress</a>
-        </div>
-      `;
+      return `<a href="/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer">Live Progress →</a>`;
     }
-    return '<span class="text-slate-400">—</span>';
+    if (!msg) return '<span class="text-slate-400">—</span>';
+    return `<span class="text-xs text-slate-600 max-w-[280px] inline-block truncate" title="${Shared.escapeHtml(msg)}">${Shared.escapeHtml(msg)}</span>`;
   }
 
   function updateStatsCards(stats) {
@@ -155,10 +145,6 @@
         {
           data: null,
           render: (data, type, row) => (type === 'display' ? messageCellHtml(row) : (row.errorMessage || '')),
-        },
-        {
-          data: null, orderable: false, searchable: false, className: 'text-right',
-          render: (data, type, row) => (type === 'display' ? actionsCellHtml(row) : ''),
         },
       ],
     }));

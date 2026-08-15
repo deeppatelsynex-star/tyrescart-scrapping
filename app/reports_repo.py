@@ -156,17 +156,13 @@ def serialize_log(row):
     end_time = row.get('end_time')
     raw_status = (row.get('status') or 'UNKNOWN').upper()
 
-    # Normalize status to RUNNING, SUCCESS, FAIL, STOPPED
+    # Normalize status to strictly RUNNING, SUCCESS, or FAIL per requirements
     if raw_status in ('FINISHED', 'SUCCESS', 'DONE'):
         status = 'SUCCESS'
-    elif raw_status in ('FAILED', 'FAIL', 'ERROR'):
-        status = 'FAIL'
-    elif raw_status == 'STOPPED':
-        status = 'STOPPED'
     elif raw_status == 'RUNNING':
         status = 'RUNNING'
     else:
-        status = raw_status
+        status = 'FAIL'
 
     output_path = row.get('output_file_path')
     output_available = bool(output_path and os.path.exists(output_path))
@@ -195,10 +191,10 @@ def serialize_log(row):
         'endTimeRaw': end_time.isoformat() + 'Z' if end_time else None,
         'duration': duration_str,
         'durationSeconds': duration_secs,
-        'noOfUrlFound': row.get('no_of_url_found', 0),
-        'totalSuccessUrl': row.get('total_success_url', 0),
-        'totalBlockUrl': row.get('total_block_url', 0),
-        'dataScraped': row.get('data_scraped') or (count_excel_data_rows(output_path) if output_available else 0),
+        'noOfUrlFound': row.get('no_of_url_found', 0) or 0,
+        'totalSuccessUrl': row.get('total_success_url', 0) or 0,
+        'totalBlockUrl': row.get('total_block_url', 0) or 0,
+        'dataScraped': row.get('data_scraped', 0) or 0,
         'outputAvailable': output_available,
         'errorMessage': row.get('error_message'),
     }

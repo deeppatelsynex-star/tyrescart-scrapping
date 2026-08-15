@@ -42,13 +42,13 @@ MAX_RUNTIME_SECONDS = 6 * 3600
 MAX_CONCURRENT_SCRAPERS = 4
 
 _processes = {}  # file_id -> {'process': Popen, 'report_id': int, 'timer': Timer, 'stopped': bool, 'timeout_stopped': bool}
-_lock = threading.Lock()
+_lock = threading.RLock()
 
 # Live per-URL status, so a scraper started from /files can be watched on the
 # main Scraper page (redirected there with ?fileId=<id>) the same way an
 # ad-hoc /StartScraper job is.
 _statuses = {}  # file_id -> [{'url', 'status', 'parent', 'type'}, ...]
-_statuses_lock = threading.Lock()
+_statuses_lock = threading.RLock()
 
 
 class StartError(Exception):
@@ -60,9 +60,9 @@ def is_running(file_id):
         entry = _processes.get(file_id)
         if entry and entry['process'].poll() is None:
             return True
-    # Also check persistent working state in database
+    # Also check persistent working state in database with bit_to_bool
     rec = files_repo.get_file(file_id)
-    return bool(rec and bool(rec.get('working')))
+    return bool(rec and files_repo.bit_to_bool(rec.get('working')))
 
 
 def running_count():
@@ -135,7 +135,7 @@ def get_statuses(file_id):
 _outputs = {}  # file_id -> absolute path
 import reports_repo
 
-_outputs_lock = threading.Lock()
+_outputs_lock = threading.RLock()
 
 
 def get_output_path(file_id):
@@ -278,13 +278,15 @@ def _run(file_id, script_path, urls, report_id=None):
         data_scraped = reports_repo.count_excel_data_rows(final_output_path) if final_output_path else 0
 
         # Determine normalized final status and error/stop message
+        # Requirement: Status column only uses RUNNING, SUCCESS, FAIL.
+        # Timeouts and stops map to FAIL with specific reason in details.
         error_message = None
         if was_timeout:
-            final_status = 'STOPPED'
-            error_message = 'Scraper automatically stopped because the maximum runtime of 6 hours was exceeded.'
+            final_status = 'FAIL'
+            error_message = 'Scraper automatically stopped because execution time exceeded 6 hours. Status: STOPPED Reason: TIMEOUT (>6 HOURS)'
         elif was_stopped:
-            final_status = 'STOPPED'
-            error_message = 'Scraper stopped by user.'
+            final_status = 'FAIL'
+            error_message = 'Scraper stopped by user. Status: STOPPED'
         elif returncode == 0:
             final_status = 'SUCCESS'
         else:
@@ -321,7 +323,7 @@ def start(file_id, user_id=None):
 
     with _lock:
         if is_running(file_id):
-            raise StartError('Scraper is already running. Please wait until the current scraper process is completed.')
+            raise StartError('Scraper is currently running. Please wait until the current process is completed.')
 
         if running_count() >= MAX_CONCURRENT_SCRAPERS:
             raise StartError(f'Too many scrapers are already running (limit: {MAX_CONCURRENT_SCRAPERS}). Wait for one to finish.')
@@ -388,3 +390,27 @@ def stop(file_id):
 
     files_repo.set_working(file_id, 0)
     return True
+
+
+def init_cleanup():
+    """Cleans up any orphaned running records from previous server runs."""
+    try:
+        from db import get_connection
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("UPDATE fileTbl SET working = 0 WHERE working = 1")
+                cursor.execute("""
+                    UPDATE logTbl 
+                    SET status = 'FAIL', 
+                        end_time = NOW(), 
+                        error_message = 'Scraper stopped because server restarted.' 
+                    WHERE status = 'RUNNING' AND end_time IS NULL
+                """)
+        finally:
+            conn.close()
+    except Exception:
+        pass
+
+
+init_cleanup()

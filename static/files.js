@@ -641,10 +641,7 @@
     } else if (st === 'SUCCESS' || st === 'FINISHED') {
       badgeClass = 'bg-sky-100 text-sky-700 border-sky-200';
       statusLabel = 'SUCCESS';
-    } else if (st === 'STOPPED') {
-      badgeClass = 'bg-amber-100 text-amber-700 border-amber-200';
-      statusLabel = 'STOPPED';
-    } else if (st === 'FAIL' || st === 'FAILED') {
+    } else {
       badgeClass = 'bg-rose-100 text-rose-700 border-rose-200';
       statusLabel = 'FAIL';
     }
@@ -689,7 +686,7 @@
   async function startFile(fileId) {
     const file = filesById.get(fileId);
     if (file && file.working) {
-      Shared.showToast('Scraper is already running. Please wait until the current scraper process is completed.', 'warning');
+      Shared.showToast('Scraper is currently running. Please wait until the current process is completed.', 'warning');
       return;
     }
     Shared.showToast(`Starting scraper "${file?.siteName || 'Scraper'}"… please wait`, 'info');
@@ -706,7 +703,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.success) {
-        const errMsg = data.error || (response.status === 409 ? 'Scraper is already running. Please wait until the current scraper process is completed.' : 'Unable to start scraper.');
+        const errMsg = data.error || (response.status === 409 ? 'Scraper is currently running. Please wait until the current process is completed.' : 'Unable to start scraper.');
         Shared.logError('Start Scraper', errMsg, { fileId, status: response.status });
         Shared.showToast(errMsg, 'warning');
         return;
