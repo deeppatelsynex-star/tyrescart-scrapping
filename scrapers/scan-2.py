@@ -28,6 +28,24 @@ TODAY = datetime.now().strftime("%d-%m-%Y")
 
 DEFAULT_SITEMAP_URL = "https://gcco.ae/sitemap.xml"
 
+DEFAULT_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/127.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Sec-Ch-Ua": '"Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
+}
+
 OUTPUT_FILE = (
     sys.argv[1]
     if len(sys.argv) > 1
@@ -53,35 +71,51 @@ def load_input_urls():
     return [DEFAULT_SITEMAP_URL]
 
 
+def robust_get(session, url, retries=3):
+    impersonates = ["chrome124", "safari17_0", "chrome120"]
+    for attempt in range(retries):
+        imp = impersonates[attempt % len(impersonates)]
+        try:
+            r = session.get(
+                url,
+                headers=DEFAULT_HEADERS,
+                impersonate=imp,
+                timeout=35,
+                allow_redirects=True,
+            )
+            if r.status_code == 200 and r.text:
+                return r
+            time.sleep(1 + attempt * 0.5)
+        except Exception:
+            time.sleep(1 + attempt * 0.5)
+    return None
+
+
 def extract_product_urls_from_sitemap(session, sitemap_url):
     emit_status(sitemap_url, 'running', url_type='sitemap')
-    try:
-        r = session.get(sitemap_url, impersonate="chrome124", timeout=30)
-        if r.status_code != 200:
-            emit_status(sitemap_url, 'blocked', url_type='sitemap')
-            return []
-
-        sel = Selector(text=r.text)
-        urls = sel.css("loc::text").getall()
-        if not urls:
-            urls = sel.xpath("//*[local-name()='loc']/text()").getall()
-
-        product_urls = [u.strip() for u in urls if u and "/product/" in u]
-        for u in product_urls:
-            emit_status(u, 'pending', parent=sitemap_url, url_type='product')
-
-        emit_status(sitemap_url, 'done', url_type='sitemap')
-        return product_urls
-    except Exception as e:
+    r = robust_get(session, sitemap_url, retries=4)
+    if not r:
         emit_status(sitemap_url, 'blocked', url_type='sitemap')
         return []
+
+    sel = Selector(text=r.text)
+    urls = sel.css("loc::text").getall()
+    if not urls:
+        urls = sel.xpath("//*[local-name()='loc']/text()").getall()
+
+    product_urls = [u.strip() for u in urls if u and "/product/" in u]
+    for u in product_urls:
+        emit_status(u, 'pending', parent=sitemap_url, url_type='product')
+
+    emit_status(sitemap_url, 'done', url_type='sitemap')
+    return product_urls
 
 
 def parse_product_page(session, url, parent_url):
     emit_status(url, 'running', parent=parent_url, url_type='product')
     try:
-        r = session.get(url, impersonate="chrome124", timeout=30)
-        if r.status_code != 200:
+        r = robust_get(session, url, retries=3)
+        if not r or r.status_code != 200:
             emit_status(url, 'blocked', parent=parent_url, url_type='product')
             return None
 
@@ -168,7 +202,6 @@ class ExcelWriter:
             row = [item.get(h, "") for h in self.headers]
             self.ws.append(row)
             self.save_count += 1
-            # Auto-save every 5 items
             if self.save_count % 5 == 0:
                 self.wb.save(self.file_path)
 
@@ -203,7 +236,6 @@ def main():
         writer.close()
         return
 
-    # Worker thread session pool
     thread_sessions = threading.local()
 
     def get_thread_session():
