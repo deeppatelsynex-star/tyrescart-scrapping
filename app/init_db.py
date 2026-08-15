@@ -50,8 +50,41 @@ CREATE TABLE IF NOT EXISTS fileTbl (
     python_file_path VARCHAR(255) NOT NULL UNIQUE,
     urls_json TEXT NULL,
     working BIT(1) NOT NULL DEFAULT 0,
+    is_deleted BIT(1) NOT NULL DEFAULT 0,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    created_by INT NULL,
     create_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)
+"""
+
+NEW_FILE_COLUMNS = {
+    "is_deleted": "ALTER TABLE fileTbl ADD COLUMN is_deleted BIT(1) NOT NULL DEFAULT 0",
+    "deleted_at": "ALTER TABLE fileTbl ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL",
+    "created_by": "ALTER TABLE fileTbl ADD COLUMN created_by INT NULL",
+}
+
+
+CREATE_LOG_TBL = """
+CREATE TABLE IF NOT EXISTS logTbl (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    scraper VARCHAR(255) NOT NULL,
+    file_id INT NULL,
+    user_id INT NOT NULL,
+    start_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP NULL DEFAULT NULL,
+    no_of_url_found INT NOT NULL DEFAULT 0,
+    total_success_url INT NOT NULL DEFAULT 0,
+    total_block_url INT NOT NULL DEFAULT 0,
+    data_scraped INT NOT NULL DEFAULT 0,
+    status VARCHAR(50) NOT NULL DEFAULT 'RUNNING',
+    output_file_path VARCHAR(500) NULL,
+    error_message TEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES userTbl(userid) ON DELETE CASCADE,
+    INDEX idx_log_user_id (user_id),
+    INDEX idx_log_file_id (file_id),
+    INDEX idx_log_start_time (start_time)
 )
 """
 
@@ -61,9 +94,18 @@ def add_missing_columns(cursor):
         "SELECT COLUMN_NAME FROM information_schema.COLUMNS "
         "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'userTbl'"
     )
-    existing = {row["COLUMN_NAME"] for row in cursor.fetchall()}
+    existing_user = {row["COLUMN_NAME"] for row in cursor.fetchall()}
     for column, statement in NEW_COLUMNS.items():
-        if column not in existing:
+        if column not in existing_user:
+            cursor.execute(statement)
+
+    cursor.execute(
+        "SELECT COLUMN_NAME FROM information_schema.COLUMNS "
+        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'fileTbl'"
+    )
+    existing_file = {row["COLUMN_NAME"] for row in cursor.fetchall()}
+    for column, statement in NEW_FILE_COLUMNS.items():
+        if column not in existing_file:
             cursor.execute(statement)
 
 
@@ -75,7 +117,9 @@ def main():
             add_missing_columns(cursor)
             cursor.execute(CREATE_PASSWORD_RESET_TBL)
             cursor.execute(CREATE_FILE_TBL)
-        print("userTbl, password_reset_tbl, and fileTbl are ready.")
+            cursor.execute("DROP TABLE IF EXISTS scraperReportTbl")
+            cursor.execute(CREATE_LOG_TBL)
+        print("userTbl, password_reset_tbl, fileTbl, and logTbl are ready.")
     finally:
         conn.close()
 

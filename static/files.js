@@ -12,6 +12,7 @@
   const newBtn = document.getElementById('files-new-btn');
   const refreshBtn = document.getElementById('files-refresh-btn');
   const refreshIcon = document.getElementById('files-refresh-icon');
+  const zipBtn = document.getElementById('files-download-zip-btn');
 
   const modal = document.getElementById('files-modal');
   const modalTitle = document.getElementById('files-modal-title');
@@ -24,24 +25,19 @@
   const submitLabel = document.getElementById('files-form-submit-label');
 
   const deleteModal = document.getElementById('files-delete-modal');
+  const deleteTitle = deleteModal ? deleteModal.querySelector('h3') : null;
   const deleteText = document.getElementById('files-delete-text');
   const deleteError = document.getElementById('files-delete-error');
   const deleteConfirmBtn = document.getElementById('files-delete-confirm');
 
   // --- URLs: paste a list directly into the textarea, or upload a CSV --
-  // the CSV's rows get converted into that same newline list (via
-  // /api/files/parse-urls) so by submit time there's one source of truth,
-  // regardless of which path was used. ---
   const urlsTextarea = document.getElementById('files-form-urls');
   const urlsCsvInput = document.getElementById('files-form-urls-csv');
   const urlsSpinner = document.getElementById('files-form-urls-spinner');
   const urlsStatus = document.getElementById('files-form-urls-status');
   const URLS_STATUS_DEFAULT = "A CSV's URL column (or first column) is converted into the list above -- review it before saving.";
 
-  // --- Python File: upload-only now (no more "pick an existing file"
-  // dropdown), gated to SuperAdmin/Admin since it's the only way to set/
-  // change a scraper's code. Everyone else still sees the current file name
-  // read-only and can save Site Name/Logo edits without touching it. ---
+  // --- Python File: upload-only now ---
   const currentFileNote = document.getElementById('files-form-current-file');
   const currentFileNameEl = document.getElementById('files-form-current-file-name');
   const uploadPanel = document.getElementById('files-form-upload-panel');
@@ -57,18 +53,11 @@
   let filesById = new Map();
   let table = null;
   let pendingDeleteId = null;
-  let inFlightStarts = new Map(); // file_id -> 'start'|'stop', for rows currently mid-request
-  // Holds whatever python_file_path the form will submit: pre-filled with the
-  // record's existing path when editing (so saving Site Name/Logo alone
-  // doesn't require touching the file), overwritten if a new file is uploaded.
+  let inFlightStarts = new Map(); // file_id -> 'start'|'stop'
+  let inFlightToggles = new Set(); // file_id
   let uploadedFileName = null;
 
   const canUploadScripts = () => currentRole === 'SuperAdmin' || currentRole === 'Admin';
-
-  // No background polling -- the table only reloads on an explicit user
-  // action (the Refresh button, or as the direct result of Start/Stop/Save/
-  // Delete). lastFilesSnapshot still skips an unnecessary table rebuild if a
-  // manual refresh happens to return exactly the same data.
   let lastFilesSnapshot = null;
 
   function logoCellHtml(row) {
@@ -79,45 +68,36 @@
     return '<span class="inline-flex w-8 h-8 rounded-lg bg-slate-100 items-center justify-center text-slate-400 text-xs">?</span>';
   }
 
-  function urlsCellHtml(row) {
-    const urls = row.urls || [];
-    if (!urls.length) {
-      return '<span class="text-xs text-slate-400">No URLs</span>';
-    }
-    return `<button type="button" data-action="view-urls" data-id="${row.fileId}" class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 hover:bg-slate-200 cursor-pointer">${urls.length} URL${urls.length === 1 ? '' : 's'}</button>`;
-  }
-
-  function openUrlsModal(file) {
-    const modal = document.getElementById('files-urls-modal');
-    const subtitle = document.getElementById('files-urls-modal-subtitle');
-    const list = document.getElementById('files-urls-modal-list');
-    const urls = file.urls || [];
-
-    subtitle.textContent = `${file.siteName} — ${urls.length} URL${urls.length === 1 ? '' : 's'}`;
-    list.innerHTML = urls.length
-      ? urls.map((url) => `
-          <li class="rounded-lg bg-slate-50 px-3 py-2">
-            <span class="break-all text-sm text-slate-700">${Shared.escapeHtml(url)}</span>
-          </li>
-        `).join('')
-      : '<li class="text-sm text-slate-400">No URLs saved for this scraper.</li>';
-
-    Shared.openModal(modal);
+  function createdByCellHtml(row) {
+    const name = row.createdByName || 'Admin';
+    const safeName = Shared.escapeHtml(name);
+    const initial = (name.trim()[0] || 'U').toUpperCase();
+    return `
+      <div class="flex items-center gap-2">
+        <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-700 border border-slate-200">${initial}</span>
+        <span class="font-medium text-slate-800">${safeName}</span>
+      </div>
+    `;
   }
 
   function statusBadgeHtml(row) {
     return row.working
       ? `<a href="/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors" title="Click to view live progress"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Running</a>`
-      : '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-500">Not Running</span>';
+      : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${row.isEnabled ? 'bg-slate-200 text-slate-500' : 'bg-slate-100 text-slate-400'}">${row.isEnabled ? 'Not Running' : 'Disabled'}</span>`;
   }
 
   function actionsCellHtml(row) {
     const busyAction = inFlightStarts.get(row.fileId);
-    const busy = !!busyAction;
-    const startStopLabel = busyAction === 'stop' ? 'Stopping…' : busyAction === 'start' ? 'Starting…' : (row.working ? 'Stop' : 'Start');
+    const busy = !row.isEnabled || !!busyAction;
+    const startStopLabel = busyAction === 'stop'
+      ? 'Stopping…'
+      : busyAction === 'start'
+      ? 'Please wait…'
+      : (row.working ? 'Stop' : 'Start');
+    const startStopDisabled = !row.isEnabled || row.working ? (row.working ? '' : 'disabled title="Enable scraper before starting"') : '';
     const startStopBtn = row.working
-      ? `<button type="button" data-action="stop" data-id="${row.fileId}" ${busy ? 'disabled' : ''} class="text-xs font-semibold ${busy ? 'text-slate-300 cursor-not-allowed' : 'text-rose-600 hover:underline cursor-pointer'}">${startStopLabel}</button>`
-      : `<button type="button" data-action="start" data-id="${row.fileId}" ${busy ? 'disabled' : ''} class="text-xs font-semibold ${busy ? 'text-slate-300 cursor-not-allowed' : 'text-emerald-600 hover:underline cursor-pointer'}">${startStopLabel}</button>`;
+      ? `<button type="button" data-action="stop" data-id="${row.fileId}" ${busyAction === 'stop' ? 'disabled' : ''} class="text-xs font-semibold ${busyAction === 'stop' ? 'text-slate-300 cursor-not-allowed' : 'text-rose-600 hover:underline cursor-pointer'}">${startStopLabel}</button>`
+      : `<button type="button" data-action="start" data-id="${row.fileId}" ${startStopDisabled || busy ? 'disabled' : ''} class="text-xs font-semibold ${busy ? 'text-slate-400 cursor-not-allowed' : 'text-emerald-600 hover:underline cursor-pointer'}">${startStopLabel}</button>`;
     const viewLiveBtn = row.working
       ? `<a href="/scraperpage?fileId=${row.fileId}" class="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer">View Progress</a>`
       : '';
@@ -134,13 +114,68 @@
       </div>`;
   }
 
+  function enabledToggleHtml(row) {
+    const isBusy = inFlightToggles.has(row.fileId);
+    const checked = row.isEnabled ? 'checked' : '';
+    const disabled = row.working || isBusy ? 'disabled' : '';
+    const title = row.working ? 'Stop scraper before disabling' : (row.isEnabled ? 'Enabled (click to disable)' : 'Disabled (click to enable)');
+    return `
+      <div class="flex items-center justify-center">
+        <label class="relative inline-flex items-center ${row.working || isBusy ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}" title="${title}">
+          <input type="checkbox" data-action="toggle-status" data-id="${row.fileId}" class="sr-only peer" ${checked} ${disabled}>
+          <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+        </label>
+      </div>
+    `;
+  }
+
+  function updateZipButtonState(anyRunning, hasAnyOutput) {
+    if (!zipBtn) return;
+    if (anyRunning) {
+      zipBtn.classList.add('opacity-50', 'pointer-events-none', 'cursor-not-allowed', 'bg-slate-400');
+      zipBtn.classList.remove('bg-slate-900', 'hover:bg-slate-800');
+      zipBtn.setAttribute('title', 'Scraping is in progress. Please wait until all scrapers finish before downloading ZIP.');
+      zipBtn.innerHTML = `
+        <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <span>Scraping In Progress…</span>
+      `;
+    } else if (!hasAnyOutput) {
+      zipBtn.classList.add('opacity-50', 'pointer-events-none', 'cursor-not-allowed', 'bg-slate-400');
+      zipBtn.classList.remove('bg-slate-900', 'hover:bg-slate-800');
+      zipBtn.setAttribute('title', 'No completed scraper reports available to download.');
+      zipBtn.innerHTML = `
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        <span>Download ZIP</span>
+      `;
+    } else {
+      zipBtn.classList.remove('opacity-50', 'pointer-events-none', 'cursor-not-allowed', 'bg-slate-400');
+      zipBtn.classList.add('bg-slate-900', 'hover:bg-slate-800');
+      zipBtn.setAttribute('title', 'Download a ZIP archive containing Excel reports for all finished scrapers');
+      zipBtn.innerHTML = `
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        <span>Download ZIP</span>
+      `;
+    }
+  }
+
   function initTable() {
     table = $(tableEl).DataTable(Shared.commonDataTableOptions({
       data: [],
       order: [[1, 'asc']],
       language: {
         search: '',
-        searchPlaceholder: 'Search site name, python file…',
+        searchPlaceholder: 'Search scrapers, created by…',
         lengthMenu: 'Show _MENU_ per page',
         info: 'Showing _START_ to _END_ of _TOTAL_',
         infoEmpty: 'No scrapers to show',
@@ -158,11 +193,7 @@
         },
         {
           data: null,
-          render: (data, type, row) => (type === 'display' ? `<code class="text-xs">${Shared.escapeHtml(row.pythonFilePath)}</code>` : row.pythonFilePath),
-        },
-        {
-          data: null, orderable: false,
-          render: (data, type, row) => (type === 'display' ? urlsCellHtml(row) : row.urlCount),
+          render: (data, type, row) => (type === 'display' ? createdByCellHtml(row) : (row.createdByName || '')),
         },
         {
           data: null,
@@ -180,6 +211,10 @@
           data: null, orderable: false, searchable: false, className: 'text-right',
           render: (data, type, row) => (type === 'display' ? actionsCellHtml(row) : ''),
         },
+        {
+          data: null, orderable: false, searchable: false, className: 'text-center',
+          render: (data, type, row) => (type === 'display' ? enabledToggleHtml(row) : (row.isEnabled ? 1 : 0)),
+        },
       ],
     }));
   }
@@ -196,17 +231,10 @@
       const data = await response.json();
       csrfToken = data.csrfToken;
       currentRole = data.user ? data.user.role : null;
-      // Uploading is the only way left to set/change a scraper's Python
-      // file, and it's code that will later run on the server -- so both
-      // creating a scraper and the upload control itself are SuperAdmin/
-      // Admin-only. Everyone else can still open Edit to change Site Name/
-      // Logo (the file stays whatever it already was).
       newBtn.classList.toggle('hidden', !canUploadScripts());
       uploadPanel.classList.toggle('hidden', !canUploadScripts());
       noAccessNote.classList.toggle('hidden', canUploadScripts());
-    } catch (err) {
-      // Leave csrfToken/currentRole null -- any mutating request will just get a clear 401/403.
-    }
+    } catch (err) {}
   }
 
   async function loadFiles({ silent } = {}) {
@@ -227,8 +255,23 @@
       files = data.files || [];
       filesById = new Map(files.map((f) => [f.fileId, f]));
 
-      // Rebuilding the table (clear/add/draw) recreates every row's DOM node
-      // -- skip it when the data hasn't actually changed since last time.
+      // Sync working states with browser IndexedDB
+      if (window.IDBStorage) {
+        try {
+          const idbStates = await window.IDBStorage.getAllWorkingStates();
+          for (const f of files) {
+            const idbEntry = idbStates.get(f.fileId);
+            if (f.working) {
+              window.IDBStorage.setWorkingState(f.fileId, true, { siteName: f.siteName });
+            } else if (idbEntry && idbEntry.working && !f.working) {
+              window.IDBStorage.setWorkingState(f.fileId, false, { siteName: f.siteName });
+            }
+          }
+        } catch (e) {}
+      }
+
+      updateZipButtonState(data.anyRunning, data.hasAnyOutput);
+
       const snapshot = JSON.stringify(files);
       if (snapshot !== lastFilesSnapshot) {
         lastFilesSnapshot = snapshot;
@@ -281,12 +324,7 @@
     idInput.value = file.fileId;
     siteNameInput.value = file.siteName;
     logoInput.value = file.logo || '';
-    // Pre-filled with the record's current list -- resaving without
-    // touching this field just resubmits the same URLs unchanged.
     urlsTextarea.value = (file.urls || []).join('\n');
-    // Carried forward unchanged unless the (SuperAdmin/Admin-only) upload
-    // control below replaces it -- this is what lets anyone save a Site
-    // Name/Logo edit without needing to touch the Python file at all.
     uploadedFileName = file.pythonFilePath;
     currentFileNameEl.textContent = file.pythonFilePath;
     currentFileNote.classList.remove('hidden');
@@ -363,14 +401,11 @@
     submitLabel.textContent = isLoading ? 'Processing…' : idleLabel;
   }
 
-  // --- Per-field validation feedback: red outline (stays until fixed) + a
-  // one-shot shake (replayed by removing/re-adding the class, since a CSS
-  // animation won't restart just by the class already being present). ---
   function markFieldError(el) {
     if (!el) return;
     el.classList.add('field-error');
     el.classList.remove('field-shake');
-    void el.offsetWidth; // force reflow so the animation can replay
+    void el.offsetWidth;
     el.classList.add('field-shake');
   }
 
@@ -378,10 +413,8 @@
     if (el) el.classList.remove('field-error', 'field-shake');
   }
 
-  // Clears a field's error state as soon as the user starts fixing it,
-  // rather than leaving the red outline until the next submit attempt.
   [siteNameInput, urlsTextarea].forEach((el) => {
-    el.addEventListener('input', () => clearFieldError(el));
+    el?.addEventListener('input', () => clearFieldError(el));
   });
   uploadInput?.addEventListener('change', () => clearFieldError(uploadInput));
 
@@ -432,11 +465,6 @@
         const message = data.error || 'Unable to save scraper.';
         Shared.showError(modalError, message);
         Shared.showToast(message, 'error');
-        // The client-side checks above catch empty fields before a request
-        // is even sent -- a field-level rejection reaching this point means
-        // the server found something the quick client check couldn't (e.g.
-        // an invalid URL, or a taken Python file path), so map it back to
-        // the right field by a simple keyword match on the error text.
         const lower = message.toLowerCase();
         if (lower.includes('url')) markFieldError(urlsTextarea);
         else if (lower.includes('site name')) markFieldError(siteNameInput);
@@ -447,6 +475,7 @@
       Shared.showToast(id ? 'Scraper updated successfully.' : 'Scraper registered successfully.', 'success');
       await loadFiles();
     } catch (err) {
+      Shared.logError('Save Scraper Form', err, { id, payload });
       Shared.showError(modalError, 'Network error. Please try again.');
       Shared.showToast('Network error. Please try again.', 'error');
     } finally {
@@ -466,15 +495,20 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to delete scraper.';
+        Shared.logError('Delete Scraper', message, { fileId: pendingDeleteId, status: response.status });
         Shared.showError(deleteError, message);
         Shared.showToast(message, 'error');
         return;
       }
+      if (window.IDBStorage) {
+        await window.IDBStorage.clearWorkingState(pendingDeleteId);
+      }
       Shared.closeModal(deleteModal);
       pendingDeleteId = null;
-      Shared.showToast('Scraper and its Python file were deleted.', 'success');
+      Shared.showToast(data.message || 'Scraper and its Python file were deleted.', 'success');
       await loadFiles();
     } catch (err) {
+      Shared.logError('Delete Scraper Network Error', err, { fileId: pendingDeleteId });
       Shared.showError(deleteError, 'Network error. Please try again.');
       Shared.showToast('Network error. Please try again.', 'error');
     } finally {
@@ -482,8 +516,44 @@
     }
   }
 
+  async function toggleFileStatus(fileId, enable) {
+    const file = filesById.get(fileId);
+    if (file && file.working) {
+      Shared.showToast('Stop this scraper before disabling it.', 'warning');
+      table.draw(false);
+      return;
+    }
+    Shared.showToast(enable ? 'Enabling scraper…' : 'Disabling scraper…', 'info');
+    inFlightToggles.add(fileId);
+    table.draw(false);
+    try {
+      const response = await fetch(`/api/files/${fileId}/toggle-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify({ enabled: enable }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        const err = data.error || 'Unable to update status.';
+        Shared.logError('Toggle Scraper Status', err, { fileId, enable, status: response.status });
+        Shared.showToast(err, 'error');
+        return;
+      }
+      Shared.showToast(data.message || (enable ? 'Scraper enabled.' : 'Scraper disabled.'), 'success');
+      await loadFiles();
+    } catch (err) {
+      Shared.logError('Toggle Scraper Status Network Error', err, { fileId, enable });
+      Shared.showToast('Network error while updating status.', 'error');
+    } finally {
+      inFlightToggles.delete(fileId);
+      table.draw(false);
+    }
+  }
+
   // --- Start / Stop ---
   async function startFile(fileId) {
+    const file = filesById.get(fileId);
+    Shared.showToast(`Starting scraper "${file?.siteName || 'Scraper'}"… please wait`, 'info');
     inFlightStarts.set(fileId, 'start');
     table.draw(false);
     let started = false;
@@ -497,21 +567,26 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.success) {
-        Shared.showToast(data.error || 'Unable to start scraper.', 'error');
+        const errMsg = data.error || 'Unable to start scraper.';
+        Shared.logError('Start Scraper', errMsg, { fileId, status: response.status });
+        Shared.showToast(errMsg, 'error');
         return;
       }
       started = true;
+      if (window.IDBStorage) {
+        await window.IDBStorage.setWorkingState(fileId, true, { siteName: file?.siteName });
+      }
       try {
         localStorage.setItem('activeFileScraperId', String(fileId));
       } catch (e) {}
       Shared.showToast('Scraper started successfully. Redirecting…', 'success');
     } catch (err) {
+      Shared.logError('Start Scraper Network Error', err, { fileId });
       Shared.showToast('Network error while starting the scraper.', 'error');
     } finally {
       inFlightStarts.delete(fileId);
       table.draw(false);
       if (started) {
-        // Jump straight to the Scraper process page so the user watches the run
         window.location.href = `/scraperpage?fileId=${fileId}`;
       } else {
         await loadFiles({ silent: true });
@@ -520,6 +595,7 @@
   }
 
   async function stopFile(fileId) {
+    Shared.showToast('Stopping scraper…', 'warning');
     inFlightStarts.set(fileId, 'stop');
     table.draw(false);
     try {
@@ -529,18 +605,20 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.success) {
-        Shared.showToast((data && data.message) || 'Unable to stop scraper.', 'error');
+        const errMsg = (data && data.message) || 'Unable to stop scraper.';
+        Shared.logError('Stop Scraper', errMsg, { fileId, status: response.status });
+        Shared.showToast(errMsg, 'error');
         return;
+      }
+      if (window.IDBStorage) {
+        await window.IDBStorage.setWorkingState(fileId, false);
       }
       Shared.showToast('Scraper stopped.', 'success');
     } catch (err) {
+      Shared.logError('Stop Scraper Network Error', err, { fileId });
       Shared.showToast('Network error while stopping the scraper.', 'error');
     } finally {
       inFlightStarts.delete(fileId);
-      // loadFiles() skips its own rebuild when the fetched data is unchanged
-      // (e.g. a failed start/stop leaves `working` exactly as it was) -- draw
-      // here regardless, so the "Starting…"/"Stopping…" label always clears
-      // instead of getting stuck if that fetch happens to see no data change.
       table.draw(false);
       await loadFiles({ silent: true });
     }
@@ -549,13 +627,19 @@
   document.addEventListener('DOMContentLoaded', () => {
     initTable();
 
-    newBtn.addEventListener('click', openCreateModal);
-    refreshBtn.addEventListener('click', () => loadFiles());
-    form.addEventListener('submit', handleFormSubmit);
-    deleteConfirmBtn.addEventListener('click', handleDeleteConfirm);
+    newBtn?.addEventListener('click', openCreateModal);
+    refreshBtn?.addEventListener('click', () => loadFiles());
+    form?.addEventListener('submit', handleFormSubmit);
+    deleteConfirmBtn?.addEventListener('click', handleDeleteConfirm);
 
     uploadInput?.addEventListener('change', () => handleScriptUpload(uploadInput.files[0]));
     urlsCsvInput?.addEventListener('change', () => handleUrlsCsvUpload(urlsCsvInput.files[0]));
+
+    $(tableEl.tBodies[0]).on('change', 'input[data-action="toggle-status"]', function () {
+      const id = Number(this.getAttribute('data-id'));
+      const isChecked = this.checked;
+      toggleFileStatus(id, isChecked);
+    });
 
     $(tableEl.tBodies[0]).on('click', 'button[data-action]', function () {
       const btn = this;
@@ -568,12 +652,16 @@
       if (action === 'start') { startFile(id); return; }
       if (action === 'stop') { stopFile(id); return; }
       if (action === 'edit') { openEditModal(file); return; }
-      if (action === 'view-urls') { openUrlsModal(file); return; }
+
       if (action === 'delete') {
         pendingDeleteId = id;
-        deleteText.textContent = `This permanently deletes "${file.siteName}" and its file ${file.pythonFilePath} from the server.`;
+        if (deleteTitle) deleteTitle.textContent = 'Delete Scraper?';
+        deleteText.textContent = `This permanently deletes "${file.siteName}" and removes its file (${file.pythonFilePath}) from the server.`;
+        deleteConfirmBtn.textContent = 'Delete';
+        deleteConfirmBtn.className = 'flex-1 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 cursor-pointer';
         Shared.hideError(deleteError);
         Shared.openModal(deleteModal);
+        return;
       }
     });
 

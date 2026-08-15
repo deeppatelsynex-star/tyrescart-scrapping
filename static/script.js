@@ -194,9 +194,12 @@ const buildUrlTree = (statuses) => {
 
 // Renders one sub-URL (child) row: status tick (done/running/blocked/pending) + url + copy button.
 const renderChildRow = (item) => {
-  // Bug fix: was reading the undefined global `status` instead of this item's own status,
-  // so every sub-URL showed the same (blank) tick regardless of done/running/blocked state.
-  const status = (item.status || 'pending').toLowerCase();
+  let status = (item.status || 'pending').toLowerCase();
+  // When scraper is not actively running, never show spinning running animation
+  if (!isCurrentRunning && status === 'running') {
+    status = 'pending';
+  }
+  const isXlsx = !!item.written_to_xlsx;
   return `
     <li class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
         <div class="mt-0.5">${getStatusIcon(status)}</div>
@@ -204,6 +207,7 @@ const renderChildRow = (item) => {
         <div class="min-w-0 flex items-center gap-2">
           <p class="break-all text-sm text-slate-600">${item.url}</p>
           ${typeTag(item.type)}
+          ${isXlsx ? '<span class="inline-flex shrink-0 items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Written to XLSX</span>' : ''}
         </div>
         <div class="flex shrink-0 items-center gap-2">
           ${copyButton(item.url, 'p-1.5')}
@@ -213,13 +217,46 @@ const renderChildRow = (item) => {
   `;
 };
 
+let isCurrentRunning = false;
+
 // Renders one root node (a directly-submitted URL): toggle chevron, status tick,
 // "x/y products done" badge, copy button, and (if expanded) its list of child rows.
 const renderRootNode = (root) => {
-  const status = (root.status || 'pending').toLowerCase();
-  const hasChildren = root.children.length > 0;
+  let status = (root.status || 'pending').toLowerCase();
+  const hasChildren = root.children && root.children.length > 0;
   const expanded = hasChildren && expandedRoots.has(root.url);
-  const doneCount = root.children.filter((c) => (c.status || '').toLowerCase() === 'done').length;
+  const doneCount = hasChildren ? root.children.filter((c) => (c.status || '').toLowerCase() === 'done').length : 0;
+  const blockedCount = hasChildren ? root.children.filter((c) => (c.status || '').toLowerCase() === 'blocked').length : 0;
+
+  if (isCurrentRunning) {
+    // While scraper is actively running:
+    // If all sub-URLs are not done yet, show root in running mode with spinner
+    if (hasChildren) {
+      const allChildrenFinished = root.children.every((c) => {
+        const s = (c.status || '').toLowerCase();
+        return s === 'done' || s === 'blocked';
+      });
+      if (!allChildrenFinished || status === 'running') {
+        status = 'running';
+      } else if (allChildrenFinished) {
+        status = 'done';
+      }
+    }
+  } else {
+    // When scraper is STOPPED or FINISHED (not running):
+    // Never show spinning running animation on any URL!
+    if (status === 'running') {
+      status = (doneCount > 0 || (root.status || '').toLowerCase() === 'done') ? 'done' : 'pending';
+    } else if (hasChildren) {
+      const allChildrenFinished = root.children.every((c) => {
+        const s = (c.status || '').toLowerCase();
+        return s === 'done' || s === 'blocked';
+      });
+      if (allChildrenFinished || (root.status || '').toLowerCase() === 'done' || doneCount > 0) {
+        status = 'done';
+      }
+    }
+  }
 
   return `
     <li class="rounded-2xl border border-slate-200 overflow-hidden">
@@ -257,6 +294,10 @@ const refreshUrlStatuses = async () => {
     const data = await response.json();
     const statuses = data.statuses || [];
     const summary = data.summary || { pending: 0, running: 0, done: 0, blocked: 0 };
+    const xlsxCount = Number(data.xlsx_count || 0);
+
+    const totalProductUrls = statuses.filter((s) => !(s.type === 'root' || !s.parent || s.parent === s.url)).length;
+    const totalMainUrls = statuses.filter((s) => (s.type === 'root' || !s.parent || s.parent === s.url)).length;
 
     const mainUrlDone = statuses.filter((s) => {
       const isRoot = s.type === 'root' || !s.parent || s.parent === s.url;
@@ -265,7 +306,17 @@ const refreshUrlStatuses = async () => {
     const subUrlDone = statuses.filter((s) => (s.status || '').toLowerCase() === 'done' && !(s.type === 'root' || !s.parent || s.parent === s.url)).length;
 
     if (urlSummaryElement) {
+      const totalBadge = totalProductUrls > 0
+        ? `<span class="rounded-full bg-indigo-50 border border-indigo-200 px-3 py-1 text-indigo-700 font-medium">Total Product URLs: <strong>${totalProductUrls}</strong></span>`
+        : `<span class="rounded-full bg-indigo-50 border border-indigo-200 px-3 py-1 text-indigo-700 font-medium">Total URLs: <strong>${totalMainUrls}</strong></span>`;
+
+      const xlsxBadge = xlsxCount > 0
+        ? `<span class="rounded-full bg-teal-50 border border-teal-200 px-3 py-1 text-teal-700 font-semibold">Written to XLSX: <strong>${xlsxCount}</strong></span>`
+        : '';
+
       urlSummaryElement.innerHTML = `
+        ${totalBadge}
+        ${xlsxBadge}
         <span class="rounded-full bg-slate-100 px-3 py-1">Pending: <strong>${summary.pending}</strong></span>
         <span class="rounded-full bg-amber-100 px-3 py-1 text-amber-700">Running: <strong>${summary.running}</strong></span>
         <span class="rounded-full bg-rose-100 px-3 py-1 text-rose-700">Blocked: <strong>${summary.blocked}</strong></span>
@@ -286,7 +337,22 @@ const refreshUrlStatuses = async () => {
     if (!urlStatusList) return;
 
     if (!statuses.length) {
-      urlStatusList.innerHTML = '<li class="rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">No URLs have been reported yet.</li>';
+      if (isCurrentRunning) {
+        urlStatusList.innerHTML = `
+          <li class="rounded-2xl border border-amber-200 bg-amber-50/80 p-5 text-sm text-amber-900 flex items-start gap-3.5 shadow-xs">
+            <svg class="w-5 h-5 animate-spin text-amber-600 shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <div class="space-y-1">
+              <p class="font-semibold text-amber-900">Scraper is running. Please wait…</p>
+              <p class="text-xs text-amber-700">The scraper script is initializing, connecting to the target website, and discovering product URLs.</p>
+            </div>
+          </li>
+        `;
+      } else {
+        urlStatusList.innerHTML = '<li class="rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">No URLs have been reported yet.</li>';
+      }
       return;
     }
 
@@ -334,16 +400,26 @@ const refreshStatus = async () => {
       }
     }
 
+    isCurrentRunning = !!state.running;
+
     if (state.running) {
       setStatus('Running', 'bg-emerald-100 text-emerald-700');
       startStatusPolling();
+      if (window.IDBStorage && fileScraperId) {
+        window.IDBStorage.setWorkingState(fileScraperId, true, { siteName: rawState.siteName });
+      }
     } else if (state.done) {
       setStatus('Finished', 'bg-slate-100 text-slate-700');
       stopStatusPolling();
-      if (fileScraperId) forgetFileScraper();
-
+      if (fileScraperId) {
+        if (window.IDBStorage) window.IDBStorage.setWorkingState(fileScraperId, false);
+        forgetFileScraper();
+      }
     } else {
       setStatus('Idle', 'bg-slate-100 text-slate-700');
+      if (fileScraperId && window.IDBStorage) {
+        window.IDBStorage.setWorkingState(fileScraperId, false);
+      }
     }
 
     updateControls(state);
@@ -480,12 +556,35 @@ const ensureFileScraperCsrfToken = async () => {
 };
 if (fileScraperId) ensureFileScraperCsrfToken();
 
+if (downloadButton) {
+  downloadButton.addEventListener('click', () => {
+    if (window.AdminShared) {
+      window.AdminShared.showToast('Starting report download…', 'info');
+    }
+  });
+}
+
+if (fileScraperSelect) {
+  fileScraperSelect.addEventListener('change', () => {
+    const target = fileScraperSelect.value;
+    if (target && target !== String(fileScraperId)) {
+      if (window.AdminShared) {
+        window.AdminShared.showToast('Switching scraper live progress view…', 'info');
+      }
+      window.location.href = `/?fileId=${target}`;
+    }
+  });
+}
+
 // Stop button: calls /stop-scraper (or, when watching a /files scraper,
 // /api/files/<id>/stop), then resets the UI and stops polling on success.
 if (stopButton) {
   stopButton.addEventListener('click', async (e) => {
     e.preventDefault();
     stopButton.disabled = true;
+    if (window.AdminShared) {
+      window.AdminShared.showToast('Stopping scraper… please wait', 'warning');
+    }
 
     try {
       let response;
@@ -504,13 +603,24 @@ if (stopButton) {
       if (!stopped) {
         throw new Error(result.message || result.error || 'Unable to stop scraper');
       }
+      isCurrentRunning = false;
       setStatus('Stopped', 'bg-rose-100 text-rose-700');
       resetScraperUI();
       stopStatusPolling();
-      if (fileScraperId) forgetFileScraper();
+      if (window.AdminShared) {
+        window.AdminShared.showToast('Scraper stopped successfully.', 'success');
+      }
+      if (fileScraperId) {
+        if (window.IDBStorage) window.IDBStorage.setWorkingState(fileScraperId, false);
+        forgetFileScraper();
+      }
     } catch (error) {
-      console.error(error);
-      alert(error.message || 'Unable to stop scraper.');
+      if (window.AdminShared) {
+        window.AdminShared.logError('Stop Scraper Button', error, { fileScraperId });
+        window.AdminShared.showToast(error.message || 'Unable to stop scraper.', 'error');
+      } else {
+        console.error('[TyresCart Scraper Error]:', error);
+      }
     } finally {
       await refreshStatus();
     }
@@ -542,7 +652,11 @@ if (urlStatusList) {
       button.className = `btncopy flex items-center justify-center rounded-xl border border-emerald-500 bg-emerald-500 ${sizeClass} text-white transition cursor-pointer`;
       button.title = 'Copied!';
 
-      showToast('URL copied to clipboard');
+      if (window.AdminShared) {
+        window.AdminShared.showToast('URL copied to clipboard!', 'success');
+      } else {
+        showToast('URL copied to clipboard');
+      }
 
       clearTimeout(button._resetTimeout);
       button._resetTimeout = setTimeout(() => {
@@ -551,8 +665,13 @@ if (urlStatusList) {
         button.title = 'Copy URL';
       }, 1500);
     } catch (error) {
-      console.error('Failed to copy URL', error);
-      showToast('Failed to copy URL');
+      if (window.AdminShared) {
+        window.AdminShared.logError('Copy URL to Clipboard', error, { url });
+        window.AdminShared.showToast('Failed to copy URL to clipboard.', 'error');
+      } else {
+        console.error('Failed to copy URL', error);
+        showToast('Failed to copy URL');
+      }
     }
   });
 }

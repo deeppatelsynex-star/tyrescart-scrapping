@@ -100,6 +100,7 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to load trash.';
+        Shared.logError('Trash Load', message, { status: response.status });
         Shared.showError(errorEl, message);
         Shared.showToast(message, 'error');
         return;
@@ -109,6 +110,7 @@
       table.rows.add(users);
       table.draw(false);
     } catch (err) {
+      Shared.logError('Trash Load Network Error', err);
       Shared.showError(errorEl, 'Network error while loading trash.');
       Shared.showToast('Network error while loading trash.', 'error');
     } finally {
@@ -120,6 +122,7 @@
     if (!pendingId) return;
     Shared.hideError(restoreError);
     restoreConfirmBtn.disabled = true;
+    Shared.showToast('Restoring user account…', 'info');
     try {
       const response = await fetch(`/api/admin/users/${pendingId}/recover`, {
         method: 'POST',
@@ -128,15 +131,17 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to restore user.';
+        Shared.logError('Restore User', message, { userId: pendingId, status: response.status });
         Shared.showError(restoreError, message);
         Shared.showToast(message, 'error');
         return;
       }
       Shared.closeModal(restoreModal);
       pendingId = null;
-      Shared.showToast('User restored successfully.', 'success');
+      Shared.showToast('User restored successfully to active accounts.', 'success');
       await loadTrash();
     } catch (err) {
+      Shared.logError('Restore User Network Error', err, { userId: pendingId });
       Shared.showError(restoreError, 'Network error. Please try again.');
       Shared.showToast('Network error. Please try again.', 'error');
     } finally {

@@ -15,7 +15,8 @@ from werkzeug.utils import secure_filename
 
 from db import get_connection
 
-FILE_COLUMNS = 'file_id, logo, site_name, python_file_path, urls_json, working, create_date, update_date'
+FILE_COLUMNS = 'file_id, logo, site_name, python_file_path, urls_json, working, is_deleted, deleted_at, created_by, create_date, update_date'
+FILE_SELECT_FIELDS = 'f.file_id, f.logo, f.site_name, f.python_file_path, f.urls_json, f.working, f.is_deleted, f.deleted_at, f.created_by, f.create_date, f.update_date, u.Name AS created_by_name, u.Email AS created_by_email'
 
 # scrapers/ lives at the project root, one level up from app/ (this file's
 # own directory) -- same BASE_DIR anchoring app.py already uses.
@@ -105,10 +106,6 @@ def save_uploaded_script(upload):
         raise FileValidationError('Invalid file name.')
     if not filename.lower().endswith('.py'):
         raise FileValidationError('Only .py files can be uploaded.')
-    # secure_filename() already strips any leading "_"/"." (its own defence
-    # against hidden/dotfiles), so a sanitized name can never collide with or
-    # overwrite a real underscore-prefixed helper file like
-    # _cf_cookie_fetcher.py -- this only guards the non-underscore reserved names.
     if filename in _NON_SCRAPER_FILES:
         raise FileValidationError('That file name is reserved.')
 
@@ -153,12 +150,21 @@ def serialize_file(row):
         except (json.JSONDecodeError, TypeError):
             urls = []
 
+    is_deleted = bit_to_bool(row.get('is_deleted'))
+    created_by_name = (row.get('created_by_name') or '').strip() or 'Admin'
     return {
         'fileId': row['file_id'],
         'logo': row.get('logo'),
         'siteName': row['site_name'],
         'pythonFilePath': row['python_file_path'],
         'working': bit_to_bool(row['working']),
+        'isDeleted': is_deleted,
+        'isEnabled': not is_deleted,
+        'deletedDate': row['deleted_at'].strftime('%d %b %Y %H:%M') if row.get('deleted_at') else None,
+        'deletedDateRaw': row['deleted_at'].isoformat() + 'Z' if row.get('deleted_at') else None,
+        'createdBy': row.get('created_by'),
+        'createdByName': created_by_name,
+        'createdByEmail': row.get('created_by_email'),
         'urls': urls,
         'urlCount': len(urls),
         'createDate': row['create_date'].strftime('%d %b %Y %H:%M') if row.get('create_date') else None,
@@ -168,8 +174,8 @@ def serialize_file(row):
     }
 
 
-def list_files(search=None, page=1, per_page=20):
-    """Returns (rows, total_count). `search` matches site_name or python_file_path."""
+def list_files(search=None, is_deleted=None, page=1, per_page=20):
+    """Returns (rows, total_count). If `is_deleted` is None, returns all scrapers."""
     page = max(1, page)
     per_page = max(1, min(per_page, 200))
     offset = (page - 1) * per_page
@@ -177,25 +183,31 @@ def list_files(search=None, page=1, per_page=20):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            where_clauses = []
+            params = []
+
+            if is_deleted is not None:
+                where_clauses.append('f.is_deleted = %s')
+                params.append(1 if is_deleted else 0)
+
             if search:
                 like = f'%{search}%'
-                cursor.execute(
-                    'SELECT COUNT(*) AS total FROM fileTbl WHERE site_name LIKE %s OR python_file_path LIKE %s',
-                    (like, like),
-                )
-                total = cursor.fetchone()['total']
-                cursor.execute(
-                    f'SELECT {FILE_COLUMNS} FROM fileTbl WHERE site_name LIKE %s OR python_file_path LIKE %s '
-                    'ORDER BY file_id DESC LIMIT %s OFFSET %s',
-                    (like, like, per_page, offset),
-                )
-            else:
-                cursor.execute('SELECT COUNT(*) AS total FROM fileTbl')
-                total = cursor.fetchone()['total']
-                cursor.execute(
-                    f'SELECT {FILE_COLUMNS} FROM fileTbl ORDER BY file_id DESC LIMIT %s OFFSET %s',
-                    (per_page, offset),
-                )
+                where_clauses.append('(f.site_name LIKE %s OR f.python_file_path LIKE %s OR u.Name LIKE %s)')
+                params.extend([like, like, like])
+
+            where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+
+            count_query = f"SELECT COUNT(*) AS total FROM fileTbl f LEFT JOIN userTbl u ON f.created_by = u.userid {where_str}"
+            cursor.execute(count_query, tuple(params))
+            total = cursor.fetchone()['total']
+
+            select_query = (
+                f"SELECT {FILE_SELECT_FIELDS} FROM fileTbl f "
+                f"LEFT JOIN userTbl u ON f.created_by = u.userid "
+                f"{where_str} "
+                f"ORDER BY f.file_id DESC LIMIT %s OFFSET %s"
+            )
+            cursor.execute(select_query, tuple(params + [per_page, offset]))
             return cursor.fetchall(), total
     finally:
         conn.close()
@@ -205,7 +217,12 @@ def get_file(file_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute(f'SELECT {FILE_COLUMNS} FROM fileTbl WHERE file_id = %s', (file_id,))
+            cursor.execute(
+                f'SELECT {FILE_SELECT_FIELDS} FROM fileTbl f '
+                'LEFT JOIN userTbl u ON f.created_by = u.userid '
+                'WHERE f.file_id = %s',
+                (file_id,),
+            )
             return cursor.fetchone()
     finally:
         conn.close()
@@ -219,13 +236,18 @@ def get_file_by_path(python_file_path):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute(f'SELECT {FILE_COLUMNS} FROM fileTbl WHERE python_file_path = %s', (python_file_path,))
+            cursor.execute(
+                f'SELECT {FILE_SELECT_FIELDS} FROM fileTbl f '
+                'LEFT JOIN userTbl u ON f.created_by = u.userid '
+                'WHERE f.python_file_path = %s',
+                (python_file_path,),
+            )
             return cursor.fetchone()
     finally:
         conn.close()
 
 
-def create_file(logo, site_name, python_file_path):
+def create_file(logo, site_name, python_file_path, created_by=None):
     validated_path = validate_python_file_path(python_file_path)
 
     conn = get_connection()
@@ -233,8 +255,8 @@ def create_file(logo, site_name, python_file_path):
         with conn.cursor() as cursor:
             try:
                 cursor.execute(
-                    'INSERT INTO fileTbl (logo, site_name, python_file_path) VALUES (%s, %s, %s)',
-                    (logo or None, site_name, validated_path),
+                    'INSERT INTO fileTbl (logo, site_name, python_file_path, created_by) VALUES (%s, %s, %s, %s)',
+                    (logo or None, site_name, validated_path, created_by or None),
                 )
             except pymysql.err.IntegrityError:
                 raise FileValidationError('That Python file is already registered as a scraper.')
@@ -260,14 +282,45 @@ def update_file(file_id, logo, site_name, python_file_path):
         conn.close()
 
 
-def delete_file(file_id):
-    """Deletes the fileTbl record AND removes its .py file from scrapers/.
-
-    Unlike userTbl's soft-delete/Trash, this is genuinely irreversible -- no
-    undo, no recovery. The caller (app.py's route) is responsible for
-    confirming with the user and for checking the scraper isn't currently
-    running before calling this.
+def soft_delete_file(file_id):
+    """Soft-deletes a scraper (moves it to Trash/Disabled) by setting
+    is_deleted = 1 and deleted_at = CURRENT_TIMESTAMP. The scraper's .py
+    file is NOT deleted from disk so it can be restored anytime.
     """
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                'UPDATE fileTbl SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE file_id = %s',
+                (file_id,),
+            )
+    finally:
+        conn.close()
+
+
+def restore_file(file_id):
+    """Restores a trashed/disabled scraper back to active status."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                'UPDATE fileTbl SET is_deleted = 0, deleted_at = NULL WHERE file_id = %s',
+                (file_id,),
+            )
+    finally:
+        conn.close()
+
+
+def set_file_enabled(file_id, enabled):
+    """Toggles a scraper enabled (0) or disabled/trashed (1)."""
+    if enabled:
+        restore_file(file_id)
+    else:
+        soft_delete_file(file_id)
+
+
+def delete_file(file_id):
+    """Permanently deletes the fileTbl record AND removes its .py file from scrapers/."""
     record = get_file(file_id)
 
     conn = get_connection()
@@ -282,8 +335,6 @@ def delete_file(file_id):
             script_path = resolve_script_path(record['python_file_path'])
             os.remove(script_path)
         except (FileValidationError, OSError):
-            # The DB registration is already gone -- a missing/unreadable
-            # file at this point shouldn't be reported as a failed delete.
             pass
 
 

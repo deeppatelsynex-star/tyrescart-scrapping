@@ -1,3 +1,4 @@
+import os
 import re
 
 
@@ -41,3 +42,33 @@ def build_status_summary(statuses):
             summary['pending'] += 1
 
     return summary
+
+
+def get_xlsx_info(file_path):
+    """Returns (row_count, set_of_source_urls) for an XLSX file."""
+    if not file_path or not os.path.exists(file_path):
+        return 0, set()
+    try:
+        import openpyxl
+        wb = openpyxl.load_workbook(file_path, read_only=True)
+        sheet = wb.active
+        source_idx = None
+        urls = set()
+        count = 0
+        for i, row in enumerate(sheet.iter_rows(values_only=True)):
+            if i == 0:
+                for idx, col in enumerate(row):
+                    if col and str(col).strip().lower() in ('source', 'source_url', 'url', 'product_url', 'product url'):
+                        source_idx = idx
+                        break
+                continue
+            if not row or not any(row):
+                continue
+            count += 1
+            if source_idx is not None and len(row) > source_idx and row[source_idx]:
+                urls.add(str(row[source_idx]).strip())
+        wb.close()
+        return count, urls
+    except Exception:
+        return 0, set()
+

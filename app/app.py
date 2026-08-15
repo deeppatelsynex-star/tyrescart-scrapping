@@ -19,6 +19,7 @@ from werkzeug.utils import secure_filename
 
 import file_scraper_runner
 import files_repo
+import reports_repo
 from auth import (
     RESET_TOKEN_TTL_MINUTES,
     VALID_ROLES,
@@ -42,7 +43,7 @@ from auth import (
 )
 from db import get_connection
 from mailer import send_email
-from scraper_status_utils import build_status_summary, parse_status_line
+from scraper_status_utils import build_status_summary, get_xlsx_info, parse_status_line
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
@@ -73,19 +74,6 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, 'static'),
 )
 
-
-def _reset_all_stale_working_flags():
-    try:
-        conn = get_connection()
-        with conn.cursor() as c:
-            c.execute("UPDATE fileTbl SET working = 0")
-        conn.commit()
-        conn.close()
-    except Exception:
-        pass
-
-
-_reset_all_stale_working_flags()
 # A random fallback key here would change on every process restart (e.g. Render's
 # free-tier spin-down/cold-start), invalidating every existing session cookie and
 # making the app look like it "reset" on refresh. Set FLASK_SECRET_KEY in the
@@ -489,6 +477,13 @@ def admin_page():
 @role_required_page('SuperAdmin', 'Admin')
 def trash_page():
     return render_template('trash.html', page='trash')
+
+
+@app.route('/reports')
+@login_required_page
+@role_required_page('SuperAdmin')
+def reports_page():
+    return render_template('reports.html', page='reports')
 
 
 @app.route('/api/admin/users', methods=['GET'])
@@ -914,6 +909,7 @@ def scraper_url_statuses_endpoint():
     with state.lock:
         statuses = list(state.url_statuses)
         running = state.process is not None and state.process.poll() is None
+        output_file = state.output_file
         # A completed/failed job's tree is served exactly once (the same request
         # cycle that /scraper-status reports it in), then cleared. Any later
         # fetch -- including a fresh page load after a refresh -- sees the
@@ -921,9 +917,24 @@ def scraper_url_statuses_endpoint():
         if not running and state.job_status == 'idle' and state.url_statuses:
             state.url_statuses.clear()
 
+    xlsx_count, xlsx_urls = get_xlsx_info(output_file)
+    if xlsx_urls:
+        if statuses:
+            for item in statuses:
+                u = item.get('url', '').strip()
+                if u in xlsx_urls:
+                    item['status'] = 'done'
+                    item['written_to_xlsx'] = True
+        else:
+            statuses = [
+                {'url': u, 'status': 'done', 'parent': '', 'type': 'product', 'written_to_xlsx': True}
+                for u in sorted(xlsx_urls)
+            ]
+
     return jsonify({
         'statuses': statuses,
         'summary': build_status_summary(statuses),
+        'xlsx_count': xlsx_count,
     })
 
 
@@ -996,7 +1007,7 @@ def _parse_urls_text(urls_text):
 
 @app.route('/api/files/running')
 @login_required_api
-def api_running_files():
+def api_list_running_files():
     """Every currently-running registered scraper (fileId + siteName only) --
     powers the Scraper page's switcher for hopping between several jobs
     started from /files without losing track of the others.
@@ -1005,15 +1016,20 @@ def api_running_files():
     running = [
         {'fileId': r['file_id'], 'siteName': r['site_name']}
         for r in rows
-        if file_scraper_runner.is_running(r['file_id']) or files_repo.bit_to_bool(r['working'])
+        if file_scraper_runner.is_running(r['file_id'])
     ]
     return jsonify({'files': running})
 
 
-@app.route('/api/files', methods=['GET'])
+@app.route('/api/files')
 @login_required_api
 def api_list_files():
-    search = (request.args.get('search') or '').strip() or None
+    search = request.args.get('search', '').strip() or None
+    raw_trash = request.args.get('trash')
+    is_deleted = None
+    if raw_trash is not None:
+        is_deleted = raw_trash.lower() in ('1', 'true', 'yes')
+
     try:
         page = int(request.args.get('page', 1))
     except ValueError:
@@ -1023,18 +1039,26 @@ def api_list_files():
     except ValueError:
         per_page = 20
 
-    rows, total = files_repo.list_files(search=search, page=page, per_page=per_page)
+    rows, total = files_repo.list_files(search=search, is_deleted=is_deleted, page=page, per_page=per_page)
     serialized = []
     for r in rows:
         item = files_repo.serialize_file(r)
+        is_running = file_scraper_runner.is_running(r['file_id'])
+        item['working'] = is_running
         item['outputAvailable'] = bool(file_scraper_runner.get_output_path(r['file_id']))
         serialized.append(item)
+
+    any_running = file_scraper_runner.running_count() > 0
+    all_outputs = file_scraper_runner.get_all_output_paths()
+    has_any_output = bool(all_outputs)
 
     return jsonify({
         'files': serialized,
         'total': total,
         'page': page,
         'perPage': per_page,
+        'anyRunning': any_running,
+        'hasAnyOutput': has_any_output,
     })
 
 
@@ -1059,7 +1083,8 @@ def api_create_file():
         return jsonify({'error': url_error}), 400
 
     try:
-        file_id = files_repo.create_file(logo, site_name, python_file_path)
+        created_by = session.get('user_id')
+        file_id = files_repo.create_file(logo, site_name, python_file_path, created_by=created_by)
     except files_repo.FileValidationError as exc:
         return jsonify({'error': str(exc)}), 400
 
@@ -1074,7 +1099,7 @@ def api_update_file(file_id):
     record = files_repo.get_file(file_id)
     if not record:
         return jsonify({'error': 'Scraper not found.'}), 404
-    if file_scraper_runner.is_running(file_id) or files_repo.bit_to_bool(record['working']):
+    if file_scraper_runner.is_running(file_id):
         return jsonify({'error': 'Stop this scraper before editing it.'}), 409
 
     data = request.get_json(silent=True) or {}
@@ -1108,19 +1133,73 @@ def api_delete_file(file_id):
     record = files_repo.get_file(file_id)
     if not record:
         return jsonify({'error': 'Scraper not found.'}), 404
-    if file_scraper_runner.is_running(file_id) or files_repo.bit_to_bool(record['working']):
+    if file_scraper_runner.is_running(file_id):
         return jsonify({'error': 'Stop this scraper before deleting it.'}), 409
 
     files_repo.delete_file(file_id)
-    return jsonify({'message': 'Scraper and its Python file were deleted.'})
+    return jsonify({'message': 'Scraper permanently deleted.'})
+
+
+@app.route('/api/files/<int:file_id>/toggle-status', methods=['POST'])
+@login_required_api
+@require_csrf
+def api_toggle_file_status(file_id):
+    record = files_repo.get_file(file_id)
+    if not record:
+        return jsonify({'error': 'Scraper not found.'}), 404
+
+    if file_scraper_runner.is_running(file_id):
+        return jsonify({'error': 'Stop this scraper before disabling it.'}), 409
+
+    data = request.get_json(silent=True) or {}
+    currently_deleted = files_repo.bit_to_bool(record.get('is_deleted'))
+
+    if 'enabled' in data:
+        new_enabled = bool(data['enabled'])
+    else:
+        new_enabled = currently_deleted  # toggle
+
+    files_repo.set_file_enabled(file_id, new_enabled)
+    updated = files_repo.get_file(file_id)
+    return jsonify({
+        'success': True,
+        'isEnabled': new_enabled,
+        'isDeleted': not new_enabled,
+        'message': 'Scraper enabled.' if new_enabled else 'Scraper disabled.',
+        'file': files_repo.serialize_file(updated),
+    })
+
+
+@app.route('/api/files/<int:file_id>/restore', methods=['POST'])
+@login_required_api
+@require_csrf
+def api_restore_file(file_id):
+    record = files_repo.get_file(file_id)
+    if not record:
+        return jsonify({'error': 'Scraper not found.'}), 404
+
+    files_repo.restore_file(file_id)
+    updated = files_repo.get_file(file_id)
+    return jsonify({
+        'success': True,
+        'message': 'Scraper restored to Active list.',
+        'file': files_repo.serialize_file(updated),
+    })
 
 
 @app.route('/api/files/<int:file_id>/start', methods=['POST'])
 @login_required_api
 @require_csrf
 def api_start_file(file_id):
+    record = files_repo.get_file(file_id)
+    if not record:
+        return jsonify({'success': False, 'error': 'Scraper not found.'}), 404
+    if files_repo.bit_to_bool(record.get('is_deleted')):
+        return jsonify({'success': False, 'error': 'This scraper is disabled/in trash. Please enable it before running.'}), 400
+
     try:
-        file_scraper_runner.start(file_id)
+        user_id = session.get('user_id')
+        file_scraper_runner.start(file_id, user_id=user_id)
     except file_scraper_runner.StartError as exc:
         return jsonify({'success': False, 'error': str(exc)}), 409
     return jsonify({'success': True, 'message': 'Scraper started.'})
@@ -1147,22 +1226,11 @@ def api_file_status(file_id):
     if not record:
         return jsonify({'error': 'Scraper not found.'}), 404
 
-    is_active = file_scraper_runner.is_running(file_id)
-    working = files_repo.bit_to_bool(record['working'])
-
-    # If not active in memory but DB still had working=1, reconcile stale state
-    if not is_active and working:
-        try:
-            files_repo.set_working(file_id, False)
-        except Exception:
-            pass
-        working = False
-
-    running = is_active or working
+    running = file_scraper_runner.is_running(file_id)
     output_path = file_scraper_runner.get_output_path(file_id)
     return jsonify({
         'running': running,
-        'working': working,
+        'working': running,
         'siteName': record['site_name'],
         'fileId': file_id,
         'outputAvailable': bool(output_path) and not running,
@@ -1173,9 +1241,25 @@ def api_file_status(file_id):
 @login_required_api
 def api_file_url_statuses(file_id):
     statuses = file_scraper_runner.get_statuses(file_id)
+    output_path = file_scraper_runner.get_output_path(file_id)
+    xlsx_count, xlsx_urls = get_xlsx_info(output_path)
+    if xlsx_urls:
+        if statuses:
+            for item in statuses:
+                u = item.get('url', '').strip()
+                if u in xlsx_urls:
+                    item['status'] = 'done'
+                    item['written_to_xlsx'] = True
+        else:
+            statuses = [
+                {'url': u, 'status': 'done', 'parent': '', 'type': 'product', 'written_to_xlsx': True}
+                for u in sorted(xlsx_urls)
+            ]
+
     return jsonify({
         'statuses': statuses,
         'summary': build_status_summary(statuses),
+        'xlsx_count': xlsx_count,
     })
 
 
@@ -1187,77 +1271,67 @@ def _format_scraper_output_filename(site_name, extension='xlsx'):
 
 @app.route('/api/files/<int:file_id>/download')
 @login_required_api
-def api_download_file_output(file_id):
+def api_file_download(file_id):
     record = files_repo.get_file(file_id)
     if not record:
-        return Response('Scraper not found.', status=404, mimetype='text/plain')
+        return jsonify({'error': 'Scraper not found.'}), 404
 
     output_path = file_scraper_runner.get_output_path(file_id)
-    if not output_path:
-        return Response('No output file found.', status=404, mimetype='text/plain')
+    if not output_path or not os.path.exists(output_path):
+        return jsonify({'error': 'No output available for this scraper yet. Run it first.'}), 404
 
-    download_name = _format_scraper_output_filename(record['site_name'], 'xlsx')
-    return send_from_directory(
-        os.path.dirname(output_path),
-        os.path.basename(output_path),
+    filename = _format_scraper_output_filename(record['site_name'])
+    return send_file(
+        output_path,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         as_attachment=True,
-        download_name=download_name,
+        download_name=filename,
     )
 
 
 @app.route('/api/files/download-zip')
 @login_required_api
-def api_download_files_zip():
-    """Builds and serves a .zip archive containing .xlsx outputs from all
-    available (or requested) finished scrapers.
-    Each file inside the zip is named <site_name>_<date>.xlsx.
-    """
-    raw_ids = request.args.get('ids', '').strip()
-    target_ids = []
-    if raw_ids:
-        for x in raw_ids.split(','):
-            x = x.strip()
-            if x.isdigit():
-                target_ids.append(int(x))
+def api_files_download_zip():
+    # 1. Reject download if any crawler is still actively running
+    if file_scraper_runner.running_count() > 0:
+        return jsonify({
+            'error': 'Scraping is in progress. Please wait until all scrapers finish before downloading ZIP.',
+            'anyRunning': True,
+        }), 409
 
     all_outputs = file_scraper_runner.get_all_output_paths()
-    if target_ids:
-        eligible_outputs = {fid: path for fid, path in all_outputs.items() if fid in target_ids}
-    else:
-        eligible_outputs = all_outputs
+    if not all_outputs:
+        return jsonify({'error': 'No completed scraper reports available to download.'}), 404
 
-    if not eligible_outputs:
-        return jsonify({'error': 'No completed scraper output files available to download.'}), 404
-
-    today = datetime.now().strftime('%d-%m-%Y')
     zip_buffer = io.BytesIO()
-    used_names = set()
-
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for file_id, file_path in eligible_outputs.items():
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        used_names = set()
+        for file_id, file_path in all_outputs.items():
             if not os.path.exists(file_path):
                 continue
             record = files_repo.get_file(file_id)
-            site_name = record['site_name'] if record else f'scraper_{file_id}'
-            clean_site = re.sub(r'[^A-Za-z0-9]+', '_', site_name or '').strip('_').lower() or 'scraper'
-            base_name = f"{clean_site}_{today}.xlsx"
-
-            final_name = base_name
+            site_name = record['site_name'] if record else f"scraper_{file_id}"
+            base_filename = _format_scraper_output_filename(site_name)
+            filename = base_filename
             counter = 1
-            while final_name in used_names:
-                final_name = f"{clean_site}_{today}_{counter}.xlsx"
+            while filename in used_names:
+                root, ext = os.path.splitext(base_filename)
+                filename = f"{root}_{counter}{ext}"
                 counter += 1
+            used_names.add(filename)
+            zf.write(file_path, arcname=filename)
 
-            used_names.add(final_name)
-            zip_file.write(file_path, arcname=final_name)
+    if not used_names:
+        return jsonify({'error': 'No valid output files found to package.'}), 404
 
     zip_buffer.seek(0)
-    zip_download_name = f"scraped_data_{today}.zip"
+    today = datetime.now().strftime('%d-%m-%Y')
+    zip_filename = f"scrapers_output_{today}.zip"
     return send_file(
         zip_buffer,
         mimetype='application/zip',
         as_attachment=True,
-        download_name=zip_download_name,
+        download_name=zip_filename,
     )
 
 
@@ -1265,18 +1339,15 @@ def api_download_files_zip():
 @login_required_api
 @role_required_api('SuperAdmin', 'Admin')
 @require_csrf
-def api_upload_script():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file was selected.'}), 400
-    upload = request.files['file']
+def api_upload_file_script():
+    if not request.files or 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded.'}), 400
 
-    # If this upload's (sanitized) name would overwrite an already-registered
-    # scraper, refuse while that scraper is currently running -- overwriting
-    # the code of a running process out from under it is unsafe.
-    candidate_name = secure_filename(upload.filename or '')
+    upload = request.files['file']
+    candidate_name = (upload.filename or '').strip()
     if candidate_name:
         existing = files_repo.get_file_by_path(candidate_name)
-        if existing and (file_scraper_runner.is_running(existing['file_id']) or files_repo.bit_to_bool(existing['working'])):
+        if existing and file_scraper_runner.is_running(existing['file_id']):
             return jsonify({'error': 'Stop this scraper before replacing its Python file.'}), 409
 
     try:
@@ -1308,6 +1379,64 @@ def api_parse_urls():
         return jsonify({'error': 'No valid URLs were found.', 'errors': errors}), 400
 
     return jsonify({'urls': urls, 'errors': errors})
+
+
+@app.route('/api/reports')
+@login_required_api
+@role_required_api('SuperAdmin')
+def api_list_reports():
+    search = request.args.get('search', '').strip() or None
+    status = request.args.get('status', '').strip() or None
+    user_id_raw = request.args.get('userId', '').strip()
+    user_id = int(user_id_raw) if user_id_raw.isdigit() else None
+    try:
+        page = int(request.args.get('page', 1))
+    except ValueError:
+        page = 1
+    try:
+        per_page = int(request.args.get('perPage', 20))
+    except ValueError:
+        per_page = 20
+
+    rows, total = reports_repo.list_logs(
+        search=search,
+        status=status,
+        user_id=user_id,
+        page=page,
+        per_page=per_page,
+    )
+    stats = reports_repo.get_logs_summary_stats()
+    return jsonify({
+        'reports': [reports_repo.serialize_log(r) for r in rows],
+        'total': total,
+        'page': page,
+        'perPage': per_page,
+        'stats': stats,
+    })
+
+
+@app.route('/api/reports/<int:report_id>/download')
+@login_required_api
+@role_required_api('SuperAdmin')
+def api_download_report_output(report_id):
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM logTbl WHERE id = %s", (report_id,))
+            record = cursor.fetchone()
+    finally:
+        conn.close()
+
+    if not record or not record.get('output_file_path') or not os.path.exists(record['output_file_path']):
+        return jsonify({'error': 'Output file not available for this run.'}), 404
+
+    filename = _format_scraper_output_filename(record['scraper'])
+    return send_file(
+        record['output_file_path'],
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename,
+    )
 
 
 if __name__ == "__main__":

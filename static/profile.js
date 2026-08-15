@@ -94,30 +94,46 @@
     const submitLabel = document.getElementById('cp-submit-label');
     submitBtn.disabled = true;
     submitLabel.textContent = 'Saving…';
+    if (window.AdminShared) {
+      window.AdminShared.showToast('Saving profile changes…', 'info');
+    }
 
     try {
+      const payload = {
+        name: document.getElementById('cp-name').value.trim(),
+        email: document.getElementById('cp-email').value.trim(),
+        avatar: document.getElementById('cp-avatar-url').value.trim() || null,
+      };
       const response = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-        body: JSON.stringify({
-          name: document.getElementById('cp-name').value.trim(),
-          email: document.getElementById('cp-email').value.trim(),
-          avatar: document.getElementById('cp-avatar-url').value.trim() || null,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        errEl.textContent = data.error || 'Unable to update profile.';
+        const message = data.error || 'Unable to update profile.';
+        if (window.AdminShared) {
+          window.AdminShared.logError('Profile Update', message, { payload, status: response.status });
+          window.AdminShared.showToast(message, 'error');
+        }
+        errEl.textContent = message;
         errEl.classList.remove('hidden');
         return;
       }
 
       currentUser = data.user;
       renderEverywhere();
+      if (window.AdminShared) {
+        window.AdminShared.showToast('Profile updated successfully.', 'success');
+      }
       okEl.textContent = 'Profile updated successfully.';
       okEl.classList.remove('hidden');
     } catch (err) {
+      if (window.AdminShared) {
+        window.AdminShared.logError('Profile Update Network Error', err);
+        window.AdminShared.showToast('Network error while updating profile.', 'error');
+      }
       errEl.textContent = 'Network error. Please try again.';
       errEl.classList.remove('hidden');
     } finally {
@@ -127,6 +143,9 @@
   }
 
   async function handleRemoveAvatar() {
+    if (window.AdminShared) {
+      window.AdminShared.showToast('Removing avatar…', 'info');
+    }
     try {
       const response = await fetch('/api/profile/avatar', {
         method: 'DELETE',
@@ -138,9 +157,21 @@
         document.getElementById('cp-avatar-url').value = '';
         renderEverywhere();
         renderAvatarInto(document.getElementById('cp-avatar-preview'), currentUser);
+        if (window.AdminShared) {
+          window.AdminShared.showToast('Avatar removed successfully.', 'success');
+        }
+      } else {
+        const message = data.error || 'Unable to remove avatar.';
+        if (window.AdminShared) {
+          window.AdminShared.logError('Remove Avatar', message, { status: response.status });
+          window.AdminShared.showToast(message, 'error');
+        }
       }
     } catch (err) {
-      // Best-effort; the form's own submit path surfaces real errors.
+      if (window.AdminShared) {
+        window.AdminShared.logError('Remove Avatar Network Error', err);
+        window.AdminShared.showToast('Network error while removing avatar.', 'error');
+      }
     }
   }
 
@@ -156,12 +187,22 @@
     const confirm = document.getElementById('pw-confirm').value;
 
     if (!current || !next || !confirm) {
-      errEl.textContent = 'All fields are required.';
+      const msg = 'All password fields are required.';
+      if (window.AdminShared) {
+        window.AdminShared.logWarn('Password Validation', msg);
+        window.AdminShared.showToast(msg, 'warning');
+      }
+      errEl.textContent = msg;
       errEl.classList.remove('hidden');
       return;
     }
     if (next !== confirm) {
-      errEl.textContent = 'Passwords do not match.';
+      const msg = 'New passwords do not match.';
+      if (window.AdminShared) {
+        window.AdminShared.logWarn('Password Validation', msg);
+        window.AdminShared.showToast(msg, 'warning');
+      }
+      errEl.textContent = msg;
       errEl.classList.remove('hidden');
       return;
     }
@@ -170,6 +211,9 @@
     const submitLabel = document.getElementById('pw-submit-label');
     submitBtn.disabled = true;
     submitLabel.textContent = 'Changing…';
+    if (window.AdminShared) {
+      window.AdminShared.showToast('Updating your password… please wait', 'info');
+    }
 
     try {
       const response = await fetch('/api/change-password', {
@@ -180,15 +224,27 @@
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        errEl.textContent = data.error || 'Unable to change password.';
+        const message = data.error || 'Unable to change password.';
+        if (window.AdminShared) {
+          window.AdminShared.logError('Change Password', message, { status: response.status });
+          window.AdminShared.showToast(message, 'error');
+        }
+        errEl.textContent = message;
         errEl.classList.remove('hidden');
         return;
       }
 
+      if (window.AdminShared) {
+        window.AdminShared.showToast('Password changed successfully!', 'success');
+      }
       okEl.textContent = 'Password changed successfully.';
       okEl.classList.remove('hidden');
       document.getElementById('change-password-form').reset();
     } catch (err) {
+      if (window.AdminShared) {
+        window.AdminShared.logError('Change Password Network Error', err);
+        window.AdminShared.showToast('Network error while changing password.', 'error');
+      }
       errEl.textContent = 'Network error. Please try again.';
       errEl.classList.remove('hidden');
     } finally {
@@ -244,9 +300,19 @@
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', async () => {
-        const response = await fetch('/logout', { method: 'POST' });
-        const data = await response.json().catch(() => ({}));
-        window.location.href = data.redirect || '/login';
+        if (window.AdminShared) {
+          window.AdminShared.showToast('Signing out… please wait', 'info');
+        }
+        try {
+          const response = await fetch('/logout', { method: 'POST' });
+          const data = await response.json().catch(() => ({}));
+          window.location.href = data.redirect || '/login';
+        } catch (err) {
+          if (window.AdminShared) {
+            window.AdminShared.logError('Logout Error', err);
+          }
+          window.location.href = '/login';
+        }
       });
     }
 

@@ -46,9 +46,39 @@ window.AdminShared = (function () {
     return div.innerHTML;
   };
 
-  // --- Toast notifications: brief floating confirmations for action results,
-  // separate from the inline form errors (which stay open so validation
-  // issues remain visible while the user fixes them). ---
+  // Structured console error logger for debugging
+  const logError = (context, error, extraDetails = null) => {
+    console.error(
+      `%c[TyresCart Error: ${context}]`,
+      'background: #be123c; color: #fff; font-weight: bold; padding: 2px 6px; border-radius: 4px;',
+      error,
+      extraDetails || ''
+    );
+  };
+
+  const logWarn = (context, message, extraDetails = null) => {
+    console.warn(
+      `%c[TyresCart Warning: ${context}]`,
+      'background: #d97706; color: #fff; font-weight: bold; padding: 2px 6px; border-radius: 4px;',
+      message,
+      extraDetails || ''
+    );
+  };
+
+  // Global uncaught error listener
+  window.addEventListener('error', (event) => {
+    logError('Uncaught Runtime Error', event.error || event.message, {
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+    });
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    logError('Unhandled Promise Rejection', event.reason);
+  });
+
+  // --- Toast notifications: floating confirmations for user clicks & actions ---
   let toastContainer = null;
 
   function getToastContainer() {
@@ -56,17 +86,43 @@ window.AdminShared = (function () {
     toastContainer = document.createElement('div');
     toastContainer.setAttribute('aria-live', 'polite');
     toastContainer.style.cssText =
-      'position:fixed; top:1rem; right:1rem; z-index:9999; display:flex; flex-direction:column; gap:0.5rem; max-width:22rem; pointer-events:none;';
+      'position:fixed; top:1rem; right:1rem; z-index:9999; display:flex; flex-direction:column; gap:0.5rem; max-width:24rem; pointer-events:none;';
     document.body.appendChild(toastContainer);
     return toastContainer;
   }
 
-  function showToast(message, type) {
-    const isError = type === 'error';
+  function showToast(message, type = 'success') {
     const container = getToastContainer();
 
+    let bg = '#ecfdf5';
+    let border = '#a7f3d0';
+    let text = '#047857';
+    let iconSvg = '<svg class="w-4 h-4 shrink-0 text-emerald-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>';
+
+    if (type === 'error') {
+      bg = '#fff1f2';
+      border = '#fecdd3';
+      text = '#be123c';
+      iconSvg = '<svg class="w-4 h-4 shrink-0 text-rose-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>';
+    } else if (type === 'info') {
+      bg = '#eff6ff';
+      border = '#bfdbfe';
+      text = '#1d4ed8';
+      iconSvg = '<svg class="w-4 h-4 shrink-0 text-blue-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>';
+    } else if (type === 'warning') {
+      bg = '#fffbeb';
+      border = '#fde68a';
+      text = '#b45309';
+      iconSvg = '<svg class="w-4 h-4 shrink-0 text-amber-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>';
+    }
+
     const toast = document.createElement('div');
-    toast.textContent = message;
+    toast.innerHTML = `
+      <div style="display:flex; align-items:center; gap:0.5rem;">
+        ${iconSvg}
+        <span>${escapeHtml(message)}</span>
+      </div>
+    `;
     toast.style.cssText = `
       pointer-events: auto;
       padding: 0.75rem 1rem;
@@ -75,9 +131,9 @@ window.AdminShared = (function () {
       font-weight: 600;
       line-height: 1.3;
       box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
-      border: 1px solid ${isError ? '#fecdd3' : '#a7f3d0'};
-      background-color: ${isError ? '#fff1f2' : '#ecfdf5'};
-      color: ${isError ? '#be123c' : '#047857'};
+      border: 1px solid ${border};
+      background-color: ${bg};
+      color: ${text};
       opacity: 0;
       transform: translateY(-6px);
       transition: opacity 0.2s ease, transform 0.2s ease;
@@ -248,6 +304,8 @@ window.AdminShared = (function () {
     showError,
     hideError,
     escapeHtml,
+    logError,
+    logWarn,
     showToast,
     avatarHtml,
     renumberRows,
@@ -384,6 +442,7 @@ window.AdminShared = (function () {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to load users.';
+        Shared.logError('Admin Load Users', message, { status: response.status });
         Shared.showError(errorEl, message);
         Shared.showToast(message, 'error');
         return;
@@ -393,6 +452,7 @@ window.AdminShared = (function () {
       table.rows.add(users);
       table.draw(false);
     } catch (err) {
+      Shared.logError('Admin Load Users Network Error', err);
       Shared.showError(errorEl, 'Network error while loading users.');
       Shared.showToast('Network error while loading users.', 'error');
     } finally {
@@ -447,6 +507,7 @@ window.AdminShared = (function () {
     }
 
     submitBtn.disabled = true;
+    Shared.showToast(id ? 'Saving user changes…' : 'Creating new user…', 'info');
     try {
       const response = await fetch(id ? `/api/admin/users/${id}` : '/api/admin/users', {
         method: id ? 'PUT' : 'POST',
@@ -456,6 +517,7 @@ window.AdminShared = (function () {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to save user.';
+        Shared.logError('Save User', message, { id, payload, status: response.status });
         Shared.showError(modalError, message);
         Shared.showToast(message, 'error');
         return;
@@ -464,6 +526,7 @@ window.AdminShared = (function () {
       Shared.showToast(id ? 'User updated successfully.' : 'User created successfully.', 'success');
       await loadUsers();
     } catch (err) {
+      Shared.logError('Save User Network Error', err, { id, payload });
       Shared.showError(modalError, 'Network error. Please try again.');
       Shared.showToast('Network error. Please try again.', 'error');
     } finally {
@@ -475,6 +538,7 @@ window.AdminShared = (function () {
     if (!pendingDeleteId) return;
     Shared.hideError(deleteError);
     deleteConfirmBtn.disabled = true;
+    Shared.showToast('Moving user to trash…', 'info');
     try {
       const response = await fetch(`/api/admin/users/${pendingDeleteId}`, {
         method: 'DELETE',
@@ -483,6 +547,7 @@ window.AdminShared = (function () {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to delete user.';
+        Shared.logError('Delete User', message, { userId: pendingDeleteId, status: response.status });
         Shared.showError(deleteError, message);
         Shared.showToast(message, 'error');
         return;
@@ -492,6 +557,7 @@ window.AdminShared = (function () {
       Shared.showToast('User moved to Trash.', 'success');
       await loadUsers();
     } catch (err) {
+      Shared.logError('Delete User Network Error', err, { userId: pendingDeleteId });
       Shared.showError(deleteError, 'Network error. Please try again.');
       Shared.showToast('Network error. Please try again.', 'error');
     } finally {

@@ -137,21 +137,39 @@ def get_statuses(file_id):
 # run for the same file_id just overwrites it (one output per registered
 # scraper, same "latest run" semantic the ad-hoc /StartScraper flow has).
 _outputs = {}  # file_id -> absolute path
+import reports_repo
+
 _outputs_lock = threading.Lock()
 
 
 def get_output_path(file_id):
     with _outputs_lock:
         path = _outputs.get(file_id)
-    return path if path and os.path.exists(path) else None
+    if path and os.path.exists(path):
+        return path
+    fallback = os.path.join(TMP_DIR, f'file_{file_id}_output.xlsx')
+    if os.path.exists(fallback):
+        return fallback
+    return None
 
 
 def get_all_output_paths():
     with _outputs_lock:
-        return {fid: path for fid, path in _outputs.items() if path and os.path.exists(path)}
+        paths = {fid: path for fid, path in _outputs.items() if path and os.path.exists(path)}
+    # Also check TMP_DIR files on disk
+    if os.path.exists(TMP_DIR):
+        for fname in os.listdir(TMP_DIR):
+            if fname.startswith('file_') and fname.endswith('_output.xlsx'):
+                try:
+                    fid = int(fname.split('_')[1])
+                    if fid not in paths:
+                        paths[fid] = os.path.join(TMP_DIR, fname)
+                except ValueError:
+                    pass
+    return paths
 
 
-def _run(file_id, script_path, urls):
+def _run(file_id, script_path, urls, report_id=None):
     input_path = None
     os.makedirs(TMP_DIR, exist_ok=True)
     output_placeholder = os.path.join(TMP_DIR, f'file_{file_id}_output.xlsx')
@@ -166,7 +184,7 @@ def _run(file_id, script_path, urls):
     if input_path:
         args.append(input_path)
 
-    logger.info('Starting scraper file_id=%s (%s)', file_id, os.path.basename(script_path))
+    logger.info('Starting scraper file_id=%s (%s), report_id=%s', file_id, os.path.basename(script_path), report_id)
     try:
         process = subprocess.Popen(
             args,
@@ -177,17 +195,23 @@ def _run(file_id, script_path, urls):
             bufsize=1,
             **_popen_kwargs(),
         )
-    except OSError:
+    except OSError as exc:
         logger.exception('Failed to launch scraper file_id=%s', file_id)
-        files_repo.set_working(file_id, False)
+        if report_id:
+            try:
+                reports_repo.finish_report_run(report_id, status='FAILED', error_message=str(exc))
+            except Exception:
+                pass
         _cleanup_temp(input_path, output_placeholder)
         with _outputs_lock:
             _outputs.pop(file_id, None)
         return
 
     with _lock:
-        _processes[file_id] = {'process': process}
+        _processes[file_id] = {'process': process, 'report_id': report_id, 'stopped': False}
 
+    returncode = -1
+    was_stopped = False
     try:
         for line in iter(process.stdout.readline, ''):
             if not line:
@@ -195,31 +219,61 @@ def _run(file_id, script_path, urls):
             _record_status_line(file_id, line.rstrip('\n'))
         process.stdout.close()
         process.wait()
-        if process.returncode == 0:
+        returncode = process.returncode
+        if returncode == 0:
             logger.info('Scraper file_id=%s finished successfully.', file_id)
         else:
-            logger.warning('Scraper file_id=%s exited with code %s (treated as failed).', file_id, process.returncode)
-    except Exception:
+            logger.warning('Scraper file_id=%s exited with code %s.', file_id, returncode)
+    except Exception as exc:
         logger.exception('Scraper file_id=%s crashed while being monitored.', file_id)
     finally:
         with _lock:
-            _processes.pop(file_id, None)
-        try:
-            files_repo.set_working(file_id, False)
-        except Exception:
-            logger.exception('Failed to clear working flag for file_id=%s after it finished.', file_id)
-        # Only the temp input CSV is cleanup -- the output workbook is kept
-        # (see _outputs) so it can be downloaded after the run finishes.
-        _cleanup_temp(input_path)
+            proc_info = _processes.pop(file_id, None)
+            if proc_info:
+                was_stopped = proc_info.get('stopped', False)
+
+        # Count URL stats: total discovered, success, blocked
+        statuses = _statuses.get(file_id, [])
+        no_of_url_found = len(statuses) if statuses else len(urls)
+        total_success_url = sum(1 for s in statuses if (s.get('status') or '').lower() in ('done', 'success'))
+        total_block_url = sum(1 for s in statuses if (s.get('status') or '').lower() in ('blocked', 'failed'))
+
+        final_output_path = None
         if output_placeholder and os.path.exists(output_placeholder):
+            final_output_path = output_placeholder
             with _outputs_lock:
                 _outputs[file_id] = output_placeholder
         else:
             with _outputs_lock:
                 _outputs.pop(file_id, None)
 
+        data_scraped = reports_repo.count_excel_data_rows(final_output_path) if final_output_path else 0
 
-def start(file_id):
+        if was_stopped:
+            final_status = 'STOPPED'
+        elif returncode == 0:
+            final_status = 'FINISHED'
+        else:
+            final_status = 'FAILED'
+
+        if report_id:
+            try:
+                reports_repo.finish_log_entry(
+                    report_id,
+                    status=final_status,
+                    no_of_url_found=no_of_url_found,
+                    total_success_url=total_success_url,
+                    total_block_url=total_block_url,
+                    data_scraped=data_scraped,
+                    output_file_path=final_output_path,
+                )
+            except Exception:
+                logger.exception('Failed to update log entry for report_id=%s', report_id)
+
+        _cleanup_temp(input_path)
+
+
+def start(file_id, user_id=None):
     """Starts file_id's scraper as a background subprocess and returns
     immediately. Raises StartError with a user-facing message (never an
     absolute filesystem path) if it can't be started.
@@ -246,16 +300,24 @@ def start(file_id):
         except (json.JSONDecodeError, TypeError):
             urls = []
 
-    # Set before the thread starts (not inside it) so a client polling
-    # immediately after this call sees working=true right away, not a race
-    # against the background thread getting scheduled.
     _reset_statuses(file_id)
-    # Drop any previous run's output so a download requested mid-run can't
-    # serve stale data before the new run has written anything.
     with _outputs_lock:
         _outputs.pop(file_id, None)
-    files_repo.set_working(file_id, True)
-    thread = threading.Thread(target=_run, args=(file_id, script_path, urls), daemon=True)
+
+    # Create run report in logTbl
+    report_id = None
+    try:
+        actual_user_id = user_id or record.get('created_by') or 1
+        scraper_name = f"{record['site_name']} ({record['python_file_path']})"
+        report_id = reports_repo.create_log_entry(
+            user_id=actual_user_id,
+            file_id=file_id,
+            scraper_name=scraper_name,
+        )
+    except Exception:
+        logger.exception('Failed to create log entry for file_id=%s', file_id)
+
+    thread = threading.Thread(target=_run, args=(file_id, script_path, urls, report_id), daemon=True)
     thread.start()
 
 
@@ -263,25 +325,15 @@ def stop(file_id):
     """Terminates file_id's running subprocess (and any child process it
     spawned, e.g. scan.py's browser bridge -- see _kill_process_tree), if
     any. Returns True if a running process was found and signaled, False if
-    it wasn't running. The background thread's own `finally` clears
-    `working` once the process actually exits (this doesn't do that
-    synchronously).
+    it wasn't running.
     """
     with _lock:
         entry = _processes.get(file_id)
         process = entry['process'] if entry else None
+        if entry:
+            entry['stopped'] = True
 
     if not process or process.poll() is not None:
-        # Nothing tracked in this process's memory -- most commonly because
-        # the app restarted since this scraper was started (a Flask reload,
-        # a deploy, etc.), which wipes _processes but leaves fileTbl.working
-        # stuck at 1 with no way to ever clear it again. Reconcile that
-        # stale state here instead of leaving Stop permanently useless for
-        # this row: if the DB still says it's running, correct it.
-        record = files_repo.get_file(file_id)
-        if record and files_repo.bit_to_bool(record['working']):
-            files_repo.set_working(file_id, False)
-            return True
         return False
 
     _kill_process_tree(process)
