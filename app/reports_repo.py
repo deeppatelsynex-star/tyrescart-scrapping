@@ -86,10 +86,25 @@ def update_log_progress(log_id, no_of_url_found=None, total_success_url=None, to
         conn.close()
 
 
-def finish_log_entry(log_id, status='FINISHED', no_of_url_found=0, total_success_url=0, total_block_url=0, data_scraped=0, output_file_path=None, error_message=None):
-    """Records completion/stop/failure of a scraper run in logTbl."""
+def finish_log_entry(log_id, status='SUCCESS', no_of_url_found=0, total_success_url=0, total_block_url=0, data_scraped=0, output_file_path=None, error_message=None):
+    """Records completion/stop/failure of a scraper run in logTbl.
+    Statuses allowed: RUNNING, SUCCESS, FAIL, STOPPED.
+    """
     if not log_id:
         return
+
+    # Normalize status
+    st = (status or '').upper()
+    if st in ('FINISHED', 'SUCCESS', 'DONE'):
+        normalized_status = 'SUCCESS'
+    elif st in ('FAILED', 'FAIL', 'ERROR'):
+        normalized_status = 'FAIL'
+    elif st == 'STOPPED':
+        normalized_status = 'STOPPED'
+    elif st == 'RUNNING':
+        normalized_status = 'RUNNING'
+    else:
+        normalized_status = 'SUCCESS'
 
     # If data_scraped is 0 or not given, calculate directly from output excel file
     if data_scraped <= 0 and output_file_path and os.path.exists(output_file_path):
@@ -111,7 +126,7 @@ def finish_log_entry(log_id, status='FINISHED', no_of_url_found=0, total_success
                     error_message = %s
                 WHERE id = %s
                 """,
-                (status, no_of_url_found, total_success_url, total_block_url, data_scraped, output_file_path, error_message, log_id),
+                (normalized_status, no_of_url_found, total_success_url, total_block_url, data_scraped, output_file_path, error_message, log_id),
             )
     finally:
         conn.close()
@@ -139,7 +154,20 @@ def serialize_log(row):
     """Serializes a log row from logTbl into a structured API response."""
     start_time = row.get('start_time')
     end_time = row.get('end_time')
-    status = row.get('status') or 'UNKNOWN'
+    raw_status = (row.get('status') or 'UNKNOWN').upper()
+
+    # Normalize status to RUNNING, SUCCESS, FAIL, STOPPED
+    if raw_status in ('FINISHED', 'SUCCESS', 'DONE'):
+        status = 'SUCCESS'
+    elif raw_status in ('FAILED', 'FAIL', 'ERROR'):
+        status = 'FAIL'
+    elif raw_status == 'STOPPED':
+        status = 'STOPPED'
+    elif raw_status == 'RUNNING':
+        status = 'RUNNING'
+    else:
+        status = raw_status
+
     output_path = row.get('output_file_path')
     output_available = bool(output_path and os.path.exists(output_path))
 
@@ -176,8 +204,8 @@ def serialize_log(row):
     }
 
 
-def list_logs(search=None, status=None, user_id=None, page=1, per_page=20):
-    """Returns (rows, total_count) from logTbl for the SuperAdmin reports view."""
+def list_logs(search=None, status=None, user_id=None, file_id=None, page=1, per_page=20):
+    """Returns (rows, total_count) from logTbl for the SuperAdmin reports view or per-scraper drawer."""
     page = max(1, page)
     per_page = max(1, min(per_page, 200))
     offset = (page - 1) * per_page
@@ -189,12 +217,22 @@ def list_logs(search=None, status=None, user_id=None, page=1, per_page=20):
             params = []
 
             if status:
-                where_clauses.append('l.status = %s')
-                params.append(status.upper())
+                st = status.upper()
+                if st == 'SUCCESS':
+                    where_clauses.append("l.status IN ('SUCCESS', 'FINISHED')")
+                elif st == 'FAIL':
+                    where_clauses.append("l.status IN ('FAIL', 'FAILED')")
+                else:
+                    where_clauses.append('l.status = %s')
+                    params.append(st)
 
             if user_id:
                 where_clauses.append('l.user_id = %s')
                 params.append(user_id)
+
+            if file_id:
+                where_clauses.append('l.file_id = %s')
+                params.append(file_id)
 
             if search:
                 like = f'%{search}%'
@@ -241,9 +279,9 @@ def get_logs_summary_stats():
                     COALESCE(SUM(total_block_url), 0) AS total_block_urls,
                     COALESCE(SUM(data_scraped), 0) AS total_data_scraped,
                     SUM(CASE WHEN status = 'RUNNING' THEN 1 ELSE 0 END) AS active_runs,
-                    SUM(CASE WHEN status = 'FINISHED' THEN 1 ELSE 0 END) AS finished_runs,
+                    SUM(CASE WHEN status IN ('SUCCESS', 'FINISHED') THEN 1 ELSE 0 END) AS finished_runs,
                     SUM(CASE WHEN status = 'STOPPED' THEN 1 ELSE 0 END) AS stopped_runs,
-                    SUM(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END) AS failed_runs
+                    SUM(CASE WHEN status IN ('FAIL', 'FAILED') THEN 1 ELSE 0 END) AS failed_runs
                 FROM logTbl
                 """
             )

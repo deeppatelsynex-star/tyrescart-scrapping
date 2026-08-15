@@ -100,10 +100,10 @@ Scraping Reports
           <label for="reports-status-filter" class="text-xs font-medium text-slate-500">Status:</label>
           <select id="reports-status-filter" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer">
             <option value="">All Statuses</option>
-            <option value="RUNNING">Running</option>
-            <option value="FINISHED">Finished</option>
-            <option value="STOPPED">Stopped</option>
-            <option value="FAILED">Failed</option>
+            <option value="RUNNING">RUNNING</option>
+            <option value="SUCCESS">SUCCESS</option>
+            <option value="FAIL">FAIL</option>
+            <option value="STOPPED">STOPPED</option>
           </select>
         </div>
       </div>
@@ -123,16 +123,13 @@ Scraping Reports
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Scraper</th>
-                <th>User</th>
-                <th>Start Date & Time</th>
-                <th>End Date & Time</th>
-                <th>Duration</th>
-                <th>No. of URLs Found</th>
-                <th>Total Success URLs</th>
-                <th>Total Blocked URLs</th>
-                <th>Data Scraped</th>
+                <th>Scraper / Site Name</th>
                 <th>Status</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Duration</th>
+                <th>Data Scraped</th>
+                <th>Error / Stop Message</th>
                 <th class="text-right">Actions</th>
               </tr>
             </thead>

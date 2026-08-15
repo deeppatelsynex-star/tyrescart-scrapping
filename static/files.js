@@ -104,11 +104,14 @@
     const downloadBtn = row.outputAvailable && !row.working
       ? `<a href="/api/files/${row.fileId}/download" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer" title="Download output Excel">Download</a>`
       : '';
+    const logBtn = `<button type="button" data-action="view-logs" data-id="${row.fileId}" class="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer">Log</button>`;
+
     return `
       <div class="flex items-center justify-end gap-3">
         ${downloadBtn}
         ${viewLiveBtn}
         ${startStopBtn}
+        ${logBtn}
         <button type="button" data-action="edit" data-id="${row.fileId}" ${row.working ? 'disabled title="Stop the scraper before editing it"' : ''} class="text-xs font-semibold ${row.working ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:underline cursor-pointer'}">Edit</button>
         <button type="button" data-action="delete" data-id="${row.fileId}" ${row.working ? 'disabled title="Stop the scraper before deleting it"' : ''} class="text-xs font-semibold ${row.working ? 'text-slate-300 cursor-not-allowed' : 'text-rose-600 hover:underline cursor-pointer'}">Delete</button>
       </div>`;
@@ -550,9 +553,145 @@
     }
   }
 
+  // --- Log Drawer Modal (Bottom-to-Top Animation) ---
+  const logModal = document.getElementById('files-log-modal');
+  const logBackdrop = document.getElementById('files-log-backdrop');
+  const logDrawer = document.getElementById('files-log-drawer');
+  const logCloseBtn = document.getElementById('files-log-close');
+  const logTitle = document.getElementById('files-log-title');
+  const logSubtitle = document.getElementById('files-log-subtitle');
+  const logLoading = document.getElementById('files-log-loading');
+  const logList = document.getElementById('files-log-list');
+  const logEmpty = document.getElementById('files-log-empty');
+
+  function openLogDrawer(file) {
+    if (!logModal || !logDrawer || !logBackdrop) return;
+    if (logTitle) logTitle.textContent = `Scraper Logs — ${file?.siteName || 'Scraper'}`;
+    if (logSubtitle) logSubtitle.textContent = `Execution history for ${file?.siteName || 'this scraper'}`;
+
+    if (logLoading) logLoading.classList.remove('hidden');
+    if (logList) {
+      logList.classList.add('hidden');
+      logList.innerHTML = '';
+    }
+    if (logEmpty) logEmpty.classList.add('hidden');
+
+    logModal.classList.remove('pointer-events-none', 'opacity-0');
+    logModal.classList.add('pointer-events-auto', 'opacity-100');
+
+    requestAnimationFrame(() => {
+      logBackdrop.classList.remove('opacity-0');
+      logBackdrop.classList.add('opacity-100');
+      logDrawer.classList.remove('translate-y-full');
+      logDrawer.classList.add('translate-y-0');
+    });
+
+    fetchScraperLogs(file.fileId);
+  }
+
+  function closeLogDrawer() {
+    if (!logModal || !logDrawer || !logBackdrop) return;
+    logDrawer.classList.remove('translate-y-0');
+    logDrawer.classList.add('translate-y-full');
+    logBackdrop.classList.remove('opacity-100');
+    logBackdrop.classList.add('opacity-0');
+
+    setTimeout(() => {
+      logModal.classList.remove('pointer-events-auto', 'opacity-100');
+      logModal.classList.add('pointer-events-none', 'opacity-0');
+    }, 300);
+  }
+
+  async function fetchScraperLogs(fileId) {
+    try {
+      const response = await fetch(`/api/files/${fileId}/logs`);
+      const data = await response.json().catch(() => ({}));
+      if (logLoading) logLoading.classList.add('hidden');
+
+      const logs = (data && data.logs) || [];
+      if (!logs.length) {
+        if (logEmpty) {
+          logEmpty.textContent = 'No logs recorded for this scraper yet.';
+          logEmpty.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (logList) {
+        logList.classList.remove('hidden');
+        logList.innerHTML = logs.map(renderLogCardHtml).join('');
+      }
+    } catch (err) {
+      Shared.logError('Fetch Scraper Logs', err, { fileId });
+      if (logLoading) logLoading.classList.add('hidden');
+      if (logEmpty) {
+        logEmpty.textContent = 'Failed to load logs. Please try again.';
+        logEmpty.classList.remove('hidden');
+      }
+    }
+  }
+
+  function renderLogCardHtml(log) {
+    const st = (log.status || '').toUpperCase();
+    let badgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
+    let statusLabel = st;
+    if (st === 'RUNNING') {
+      badgeClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      statusLabel = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>RUNNING';
+    } else if (st === 'SUCCESS' || st === 'FINISHED') {
+      badgeClass = 'bg-sky-100 text-sky-700 border-sky-200';
+      statusLabel = 'SUCCESS';
+    } else if (st === 'STOPPED') {
+      badgeClass = 'bg-amber-100 text-amber-700 border-amber-200';
+      statusLabel = 'STOPPED';
+    } else if (st === 'FAIL' || st === 'FAILED') {
+      badgeClass = 'bg-rose-100 text-rose-700 border-rose-200';
+      statusLabel = 'FAIL';
+    }
+
+    const startTime = log.startTime || '—';
+    const duration = log.duration || '—';
+    const itemsScraped = (log.dataScraped || 0).toLocaleString();
+    const errorMsg = log.errorMessage;
+
+    return `
+      <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 transition-all hover:border-slate-300 hover:shadow-xs">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeClass}">
+              ${statusLabel}
+            </span>
+            <span class="font-mono text-xs text-slate-500 font-semibold">#${log.id}</span>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-500">
+            <span>Started: <strong class="text-slate-700">${Shared.escapeHtml(startTime)}</strong></span>
+            <span>Duration: <strong class="text-slate-700">${Shared.escapeHtml(duration)}</strong></span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex items-center gap-2 text-slate-600">
+            <span class="font-semibold text-slate-900">${itemsScraped}</span> items / products scraped
+          </div>
+          ${log.status === 'RUNNING' && log.fileId ? `<a href="/scraperpage?fileId=${log.fileId}" class="font-semibold text-indigo-600 hover:underline">View Live Progress →</a>` : ''}
+        </div>
+
+        ${errorMsg ? `
+          <div class="mt-2.5 text-xs rounded-xl bg-amber-50/80 border border-amber-200/70 text-amber-800 px-3 py-2 font-medium">
+            ${Shared.escapeHtml(errorMsg)}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
   // --- Start / Stop ---
   async function startFile(fileId) {
     const file = filesById.get(fileId);
+    if (file && file.working) {
+      Shared.showToast('Scraper is already running. Please wait until the current scraper process is completed.', 'warning');
+      return;
+    }
     Shared.showToast(`Starting scraper "${file?.siteName || 'Scraper'}"… please wait`, 'info');
     inFlightStarts.set(fileId, 'start');
     table.draw(false);
@@ -567,9 +706,9 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.success) {
-        const errMsg = data.error || 'Unable to start scraper.';
+        const errMsg = data.error || (response.status === 409 ? 'Scraper is already running. Please wait until the current scraper process is completed.' : 'Unable to start scraper.');
         Shared.logError('Start Scraper', errMsg, { fileId, status: response.status });
-        Shared.showToast(errMsg, 'error');
+        Shared.showToast(errMsg, 'warning');
         return;
       }
       started = true;
@@ -635,6 +774,15 @@
     uploadInput?.addEventListener('change', () => handleScriptUpload(uploadInput.files[0]));
     urlsCsvInput?.addEventListener('change', () => handleUrlsCsvUpload(urlsCsvInput.files[0]));
 
+    // Log drawer close events
+    logCloseBtn?.addEventListener('click', closeLogDrawer);
+    logBackdrop?.addEventListener('click', closeLogDrawer);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && logModal && !logModal.classList.contains('pointer-events-none')) {
+        closeLogDrawer();
+      }
+    });
+
     $(tableEl.tBodies[0]).on('change', 'input[data-action="toggle-status"]', function () {
       const id = Number(this.getAttribute('data-id'));
       const isChecked = this.checked;
@@ -652,6 +800,7 @@
       if (action === 'start') { startFile(id); return; }
       if (action === 'stop') { stopFile(id); return; }
       if (action === 'edit') { openEditModal(file); return; }
+      if (action === 'view-logs') { openLogDrawer(file); return; }
 
       if (action === 'delete') {
         pendingDeleteId = id;

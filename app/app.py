@@ -1381,6 +1381,21 @@ def api_parse_urls():
     return jsonify({'urls': urls, 'errors': errors})
 
 
+@app.route('/api/files/<int:file_id>/logs')
+@login_required_api
+def api_file_logs(file_id):
+    record = files_repo.get_file(file_id)
+    if not record:
+        return jsonify({'error': 'Scraper not found.'}), 404
+    rows, total = reports_repo.list_logs(file_id=file_id, per_page=100)
+    return jsonify({
+        'fileId': file_id,
+        'siteName': record.get('site_name') or 'Scraper',
+        'logs': [reports_repo.serialize_log(r) for r in rows],
+        'total': total,
+    })
+
+
 @app.route('/api/reports')
 @login_required_api
 @role_required_api('SuperAdmin')
@@ -1389,6 +1404,8 @@ def api_list_reports():
     status = request.args.get('status', '').strip() or None
     user_id_raw = request.args.get('userId', '').strip()
     user_id = int(user_id_raw) if user_id_raw.isdigit() else None
+    file_id_raw = request.args.get('fileId', '').strip()
+    file_id = int(file_id_raw) if file_id_raw.isdigit() else None
     try:
         page = int(request.args.get('page', 1))
     except ValueError:
@@ -1402,6 +1419,7 @@ def api_list_reports():
         search=search,
         status=status,
         user_id=user_id,
+        file_id=file_id,
         page=page,
         per_page=per_page,
     )

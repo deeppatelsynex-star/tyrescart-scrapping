@@ -33,20 +33,20 @@ logger = logging.getLogger(__name__)
 BASE_DIR = files_repo.BASE_DIR
 TMP_DIR = os.path.join(BASE_DIR, 'tmp', 'file_scrapers')
 
+# Maximum execution runtime: 6 hours (in seconds)
+MAX_RUNTIME_SECONDS = 6 * 3600
+
 # Simple resource-safety cap for "Start Selected" -- several of the
 # registered scrapers are heavy (scan.py launches a full non-headless
 # Chromium), so an unbounded number of simultaneous starts isn't safe.
 MAX_CONCURRENT_SCRAPERS = 4
 
-_processes = {}  # file_id -> {'process': Popen}
+_processes = {}  # file_id -> {'process': Popen, 'report_id': int, 'timer': Timer, 'stopped': bool, 'timeout_stopped': bool}
 _lock = threading.Lock()
 
 # Live per-URL status, so a scraper started from /files can be watched on the
 # main Scraper page (redirected there with ?fileId=<id>) the same way an
-# ad-hoc /StartScraper job is. Scripts that never print URL_STATUS lines
-# (e.g. scan*.py, which don't emit that format) simply leave this empty --
-# is_running()/working still reflect that they're running, just without a
-# per-URL tree.
+# ad-hoc /StartScraper job is.
 _statuses = {}  # file_id -> [{'url', 'status', 'parent', 'type'}, ...]
 _statuses_lock = threading.Lock()
 
@@ -58,7 +58,11 @@ class StartError(Exception):
 def is_running(file_id):
     with _lock:
         entry = _processes.get(file_id)
-        return bool(entry and entry['process'].poll() is None)
+        if entry and entry['process'].poll() is None:
+            return True
+    # Also check persistent working state in database
+    rec = files_repo.get_file(file_id)
+    return bool(rec and bool(rec.get('working')))
 
 
 def running_count():
@@ -77,9 +81,7 @@ def _cleanup_temp(*paths):
 
 def _popen_kwargs():
     """Extra Popen kwargs so the whole process tree can be killed together on
-    stop() -- some scrapers (scan.py) spawn their own child process (a
-    Playwright browser bridge); without this, terminate()/kill() only signal
-    the top-level process and leave that child orphaned and running.
+    stop() or 6-hour timeout.
     """
     if os.name == 'nt':
         return {'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP}
@@ -87,15 +89,14 @@ def _popen_kwargs():
 
 
 def _kill_process_tree(process, force=False):
+    if not process:
+        return
     if os.name == 'nt':
-        # taskkill's /T walks the process tree by parent PID -- this is the
-        # forceful default on Windows either way (Popen.terminate() there is
-        # already just TerminateProcess, not a soft signal).
         subprocess.run(['taskkill', '/F', '/T', '/PID', str(process.pid)], capture_output=True)
         return
     try:
         os.killpg(os.getpgid(process.pid), signal.SIGKILL if force else signal.SIGTERM)
-    except ProcessLookupError:
+    except (ProcessLookupError, OSError):
         pass
 
 
@@ -131,11 +132,6 @@ def get_statuses(file_id):
         return list(_statuses.get(file_id, []))
 
 
-# Latest output workbook per file_id, so the Scraper page (watching via
-# ?fileId=<id>) can offer a real download once a run finishes -- unlike
-# input CSVs, this is deliberately NOT deleted in _run()'s cleanup; a later
-# run for the same file_id just overwrites it (one output per registered
-# scraper, same "latest run" semantic the ad-hoc /StartScraper flow has).
 _outputs = {}  # file_id -> absolute path
 import reports_repo
 
@@ -156,7 +152,6 @@ def get_output_path(file_id):
 def get_all_output_paths():
     with _outputs_lock:
         paths = {fid: path for fid, path in _outputs.items() if path and os.path.exists(path)}
-    # Also check TMP_DIR files on disk
     if os.path.exists(TMP_DIR):
         for fname in os.listdir(TMP_DIR):
             if fname.startswith('file_') and fname.endswith('_output.xlsx'):
@@ -167,6 +162,22 @@ def get_all_output_paths():
                 except ValueError:
                     pass
     return paths
+
+
+def _handle_timeout(file_id):
+    """Callback fired when a scraper reaches the 6-hour maximum runtime."""
+    logger.warning('Scraper file_id=%s reached maximum runtime of 6 hours. Automatically terminating...', file_id)
+    with _lock:
+        entry = _processes.get(file_id)
+        if entry:
+            entry['stopped'] = True
+            entry['timeout_stopped'] = True
+            process = entry.get('process')
+        else:
+            process = None
+
+    if process and process.poll() is None:
+        _kill_process_tree(process, force=True)
 
 
 def _run(file_id, script_path, urls, report_id=None):
@@ -199,19 +210,32 @@ def _run(file_id, script_path, urls, report_id=None):
         logger.exception('Failed to launch scraper file_id=%s', file_id)
         if report_id:
             try:
-                reports_repo.finish_report_run(report_id, status='FAILED', error_message=str(exc))
+                reports_repo.finish_log_entry(report_id, status='FAIL', error_message=str(exc))
             except Exception:
                 pass
         _cleanup_temp(input_path, output_placeholder)
         with _outputs_lock:
             _outputs.pop(file_id, None)
+        files_repo.set_working(file_id, 0)
         return
 
+    # Start 6-hour automatic timeout watchdog timer
+    timeout_timer = threading.Timer(MAX_RUNTIME_SECONDS, _handle_timeout, args=(file_id,))
+    timeout_timer.daemon = True
+    timeout_timer.start()
+
     with _lock:
-        _processes[file_id] = {'process': process, 'report_id': report_id, 'stopped': False}
+        _processes[file_id] = {
+            'process': process,
+            'report_id': report_id,
+            'timer': timeout_timer,
+            'stopped': False,
+            'timeout_stopped': False,
+        }
 
     returncode = -1
     was_stopped = False
+    was_timeout = False
     try:
         for line in iter(process.stdout.readline, ''):
             if not line:
@@ -227,10 +251,14 @@ def _run(file_id, script_path, urls, report_id=None):
     except Exception as exc:
         logger.exception('Scraper file_id=%s crashed while being monitored.', file_id)
     finally:
+        # Cancel watchdog timer
+        timeout_timer.cancel()
+
         with _lock:
             proc_info = _processes.pop(file_id, None)
             if proc_info:
                 was_stopped = proc_info.get('stopped', False)
+                was_timeout = proc_info.get('timeout_stopped', False)
 
         # Count URL stats: total discovered, success, blocked
         statuses = _statuses.get(file_id, [])
@@ -249,12 +277,19 @@ def _run(file_id, script_path, urls, report_id=None):
 
         data_scraped = reports_repo.count_excel_data_rows(final_output_path) if final_output_path else 0
 
-        if was_stopped:
+        # Determine normalized final status and error/stop message
+        error_message = None
+        if was_timeout:
             final_status = 'STOPPED'
+            error_message = 'Scraper automatically stopped because the maximum runtime of 6 hours was exceeded.'
+        elif was_stopped:
+            final_status = 'STOPPED'
+            error_message = 'Scraper stopped by user.'
         elif returncode == 0:
-            final_status = 'FINISHED'
+            final_status = 'SUCCESS'
         else:
-            final_status = 'FAILED'
+            final_status = 'FAIL'
+            error_message = f'Scraper process exited with return code {returncode}.'
 
         if report_id:
             try:
@@ -266,31 +301,38 @@ def _run(file_id, script_path, urls, report_id=None):
                     total_block_url=total_block_url,
                     data_scraped=data_scraped,
                     output_file_path=final_output_path,
+                    error_message=error_message,
                 )
             except Exception:
                 logger.exception('Failed to update log entry for report_id=%s', report_id)
 
+        # Always release scraper working status in database
+        files_repo.set_working(file_id, 0)
         _cleanup_temp(input_path)
 
 
 def start(file_id, user_id=None):
     """Starts file_id's scraper as a background subprocess and returns
-    immediately. Raises StartError with a user-facing message (never an
-    absolute filesystem path) if it can't be started.
+    immediately. Raises StartError with a user-facing message if it can't be started.
     """
     record = files_repo.get_file(file_id)
     if not record:
         raise StartError('Scraper not found.')
 
-    if is_running(file_id):
-        raise StartError('This scraper is already running.')
+    with _lock:
+        if is_running(file_id):
+            raise StartError('Scraper is already running. Please wait until the current scraper process is completed.')
 
-    if running_count() >= MAX_CONCURRENT_SCRAPERS:
-        raise StartError(f'Too many scrapers are already running (limit: {MAX_CONCURRENT_SCRAPERS}). Wait for one to finish.')
+        if running_count() >= MAX_CONCURRENT_SCRAPERS:
+            raise StartError(f'Too many scrapers are already running (limit: {MAX_CONCURRENT_SCRAPERS}). Wait for one to finish.')
+
+        # Mark working in DB under lock immediately
+        files_repo.set_working(file_id, 1)
 
     try:
         script_path = files_repo.resolve_script_path(record['python_file_path'])
     except files_repo.FileValidationError as exc:
+        files_repo.set_working(file_id, 0)
         raise StartError(str(exc))
 
     urls = []
@@ -308,7 +350,7 @@ def start(file_id, user_id=None):
     report_id = None
     try:
         actual_user_id = user_id or record.get('created_by') or 1
-        scraper_name = f"{record['site_name']} ({record['python_file_path']})"
+        scraper_name = record.get('site_name') or 'Scraper'
         report_id = reports_repo.create_log_entry(
             user_id=actual_user_id,
             file_id=file_id,
@@ -322,18 +364,19 @@ def start(file_id, user_id=None):
 
 
 def stop(file_id):
-    """Terminates file_id's running subprocess (and any child process it
-    spawned, e.g. scan.py's browser bridge -- see _kill_process_tree), if
-    any. Returns True if a running process was found and signaled, False if
-    it wasn't running.
+    """Terminates file_id's running subprocess (and any child processes).
+    Returns True if a running process was found and signaled, False if it wasn't running.
     """
     with _lock:
         entry = _processes.get(file_id)
         process = entry['process'] if entry else None
         if entry:
             entry['stopped'] = True
+            if entry.get('timer'):
+                entry['timer'].cancel()
 
     if not process or process.poll() is not None:
+        files_repo.set_working(file_id, 0)
         return False
 
     _kill_process_tree(process)
@@ -342,4 +385,6 @@ def stop(file_id):
     except subprocess.TimeoutExpired:
         _kill_process_tree(process, force=True)
         process.wait()
+
+    files_repo.set_working(file_id, 0)
     return True

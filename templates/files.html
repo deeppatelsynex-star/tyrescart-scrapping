@@ -200,6 +200,52 @@ Scraper
     </div>
   </div>
 </div>
+
+<!-- Scraper Log Bottom-to-Top Drawer / Modal -->
+<div id="files-log-modal" class="fixed inset-0 z-50 flex flex-col justify-end pointer-events-none transition-opacity duration-300 opacity-0">
+  <!-- Backdrop overlay with blur -->
+  <div id="files-log-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity duration-300 opacity-0 pointer-events-auto"></div>
+  
+  <!-- Slide-up Drawer -->
+  <div id="files-log-drawer" class="relative z-10 bg-white w-full max-w-4xl mx-auto rounded-t-3xl shadow-2xl border-t border-slate-200 pointer-events-auto transform translate-y-full transition-transform duration-300 ease-out flex flex-col max-h-[85vh] sm:max-h-[80vh]">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+        </div>
+        <div>
+          <h3 id="files-log-title" class="text-base font-bold text-slate-900">Scraper Logs</h3>
+          <p id="files-log-subtitle" class="text-xs text-slate-500">Execution history and runtime details</p>
+        </div>
+      </div>
+      <button type="button" id="files-log-close" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition cursor-pointer" title="Close">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content / Log Entries -->
+    <div id="files-log-body" class="p-6 overflow-y-auto space-y-3 flex-1 min-h-[220px]">
+      <div id="files-log-loading" class="flex items-center justify-center py-12 text-sm text-slate-400 gap-2">
+        <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <span>Loading logs…</span>
+      </div>
+      <div id="files-log-list" class="space-y-3 hidden"></div>
+      <div id="files-log-empty" class="hidden py-12 text-center text-sm text-slate-400">No logs recorded for this scraper yet.</div>
+    </div>
+  </div>
+</div>
 {% endblock MainContent %}
 
 {% block ExtraScripts %}

@@ -48,13 +48,11 @@
   }
 
   function scraperCellHtml(row) {
-    const scraperName = row.scraper || row.siteName || 'Scraper';
+    const scraperName = row.siteName || row.scraper || 'Scraper';
     const safeSite = Shared.escapeHtml(scraperName);
-    const safeScript = Shared.escapeHtml(row.pythonFilePath || '');
     return `
       <div>
         <div class="font-semibold text-slate-800 text-sm">${safeSite}</div>
-        ${safeScript ? `<div class="font-mono text-[11px] text-slate-400 truncate max-w-[180px]">${safeScript}</div>` : ''}
       </div>
     `;
   }
@@ -63,33 +61,36 @@
     const st = (row.status || '').toUpperCase();
     switch (st) {
       case 'RUNNING':
-        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Running</span>`;
+        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>RUNNING</span>`;
+      case 'SUCCESS':
       case 'FINISHED':
-        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-700 border border-sky-200/60">Finished</span>`;
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-700 border border-sky-200/60">SUCCESS</span>`;
       case 'STOPPED':
-        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200/60">Stopped</span>`;
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200/60">STOPPED</span>`;
+      case 'FAIL':
       case 'FAILED':
-        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 border border-rose-200/60">Failed</span>`;
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 border border-rose-200/60">FAIL</span>`;
       default:
         return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">${st}</span>`;
     }
   }
 
+  function messageCellHtml(row) {
+    const msg = row.errorMessage || '';
+    if (!msg) return '<span class="text-slate-400">—</span>';
+    return `<span class="text-xs text-slate-600 max-w-[240px] inline-block truncate" title="${Shared.escapeHtml(msg)}">${Shared.escapeHtml(msg)}</span>`;
+  }
+
   function actionsCellHtml(row) {
     const isRunning = (row.status || '').toUpperCase() === 'RUNNING';
-    const viewLiveBtn = isRunning && row.fileId
-      ? `<a href="/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer">Live Progress</a>`
-      : '';
-    const downloadBtn = row.outputAvailable
-      ? `<a href="/api/reports/${row.id}/download" class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-800 hover:underline cursor-pointer" title="Download report Excel">Download</a>`
-      : '';
-
-    return `
-      <div class="flex items-center justify-end gap-3">
-        ${viewLiveBtn}
-        ${downloadBtn}
-      </div>
-    `;
+    if (isRunning && row.fileId) {
+      return `
+        <div class="flex items-center justify-end gap-3">
+          <a href="/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer">Live Progress</a>
+        </div>
+      `;
+    }
+    return '<span class="text-slate-400">—</span>';
   }
 
   function updateStatsCards(stats) {
@@ -106,7 +107,7 @@
       order: [[0, 'desc']], // newest run first
       language: {
         search: '',
-        searchPlaceholder: 'Search by scraper, user, site…',
+        searchPlaceholder: 'Search logs…',
         lengthMenu: 'Show _MENU_ logs per page',
         info: 'Showing _START_ to _END_ of _TOTAL_ logs',
         infoEmpty: 'No scraping logs recorded yet',
@@ -121,11 +122,11 @@
         },
         {
           data: null,
-          render: (data, type, row) => (type === 'display' ? scraperCellHtml(row) : (row.scraper || '')),
+          render: (data, type, row) => (type === 'display' ? scraperCellHtml(row) : (row.siteName || row.scraper || '')),
         },
         {
           data: null,
-          render: (data, type, row) => (type === 'display' ? userCellHtml(row) : (row.userName || '')),
+          render: (data, type, row) => (type === 'display' ? statusBadgeHtml(row) : (row.status || '')),
         },
         {
           data: null,
@@ -148,24 +149,12 @@
           render: (data, type, row) => (type === 'display' ? `<span class="font-semibold text-slate-700">${Shared.escapeHtml(row.duration || '—')}</span>` : (row.durationSeconds || 0)),
         },
         {
-          data: 'noOfUrlFound',
-          render: (data, type) => (type === 'display' ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200/60">${(data || 0).toLocaleString()}</span>` : (data || 0)),
-        },
-        {
-          data: 'totalSuccessUrl',
-          render: (data, type) => (type === 'display' ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">${(data || 0).toLocaleString()}</span>` : (data || 0)),
-        },
-        {
-          data: 'totalBlockUrl',
-          render: (data, type) => (type === 'display' ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/60">${(data || 0).toLocaleString()}</span>` : (data || 0)),
-        },
-        {
           data: 'dataScraped',
-          render: (data, type) => (type === 'display' ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">${(data || 0).toLocaleString()} rows</span>` : (data || 0)),
+          render: (data, type) => (type === 'display' ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">${(data || 0).toLocaleString()}</span>` : (data || 0)),
         },
         {
           data: null,
-          render: (data, type, row) => (type === 'display' ? statusBadgeHtml(row) : (row.status || '')),
+          render: (data, type, row) => (type === 'display' ? messageCellHtml(row) : (row.errorMessage || '')),
         },
         {
           data: null, orderable: false, searchable: false, className: 'text-right',
