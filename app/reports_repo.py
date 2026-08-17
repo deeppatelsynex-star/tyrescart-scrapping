@@ -183,17 +183,17 @@ def serialize_log(row):
     # Normalize status to strictly RUNNING, SUCCESS, STOPPED, or FAIL per requirements
     if raw_status in ('FINISHED', 'SUCCESS', 'DONE'):
         status = 'SUCCESS'
-    elif raw_status == 'RUNNING':
+    elif raw_status == 'RUNNING' and end_time is None:
         status = 'RUNNING'
     elif raw_status in ('STOPPED', 'STOP') or 'stopped by user' in error_msg.lower() or 'status: stopped' in error_msg.lower():
         status = 'STOPPED'
     else:
-        status = 'FAIL'
+        status = 'FAIL' if raw_status not in ('RUNNING',) else 'SUCCESS'
 
     output_path = row.get('output_file_path')
     output_available = bool(output_path and os.path.exists(output_path))
 
-    duration_str = format_duration(start_time, end_time) if status != 'RUNNING' else 'Running…'
+    duration_str = format_duration(start_time, end_time) if (status != 'RUNNING' and end_time is not None) else 'Running…'
     duration_secs = int((end_time - start_time).total_seconds()) if (start_time and end_time) else None
 
     scraper_name = row.get('scraper') or row.get('site_name') or 'Scraper'
@@ -226,8 +226,50 @@ def serialize_log(row):
     }
 
 
+def reconcile_stale_logs():
+    """Reconciles any logTbl rows marked as RUNNING when scraper_jobs or process is already finished."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            # 1. Match finished scraper_jobs to update any lingering RUNNING logTbl rows
+            cursor.execute("""
+                UPDATE logTbl l
+                JOIN scraper_jobs j ON l.file_id = j.file_id AND l.user_id = j.started_by_user_id
+                SET l.status = CASE
+                        WHEN j.status = 'SUCCESS' THEN 'SUCCESS'
+                        WHEN j.status = 'STOPPED' THEN 'STOPPED'
+                        ELSE 'FAIL'
+                    END,
+                    l.end_time = COALESCE(j.finished_at, NOW()),
+                    l.error_message = COALESCE(j.error_message, l.error_message),
+                    l.no_of_url_found = GREATEST(l.no_of_url_found, j.total_urls),
+                    l.total_success_url = GREATEST(l.total_success_url, j.completed_urls),
+                    l.total_block_url = GREATEST(l.total_block_url, j.blocked_urls),
+                    l.data_scraped = GREATEST(l.data_scraped, j.written_to_xlsx)
+                WHERE (l.status = 'RUNNING' OR l.end_time IS NULL)
+                  AND j.status IN ('SUCCESS', 'FAILED', 'STOPPED')
+                  AND j.finished_at IS NOT NULL
+            """)
+
+            # 2. For any other RUNNING log without an active lock in scraper_job_locks
+            cursor.execute("""
+                UPDATE logTbl l
+                LEFT JOIN scraper_job_locks k ON l.file_id = k.file_id
+                SET l.status = 'STOPPED',
+                    l.end_time = NOW(),
+                    l.error_message = 'Scraper execution finished.'
+                WHERE (l.status = 'RUNNING' OR l.end_time IS NULL)
+                  AND k.file_id IS NULL
+            """)
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+
 def list_logs(search=None, status=None, user_id=None, file_id=None, page=1, per_page=20):
     """Returns (rows, total_count) from logTbl for the SuperAdmin reports view or per-scraper drawer."""
+    reconcile_stale_logs()
     page = max(1, page)
     per_page = max(1, min(per_page, 200))
     offset = (page - 1) * per_page

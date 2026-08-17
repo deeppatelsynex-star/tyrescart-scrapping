@@ -163,10 +163,20 @@ def get_job_by_id(job_id):
 def finalize_job(job_id, status, error_message=None, output_file_path=None):
     """Updates a job to terminal state (SUCCESS, FAILED, STOPPED) with finished_at.
     The MySQL trigger `after_scraper_job_update` automatically deletes the lock.
+    Also synchronizes and finalizes the corresponding record in logTbl.
     """
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            # 1. Fetch job details
+            cursor.execute("""
+                SELECT file_id, started_by_user_id, process_id, total_urls, completed_urls, blocked_urls, written_to_xlsx
+                FROM scraper_jobs
+                WHERE job_id = %s
+            """, (job_id,))
+            job_row = cursor.fetchone()
+
+            # 2. Update scraper_jobs
             cursor.execute("""
                 UPDATE scraper_jobs
                 SET status = %s,
@@ -177,11 +187,49 @@ def finalize_job(job_id, status, error_message=None, output_file_path=None):
                 WHERE job_id = %s
             """, (status, error_message, output_file_path, job_id))
 
-            # Also ensure lock is cleared in case trigger didn't match
+            # 3. Ensure lock is deleted from scraper_job_locks
             cursor.execute("""
                 DELETE FROM scraper_job_locks
                 WHERE job_id = %s
             """, (job_id,))
+
+            # 4. Synchronize logTbl so audit log is never left as RUNNING when job finishes!
+            log_status = 'SUCCESS' if status == 'SUCCESS' else ('STOPPED' if status == 'STOPPED' else 'FAIL')
+            if job_row:
+                fid = job_row['file_id']
+                uid = job_row['started_by_user_id']
+                pid = job_row.get('process_id')
+                total_u = job_row.get('total_urls') or 0
+                comp_u = job_row.get('completed_urls') or 0
+                block_u = job_row.get('blocked_urls') or 0
+                data_s = job_row.get('written_to_xlsx') or 0
+
+                if pid:
+                    cursor.execute("""
+                        UPDATE logTbl
+                        SET status = %s,
+                            end_time = NOW(),
+                            error_message = COALESCE(%s, error_message),
+                            output_file_path = COALESCE(%s, output_file_path),
+                            no_of_url_found = GREATEST(no_of_url_found, %s),
+                            total_success_url = GREATEST(total_success_url, %s),
+                            total_block_url = GREATEST(total_block_url, %s),
+                            data_scraped = GREATEST(data_scraped, %s)
+                        WHERE process_id = %s AND (status = 'RUNNING' OR end_time IS NULL)
+                    """, (log_status, error_message, output_file_path, total_u, comp_u, block_u, data_s, pid))
+
+                cursor.execute("""
+                    UPDATE logTbl
+                    SET status = %s,
+                        end_time = NOW(),
+                        error_message = COALESCE(%s, error_message),
+                        output_file_path = COALESCE(%s, output_file_path),
+                        no_of_url_found = GREATEST(no_of_url_found, %s),
+                        total_success_url = GREATEST(total_success_url, %s),
+                        total_block_url = GREATEST(total_block_url, %s),
+                        data_scraped = GREATEST(data_scraped, %s)
+                    WHERE file_id = %s AND user_id = %s AND (status = 'RUNNING' OR end_time IS NULL)
+                """, (log_status, error_message, output_file_path, total_u, comp_u, block_u, data_s, fid, uid))
     except Exception:
         logger.exception("Error finalizing job_id=%s in database.", job_id)
     finally:
