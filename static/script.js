@@ -153,10 +153,10 @@ const expandedRoots = new Set();
 // Small pill badge that labels a child row as "Pagination" (listing page) or "Product".
 const typeTag = (type) => {
   if (type === 'listing') {
-    return '<span class="inline-flex shrink-0 items-center rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700">Pagination</span>';
+    return '<span class="inline-flex shrink-0 items-center rounded-full bg-indigo-100 border border-indigo-200/80 px-2.5 py-0.5 text-xs font-semibold text-indigo-800">Pagination</span>';
   }
   if (type === 'product') {
-    return '<span class="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">Product</span>';
+    return '<span class="inline-flex shrink-0 items-center rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-700">Product</span>';
   }
   return '';
 };
@@ -201,13 +201,13 @@ const renderChildRow = (item) => {
   }
   const isXlsx = !!item.written_to_xlsx;
   return `
-    <li class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-        <div class="mt-0.5">${getStatusIcon(status)}</div>
-      <div class="min-w-0 flex-1 flex items-center justify-between gap-3">
-        <div class="min-w-0 flex items-center gap-2">
-          <p class="break-all text-sm text-slate-600">${item.url}</p>
+    <li class="flex items-start gap-3 rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 shadow-2xs">
+      <div class="mt-0.5 shrink-0">${getStatusIcon(status)}</div>
+      <div class="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div class="min-w-0 flex flex-wrap items-center gap-2">
+          <p class="break-all text-sm sm:text-base font-normal text-slate-800">${item.url}</p>
           ${typeTag(item.type)}
-          ${isXlsx ? '<span class="inline-flex shrink-0 items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Written to XLSX</span>' : ''}
+          ${isXlsx ? '<span class="inline-flex shrink-0 items-center rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-xs font-bold text-emerald-800">Written to XLSX</span>' : ''}
         </div>
         <div class="flex shrink-0 items-center gap-2">
           ${copyButton(item.url, 'p-1.5')}
@@ -259,16 +259,16 @@ const renderRootNode = (root) => {
   }
 
   return `
-    <li class="rounded-2xl border border-slate-200 overflow-hidden">
-      <div class="flex items-start gap-3 px-4 py-3">
+    <li class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+      <div class="flex items-start gap-3.5 px-4 sm:px-5 py-3.5">
         ${hasChildren
-      ? `<button type="button" class="tree-toggle mt-0.5 flex items-center justify-center rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 cursor-pointer" data-url="${root.url}" aria-expanded="${expanded}" aria-label="Toggle product list">${chevronIcon(expanded)}</button>`
+      ? `<button type="button" class="tree-toggle mt-0.5 flex items-center justify-center rounded-lg p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 cursor-pointer" data-url="${root.url}" aria-expanded="${expanded}" aria-label="Toggle product list">${chevronIcon(expanded)}</button>`
       : '<span class="w-[26px] shrink-0"></span>'}
-        <div class="mt-0.5">${getStatusIcon(status)}</div>
-        <div class="min-w-0 flex-1 flex items-center justify-between gap-3">
+        <div class="mt-0.5 shrink-0">${getStatusIcon(status)}</div>
+        <div class="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="min-w-0">
-            <p class="break-all text-sm font-medium text-slate-700">${root.url}</p>
-            ${hasChildren ? `<span class="mt-1 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">${doneCount}/${root.children.length} products done</span>` : ''}
+            <p class="break-all text-sm sm:text-base font-bold text-slate-900 leading-snug">${root.url}</p>
+            ${hasChildren ? `<span class="mt-1.5 inline-flex items-center rounded-full bg-slate-100 border border-slate-200/90 px-3 py-0.5 text-xs sm:text-sm font-semibold text-slate-700">${doneCount}/${root.children.length} products done</span>` : ''}
           </div>
           <div class="flex shrink-0 items-center gap-2">
             ${copyButton(root.url)}
@@ -276,7 +276,7 @@ const renderRootNode = (root) => {
         </div>
       </div>
       ${hasChildren ? `
-        <ul class="child-list space-y-2 border-t border-slate-100 bg-slate-50/70 px-4 py-3 pl-9 sm:pl-12 ${expanded ? '' : 'hidden'}">
+        <ul class="child-list space-y-2 border-t border-slate-100 bg-slate-50/80 px-4 sm:px-5 py-3.5 pl-9 sm:pl-14 ${expanded ? '' : 'hidden'}">
           ${root.children.map(renderChildRow).join('')}
         </ul>
       ` : ''}
@@ -307,21 +307,21 @@ const refreshUrlStatuses = async () => {
 
     if (urlSummaryElement) {
       const totalBadge = totalProductUrls > 0
-        ? `<span class="rounded-full bg-indigo-50 border border-indigo-200 px-3 py-1 text-indigo-700 font-medium">Total Product URLs: <strong>${totalProductUrls}</strong></span>`
-        : `<span class="rounded-full bg-indigo-50 border border-indigo-200 px-3 py-1 text-indigo-700 font-medium">Total URLs: <strong>${totalMainUrls}</strong></span>`;
+        ? `<span class="rounded-full bg-indigo-50 border border-indigo-200 px-3.5 py-1.5 text-xs sm:text-sm text-indigo-800 font-semibold shadow-2xs">Total Product URLs: <strong class="text-indigo-950 font-bold">${totalProductUrls}</strong></span>`
+        : `<span class="rounded-full bg-indigo-50 border border-indigo-200 px-3.5 py-1.5 text-xs sm:text-sm text-indigo-800 font-semibold shadow-2xs">Total URLs: <strong class="text-indigo-950 font-bold">${totalMainUrls}</strong></span>`;
 
       const xlsxBadge = xlsxCount > 0
-        ? `<span class="rounded-full bg-teal-50 border border-teal-200 px-3 py-1 text-teal-700 font-semibold">Written to XLSX: <strong>${xlsxCount}</strong></span>`
+        ? `<span class="rounded-full bg-teal-50 border border-teal-200 px-3.5 py-1.5 text-xs sm:text-sm text-teal-800 font-bold shadow-2xs">Written to XLSX: <strong class="text-teal-950 font-extrabold">${xlsxCount}</strong></span>`
         : '';
 
       urlSummaryElement.innerHTML = `
         ${totalBadge}
         ${xlsxBadge}
-        <span class="rounded-full bg-slate-100 px-3 py-1">Pending: <strong>${summary.pending}</strong></span>
-        <span class="rounded-full bg-amber-100 px-3 py-1 text-amber-700">Running: <strong>${summary.running}</strong></span>
-        <span class="rounded-full bg-rose-100 px-3 py-1 text-rose-700">Blocked: <strong>${summary.blocked}</strong></span>
-        <span class="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">Main URL Done: <strong>${mainUrlDone}</strong></span>
-        <span class="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">Product URL Done: <strong>${subUrlDone}</strong></span>
+        <span class="rounded-full bg-slate-100 border border-slate-200 px-3.5 py-1.5 text-xs sm:text-sm text-slate-700 font-semibold shadow-2xs">Pending: <strong class="text-slate-900 font-bold">${summary.pending}</strong></span>
+        <span class="rounded-full bg-amber-50 border border-amber-200 px-3.5 py-1.5 text-xs sm:text-sm text-amber-800 font-semibold shadow-2xs">Running: <strong class="text-amber-950 font-bold">${summary.running}</strong></span>
+        <span class="rounded-full bg-rose-50 border border-rose-200 px-3.5 py-1.5 text-xs sm:text-sm text-rose-800 font-semibold shadow-2xs">Blocked: <strong class="text-rose-950 font-bold">${summary.blocked}</strong></span>
+        <span class="rounded-full bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 text-xs sm:text-sm text-emerald-800 font-semibold shadow-2xs">Main URL Done: <strong class="text-emerald-950 font-bold">${mainUrlDone}</strong></span>
+        <span class="rounded-full bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 text-xs sm:text-sm text-emerald-800 font-semibold shadow-2xs">Product URL Done: <strong class="text-emerald-950 font-bold">${subUrlDone}</strong></span>
       `;
     }
 
