@@ -394,7 +394,6 @@ const refreshStatus = async () => {
       if (fileScraperId && rawState.siteName) {
         fileScraperNameEl.textContent = `Scraper: ${rawState.siteName}`;
         fileScraperSwitcher.classList.remove('hidden');
-        refreshRunningFileScrapers();
       } else {
         fileScraperSwitcher.classList.add('hidden');
       }
