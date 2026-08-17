@@ -116,10 +116,6 @@
         },
         {
           data: null,
-          render: (data, type, row) => (type === 'display' ? statusBadgeHtml(row) : (row.status || '')),
-        },
-        {
-          data: null,
           render: (data, type, row) => (type === 'display' ? Shared.dateTimeHtml(row.startTimeRaw) : (row.startTimeRaw || '')),
         },
         {
@@ -144,7 +140,7 @@
         },
         {
           data: null,
-          render: (data, type, row) => (type === 'display' ? messageCellHtml(row) : (row.errorMessage || '')),
+          render: (data, type, row) => (type === 'display' ? statusBadgeHtml(row) : (row.status || '')),
         },
       ],
     }));
