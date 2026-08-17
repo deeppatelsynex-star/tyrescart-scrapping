@@ -74,6 +74,15 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, 'static'),
 )
 
+# High-Performance HTTP Response Compression (Brotli + Gzip)
+try:
+    from flask_compress import Compress
+    Compress(app)
+    app.config['COMPRESS_ALGORITHM'] = ['brotli', 'gzip', 'deflate']
+    app.config['COMPRESS_MIN_SIZE'] = 500
+except ImportError:
+    pass
+
 # A random fallback key here would change on every process restart (e.g. Render's
 # free-tier spin-down/cold-start), invalidating every existing session cookie and
 # making the app look like it "reset" on refresh. Set FLASK_SECRET_KEY in the
@@ -83,6 +92,17 @@ app.permanent_session_lifetime = timedelta(days=7)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7 days browser cache for static files
+
+
+@app.after_request
+def add_performance_headers(response):
+    """Adds caching headers for static assets and enables keep-alive."""
+    if request.path.startswith('/static/'):
+        # Cache static CSS, JS, images for 7 days with revalidation
+        response.headers['Cache-Control'] = 'public, max-age=604800, stale-while-revalidate=86400'
+    return response
+
 
 TMP_SCRAPERS_DIR = os.path.join(BASE_DIR, 'tmp', 'scrapers')
 
