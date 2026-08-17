@@ -106,25 +106,36 @@
       : '';
     const logBtn = `<button type="button" data-action="view-logs" data-id="${row.fileId}" class="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer">Log</button>`;
 
+    const canManage = canUploadScripts();
+    const editBtn = canManage
+      ? `<button type="button" data-action="edit" data-id="${row.fileId}" ${row.working ? 'disabled title="Stop the scraper before editing it"' : ''} class="text-xs font-semibold ${row.working ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:underline cursor-pointer'}">Edit</button>`
+      : '';
+    const deleteBtn = canManage
+      ? `<button type="button" data-action="delete" data-id="${row.fileId}" ${row.working ? 'disabled title="Stop the scraper before deleting it"' : ''} class="text-xs font-semibold ${row.working ? 'text-slate-300 cursor-not-allowed' : 'text-rose-600 hover:underline cursor-pointer'}">Delete</button>`
+      : '';
+
     return `
       <div class="flex items-center justify-end gap-3">
         ${downloadBtn}
         ${viewLiveBtn}
         ${startStopBtn}
         ${logBtn}
-        <button type="button" data-action="edit" data-id="${row.fileId}" ${row.working ? 'disabled title="Stop the scraper before editing it"' : ''} class="text-xs font-semibold ${row.working ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:underline cursor-pointer'}">Edit</button>
-        <button type="button" data-action="delete" data-id="${row.fileId}" ${row.working ? 'disabled title="Stop the scraper before deleting it"' : ''} class="text-xs font-semibold ${row.working ? 'text-slate-300 cursor-not-allowed' : 'text-rose-600 hover:underline cursor-pointer'}">Delete</button>
+        ${editBtn}
+        ${deleteBtn}
       </div>`;
   }
 
   function enabledToggleHtml(row) {
     const isBusy = inFlightToggles.has(row.fileId);
     const checked = row.isEnabled ? 'checked' : '';
-    const disabled = row.working || isBusy ? 'disabled' : '';
-    const title = row.working ? 'Stop scraper before disabling' : (row.isEnabled ? 'Enabled (click to disable)' : 'Disabled (click to enable)');
+    const canManage = canUploadScripts();
+    const disabled = !canManage || row.working || isBusy ? 'disabled' : '';
+    const title = !canManage
+      ? 'Only Admins can enable or disable scrapers'
+      : (row.working ? 'Stop scraper before disabling' : (row.isEnabled ? 'Enabled (click to disable)' : 'Disabled (click to enable)'));
     return `
       <div class="flex items-center justify-center">
-        <label class="relative inline-flex items-center ${row.working || isBusy ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}" title="${title}">
+        <label class="relative inline-flex items-center ${!canManage || row.working || isBusy ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}" title="${title}">
           <input type="checkbox" data-action="toggle-status" data-id="${row.fileId}" class="sr-only peer" ${checked} ${disabled}>
           <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
         </label>
@@ -234,9 +245,9 @@
       const data = await response.json();
       csrfToken = data.csrfToken;
       currentRole = data.user ? data.user.role : null;
-      newBtn.classList.toggle('hidden', !canUploadScripts());
-      uploadPanel.classList.toggle('hidden', !canUploadScripts());
-      noAccessNote.classList.toggle('hidden', canUploadScripts());
+      newBtn?.classList.toggle('hidden', !canUploadScripts());
+      uploadPanel?.classList.toggle('hidden', !canUploadScripts());
+      noAccessNote?.classList.toggle('hidden', canUploadScripts());
     } catch (err) {}
   }
 
