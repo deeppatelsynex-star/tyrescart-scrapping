@@ -43,6 +43,7 @@ class TestScraperLockingAndPrivacy(unittest.TestCase):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM scraper_jobs WHERE job_id LIKE 'test_%'")
                 cursor.execute("""
                     UPDATE scraper_jobs
                     SET status = 'STOPPED', finished_at = NOW()
@@ -60,6 +61,7 @@ class TestScraperLockingAndPrivacy(unittest.TestCase):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM scraper_jobs WHERE job_id LIKE 'test_%'")
                 cursor.execute("""
                     UPDATE scraper_jobs
                     SET status = 'STOPPED', finished_at = NOW()

@@ -459,8 +459,15 @@ def start_job(file_id, user_id):
     with _start_lock:
         active = get_active_job(file_id)
         if active:
+            with _lock:
+                in_memory = (active['job_id'] in _active_jobs)
             pid = active.get('process_id')
-            if pid and psutil.pid_exists(pid):
+            started_at = active.get('started_at')
+            is_alive = in_memory or (pid and psutil.pid_exists(pid))
+            # If not in memory and started > 60s ago and PID dead, consider stale
+            is_stale = not in_memory and pid and not psutil.pid_exists(pid) and started_at and (datetime.now() - started_at).total_seconds() > 60
+
+            if is_alive or not is_stale:
                 if active['started_by_user_id'] == user_id:
                     return {
                         'success': True,
@@ -478,7 +485,7 @@ def start_job(file_id, user_id):
                         'message': 'This scraper is currently being used by another user.'
                     }
             else:
-                # Stale process: finalize and free lock
+                # Genuinely stale process: finalize and free lock
                 finalize_job(active['job_id'], status='FAILED', error_message='Process terminated unexpectedly.')
                 files_repo.set_working(file_id, 0)
 

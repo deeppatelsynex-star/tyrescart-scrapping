@@ -1062,10 +1062,16 @@ def api_list_files():
 
     rows, total = files_repo.list_files(search=search, is_deleted=is_deleted, page=page, per_page=per_page)
     serialized = []
+    user_id = session.get('user_id')
     for r in rows:
         item = files_repo.serialize_file(r)
-        is_running = bool(item.get('working')) or file_scraper_runner.is_running(r['file_id'])
-        item['working'] = is_running
+        active = job_manager.get_active_job(r['file_id'])
+        if active:
+            item['working'] = True
+            item['is_owner'] = (active['started_by_user_id'] == user_id)
+        else:
+            item['working'] = False
+            item['is_owner'] = True
         item['outputAvailable'] = bool(file_scraper_runner.get_output_path(r['file_id']))
         serialized.append(item)
 

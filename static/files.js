@@ -81,26 +81,37 @@
   }
 
   function statusBadgeHtml(row) {
-    return row.working
-      ? `<a href="/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors" title="Click to view live progress"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Running</a>`
-      : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${row.isEnabled ? 'bg-slate-200 text-slate-500' : 'bg-slate-100 text-slate-400'}">${row.isEnabled ? 'Not Running' : 'Disabled'}</span>`;
+    if (row.working) {
+      if (row.is_owner) {
+        return `<a href="/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors" title="Click to view your live progress"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Running</a>`;
+      }
+      return `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200/80" title="This scraper is currently being used by another user">In Use</span>`;
+    }
+    return `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${row.isEnabled ? 'bg-slate-200 text-slate-500' : 'bg-slate-100 text-slate-400'}">${row.isEnabled ? 'Not Running' : 'Disabled'}</span>`;
   }
 
   function actionsCellHtml(row) {
     const busyAction = inFlightStarts.get(row.fileId);
-    const busy = !row.isEnabled || !!busyAction;
-    const startStopLabel = busyAction === 'stop'
-      ? 'Stopping…'
-      : busyAction === 'start'
-      ? 'Please wait…'
-      : (row.working ? 'Stop' : 'Start');
-    const startStopDisabled = !row.isEnabled || row.working ? (row.working ? '' : 'disabled title="Enable scraper before starting"') : '';
-    const startStopBtn = row.working
-      ? `<button type="button" data-action="stop" data-id="${row.fileId}" ${busyAction === 'stop' ? 'disabled' : ''} class="text-xs font-semibold ${busyAction === 'stop' ? 'text-slate-300 cursor-not-allowed' : 'text-rose-600 hover:underline cursor-pointer'}">${startStopLabel}</button>`
-      : `<button type="button" data-action="start" data-id="${row.fileId}" ${startStopDisabled || busy ? 'disabled' : ''} class="text-xs font-semibold ${busy ? 'text-slate-400 cursor-not-allowed' : 'text-emerald-600 hover:underline cursor-pointer'}">${startStopLabel}</button>`;
-    const viewLiveBtn = row.working
-      ? `<a href="/scraperpage?fileId=${row.fileId}" class="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer">View Progress</a>`
-      : '';
+    const isOtherRunning = row.working && !row.is_owner;
+    const busy = !row.isEnabled || !!busyAction || isOtherRunning;
+
+    let startStopBtn = '';
+    let viewLiveBtn = '';
+
+    if (row.working) {
+      if (row.is_owner) {
+        const startStopLabel = busyAction === 'stop' ? 'Stopping…' : 'Stop';
+        startStopBtn = `<button type="button" data-action="stop" data-id="${row.fileId}" ${busyAction === 'stop' ? 'disabled' : ''} class="text-xs font-semibold ${busyAction === 'stop' ? 'text-slate-300 cursor-not-allowed' : 'text-rose-600 hover:underline cursor-pointer'}">${startStopLabel}</button>`;
+        viewLiveBtn = `<a href="/scraperpage?fileId=${row.fileId}" class="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer">View Progress</a>`;
+      } else {
+        startStopBtn = `<button type="button" disabled class="text-xs font-semibold text-slate-400 cursor-not-allowed" title="This scraper is currently being used by another user.">In Use</button>`;
+      }
+    } else {
+      const startStopLabel = busyAction === 'start' ? 'Please wait…' : 'Start';
+      const startStopDisabled = !row.isEnabled ? 'disabled title="Enable scraper before starting"' : (busy ? 'disabled' : '');
+      startStopBtn = `<button type="button" data-action="start" data-id="${row.fileId}" ${startStopDisabled} class="text-xs font-semibold ${busy ? 'text-slate-400 cursor-not-allowed' : 'text-emerald-600 hover:underline cursor-pointer'}">${startStopLabel}</button>`;
+    }
+
     const downloadBtn = row.outputAvailable && !row.working
       ? `<a href="/api/files/${row.fileId}/download" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer" title="Download output Excel">Download</a>`
       : '';
