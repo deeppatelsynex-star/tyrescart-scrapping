@@ -84,9 +84,25 @@ CREATE TABLE IF NOT EXISTS logTbl (
     FOREIGN KEY (user_id) REFERENCES userTbl(userid) ON DELETE CASCADE,
     INDEX idx_log_user_id (user_id),
     INDEX idx_log_file_id (file_id),
-    INDEX idx_log_start_time (start_time)
+    INDEX idx_log_start_time (start_time),
+    INDEX idx_log_file_id_id (file_id, id),
+    INDEX idx_log_status_id (status, id),
+    INDEX idx_log_user_id_id (user_id, id),
+    INDEX idx_log_scraper (scraper)
 )
 """
+
+PERFORMANCE_INDEXES = [
+    ("logTbl", "idx_log_file_id_id", "(file_id, id)"),
+    ("logTbl", "idx_log_status_id", "(status, id)"),
+    ("logTbl", "idx_log_user_id_id", "(user_id, id)"),
+    ("logTbl", "idx_log_scraper", "(scraper)"),
+    ("fileTbl", "idx_file_deleted_id", "(is_deleted, file_id)"),
+    ("fileTbl", "idx_file_site_name", "(site_name)"),
+    ("fileTbl", "idx_file_working", "(working)"),
+    ("userTbl", "idx_user_deleted_id", "(IsDeleted, userid)"),
+    ("userTbl", "idx_user_role", "(Role)"),
+]
 
 
 def add_missing_columns(cursor):
@@ -109,6 +125,23 @@ def add_missing_columns(cursor):
             cursor.execute(statement)
 
 
+def add_missing_indexes(cursor):
+    """Ensures high-performance database indexes exist across all core tables."""
+    for table, index_name, cols in PERFORMANCE_INDEXES:
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS cnt 
+            FROM information_schema.STATISTICS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+              AND TABLE_NAME = %s 
+              AND INDEX_NAME = %s
+            """,
+            (table, index_name),
+        )
+        if cursor.fetchone()["cnt"] == 0:
+            cursor.execute(f"CREATE INDEX {index_name} ON {table} {cols}")
+
+
 def main():
     conn = get_connection()
     try:
@@ -119,7 +152,8 @@ def main():
             cursor.execute(CREATE_FILE_TBL)
             cursor.execute("DROP TABLE IF EXISTS scraperReportTbl")
             cursor.execute(CREATE_LOG_TBL)
-        print("userTbl, password_reset_tbl, fileTbl, and logTbl are ready.")
+            add_missing_indexes(cursor)
+        print("userTbl, password_reset_tbl, fileTbl, and logTbl are ready with performance indexes.")
     finally:
         conn.close()
 
