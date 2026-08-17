@@ -1062,14 +1062,9 @@ def api_list_files():
 
     rows, total = files_repo.list_files(search=search, is_deleted=is_deleted, page=page, per_page=per_page)
     serialized = []
-    with file_scraper_runner._lock:
-        running_proc_ids = {
-            fid for fid, entry in file_scraper_runner._processes.items()
-            if entry.get('process') and entry['process'].poll() is None
-        }
     for r in rows:
         item = files_repo.serialize_file(r)
-        is_running = (r['file_id'] in running_proc_ids) or item['working']
+        is_running = bool(item.get('working')) or file_scraper_runner.is_running(r['file_id'])
         item['working'] = is_running
         item['outputAvailable'] = bool(file_scraper_runner.get_output_path(r['file_id']))
         serialized.append(item)

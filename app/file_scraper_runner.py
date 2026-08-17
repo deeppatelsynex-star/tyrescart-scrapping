@@ -16,7 +16,7 @@ class StartError(Exception):
 
 def is_running(file_id):
     """Returns True if there is an active job running for file_id."""
-    active = job_manager.get_active_job_for_file(file_id)
+    active = job_manager.get_active_job(file_id)
     if active:
         return True
     rec = files_repo.get_file(file_id)
@@ -30,7 +30,7 @@ def running_count():
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                cursor.execute("SELECT COUNT(*) AS cnt FROM scraper_jobs WHERE status IN ('QUEUED', 'RUNNING', 'STOPPING')")
+                cursor.execute("SELECT COUNT(*) AS cnt FROM scraper_jobs WHERE status = 'RUNNING' AND finished_at IS NULL")
                 row = cursor.fetchone()
                 return row['cnt'] if row else 0
         finally:
@@ -41,15 +41,16 @@ def running_count():
 
 def get_statuses(file_id):
     """Returns live URL status list for file_id's active or recent job."""
-    active = job_manager.get_active_job_for_file(file_id)
+    active = job_manager.get_active_job(file_id)
     if active:
-        return job_manager.get_job_urls(active['job_id'])
+        urls, _ = job_manager.get_job_urls(active['job_id'], current_user_id=active['started_by_user_id'])
+        return urls
     return []
 
 
 def get_output_path(file_id):
     """Returns absolute path to the XLSX output file for file_id."""
-    active = job_manager.get_active_job_for_file(file_id)
+    active = job_manager.get_active_job(file_id)
     if active and active.get('output_file_path') and os.path.exists(active['output_file_path']):
         return active['output_file_path']
     fallback = os.path.join(TMP_DIR, f'file_{file_id}_output.xlsx')
