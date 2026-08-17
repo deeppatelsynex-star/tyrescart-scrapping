@@ -116,3 +116,35 @@ table.dataTable.no-footer { border-bottom: none; }
 table.dataTable tbody tr:hover { background: #f8fafc; }
 div.dataTables_wrapper div.dataTables_processing { display: none; }
 .dtr-control { cursor: pointer; }
+
+/* Responsive adjustments for mobile and tablets */
+@media (max-width: 640px) {
+  .dataTables_wrapper {
+    gap: 0.75rem;
+  }
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_paginate {
+    margin-left: 0;
+    width: 100%;
+  }
+  .dataTables_wrapper .dataTables_filter input {
+    width: 100%;
+  }
+  .dataTables_wrapper .dataTables_info,
+  .dataTables_wrapper .dataTables_paginate {
+    justify-content: center;
+    width: 100%;
+    text-align: center;
+  }
+  .dataTables_wrapper .dataTables_paginate {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+  table.dataTable thead th,
+  table.dataTable tbody td {
+    padding: 0.625rem 0.875rem !important;
+    white-space: nowrap;
+  }
+}
