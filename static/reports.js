@@ -58,15 +58,24 @@
       case 'FAIL':
       case 'FAILED':
       default:
-        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 border border-rose-200/60">FAIL</span>`;
+        return `<button type="button" data-action="view-error-detail" data-log-id="${row.id}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200/80 hover:bg-rose-200 hover:border-rose-300 transition cursor-pointer" title="Click to view failure reason & details"><svg class="w-3 h-3 text-rose-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>FAIL</button>`;
     }
   }
 
   function messageCellHtml(row) {
     const isRunning = (row.status || '').toUpperCase() === 'RUNNING';
+    const isFail = (row.status || '').toUpperCase() === 'FAIL' || (row.status || '').toUpperCase() === 'FAILED';
     const msg = row.errorMessage || '';
     if (isRunning && row.fileId) {
       return `<a href="/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer">Live Progress →</a>`;
+    }
+    if (isFail) {
+      return `
+        <button type="button" data-action="view-error-detail" data-log-id="${row.id}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition cursor-pointer max-w-[280px] text-left truncate" title="${Shared.escapeHtml(msg || 'Click to view failure reason')}">
+          <svg class="w-3.5 h-3.5 text-rose-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span class="truncate">${Shared.escapeHtml(msg || 'View Failure Reason')}</span>
+        </button>
+      `;
     }
     if (!msg) return '<span class="text-slate-400">—</span>';
     return `<span class="text-xs text-slate-600 max-w-[280px] inline-block truncate" title="${Shared.escapeHtml(msg)}">${Shared.escapeHtml(msg)}</span>`;
@@ -204,6 +213,82 @@
     }
   }
 
+  // --- Log Detail / Failure Modal Management ---
+  const logDetailModal = document.getElementById('log-detail-modal');
+  const logDetailTitle = document.getElementById('log-detail-title');
+  const logDetailSubtitle = document.getElementById('log-detail-subtitle');
+  const logDetailStatusPill = document.getElementById('log-detail-status-pill');
+  const logDetailUser = document.getElementById('log-detail-user');
+  const logDetailDuration = document.getElementById('log-detail-duration');
+  const logDetailUrlsFound = document.getElementById('log-detail-urls-found');
+  const logDetailUrlsSuccess = document.getElementById('log-detail-urls-success');
+  const logDetailUrlsBlocked = document.getElementById('log-detail-urls-blocked');
+  const logDetailReasonText = document.getElementById('log-detail-reason-text');
+  const logDetailExplanation = document.getElementById('log-detail-explanation');
+  const logDetailRawError = document.getElementById('log-detail-raw-error');
+  const logDetailCopyBtn = document.getElementById('log-detail-copy-btn');
+
+  function openLogDetailModal(log) {
+    if (!logDetailModal || !log) return;
+
+    if (logDetailTitle) logDetailTitle.textContent = `${log.siteName || log.scraper || 'Scraper'} — Failure Report`;
+    if (logDetailSubtitle) logDetailSubtitle.textContent = `Log Run #${log.id} • Started: ${log.startTime || '—'}`;
+
+    if (logDetailStatusPill) {
+      logDetailStatusPill.textContent = log.status || 'FAIL';
+      logDetailStatusPill.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700';
+    }
+
+    if (logDetailUser) logDetailUser.textContent = `${log.userName || 'Admin'} #${log.userId || '—'}`;
+    if (logDetailDuration) logDetailDuration.textContent = log.duration || '—';
+
+    if (logDetailUrlsFound) logDetailUrlsFound.textContent = (log.noOfUrlFound || 0).toLocaleString();
+    if (logDetailUrlsSuccess) logDetailUrlsSuccess.textContent = (log.totalSuccessUrl || 0).toLocaleString();
+    if (logDetailUrlsBlocked) logDetailUrlsBlocked.textContent = (log.totalBlockUrl || 0).toLocaleString();
+
+    const rawError = log.errorMessage || 'No detailed error message recorded.';
+    if (logDetailRawError) logDetailRawError.textContent = rawError;
+
+    if (logDetailReasonText) {
+      logDetailReasonText.textContent = rawError;
+    }
+
+    if (logDetailExplanation) {
+      const errLower = rawError.toLowerCase();
+      if (errLower.includes('blocked') || (log.totalBlockUrl > 0 && log.totalSuccessUrl === 0)) {
+        logDetailExplanation.textContent = 'The target website anti-bot protection (Cloudflare / WAF / HTTP 403) blocked automated scraper requests before product data could be extracted.';
+      } else if (errLower.includes('6 hours') || errLower.includes('timeout')) {
+        logDetailExplanation.textContent = 'The crawler was terminated because it exceeded the maximum safety execution limit of 6 hours.';
+      } else if (errLower.includes('server restarted')) {
+        logDetailExplanation.textContent = 'The crawler process was interrupted because the application web server was restarted.';
+      } else if (errLower.includes('return code') || errLower.includes('exit code')) {
+        logDetailExplanation.textContent = 'The Python scraper process encountered an unhandled exception or terminated with a non-zero exit code.';
+      } else {
+        logDetailExplanation.textContent = 'The crawler encountered an unhandled exception during execution and could not complete data extraction.';
+      }
+    }
+
+    if (logDetailCopyBtn) {
+      logDetailCopyBtn.textContent = 'Copy Error';
+      logDetailCopyBtn.onclick = () => {
+        navigator.clipboard.writeText(rawError).then(() => {
+          logDetailCopyBtn.textContent = 'Copied!';
+          setTimeout(() => { logDetailCopyBtn.textContent = 'Copy Error'; }, 1500);
+        });
+      };
+    }
+
+    Shared.openModal(logDetailModal);
+  }
+
+  function closeLogDetailModal() {
+    if (logDetailModal) Shared.closeModal(logDetailModal);
+  }
+
+  document.querySelectorAll('[data-close-log-detail]').forEach((btn) => {
+    btn.addEventListener('click', closeLogDetailModal);
+  });
+
   document.addEventListener('DOMContentLoaded', () => {
     initTable();
 
@@ -220,6 +305,15 @@
 
     $(tableEl.tBodies[0]).on('click', 'a[href*="/download"]', function () {
       Shared.showToast('Starting report download…', 'info');
+    });
+
+    $(tableEl.tBodies[0]).on('click', 'button[data-action="view-error-detail"]', function (e) {
+      e.stopPropagation();
+      const logId = Number(this.getAttribute('data-log-id'));
+      const log = reports.find((r) => r.id === logId);
+      if (log) {
+        openLogDetailModal(log);
+      }
     });
 
     loadReports();

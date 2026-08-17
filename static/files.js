@@ -612,6 +612,8 @@
     }, 300);
   }
 
+  let currentDrawerLogs = new Map();
+
   async function fetchScraperLogs(fileId) {
     try {
       const response = await fetch(`/api/files/${fileId}/logs`);
@@ -619,6 +621,8 @@
       if (logLoading) logLoading.classList.add('hidden');
 
       const logs = (data && data.logs) || [];
+      currentDrawerLogs = new Map(logs.map((l) => [l.id, l]));
+
       if (!logs.length) {
         if (logEmpty) {
           logEmpty.textContent = 'No logs recorded for this scraper yet.';
@@ -675,6 +679,36 @@
     const userName = log.userName || 'Admin';
     const userId = log.userId;
 
+    let actionSection = '';
+    if (st === 'FAIL') {
+      actionSection = `
+        <button type="button" data-action="view-error-detail" data-log-id="${log.id}" class="mt-2.5 w-full flex items-center justify-between gap-2 text-xs rounded-xl bg-rose-50 border border-rose-200/80 text-rose-900 px-3.5 py-2.5 font-medium hover:bg-rose-100/90 hover:border-rose-300 transition cursor-pointer text-left group">
+          <div class="flex items-center gap-2 min-w-0">
+            <svg class="w-4 h-4 text-rose-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span class="truncate"><strong>Failed:</strong> ${Shared.escapeHtml(errorMsg || 'Click to view why this scraper failed')}</span>
+          </div>
+          <span class="inline-flex items-center text-[11px] font-bold text-rose-700 underline shrink-0 group-hover:text-rose-900">View Reason →</span>
+        </button>
+      `;
+    } else if (errorMsg && (st === 'STOPPED' || st === 'STOP')) {
+      actionSection = `
+        <div class="mt-2.5 text-xs rounded-xl bg-amber-50/80 border border-amber-200/70 text-amber-800 px-3 py-2 font-medium flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+          <span>${Shared.escapeHtml(errorMsg)}</span>
+        </div>
+      `;
+    } else if (errorMsg) {
+      actionSection = `
+        <div class="mt-2.5 text-xs rounded-xl bg-slate-100 border border-slate-200 text-slate-700 px-3 py-2 font-medium">
+          ${Shared.escapeHtml(errorMsg)}
+        </div>
+      `;
+    }
+
     return `
       <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 transition-all hover:border-slate-300 hover:shadow-xs">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
@@ -698,14 +732,86 @@
           ${log.status === 'RUNNING' && log.fileId ? `<a href="/scraperpage?fileId=${log.fileId}" class="font-semibold text-indigo-600 hover:underline">View Live Progress →</a>` : ''}
         </div>
 
-        ${errorMsg ? `
-          <div class="mt-2.5 text-xs rounded-xl bg-amber-50/80 border border-amber-200/70 text-amber-800 px-3 py-2 font-medium">
-            ${Shared.escapeHtml(errorMsg)}
-          </div>
-        ` : ''}
+        ${actionSection}
       </div>
     `;
   }
+
+  // --- Log Detail / Failure Modal Management ---
+  const logDetailModal = document.getElementById('log-detail-modal');
+  const logDetailTitle = document.getElementById('log-detail-title');
+  const logDetailSubtitle = document.getElementById('log-detail-subtitle');
+  const logDetailStatusPill = document.getElementById('log-detail-status-pill');
+  const logDetailUser = document.getElementById('log-detail-user');
+  const logDetailDuration = document.getElementById('log-detail-duration');
+  const logDetailUrlsFound = document.getElementById('log-detail-urls-found');
+  const logDetailUrlsSuccess = document.getElementById('log-detail-urls-success');
+  const logDetailUrlsBlocked = document.getElementById('log-detail-urls-blocked');
+  const logDetailReasonText = document.getElementById('log-detail-reason-text');
+  const logDetailExplanation = document.getElementById('log-detail-explanation');
+  const logDetailRawError = document.getElementById('log-detail-raw-error');
+  const logDetailCopyBtn = document.getElementById('log-detail-copy-btn');
+
+  function openLogDetailModal(log) {
+    if (!logDetailModal || !log) return;
+
+    if (logDetailTitle) logDetailTitle.textContent = `${log.siteName || log.scraper || 'Scraper'} — Failure Report`;
+    if (logDetailSubtitle) logDetailSubtitle.textContent = `Log Run #${log.id} • Started: ${log.startTime || '—'}`;
+
+    if (logDetailStatusPill) {
+      logDetailStatusPill.textContent = log.status || 'FAIL';
+      logDetailStatusPill.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700';
+    }
+
+    if (logDetailUser) logDetailUser.textContent = `${log.userName || 'Admin'} #${log.userId || '—'}`;
+    if (logDetailDuration) logDetailDuration.textContent = log.duration || '—';
+
+    if (logDetailUrlsFound) logDetailUrlsFound.textContent = (log.noOfUrlFound || 0).toLocaleString();
+    if (logDetailUrlsSuccess) logDetailUrlsSuccess.textContent = (log.totalSuccessUrl || 0).toLocaleString();
+    if (logDetailUrlsBlocked) logDetailUrlsBlocked.textContent = (log.totalBlockUrl || 0).toLocaleString();
+
+    const rawError = log.errorMessage || 'No detailed error message recorded.';
+    if (logDetailRawError) logDetailRawError.textContent = rawError;
+
+    if (logDetailReasonText) {
+      logDetailReasonText.textContent = rawError;
+    }
+
+    if (logDetailExplanation) {
+      const errLower = rawError.toLowerCase();
+      if (errLower.includes('blocked') || (log.totalBlockUrl > 0 && log.totalSuccessUrl === 0)) {
+        logDetailExplanation.textContent = 'The target website anti-bot protection (Cloudflare / WAF / HTTP 403) blocked automated scraper requests before product data could be extracted.';
+      } else if (errLower.includes('6 hours') || errLower.includes('timeout')) {
+        logDetailExplanation.textContent = 'The crawler was terminated because it exceeded the maximum safety execution limit of 6 hours.';
+      } else if (errLower.includes('server restarted')) {
+        logDetailExplanation.textContent = 'The crawler process was interrupted because the application web server was restarted.';
+      } else if (errLower.includes('return code') || errLower.includes('exit code')) {
+        logDetailExplanation.textContent = 'The Python scraper process encountered an unhandled exception or terminated with a non-zero exit code.';
+      } else {
+        logDetailExplanation.textContent = 'The crawler encountered an unhandled exception during execution and could not complete data extraction.';
+      }
+    }
+
+    if (logDetailCopyBtn) {
+      logDetailCopyBtn.textContent = 'Copy Error';
+      logDetailCopyBtn.onclick = () => {
+        navigator.clipboard.writeText(rawError).then(() => {
+          logDetailCopyBtn.textContent = 'Copied!';
+          setTimeout(() => { logDetailCopyBtn.textContent = 'Copy Error'; }, 1500);
+        });
+      };
+    }
+
+    Shared.openModal(logDetailModal);
+  }
+
+  function closeLogDetailModal() {
+    if (logDetailModal) Shared.closeModal(logDetailModal);
+  }
+
+  document.querySelectorAll('[data-close-log-detail]').forEach((btn) => {
+    btn.addEventListener('click', closeLogDetailModal);
+  });
 
   // --- Start / Stop ---
   async function startFile(fileId) {
@@ -833,6 +939,16 @@
         Shared.hideError(deleteError);
         Shared.openModal(deleteModal);
         return;
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action="view-error-detail"]');
+      if (!btn) return;
+      const logId = Number(btn.getAttribute('data-log-id'));
+      const log = currentDrawerLogs.get(logId);
+      if (log) {
+        openLogDetailModal(log);
       }
     });
 
