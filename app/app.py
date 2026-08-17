@@ -1238,9 +1238,7 @@ def api_stop_file(file_id):
     if not record:
         return jsonify({'success': False, 'error': 'Scraper not found.'}), 404
 
-    stopped = file_scraper_runner.stop(file_id)
-    if not stopped:
-        return jsonify({'success': False, 'message': 'This scraper is not currently running.'})
+    file_scraper_runner.stop(file_id)
     return jsonify({'success': True, 'message': 'Scraper stopped.'})
 
 

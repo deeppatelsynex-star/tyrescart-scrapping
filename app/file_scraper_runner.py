@@ -58,7 +58,11 @@ class StartError(Exception):
 def is_running(file_id):
     with _lock:
         entry = _processes.get(file_id)
-        if entry and entry['process'].poll() is None:
+        if entry:
+            if entry.get('stopped'):
+                return False
+            if entry['process'].poll() is not None:
+                return False
             return True
     # Also check persistent working state in database with bit_to_bool
     rec = files_repo.get_file(file_id)
@@ -402,7 +406,7 @@ def start(file_id, user_id=None):
 
 def stop(file_id):
     """Terminates file_id's running subprocess (and any child processes).
-    Returns True if a running process was found and signaled, False if it wasn't running.
+    Immediately clears working state in database and marks log entry as STOPPED.
     """
     with _lock:
         entry = _processes.get(file_id)
@@ -412,18 +416,40 @@ def stop(file_id):
             if entry.get('timer'):
                 entry['timer'].cancel()
 
+    # Immediate DB state reset
+    files_repo.set_working(file_id, 0)
+
+    # Immediately ensure any RUNNING log entry in logTbl for this scraper is set to STOPPED
+    try:
+        from db import get_connection
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE logTbl
+                    SET status = 'STOPPED',
+                        end_time = NOW(),
+                        error_message = 'Scraper stopped by user.'
+                    WHERE file_id = %s AND status = 'RUNNING' AND end_time IS NULL
+                """, (file_id,))
+        finally:
+            conn.close()
+    except Exception:
+        pass
+
     if not process or process.poll() is not None:
-        files_repo.set_working(file_id, 0)
-        return False
+        return True
 
     _kill_process_tree(process)
     try:
-        process.wait(timeout=5)
+        process.wait(timeout=3)
     except subprocess.TimeoutExpired:
         _kill_process_tree(process, force=True)
-        process.wait()
+        try:
+            process.wait(timeout=2)
+        except Exception:
+            pass
 
-    files_repo.set_working(file_id, 0)
     return True
 
 

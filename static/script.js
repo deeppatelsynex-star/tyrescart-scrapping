@@ -551,9 +551,9 @@ if (stopButton) {
         throw new Error(result.message || result.error || 'Unable to stop scraper');
       }
       isCurrentRunning = false;
+      stopStatusPolling();
       setStatus('Stopped', 'bg-amber-100 text-amber-800 border border-amber-200 font-bold');
       resetScraperUI();
-      stopStatusPolling();
       if (window.AdminShared) {
         window.AdminShared.showToast('Scraper stopped successfully.', 'success');
       }
@@ -569,7 +569,12 @@ if (stopButton) {
         console.error('[TyresCart Scraper Error]:', error);
       }
     } finally {
-      await refreshStatus();
+      if (isCurrentRunning) {
+        await refreshStatus();
+      } else {
+        stopButton.disabled = true;
+        await refreshUrlStatuses();
+      }
     }
   });
 }
