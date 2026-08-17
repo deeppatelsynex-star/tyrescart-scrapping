@@ -1482,5 +1482,27 @@ def api_download_report_output(report_id):
     )
 
 
+@app.errorhandler(404)
+def handle_404_error(e):
+    """Gracefully handles unwanted page or API requests by serving custom 404."""
+    if request.path.startswith('/api/') or request.headers.get('Accept') == 'application/json':
+        return jsonify({
+            'error': 'The requested API resource was not found.',
+            'status': 404,
+            'path': request.path
+        }), 404
+    return render_template(
+        '404.html',
+        page='404',
+        requested_path=request.path,
+        user_name=session.get('name'),
+        user_email=session.get('email'),
+        user_role=session.get('role'),
+        user_avatar=session.get('avatar'),
+        unread_notifications=0,
+        notifications=[]
+    ), 404
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000,debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
