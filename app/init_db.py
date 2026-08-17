@@ -64,6 +64,10 @@ NEW_FILE_COLUMNS = {
     "created_by": "ALTER TABLE fileTbl ADD COLUMN created_by INT NULL",
 }
 
+NEW_LOG_COLUMNS = {
+    "process_id": "ALTER TABLE logTbl ADD COLUMN process_id INT NULL",
+}
+
 
 CREATE_LOG_TBL = """
 CREATE TABLE IF NOT EXISTS logTbl (
@@ -92,6 +96,36 @@ CREATE TABLE IF NOT EXISTS logTbl (
 )
 """
 
+CREATE_SCRAPER_JOBS_TBL = """
+CREATE TABLE IF NOT EXISTS scraper_jobs (
+    job_id VARCHAR(64) PRIMARY KEY,
+    file_id INT NOT NULL,
+    started_by_user_id INT NULL,
+    status ENUM('QUEUED', 'RUNNING', 'STOPPING', 'SUCCESS', 'FAILED', 'STOPPED') NOT NULL DEFAULT 'QUEUED',
+    total_urls INT DEFAULT 0,
+    pending_urls INT DEFAULT 0,
+    running_urls INT DEFAULT 0,
+    completed_urls INT DEFAULT 0,
+    blocked_urls INT DEFAULT 0,
+    total_products INT DEFAULT 0,
+    written_to_xlsx INT DEFAULT 0,
+    main_url_done INT DEFAULT 0,
+    product_url_done INT DEFAULT 0,
+    progress_percent FLOAT DEFAULT 0.0,
+    output_file_path VARCHAR(500) NULL,
+    error_message TEXT NULL,
+    process_id INT NULL,
+    started_at DATETIME NULL,
+    finished_at DATETIME NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_job_file_status (file_id, status),
+    INDEX idx_job_status (status),
+    INDEX idx_job_started_at (started_at),
+    FOREIGN KEY (file_id) REFERENCES fileTbl(file_id) ON DELETE CASCADE
+)
+"""
+
 PERFORMANCE_INDEXES = [
     ("logTbl", "idx_log_file_id_id", "(file_id, id)"),
     ("logTbl", "idx_log_status_id", "(status, id)"),
@@ -102,6 +136,7 @@ PERFORMANCE_INDEXES = [
     ("fileTbl", "idx_file_working", "(working)"),
     ("userTbl", "idx_user_deleted_id", "(IsDeleted, userid)"),
     ("userTbl", "idx_user_role", "(Role)"),
+    ("scraper_jobs", "idx_job_file_status", "(file_id, status)"),
 ]
 
 
@@ -124,6 +159,15 @@ def add_missing_columns(cursor):
         if column not in existing_file:
             cursor.execute(statement)
 
+    cursor.execute(
+        "SELECT COLUMN_NAME FROM information_schema.COLUMNS "
+        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'logTbl'"
+    )
+    existing_log = {row["COLUMN_NAME"] for row in cursor.fetchall()}
+    for column, statement in NEW_LOG_COLUMNS.items():
+        if column not in existing_log:
+            cursor.execute(statement)
+
 
 def add_missing_indexes(cursor):
     """Ensures high-performance database indexes exist across all core tables."""
@@ -142,6 +186,49 @@ def add_missing_indexes(cursor):
             cursor.execute(f"CREATE INDEX {index_name} ON {table} {cols}")
 
 
+CREATE_SCRAPER_JOB_LOCKS_TBL = """
+CREATE TABLE IF NOT EXISTS scraper_job_locks (
+    file_id INT NOT NULL PRIMARY KEY,
+    job_id VARCHAR(255) NOT NULL,
+    started_by_user_id INT NULL,
+    locked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+"""
+
+TRIGGER_BEFORE_INSERT = """
+CREATE TRIGGER before_scraper_job_insert
+BEFORE INSERT ON scraper_jobs
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'RUNNING' AND NEW.finished_at IS NULL THEN
+        INSERT INTO scraper_job_locks (
+            file_id,
+            job_id,
+            started_by_user_id
+        )
+        VALUES (
+            NEW.file_id,
+            NEW.job_id,
+            NEW.started_by_user_id
+        );
+    END IF;
+END;
+"""
+
+TRIGGER_AFTER_UPDATE = """
+CREATE TRIGGER after_scraper_job_update
+AFTER UPDATE ON scraper_jobs
+FOR EACH ROW
+BEGIN
+    IF NEW.finished_at IS NOT NULL AND NEW.status IN ('SUCCESS', 'FAILED', 'STOPPED') THEN
+        DELETE FROM scraper_job_locks
+        WHERE file_id = NEW.file_id
+          AND job_id = NEW.job_id;
+    END IF;
+END;
+"""
+
+
 def update_legacy_stopped_logs(cursor):
     """Backfills legacy logs where scraper was stopped by user to status='STOPPED'."""
     cursor.execute(
@@ -158,6 +245,26 @@ def update_legacy_stopped_logs(cursor):
     )
 
 
+def setup_triggers(cursor):
+    """Initializes scraper_job_locks table, syncs active locks, and installs MySQL triggers."""
+    cursor.execute(CREATE_SCRAPER_JOB_LOCKS_TBL)
+
+    # Resolve any duplicate stale active jobs in scraper_jobs
+    cursor.execute("""
+        UPDATE scraper_jobs
+        SET status = 'STOPPED', finished_at = NOW()
+        WHERE status = 'RUNNING' AND finished_at IS NULL
+    """)
+    cursor.execute("DELETE FROM scraper_job_locks")
+
+    # Install triggers safely
+    cursor.execute("DROP TRIGGER IF EXISTS before_scraper_job_insert")
+    cursor.execute(TRIGGER_BEFORE_INSERT)
+
+    cursor.execute("DROP TRIGGER IF EXISTS after_scraper_job_update")
+    cursor.execute(TRIGGER_AFTER_UPDATE)
+
+
 def main():
     conn = get_connection()
     try:
@@ -168,9 +275,11 @@ def main():
             cursor.execute(CREATE_FILE_TBL)
             cursor.execute("DROP TABLE IF EXISTS scraperReportTbl")
             cursor.execute(CREATE_LOG_TBL)
+            cursor.execute(CREATE_SCRAPER_JOBS_TBL)
+            setup_triggers(cursor)
             add_missing_indexes(cursor)
             update_legacy_stopped_logs(cursor)
-        print("userTbl, password_reset_tbl, fileTbl, and logTbl are ready with performance indexes.")
+        print("userTbl, password_reset_tbl, fileTbl, logTbl, scraper_jobs, and scraper_job_locks with triggers are ready.")
     finally:
         conn.close()
 

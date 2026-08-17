@@ -20,6 +20,7 @@ from werkzeug.utils import secure_filename
 import file_scraper_runner
 import files_repo
 import reports_repo
+import job_manager
 from auth import (
     RESET_TOKEN_TTL_MINUTES,
     VALID_ROLES,
@@ -1212,34 +1213,97 @@ def api_restore_file(file_id):
     })
 
 
+# ==============================================================================
+# Centralized Job-Based Scraper APIs
+# ==============================================================================
+
+# ==============================================================================
+# Centralized Job-Based Scraper APIs (with User Ownership Protection)
+# ==============================================================================
+
+@app.route('/api/scraper/start', methods=['POST'])
+@login_required_api
+@require_csrf
+def api_scraper_job_start():
+    data = request.get_json(silent=True) or {}
+    file_id = data.get('file_id') or request.form.get('file_id') or request.args.get('file_id')
+    if not file_id:
+        return jsonify({'success': False, 'error': 'Missing file_id parameter.'}), 400
+    try:
+        file_id = int(file_id)
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'error': 'Invalid file_id.'}), 400
+
+    user_id = session.get('user_id')
+    result = job_manager.start_job(file_id, user_id=user_id)
+    if not result.get('success'):
+        return jsonify(result), 409
+    return jsonify(result)
+
+
+@app.route('/api/scraper/file/<int:file_id>/active-job')
+@login_required_api
+def api_scraper_file_active_job(file_id):
+    user_id = session.get('user_id')
+    active_info = job_manager.get_active_job_for_file(file_id, current_user_id=user_id)
+    return jsonify(active_info)
+
+
+@app.route('/api/scraper/job/<string:job_id>/status')
+@login_required_api
+def api_scraper_job_status(job_id):
+    user_id = session.get('user_id')
+    data, code = job_manager.get_job_status(job_id, current_user_id=user_id)
+    return jsonify(data), code
+
+
+@app.route('/api/scraper/job/<string:job_id>/urls')
+@login_required_api
+def api_scraper_job_urls(job_id):
+    user_id = session.get('user_id')
+    urls, code = job_manager.get_job_urls(job_id, current_user_id=user_id)
+    if code != 200:
+        return jsonify(urls), code
+    summary = build_status_summary(urls)
+    return jsonify({
+        'job_id': job_id,
+        'statuses': urls,
+        'summary': summary,
+        'count': len(urls),
+    })
+
+
+@app.route('/api/scraper/job/<string:job_id>/stop', methods=['POST'])
+@login_required_api
+@require_csrf
+def api_scraper_job_stop(job_id):
+    user_id = session.get('user_id')
+    is_superadmin = (session.get('role') == 'SuperAdmin')
+    result, code = job_manager.stop_job(job_id, current_user_id=user_id, is_superadmin=is_superadmin)
+    return jsonify(result), code
+
+
+# --- Backward Compatible Routes for /api/files/ endpoints ---
+
 @app.route('/api/files/<int:file_id>/start', methods=['POST'])
 @login_required_api
 @require_csrf
 def api_start_file(file_id):
-    record = files_repo.get_file(file_id)
-    if not record:
-        return jsonify({'success': False, 'error': 'Scraper not found.'}), 404
-    if files_repo.bit_to_bool(record.get('is_deleted')):
-        return jsonify({'success': False, 'error': 'This scraper is disabled/in trash. Please enable it before running.'}), 400
-
-    try:
-        user_id = session.get('user_id')
-        file_scraper_runner.start(file_id, user_id=user_id)
-    except file_scraper_runner.StartError as exc:
-        return jsonify({'success': False, 'error': str(exc)}), 409
-    return jsonify({'success': True, 'message': 'Scraper started.'})
+    user_id = session.get('user_id')
+    result = job_manager.start_job(file_id, user_id=user_id)
+    if not result.get('success'):
+        return jsonify(result), 409
+    return jsonify(result)
 
 
 @app.route('/api/files/<int:file_id>/stop', methods=['POST'])
 @login_required_api
 @require_csrf
 def api_stop_file(file_id):
-    record = files_repo.get_file(file_id)
-    if not record:
-        return jsonify({'success': False, 'error': 'Scraper not found.'}), 404
-
-    file_scraper_runner.stop(file_id)
-    return jsonify({'success': True, 'message': 'Scraper stopped.'})
+    user_id = session.get('user_id')
+    is_superadmin = (session.get('role') == 'SuperAdmin')
+    result, code = job_manager.stop_file(file_id, current_user_id=user_id, is_superadmin=is_superadmin)
+    return jsonify(result), code
 
 
 @app.route('/api/files/<int:file_id>/status')
@@ -1249,40 +1313,71 @@ def api_file_status(file_id):
     if not record:
         return jsonify({'error': 'Scraper not found.'}), 404
 
-    running = file_scraper_runner.is_running(file_id)
+    user_id = session.get('user_id')
+    active_info = job_manager.get_active_job_for_file(file_id, current_user_id=user_id)
+
+    if active_info['has_active_job']:
+        if not active_info['is_owner']:
+            return jsonify({
+                'already_running': True,
+                'is_owner': False,
+                'running': True,
+                'working': True,
+                'siteName': record['site_name'],
+                'fileId': file_id,
+                'message': 'This scraper is currently being used by another user.',
+            })
+        else:
+            job_status, code = job_manager.get_job_status(active_info['job_id'], current_user_id=user_id)
+            if code == 200:
+                job_status['is_owner'] = True
+                job_status['working'] = True
+                job_status['siteName'] = record['site_name']
+                job_status['fileId'] = file_id
+                return jsonify(job_status)
+
     output_path = file_scraper_runner.get_output_path(file_id)
     return jsonify({
-        'running': running,
-        'working': running,
+        'job_id': None,
+        'running': False,
+        'working': False,
+        'done': True,
+        'is_owner': True,
         'siteName': record['site_name'],
         'fileId': file_id,
-        'outputAvailable': bool(output_path) and not running,
+        'outputAvailable': bool(output_path and os.path.exists(output_path)),
+        'total_product_urls': 0,
+        'written_to_xlsx': 0,
+        'pending': 0,
+        'running_count': 0,
+        'blocked': 0,
+        'main_url_done': 0,
+        'product_url_done': 0,
+        'progress_percent': 0.0,
     })
 
 
 @app.route('/api/files/<int:file_id>/url-statuses')
 @login_required_api
 def api_file_url_statuses(file_id):
-    statuses = file_scraper_runner.get_statuses(file_id)
-    output_path = file_scraper_runner.get_output_path(file_id)
-    xlsx_count, xlsx_urls = get_xlsx_info(output_path)
-    if xlsx_urls:
-        if statuses:
-            for item in statuses:
-                u = item.get('url', '').strip()
-                if u in xlsx_urls:
-                    item['status'] = 'done'
-                    item['written_to_xlsx'] = True
-        else:
-            statuses = [
-                {'url': u, 'status': 'done', 'parent': '', 'type': 'product', 'written_to_xlsx': True}
-                for u in sorted(xlsx_urls)
-            ]
+    user_id = session.get('user_id')
+    active_info = job_manager.get_active_job_for_file(file_id, current_user_id=user_id)
 
+    if active_info['has_active_job'] and not active_info['is_owner']:
+        return jsonify({'statuses': [], 'summary': {}, 'xlsx_count': 0, 'error': 'Forbidden'}), 403
+
+    if active_info['has_active_job'] and active_info['is_owner']:
+        urls, code = job_manager.get_job_urls(active_info['job_id'], current_user_id=user_id)
+        if code != 200:
+            return jsonify({'statuses': [], 'summary': {}, 'xlsx_count': 0}), code
+    else:
+        urls = file_scraper_runner.get_statuses(file_id)
+
+    summary = build_status_summary(urls)
     return jsonify({
-        'statuses': statuses,
-        'summary': build_status_summary(statuses),
-        'xlsx_count': xlsx_count,
+        'statuses': urls,
+        'summary': summary,
+        'xlsx_count': summary.get('written_to_xlsx', 0),
     })
 
 

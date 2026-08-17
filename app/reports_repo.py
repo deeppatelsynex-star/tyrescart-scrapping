@@ -33,7 +33,7 @@ def count_excel_data_rows(excel_path):
         return 0
 
 
-def create_log_entry(user_id, file_id, scraper_name):
+def create_log_entry(user_id, file_id, scraper_name, process_id=None):
     """Inserts a new scraper run audit record into logTbl when a crawler starts."""
     conn = get_connection()
     try:
@@ -41,13 +41,36 @@ def create_log_entry(user_id, file_id, scraper_name):
             cursor.execute(
                 """
                 INSERT INTO logTbl
-                    (scraper, file_id, user_id, status, start_time)
+                    (scraper, file_id, user_id, status, start_time, process_id)
                 VALUES
-                    (%s, %s, %s, 'RUNNING', NOW())
+                    (%s, %s, %s, 'RUNNING', NOW(), %s)
                 """,
-                (scraper_name, file_id, user_id),
+                (scraper_name, file_id, user_id, process_id),
             )
             return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def get_active_log_for_file(file_id):
+    """Returns the single active execution log from logTbl for file_id, or None."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, scraper, file_id, user_id, start_time, end_time, status, process_id,
+                       no_of_url_found, total_success_url, total_block_url, data_scraped,
+                       output_file_path, error_message
+                FROM logTbl
+                WHERE file_id = %s
+                  AND (status = 'RUNNING' OR end_time IS NULL)
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                (file_id,),
+            )
+            return cursor.fetchone()
     finally:
         conn.close()
 
