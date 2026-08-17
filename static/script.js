@@ -12,6 +12,7 @@
     return;
   }
 
+  const startButton = document.getElementById('start-scraper');
   const stopButton = document.getElementById('stop-scraper');
   const downloadButton = document.getElementById('download-report');
   const statusElement = document.getElementById('scraper-status');
@@ -61,6 +62,10 @@
 
   const updateControls = (state) => {
     const isRunning = state.status === 'RUNNING' || state.running === true;
+    if (startButton) {
+      startButton.disabled = isRunning;
+      startButton.style.display = isRunning ? 'none' : '';
+    }
     if (stopButton) {
       stopButton.disabled = !isRunning;
       stopButton.style.display = isRunning ? '' : 'none';
@@ -409,9 +414,54 @@
     return fileScraperCsrfToken;
   };
 
+  if (startButton) {
+    startButton.addEventListener('click', async () => {
+      if (!fileScraperId) return;
+      startButton.disabled = true;
+      startButton.innerHTML = '<span>Starting…</span>';
+      if (window.AdminShared) {
+        window.AdminShared.showToast('Starting scraper… please wait', 'info');
+      }
+
+      try {
+        const token = await ensureFileScraperCsrfToken();
+        const res = await fetch(`/api/files/${fileScraperId}/start`, {
+          method: 'POST',
+          headers: { 'X-CSRF-Token': token },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+          const errMsg = data.message || data.error || 'Unable to start scraper.';
+          if (window.AdminShared) window.AdminShared.showToast(errMsg, 'warning');
+          await refreshProgress();
+          return;
+        }
+        if (window.AdminShared) window.AdminShared.showToast('Scraper started successfully!', 'success');
+        currentJobId = data.job_id;
+        startStatusPolling();
+        await refreshProgress();
+      } catch (err) {
+        if (window.AdminShared) window.AdminShared.showToast('Failed to start scraper.', 'error');
+      } finally {
+        if (startButton) {
+          startButton.disabled = false;
+          startButton.innerHTML = `
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span class="ml-2">Start Scraper</span>
+          `;
+        }
+      }
+    });
+  }
+
   if (stopButton) {
     stopButton.addEventListener('click', async (e) => {
       e.preventDefault();
+      if (!confirm('Are you sure you want to stop this scraper?')) {
+        return;
+      }
       stopButton.disabled = true;
       if (window.AdminShared) {
         window.AdminShared.showToast('Stopping scraper… please wait', 'warning');

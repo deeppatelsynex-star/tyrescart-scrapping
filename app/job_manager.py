@@ -462,12 +462,9 @@ def start_job(file_id, user_id):
             with _lock:
                 in_memory = (active['job_id'] in _active_jobs)
             pid = active.get('process_id')
-            started_at = active.get('started_at')
             is_alive = in_memory or (pid and psutil.pid_exists(pid))
-            # If not in memory and started > 60s ago and PID dead, consider stale
-            is_stale = not in_memory and pid and not psutil.pid_exists(pid) and started_at and (datetime.now() - started_at).total_seconds() > 60
 
-            if is_alive or not is_stale:
+            if is_alive:
                 if active['started_by_user_id'] == user_id:
                     return {
                         'success': True,
@@ -485,7 +482,7 @@ def start_job(file_id, user_id):
                         'message': 'This scraper is currently being used by another user.'
                     }
             else:
-                # Genuinely stale process: finalize and free lock
+                # Dead process: finalize and free lock
                 finalize_job(active['job_id'], status='FAILED', error_message='Process terminated unexpectedly.')
                 files_repo.set_working(file_id, 0)
 
@@ -661,19 +658,18 @@ def get_active_job_for_file(file_id, current_user_id):
         in_memory = (active['job_id'] in _active_jobs)
 
     pid = active.get('process_id')
-    started_at = active.get('started_at')
-    if not in_memory and pid and not psutil.pid_exists(pid):
-        if started_at and (datetime.now() - started_at).total_seconds() > 60:
-            finalize_job(active['job_id'], status='FAILED', error_message='Process terminated unexpectedly.')
-            files_repo.set_working(file_id, 0)
-            return {
-                'has_active_job': False,
-                'already_running': False,
-                'is_owner': True,
-                'file_id': file_id,
-                'site_name': site_name,
-                'status': 'IDLE'
-            }
+    is_alive = in_memory or (pid and psutil.pid_exists(pid))
+    if not is_alive:
+        finalize_job(active['job_id'], status='FAILED', error_message='Process terminated unexpectedly.')
+        files_repo.set_working(file_id, 0)
+        return {
+            'has_active_job': False,
+            'already_running': False,
+            'is_owner': True,
+            'file_id': file_id,
+            'site_name': site_name,
+            'status': 'IDLE'
+        }
 
     is_owner = (active['started_by_user_id'] == current_user_id)
 
