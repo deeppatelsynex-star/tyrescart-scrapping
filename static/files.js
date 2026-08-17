@@ -616,6 +616,15 @@
         return;
       }
 
+      // Sort logs so that RUNNING sessions and newest/latest runs are always at the top
+      logs.sort((a, b) => {
+        const aRunning = (a.status || '').toUpperCase() === 'RUNNING';
+        const bRunning = (b.status || '').toUpperCase() === 'RUNNING';
+        if (aRunning && !bRunning) return -1;
+        if (!aRunning && bRunning) return 1;
+        return (Number(b.id) || 0) - (Number(a.id) || 0);
+      });
+
       if (logList) {
         logList.classList.remove('hidden');
         logList.innerHTML = logs.map(renderLogCardHtml).join('');
