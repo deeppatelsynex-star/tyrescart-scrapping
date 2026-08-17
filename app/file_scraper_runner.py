@@ -278,15 +278,16 @@ def _run(file_id, script_path, urls, report_id=None):
         data_scraped = reports_repo.count_excel_data_rows(final_output_path) if final_output_path else 0
 
         # Determine normalized final status and error/stop message
-        # Requirement: Status column only uses RUNNING, SUCCESS, FAIL.
-        # Timeouts and stops map to FAIL with specific reason in details.
         error_message = None
-        if was_timeout:
+        if was_stopped:
+            final_status = 'STOPPED'
+            error_message = 'Scraper stopped by user.'
+        elif was_timeout:
             final_status = 'FAIL'
-            error_message = 'Scraper automatically stopped because execution time exceeded 6 hours. Status: STOPPED Reason: TIMEOUT (>6 HOURS)'
-        elif was_stopped:
+            error_message = 'Scraper automatically stopped because execution time exceeded 6 hours. Reason: TIMEOUT (>6 HOURS)'
+        elif total_block_url > 0 and total_success_url == 0:
             final_status = 'FAIL'
-            error_message = 'Scraper stopped by user. Status: STOPPED'
+            error_message = f'Scraping failed: {total_block_url} URLs blocked by target website.'
         elif returncode == 0:
             final_status = 'SUCCESS'
         else:

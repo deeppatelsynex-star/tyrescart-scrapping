@@ -640,6 +640,9 @@
     } else if (st === 'SUCCESS' || st === 'FINISHED') {
       badgeClass = 'bg-sky-100 text-sky-700 border-sky-200';
       statusLabel = 'SUCCESS';
+    } else if (st === 'STOPPED' || st === 'STOP') {
+      badgeClass = 'bg-amber-100 text-amber-800 border-amber-200';
+      statusLabel = 'STOPPED';
     } else {
       badgeClass = 'bg-rose-100 text-rose-700 border-rose-200';
       statusLabel = 'FAIL';

@@ -52,9 +52,11 @@
       case 'SUCCESS':
       case 'FINISHED':
         return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-700 border border-sky-200/60">SUCCESS</span>`;
+      case 'STOPPED':
+      case 'STOP':
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200/60">STOPPED</span>`;
       case 'FAIL':
       case 'FAILED':
-      case 'STOPPED':
       default:
         return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 border border-rose-200/60">FAIL</span>`;
     }

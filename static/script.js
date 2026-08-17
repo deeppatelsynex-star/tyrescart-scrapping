@@ -604,7 +604,7 @@ if (stopButton) {
         throw new Error(result.message || result.error || 'Unable to stop scraper');
       }
       isCurrentRunning = false;
-      setStatus('Stopped', 'bg-rose-100 text-rose-700');
+      setStatus('Stopped', 'bg-amber-100 text-amber-800 border border-amber-200 font-bold');
       resetScraperUI();
       stopStatusPolling();
       if (window.AdminShared) {

@@ -156,11 +156,13 @@ def serialize_log(row):
     end_time = row.get('end_time')
     raw_status = (row.get('status') or 'UNKNOWN').upper()
 
-    # Normalize status to strictly RUNNING, SUCCESS, or FAIL per requirements
+    # Normalize status to strictly RUNNING, SUCCESS, STOPPED, or FAIL per requirements
     if raw_status in ('FINISHED', 'SUCCESS', 'DONE'):
         status = 'SUCCESS'
     elif raw_status == 'RUNNING':
         status = 'RUNNING'
+    elif raw_status in ('STOPPED', 'STOP'):
+        status = 'STOPPED'
     else:
         status = 'FAIL'
 
@@ -216,7 +218,9 @@ def list_logs(search=None, status=None, user_id=None, file_id=None, page=1, per_
                 st = status.upper()
                 if st == 'SUCCESS':
                     where_clauses.append("l.status IN ('SUCCESS', 'FINISHED')")
-                elif st == 'FAIL':
+                elif st in ('STOPPED', 'STOP'):
+                    where_clauses.append("l.status IN ('STOPPED', 'STOP')")
+                elif st in ('FAIL', 'FAILED'):
                     where_clauses.append("l.status IN ('FAIL', 'FAILED')")
                 else:
                     where_clauses.append('l.status = %s')
