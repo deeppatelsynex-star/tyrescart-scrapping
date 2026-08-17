@@ -461,14 +461,22 @@ def start_job(file_id, user_id):
         if active:
             pid = active.get('process_id')
             if pid and psutil.pid_exists(pid):
-                return {
-                    'success': True,
-                    'job_id': active['job_id'],
-                    'file_id': file_id,
-                    'is_owner': (active['started_by_user_id'] == user_id),
-                    'is_new_job': False,
-                    'message': 'Connected to active running scraper.'
-                }
+                if active['started_by_user_id'] == user_id:
+                    return {
+                        'success': True,
+                        'job_id': active['job_id'],
+                        'file_id': file_id,
+                        'is_owner': True,
+                        'is_new_job': False,
+                        'message': 'Resuming your active scraper execution.'
+                    }
+                else:
+                    return {
+                        'success': False,
+                        'already_running': True,
+                        'is_owner': False,
+                        'message': 'This scraper is currently being used by another user.'
+                    }
             else:
                 # Stale process: finalize and free lock
                 finalize_job(active['job_id'], status='FAILED', error_message='Process terminated unexpectedly.')
@@ -487,23 +495,13 @@ def start_job(file_id, user_id):
                     VALUES (%s, %s, %s, 'RUNNING', NOW())
                 """, (job_id, file_id, user_id))
         except (pymysql.err.IntegrityError, Exception) as exc:
-            # Duplicate key error (1062) means another user acquired the lock simultaneously -> attach to active
-            logger.info("Lock acquired by another process for file_id=%s, attaching...", file_id)
-            active_now = get_active_job(file_id)
-            if active_now:
-                return {
-                    'success': True,
-                    'job_id': active_now['job_id'],
-                    'file_id': file_id,
-                    'is_owner': (active_now['started_by_user_id'] == user_id),
-                    'is_new_job': False,
-                    'message': 'Connected to active running scraper.'
-                }
+            # Duplicate key error (1062) means another user acquired the lock simultaneously
+            logger.info("Job start lock rejected for file_id=%s: %s", file_id, exc)
             return {
                 'success': False,
                 'already_running': True,
                 'is_owner': False,
-                'message': 'This scraper is currently running.'
+                'message': 'This scraper is currently being used by another user.'
             }
         finally:
             conn.close()
@@ -548,7 +546,7 @@ def start_job(file_id, user_id):
             )
         except OSError as exc:
             _cleanup_temp(input_path, output_placeholder)
-            finalize_job(job_id, status='FAILED', error_message=f'Failed to launch process: {exc}')
+            finalize_job(job_id, status='FAILED', error_message='Failed to start scraper process')
             files_repo.set_working(file_id, 0)
             return {'success': False, 'error': f'Failed to launch process: {exc}'}
 
@@ -630,8 +628,14 @@ def start_job(file_id, user_id):
         }
 
 
-def get_active_job_for_file(file_id, current_user_id=None):
-    """Checks active job for file_id and returns active state for shared live monitoring."""
+def get_active_job_for_file(file_id, current_user_id):
+    """Checks active job for file_id and strictly enforces user privacy.
+
+    - If no active job -> returns {has_active_job: false, is_owner: true, status: 'IDLE'}
+    - If active and owner == current_user_id -> returns {has_active_job: true, is_owner: true, job_id: ...}
+    - If active and owner != current_user_id -> returns {has_active_job: true, already_running: true, is_owner: false, message: '...'}
+      (NEVER leaks job_id, process_id, counters, URLs, logs, or username to non-owners).
+    """
     active = get_active_job(file_id)
     record = files_repo.get_file(file_id)
     site_name = record['site_name'] if record else 'Scraper'
@@ -664,12 +668,23 @@ def get_active_job_for_file(file_id, current_user_id=None):
                 'status': 'IDLE'
             }
 
-    is_owner = (active['started_by_user_id'] == current_user_id) if current_user_id else True
+    is_owner = (active['started_by_user_id'] == current_user_id)
+
+    if not is_owner:
+        return {
+            'has_active_job': True,
+            'already_running': True,
+            'is_owner': False,
+            'file_id': file_id,
+            'site_name': site_name,
+            'status': 'RUNNING',
+            'message': 'This scraper is currently being used by another user.'
+        }
 
     return {
         'has_active_job': True,
         'already_running': True,
-        'is_owner': is_owner,
+        'is_owner': True,
         'job_id': active['job_id'],
         'file_id': file_id,
         'site_name': site_name,
@@ -677,11 +692,13 @@ def get_active_job_for_file(file_id, current_user_id=None):
     }
 
 
-def get_job_status(job_id, current_user_id=None):
-    """Returns live authoritative progress for the scraper job."""
+def get_job_status(job_id, current_user_id):
+    """Returns live authoritative progress ONLY to the authenticated owner."""
     with _lock:
         state = _active_jobs.get(job_id)
         if state:
+            if state['started_by_user_id'] != current_user_id:
+                return {'success': False, 'error': 'Forbidden'}, 403
             _recalc_counters(state)
             return {
                 'job_id': job_id,
@@ -708,7 +725,10 @@ def get_job_status(job_id, current_user_id=None):
 
     job = get_job_by_id(job_id)
     if not job:
-        return {'error': 'Job not found.', 'status': 'NOT_FOUND'}, 404
+        return {'success': False, 'error': 'Job not found.'}, 404
+
+    if job['started_by_user_id'] != current_user_id:
+        return {'success': False, 'error': 'Forbidden'}, 403
 
     is_running = (job['status'] == 'RUNNING' and job['finished_at'] is None)
     output_path = job.get('output_file_path')
@@ -738,16 +758,21 @@ def get_job_status(job_id, current_user_id=None):
     }, 200
 
 
-def get_job_urls(job_id, current_user_id=None):
-    """Returns URL queue and statuses for the scraper job."""
+def get_job_urls(job_id, current_user_id):
+    """Returns URL queue and statuses ONLY to the authenticated owner."""
     with _lock:
         state = _active_jobs.get(job_id)
         if state:
+            if state['started_by_user_id'] != current_user_id:
+                return {'success': False, 'error': 'Forbidden'}, 403
             return list(state['urls'].values()), 200
 
     job = get_job_by_id(job_id)
     if not job:
-        return {'error': 'Job not found.'}, 404
+        return {'success': False, 'error': 'Job not found.'}, 404
+
+    if job['started_by_user_id'] != current_user_id:
+        return {'success': False, 'error': 'Forbidden'}, 403
 
     if job.get('output_file_path') and os.path.exists(job['output_file_path']):
         try:
@@ -774,11 +799,14 @@ def get_job_urls(job_id, current_user_id=None):
     return [], 200
 
 
-def stop_job(job_id, current_user_id=None, is_superadmin=False):
-    """Terminates the scraper process and updates status to STOPPED."""
+def stop_job(job_id, current_user_id, is_superadmin=False):
+    """Terminates the scraper process if requested by the owner (or SuperAdmin)."""
     job = get_job_by_id(job_id)
     if not job:
         return {'success': False, 'error': 'Job not found.'}, 404
+
+    if job['started_by_user_id'] != current_user_id and not is_superadmin:
+        return {'success': False, 'error': 'Forbidden'}, 403
 
     file_id = job.get('file_id')
     process = None
