@@ -952,6 +952,15 @@
       }
     });
 
-    loadMe().then(loadFiles);
+    let pollFilesInterval = null;
+    function startFilesPolling() {
+      if (!pollFilesInterval) {
+        pollFilesInterval = setInterval(() => {
+          loadFiles({ silent: true });
+        }, 4000);
+      }
+    }
+
+    loadMe().then(() => loadFiles().then(startFilesPolling));
   });
 })();
