@@ -23,26 +23,13 @@
 
   function userCellHtml(row) {
     const name = row.userName || 'Admin';
-    const email = row.userEmail || '';
-    const userId = row.userId ? `ID #${row.userId}` : '';
+    const userId = row.userId;
     const safeName = Shared.escapeHtml(name);
-    const safeEmail = Shared.escapeHtml(email);
-    const initial = (name.trim()[0] || 'U').toUpperCase();
-
-    const avatarHtml = row.userAvatar
-      ? `<img src="${Shared.escapeHtml(row.userAvatar)}" alt="" class="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-semibold shrink-0',textContent:'${initial}'}))" />`
-      : `<span class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-semibold shrink-0 border border-emerald-200">${initial}</span>`;
 
     return `
-      <div class="flex items-center gap-3">
-        ${avatarHtml}
-        <div class="min-w-0">
-          <div class="flex items-center gap-1.5">
-            <span class="font-semibold text-slate-800 text-sm truncate">${safeName}</span>
-            ${userId ? `<span class="inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-mono text-slate-500">${userId}</span>` : ''}
-          </div>
-          <div class="text-[11px] text-slate-400 truncate">${safeEmail}</div>
-        </div>
+      <div class="flex items-center gap-1.5">
+        <span class="font-medium text-slate-800 text-sm">${safeName}</span>
+        ${userId ? `<span class="inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-500">#${userId}</span>` : ''}
       </div>
     `;
   }
@@ -113,6 +100,10 @@
         {
           data: null,
           render: (data, type, row) => (type === 'display' ? scraperCellHtml(row) : (row.siteName || row.scraper || '')),
+        },
+        {
+          data: null,
+          render: (data, type, row) => (type === 'display' ? userCellHtml(row) : `${row.userName || 'Admin'} ${row.userId ? '#' + row.userId : ''}`),
         },
         {
           data: null,

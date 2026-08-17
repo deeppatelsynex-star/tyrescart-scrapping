@@ -649,6 +649,8 @@
     const duration = log.duration || '—';
     const itemsScraped = (log.dataScraped || 0).toLocaleString();
     const errorMsg = log.errorMessage;
+    const userName = log.userName || 'Admin';
+    const userId = log.userId;
 
     return `
       <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 transition-all hover:border-slate-300 hover:shadow-xs">
@@ -660,6 +662,7 @@
             <span class="font-mono text-xs text-slate-500 font-semibold">#${log.id}</span>
           </div>
           <div class="flex items-center gap-3 text-xs text-slate-500">
+            <span>By: <strong class="text-slate-700">${Shared.escapeHtml(userName)}</strong>${userId ? ` <span class="inline-flex items-center rounded bg-slate-200/70 px-1 py-0.2 text-[9px] font-mono text-slate-600">#${userId}</span>` : ''}</span>
             <span>Started: <strong class="text-slate-700">${Shared.escapeHtml(startTime)}</strong></span>
             <span>Duration: <strong class="text-slate-700">${Shared.escapeHtml(duration)}</strong></span>
           </div>
