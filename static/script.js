@@ -290,25 +290,16 @@
         const activeRes = await fetch(`/api/scraper/file/${fileScraperId}/active-job`);
         if (activeRes.ok) {
           const activeInfo = await activeRes.json();
-          // If scraper is actively running by another user, show blocked screen and keep polling
-          if (activeInfo.already_running && !activeInfo.is_owner) {
-            showBlockedScreen();
-            startStatusPolling();
-            return;
-          }
-
-          // If not running by anyone, show idle screen
-          if (!activeInfo.has_active_job) {
+          if (activeInfo.has_active_job && activeInfo.job_id) {
+            showMainProgress();
+            currentJobId = activeInfo.job_id;
+          } else if (!activeInfo.has_active_job) {
             showMainProgress();
             stopStatusPolling();
             setStatus('Idle', 'bg-slate-100 text-slate-700');
             updateControls({ running: false, status: 'IDLE' });
             return;
           }
-
-          // Active job belongs to current user
-          showMainProgress();
-          currentJobId = activeInfo.job_id;
         }
       }
 

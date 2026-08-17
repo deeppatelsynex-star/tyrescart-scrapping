@@ -1311,25 +1311,14 @@ def api_file_status(file_id):
     user_id = session.get('user_id')
     active_info = job_manager.get_active_job_for_file(file_id, current_user_id=user_id)
 
-    if active_info['has_active_job']:
-        if not active_info['is_owner']:
-            return jsonify({
-                'already_running': True,
-                'is_owner': False,
-                'running': True,
-                'working': True,
-                'siteName': record['site_name'],
-                'fileId': file_id,
-                'message': 'This scraper is currently being used by another user.',
-            })
-        else:
-            job_status, code = job_manager.get_job_status(active_info['job_id'], current_user_id=user_id)
-            if code == 200:
-                job_status['is_owner'] = True
-                job_status['working'] = True
-                job_status['siteName'] = record['site_name']
-                job_status['fileId'] = file_id
-                return jsonify(job_status)
+    if active_info.get('has_active_job') and active_info.get('job_id'):
+        job_status, code = job_manager.get_job_status(active_info['job_id'], current_user_id=user_id)
+        if code == 200:
+            job_status['is_owner'] = True
+            job_status['working'] = True
+            job_status['siteName'] = record['site_name']
+            job_status['fileId'] = file_id
+            return jsonify(job_status)
 
     output_path = file_scraper_runner.get_output_path(file_id)
     return jsonify({

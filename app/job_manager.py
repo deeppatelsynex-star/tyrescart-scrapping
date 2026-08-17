@@ -461,22 +461,14 @@ def start_job(file_id, user_id):
         if active:
             pid = active.get('process_id')
             if pid and psutil.pid_exists(pid):
-                if active['started_by_user_id'] == user_id:
-                    return {
-                        'success': True,
-                        'job_id': active['job_id'],
-                        'file_id': file_id,
-                        'is_owner': True,
-                        'is_new_job': False,
-                        'message': 'Resuming your active scraper execution.'
-                    }
-                else:
-                    return {
-                        'success': False,
-                        'already_running': True,
-                        'is_owner': False,
-                        'message': 'This scraper is currently being used by another user.'
-                    }
+                return {
+                    'success': True,
+                    'job_id': active['job_id'],
+                    'file_id': file_id,
+                    'is_owner': (active['started_by_user_id'] == user_id),
+                    'is_new_job': False,
+                    'message': 'Connected to active running scraper.'
+                }
             else:
                 # Stale process: finalize and free lock
                 finalize_job(active['job_id'], status='FAILED', error_message='Process terminated unexpectedly.')
@@ -495,13 +487,23 @@ def start_job(file_id, user_id):
                     VALUES (%s, %s, %s, 'RUNNING', NOW())
                 """, (job_id, file_id, user_id))
         except (pymysql.err.IntegrityError, Exception) as exc:
-            # Duplicate key error (1062) means another user acquired the lock simultaneously
-            logger.info("Job start lock rejected for file_id=%s: %s", file_id, exc)
+            # Duplicate key error (1062) means another user acquired the lock simultaneously -> attach to active
+            logger.info("Lock acquired by another process for file_id=%s, attaching...", file_id)
+            active_now = get_active_job(file_id)
+            if active_now:
+                return {
+                    'success': True,
+                    'job_id': active_now['job_id'],
+                    'file_id': file_id,
+                    'is_owner': (active_now['started_by_user_id'] == user_id),
+                    'is_new_job': False,
+                    'message': 'Connected to active running scraper.'
+                }
             return {
                 'success': False,
                 'already_running': True,
                 'is_owner': False,
-                'message': 'This scraper is currently being used by another user.'
+                'message': 'This scraper is currently running.'
             }
         finally:
             conn.close()
@@ -628,14 +630,8 @@ def start_job(file_id, user_id):
         }
 
 
-def get_active_job_for_file(file_id, current_user_id):
-    """Checks active job for file_id and strictly enforces user privacy.
-
-    - If no active job -> returns {has_active_job: false, is_owner: true, status: 'IDLE'}
-    - If active and owner == current_user_id -> returns {has_active_job: true, is_owner: true, job_id: ...}
-    - If active and owner != current_user_id -> returns {has_active_job: true, already_running: true, is_owner: false, message: '...'}
-      (NEVER leaks job_id, process_id, counters, URLs, logs, or username to non-owners).
-    """
+def get_active_job_for_file(file_id, current_user_id=None):
+    """Checks active job for file_id and returns active state for shared live monitoring."""
     active = get_active_job(file_id)
     record = files_repo.get_file(file_id)
     site_name = record['site_name'] if record else 'Scraper'
@@ -650,37 +646,30 @@ def get_active_job_for_file(file_id, current_user_id):
             'status': 'IDLE'
         }
 
+    with _lock:
+        in_memory = (active['job_id'] in _active_jobs)
+
     pid = active.get('process_id')
-    # Check if process is still alive on OS
-    if pid and not psutil.pid_exists(pid):
-        finalize_job(active['job_id'], status='FAILED', error_message='Process terminated unexpectedly.')
-        files_repo.set_working(file_id, 0)
-        return {
-            'has_active_job': False,
-            'already_running': False,
-            'is_owner': True,
-            'file_id': file_id,
-            'site_name': site_name,
-            'status': 'IDLE'
-        }
+    started_at = active.get('started_at')
+    if not in_memory and pid and not psutil.pid_exists(pid):
+        if started_at and (datetime.now() - started_at).total_seconds() > 60:
+            finalize_job(active['job_id'], status='FAILED', error_message='Process terminated unexpectedly.')
+            files_repo.set_working(file_id, 0)
+            return {
+                'has_active_job': False,
+                'already_running': False,
+                'is_owner': True,
+                'file_id': file_id,
+                'site_name': site_name,
+                'status': 'IDLE'
+            }
 
-    is_owner = (active['started_by_user_id'] == current_user_id)
-
-    if not is_owner:
-        return {
-            'has_active_job': True,
-            'already_running': True,
-            'is_owner': False,
-            'file_id': file_id,
-            'site_name': site_name,
-            'status': 'RUNNING',
-            'message': 'This scraper is currently being used by another user.'
-        }
+    is_owner = (active['started_by_user_id'] == current_user_id) if current_user_id else True
 
     return {
         'has_active_job': True,
         'already_running': True,
-        'is_owner': True,
+        'is_owner': is_owner,
         'job_id': active['job_id'],
         'file_id': file_id,
         'site_name': site_name,
@@ -688,13 +677,11 @@ def get_active_job_for_file(file_id, current_user_id):
     }
 
 
-def get_job_status(job_id, current_user_id):
-    """Returns live authoritative progress ONLY to the authenticated owner."""
+def get_job_status(job_id, current_user_id=None):
+    """Returns live authoritative progress for the scraper job."""
     with _lock:
         state = _active_jobs.get(job_id)
         if state:
-            if state['started_by_user_id'] != current_user_id:
-                return {'error': 'Forbidden', 'status': 'FORBIDDEN'}, 403
             _recalc_counters(state)
             return {
                 'job_id': job_id,
@@ -722,9 +709,6 @@ def get_job_status(job_id, current_user_id):
     job = get_job_by_id(job_id)
     if not job:
         return {'error': 'Job not found.', 'status': 'NOT_FOUND'}, 404
-
-    if job['started_by_user_id'] != current_user_id:
-        return {'error': 'Forbidden', 'status': 'FORBIDDEN'}, 403
 
     is_running = (job['status'] == 'RUNNING' and job['finished_at'] is None)
     output_path = job.get('output_file_path')
@@ -754,18 +738,16 @@ def get_job_status(job_id, current_user_id):
     }, 200
 
 
-def get_job_urls(job_id, current_user_id):
-    """Returns URL queue and statuses ONLY to the authenticated owner."""
+def get_job_urls(job_id, current_user_id=None):
+    """Returns URL queue and statuses for the scraper job."""
     with _lock:
         state = _active_jobs.get(job_id)
         if state:
-            if state['started_by_user_id'] != current_user_id:
-                return {'error': 'Forbidden'}, 403
             return list(state['urls'].values()), 200
 
     job = get_job_by_id(job_id)
-    if not job or job['started_by_user_id'] != current_user_id:
-        return {'error': 'Forbidden'}, 403
+    if not job:
+        return {'error': 'Job not found.'}, 404
 
     if job.get('output_file_path') and os.path.exists(job['output_file_path']):
         try:
@@ -792,14 +774,11 @@ def get_job_urls(job_id, current_user_id):
     return [], 200
 
 
-def stop_job(job_id, current_user_id, is_superadmin=False):
-    """Terminates the scraper process if requested by the owner (or SuperAdmin)."""
+def stop_job(job_id, current_user_id=None, is_superadmin=False):
+    """Terminates the scraper process and updates status to STOPPED."""
     job = get_job_by_id(job_id)
     if not job:
         return {'success': False, 'error': 'Job not found.'}, 404
-
-    if job['started_by_user_id'] != current_user_id and not is_superadmin:
-        return {'success': False, 'error': 'You do not have permission to stop another user’s scraper.'}, 403
 
     file_id = job.get('file_id')
     process = None
@@ -851,32 +830,28 @@ def stop_file(file_id, current_user_id, is_superadmin=False):
 # ==============================================================================
 
 def _watchdog_loop():
+    """Background watchdog thread that:
+    1. Terminates executions exceeding 6 hours max runtime.
+    2. Only cleans up dead processes managed by THIS local instance.
+       (Never kills jobs from remote instances/other servers sharing the DB!).
+    """
     while True:
         try:
             time.sleep(15)
-            conn = get_connection()
-            active_jobs = []
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute("""
-                        SELECT job_id, file_id, started_by_user_id, process_id, started_at
-                        FROM scraper_jobs
-                        WHERE status = 'RUNNING' AND finished_at IS NULL
-                    """)
-                    active_jobs = cursor.fetchall()
-            finally:
-                conn.close()
+            now = datetime.now(timezone.utc)
 
-            now = datetime.now()
-            for aj in active_jobs:
-                jid = aj['job_id']
-                fid = aj['file_id']
-                pid = aj.get('process_id')
-                started_at = aj.get('started_at')
+            # 1. First, check jobs managed in memory by THIS instance
+            with _lock:
+                managed_jobs = list(_active_jobs.items())
+
+            for jid, state in managed_jobs:
+                proc = state.get('process')
+                pid = state.get('pid')
+                started_at = state.get('started_at')
 
                 # Check 6-hour timeout
                 if started_at and (now - started_at).total_seconds() > MAX_RUNTIME_SECONDS:
-                    logger.warning("Job %s exceeded 6 hours. Auto-terminating...", jid)
+                    logger.warning("Local Job %s exceeded 6 hours. Auto-terminating...", jid)
                     if pid and psutil.pid_exists(pid):
                         _kill_process_tree(pid, force=True)
                     finalize_job(
@@ -884,20 +859,32 @@ def _watchdog_loop():
                         status='STOPPED',
                         error_message='Automatically stopped after maximum runtime of 6 hours.'
                     )
-                    if fid:
-                        files_repo.set_working(fid, 0)
                     continue
 
-                # Check dead process
-                if pid and not psutil.pid_exists(pid):
-                    logger.warning("Job %s process %s is dead. Cleaning up...", jid, pid)
-                    finalize_job(
-                        jid,
-                        status='FAILED',
-                        error_message='Process terminated unexpectedly.'
-                    )
-                    if fid:
-                        files_repo.set_working(fid, 0)
+                # Check if local process died
+                if proc and proc.poll() is not None and state.get('status') == 'RUNNING':
+                    ret = proc.poll()
+                    logger.info("Local Job %s process %s exited with code %s.", jid, pid, ret)
+                    final_st = 'SUCCESS' if ret == 0 else 'FAILED'
+                    err = None if ret == 0 else f'Process exited with return code {ret}.'
+                    finalize_job(jid, status=final_st, error_message=err)
+
+            # 2. Database level: only terminate globally if job is > 6 hours old
+            conn = get_connection()
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE scraper_jobs
+                        SET status = 'STOPPED',
+                            finished_at = NOW(),
+                            error_message = 'Automatically stopped after maximum runtime of 6 hours.'
+                        WHERE status = 'RUNNING'
+                          AND finished_at IS NULL
+                          AND started_at < NOW() - INTERVAL 6 HOUR
+                    """)
+            finally:
+                conn.close()
+
         except Exception:
             pass
 
