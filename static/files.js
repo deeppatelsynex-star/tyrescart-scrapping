@@ -262,6 +262,23 @@
     } catch (err) {}
   }
 
+  let pollFilesInterval = null;
+
+  function stopFilesPolling() {
+    if (pollFilesInterval) {
+      clearInterval(pollFilesInterval);
+      pollFilesInterval = null;
+    }
+  }
+
+  function startFilesPolling(intervalMs = 5000) {
+    if (pollFilesInterval) return;
+    pollFilesInterval = setInterval(() => {
+      if (document.hidden) return;
+      loadFiles({ silent: true });
+    }, intervalMs);
+  }
+
   async function loadFiles({ silent } = {}) {
     if (!silent) Shared.hideError(errorEl);
     if (refreshBtn) {
@@ -269,7 +286,7 @@
       refreshIcon.classList.add('animate-spin');
     }
     try {
-      const response = await fetch('/api/files?perPage=1000');
+      const response = await fetch('/api/files?perPage=100');
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to load scrapers.';
@@ -296,6 +313,13 @@
       }
 
       updateZipButtonState(data.anyRunning, data.hasAnyOutput);
+
+      // Only poll when a scraper is actively running
+      if (data.anyRunning) {
+        startFilesPolling(5000);
+      } else {
+        stopFilesPolling();
+      }
 
       const snapshot = JSON.stringify(files);
       if (snapshot !== lastFilesSnapshot) {
@@ -960,15 +984,12 @@
       }
     });
 
-    let pollFilesInterval = null;
-    function startFilesPolling() {
-      if (!pollFilesInterval) {
-        pollFilesInterval = setInterval(() => {
-          loadFiles({ silent: true });
-        }, 4000);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        loadFiles({ silent: true });
       }
-    }
+    });
 
-    loadMe().then(() => loadFiles().then(startFilesPolling));
+    loadMe().then(() => loadFiles());
   });
 })();
