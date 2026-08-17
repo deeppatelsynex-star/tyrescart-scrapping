@@ -323,11 +323,11 @@ def start(file_id, user_id=None):
         raise StartError('Scraper not found.')
 
     with _lock:
-        if is_running(file_id):
-            raise StartError('Scraper is currently running. Please wait until the current process is completed.')
+        if is_running(file_id) or record.get('working') == 1:
+            raise StartError('Please wait. This scraper is currently running and cannot be started.')
 
         if running_count() >= MAX_CONCURRENT_SCRAPERS:
-            raise StartError(f'Too many scrapers are already running (limit: {MAX_CONCURRENT_SCRAPERS}). Wait for one to finish.')
+            raise StartError(f'Please wait. Too many scrapers are already running (limit: {MAX_CONCURRENT_SCRAPERS}). Wait for one to finish.')
 
         # Mark working in DB under lock immediately
         files_repo.set_working(file_id, 1)

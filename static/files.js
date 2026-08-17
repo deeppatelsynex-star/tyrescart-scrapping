@@ -711,7 +711,7 @@
   async function startFile(fileId) {
     const file = filesById.get(fileId);
     if (file && file.working) {
-      Shared.showToast('Scraper is currently running. Please wait until the current process is completed.', 'warning');
+      Shared.showToast('Please wait. This scraper is currently running and cannot be started.', 'warning');
       return;
     }
     Shared.showToast(`Starting scraper "${file?.siteName || 'Scraper'}"… please wait`, 'info');
@@ -728,7 +728,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.success) {
-        const errMsg = data.error || (response.status === 409 ? 'Scraper is currently running. Please wait until the current process is completed.' : 'Unable to start scraper.');
+        const errMsg = data.error || (response.status === 409 ? 'Please wait. This scraper is currently running and cannot be started.' : 'Unable to start scraper.');
         Shared.logError('Start Scraper', errMsg, { fileId, status: response.status });
         Shared.showToast(errMsg, 'warning');
         return;
