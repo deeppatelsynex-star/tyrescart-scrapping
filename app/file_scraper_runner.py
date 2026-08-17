@@ -89,13 +89,47 @@ def _popen_kwargs():
 
 
 def _kill_process_tree(process, force=False):
-    if not process:
+    """Safely terminates only the targeted scraper process and its direct child
+    processes (e.g. crawler/playwright subprocesses), without ever touching the
+    parent web server or any sibling scraper processes belonging to other users.
+    """
+    if not process or process.pid is None:
         return
+    try:
+        import psutil
+        try:
+            parent = psutil.Process(process.pid)
+            children = parent.children(recursive=True)
+            for child in children:
+                try:
+                    if force:
+                        child.kill()
+                    else:
+                        child.terminate()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            try:
+                if force:
+                    parent.kill()
+                else:
+                    parent.terminate()
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+            return
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            return
+    except Exception:
+        pass
+
+    # Safe fallback
     if os.name == 'nt':
         subprocess.run(['taskkill', '/F', '/T', '/PID', str(process.pid)], capture_output=True)
         return
     try:
-        os.killpg(os.getpgid(process.pid), signal.SIGKILL if force else signal.SIGTERM)
+        if force:
+            process.kill()
+        else:
+            process.terminate()
     except (ProcessLookupError, OSError):
         pass
 
@@ -352,7 +386,7 @@ def start(file_id, user_id=None):
     # Create run report in logTbl
     report_id = None
     try:
-        actual_user_id = user_id or record.get('created_by') or 1
+        actual_user_id = user_id or record.get('created_by') or 2
         scraper_name = record.get('site_name') or 'Scraper'
         report_id = reports_repo.create_log_entry(
             user_id=actual_user_id,
