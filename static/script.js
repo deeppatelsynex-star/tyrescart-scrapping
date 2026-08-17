@@ -428,49 +428,7 @@ const refreshStatus = async () => {
   }
 };
 
-// Populates the "switch to another running scraper" dropdown next to the
-// site-name badge, so starting a second scraper from /files while this page
-// is already watching one doesn't strand the first -- you can hop back to
-// check on it without needing /files' table.
-const refreshRunningFileScrapers = async () => {
-  if (!fileScraperId || !fileScraperSelect) return;
-  try {
-    const response = await fetch('/api/files/running');
-    if (!response.ok) return;
-    const data = await response.json();
-    const others = (data.files || []).filter((f) => String(f.fileId) !== String(fileScraperId));
 
-    if (!others.length) {
-      fileScraperSelect.classList.add('hidden');
-      return;
-    }
-
-    fileScraperSelect.innerHTML = '';
-    const currentOption = document.createElement('option');
-    currentOption.value = String(fileScraperId);
-    currentOption.textContent = 'Currently viewing';
-    fileScraperSelect.appendChild(currentOption);
-    others.forEach((f) => {
-      const opt = document.createElement('option');
-      opt.value = String(f.fileId);
-      opt.textContent = f.siteName;
-      fileScraperSelect.appendChild(opt);
-    });
-    fileScraperSelect.value = String(fileScraperId);
-    fileScraperSelect.classList.remove('hidden');
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-if (fileScraperSelect) {
-  fileScraperSelect.addEventListener('change', () => {
-    const target = fileScraperSelect.value;
-    if (target && target !== String(fileScraperId)) {
-      window.location.href = `/?fileId=${target}`;
-    }
-  });
-}
 
 // Copies `text` to the clipboard via the modern Clipboard API when available
 // (requires a secure context), falling back to the legacy hidden-textarea +
@@ -563,17 +521,7 @@ if (downloadButton) {
   });
 }
 
-if (fileScraperSelect) {
-  fileScraperSelect.addEventListener('change', () => {
-    const target = fileScraperSelect.value;
-    if (target && target !== String(fileScraperId)) {
-      if (window.AdminShared) {
-        window.AdminShared.showToast('Switching scraper live progress view…', 'info');
-      }
-      window.location.href = `/?fileId=${target}`;
-    }
-  });
-}
+
 
 // Stop button: calls /stop-scraper (or, when watching a /files scraper,
 // /api/files/<id>/stop), then resets the UI and stops polling on success.

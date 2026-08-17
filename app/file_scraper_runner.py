@@ -427,25 +427,25 @@ def stop(file_id):
     return True
 
 
-def init_cleanup():
-    """Cleans up any orphaned running records from previous server runs."""
+def cleanup_stale_logs(max_age_hours=24):
+    """Safely cleans up truly stale orphaned running logs (older than max_age_hours)
+    without ever interrupting concurrently running scrapers.
+    """
     try:
         from db import get_connection
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                cursor.execute("UPDATE fileTbl SET working = 0 WHERE working = 1")
-                cursor.execute("""
+                cursor.execute(f"""
                     UPDATE logTbl 
                     SET status = 'FAIL', 
                         end_time = NOW(), 
-                        error_message = 'Scraper stopped because server restarted.' 
-                    WHERE status = 'RUNNING' AND end_time IS NULL
+                        error_message = 'Scraper timed out or server restarted.' 
+                    WHERE status = 'RUNNING' 
+                      AND end_time IS NULL 
+                      AND start_time < NOW() - INTERVAL {int(max_age_hours)} HOUR
                 """)
         finally:
             conn.close()
     except Exception:
         pass
-
-
-init_cleanup()
