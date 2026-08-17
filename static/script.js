@@ -29,7 +29,8 @@
   let isCurrentRunning = false;
   let statusIntervalId = null;
   let fileScraperCsrfToken = null;
-  const expandedRoots = new Set();
+  const collapsedRoots = new Set();
+  let lastKnownStatuses = [];
 
   const stopStatusPolling = () => {
     if (statusIntervalId !== null) {
@@ -199,7 +200,7 @@
   const renderRootNode = (root) => {
     let status = (root.status || 'pending').toLowerCase();
     const hasChildren = root.children && root.children.length > 0;
-    const expanded = hasChildren && expandedRoots.has(root.url);
+    const expanded = hasChildren && !collapsedRoots.has(root.url);
     const doneCount = hasChildren ? root.children.filter((c) => (c.status || '').toLowerCase() === 'done').length : 0;
 
     if (isCurrentRunning) {
@@ -372,7 +373,11 @@
 
       // Render URL Tree
       if (urlStatusList) {
-        const statuses = (urlsRes && urlsRes.statuses) ? urlsRes.statuses : [];
+        const statuses = Array.isArray(urlsRes)
+          ? urlsRes
+          : (urlsRes && Array.isArray(urlsRes.statuses) ? urlsRes.statuses : []);
+        lastKnownStatuses = statuses;
+
         if (!statuses.length) {
           if (isCurrentRunning) {
             urlStatusList.innerHTML = `
@@ -557,25 +562,53 @@
       }
     });
 
+    const toggleAllBtn = document.getElementById('toggle-all-urls');
+    const toggleAllLabel = document.getElementById('toggle-all-label');
+
+    if (toggleAllBtn) {
+      toggleAllBtn.addEventListener('click', () => {
+        const toggles = document.querySelectorAll('.tree-toggle');
+        const isCollapse = toggleAllLabel && toggleAllLabel.textContent.includes('Collapse');
+        toggles.forEach((btn) => {
+          const url = btn.dataset.url;
+          if (url) {
+            if (isCollapse) {
+              collapsedRoots.add(url);
+            } else {
+              collapsedRoots.delete(url);
+            }
+          }
+        });
+        if (toggleAllLabel) {
+          toggleAllLabel.textContent = isCollapse ? 'Expand All' : 'Collapse All';
+        }
+        if (urlStatusList && lastKnownStatuses.length) {
+          const tree = buildUrlTree(lastKnownStatuses);
+          urlStatusList.innerHTML = tree.map(renderRootNode).join('');
+        }
+      });
+    }
+
     urlStatusList.addEventListener('click', (e) => {
       const toggle = e.target.closest('.tree-toggle');
       if (!toggle) return;
 
       const url = toggle.dataset.url;
-      const expanded = expandedRoots.has(url);
+      const isCollapsed = collapsedRoots.has(url);
 
-      if (expanded) {
-        expandedRoots.delete(url);
+      if (isCollapsed) {
+        collapsedRoots.delete(url);
       } else {
-        expandedRoots.add(url);
+        collapsedRoots.add(url);
       }
 
-      toggle.setAttribute('aria-expanded', String(!expanded));
-      toggle.innerHTML = chevronIcon(!expanded);
+      const nowExpanded = !collapsedRoots.has(url);
+      toggle.setAttribute('aria-expanded', String(nowExpanded));
+      toggle.innerHTML = chevronIcon(nowExpanded);
 
       const childList = toggle.closest('li').querySelector('.child-list');
       if (childList) {
-        childList.classList.toggle('hidden', expanded);
+        childList.classList.toggle('hidden', !nowExpanded);
       }
     });
   }
