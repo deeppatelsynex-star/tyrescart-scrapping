@@ -817,7 +817,7 @@
   async function startFile(fileId) {
     const file = filesById.get(fileId);
     if (file && file.working) {
-      Shared.showToast('Please wait. This scraper is currently running and cannot be started.', 'warning');
+      Shared.showToast('This scraper is currently being used by another user.', 'warning');
       return;
     }
     Shared.showToast(`Starting scraper "${file?.siteName || 'Scraper'}"… please wait`, 'info');
@@ -834,7 +834,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.success) {
-        const errMsg = data.error || (response.status === 409 ? 'Please wait. This scraper is currently running and cannot be started.' : 'Unable to start scraper.');
+        const errMsg = data.message || data.error || (response.status === 409 ? 'This scraper is currently being used by another user.' : 'Unable to start scraper.');
         Shared.logError('Start Scraper', errMsg, { fileId, status: response.status });
         Shared.showToast(errMsg, 'warning');
         return;
@@ -843,9 +843,6 @@
       if (window.IDBStorage) {
         await window.IDBStorage.setWorkingState(fileId, true, { siteName: file?.siteName });
       }
-      try {
-        localStorage.setItem('activeFileScraperId', String(fileId));
-      } catch (e) {}
       Shared.showToast('Scraper started successfully. Redirecting…', 'success');
     } catch (err) {
       Shared.logError('Start Scraper Network Error', err, { fileId });
