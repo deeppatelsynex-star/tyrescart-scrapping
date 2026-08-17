@@ -155,13 +155,14 @@ def serialize_log(row):
     start_time = row.get('start_time')
     end_time = row.get('end_time')
     raw_status = (row.get('status') or 'UNKNOWN').upper()
+    error_msg = row.get('error_message') or ''
 
     # Normalize status to strictly RUNNING, SUCCESS, STOPPED, or FAIL per requirements
     if raw_status in ('FINISHED', 'SUCCESS', 'DONE'):
         status = 'SUCCESS'
     elif raw_status == 'RUNNING':
         status = 'RUNNING'
-    elif raw_status in ('STOPPED', 'STOP'):
+    elif raw_status in ('STOPPED', 'STOP') or 'stopped by user' in error_msg.lower() or 'status: stopped' in error_msg.lower():
         status = 'STOPPED'
     else:
         status = 'FAIL'

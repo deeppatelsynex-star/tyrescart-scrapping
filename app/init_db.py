@@ -142,6 +142,22 @@ def add_missing_indexes(cursor):
             cursor.execute(f"CREATE INDEX {index_name} ON {table} {cols}")
 
 
+def update_legacy_stopped_logs(cursor):
+    """Backfills legacy logs where scraper was stopped by user to status='STOPPED'."""
+    cursor.execute(
+        """
+        UPDATE logTbl 
+        SET status = 'STOPPED' 
+        WHERE status != 'STOPPED' 
+          AND (
+            LOWER(error_message) LIKE '%stopped by user%' 
+            OR LOWER(error_message) LIKE '%status: stopped%'
+            OR status = 'STOP'
+          )
+        """
+    )
+
+
 def main():
     conn = get_connection()
     try:
@@ -153,6 +169,7 @@ def main():
             cursor.execute("DROP TABLE IF EXISTS scraperReportTbl")
             cursor.execute(CREATE_LOG_TBL)
             add_missing_indexes(cursor)
+            update_legacy_stopped_logs(cursor)
         print("userTbl, password_reset_tbl, fileTbl, and logTbl are ready with performance indexes.")
     finally:
         conn.close()
