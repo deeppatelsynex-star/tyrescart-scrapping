@@ -200,8 +200,12 @@
   const renderRootNode = (root) => {
     let status = (root.status || 'pending').toLowerCase();
     const hasChildren = root.children && root.children.length > 0;
-    const expanded = hasChildren && !collapsedRoots.has(root.url);
+    // Auto-collapse root nodes with many children to avoid browser freeze;
+    // user can still manually expand them. Roots with <= 15 children expand by default.
+    const isLargeList = hasChildren && root.children.length > 15;
+    const expanded = hasChildren && !collapsedRoots.has(root.url) && !isLargeList;
     const doneCount = hasChildren ? root.children.filter((c) => (c.status || '').toLowerCase() === 'done').length : 0;
+
 
     if (isCurrentRunning) {
       if (hasChildren) {
@@ -248,7 +252,8 @@
         </div>
         ${hasChildren ? `
           <ul class="child-list space-y-2 border-t border-slate-100 bg-slate-50/80 px-4 sm:px-5 py-3.5 pl-9 sm:pl-14 ${expanded ? '' : 'hidden'}">
-            ${root.children.map(renderChildRow).join('')}
+            ${root.children.slice(0, 100).map(renderChildRow).join('')}
+            ${root.children.length > 100 ? `<li class="rounded-xl border border-dashed border-slate-200 px-3.5 py-2.5 text-xs text-slate-500 text-center">… and <strong>${root.children.length - 100}</strong> more product URLs (${root.children.length} total)</li>` : ''}
           </ul>
         ` : ''}
       </li>
@@ -376,7 +381,11 @@
         const statuses = Array.isArray(urlsRes)
           ? urlsRes
           : (urlsRes && Array.isArray(urlsRes.statuses) ? urlsRes.statuses : []);
+
+        // Only re-render when count changes (avoid DOM thrashing on large lists)
+        const prevCount = lastKnownStatuses.length;
         lastKnownStatuses = statuses;
+        const shouldRender = !isCurrentRunning || Math.abs(statuses.length - prevCount) > 0;
 
         if (!statuses.length) {
           if (isCurrentRunning) {
@@ -395,9 +404,16 @@
           } else {
             urlStatusList.innerHTML = '<li class="rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">No URLs have been reported yet.</li>';
           }
-        } else {
+        } else if (shouldRender) {
           const tree = buildUrlTree(statuses);
-          urlStatusList.innerHTML = tree.map(renderRootNode).join('');
+          const MAX_ROOTS = 50;
+          const visibleTree = tree.slice(0, MAX_ROOTS);
+          const hidden = tree.length - visibleTree.length;
+          const html = visibleTree.map(renderRootNode).join('');
+          const moreHtml = hidden > 0
+            ? `<li class="rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500 text-center">… and <strong>${hidden}</strong> more root URLs (total: ${tree.length})</li>`
+            : '';
+          urlStatusList.innerHTML = html + moreHtml;
         }
       }
     } catch (error) {
