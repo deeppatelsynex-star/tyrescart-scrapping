@@ -828,14 +828,28 @@
     });
   }
 
-  // Initial bootstrap on /scraperpage (load instant localStorage cache first, then refresh)
+  // Initial bootstrap on /scraperpage
   const initPage = async () => {
+    // 1. Immediately render default placeholders so UI is never blank
+    renderSummaryPills({});
+    renderUrlTreeList([]);
+    updateControls({ running: false, status: 'IDLE' });
+
+    // 2. Resolve scraper fileId if not in URL params
     if (!fileScraperId) {
       await resolveFileScraperId();
     }
+
+    // 3. Preload cached state if available
     loadStateFromLocalStorage();
+
+    // 4. Fetch live server progress
     await refreshProgress();
   };
 
-  initPage();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPage);
+  } else {
+    initPage();
+  }
 })();
