@@ -146,6 +146,27 @@ def get_active_job(file_id):
     return get_active_log(file_id)
 
 
+def get_latest_log_for_file(file_id):
+    """Returns the most recent log record for file_id, or None."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT id, job_id, scraper, file_id, user_id, status,
+                       no_of_url_found, total_success_url, total_block_url, data_scraped,
+                       total_products, pending_urls, running_urls, completed_urls, blocked_urls,
+                       main_url_done, product_url_done, progress_percent,
+                       output_file_path, error_message, process_id,
+                       start_time, end_time
+                FROM logTbl
+                WHERE file_id = %s
+                ORDER BY id DESC LIMIT 1
+            """, (file_id,))
+            return cursor.fetchone()
+    finally:
+        conn.close()
+
+
 def get_log_by_job_id(job_id):
     if not job_id:
         return None
@@ -529,6 +550,17 @@ def get_active_job_for_file(file_id, current_user_id):
     record = files_repo.get_file(file_id)
     site_name = record['site_name'] if record else 'Scraper'
     if not active:
+        latest = get_latest_log_for_file(file_id)
+        if latest:
+            return {
+                'has_active_job': False,
+                'already_running': False,
+                'is_owner': True,
+                'job_id': latest.get('job_id'),
+                'file_id': file_id,
+                'site_name': site_name,
+                'status': latest.get('status', 'IDLE')
+            }
         return {'has_active_job': False, 'already_running': False, 'is_owner': True,
                 'file_id': file_id, 'site_name': site_name, 'status': 'IDLE'}
     job_id = active.get('job_id')
@@ -542,6 +574,17 @@ def get_active_job_for_file(file_id, current_user_id):
         else:
             _close_stale_log_row(active['id'])
         files_repo.set_working(file_id, 0)
+        latest = get_latest_log_for_file(file_id)
+        if latest:
+            return {
+                'has_active_job': False,
+                'already_running': False,
+                'is_owner': True,
+                'job_id': latest.get('job_id'),
+                'file_id': file_id,
+                'site_name': site_name,
+                'status': latest.get('status', 'IDLE')
+            }
         return {'has_active_job': False, 'already_running': False, 'is_owner': True,
                 'file_id': file_id, 'site_name': site_name, 'status': 'IDLE'}
     is_owner = (active['user_id'] == current_user_id)

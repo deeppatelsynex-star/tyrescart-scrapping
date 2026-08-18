@@ -1280,11 +1280,11 @@ def api_file_status(file_id):
     user_id = session.get('user_id')
     active_info = job_manager.get_active_job_for_file(file_id, current_user_id=user_id)
 
-    if active_info.get('has_active_job') and active_info.get('job_id'):
+    if active_info.get('job_id'):
         job_status, code = job_manager.get_job_status(active_info['job_id'], current_user_id=user_id)
         if code == 200:
             job_status['is_owner'] = True
-            job_status['working'] = True
+            job_status['working'] = bool(active_info.get('has_active_job'))
             job_status['siteName'] = record['site_name']
             job_status['fileId'] = file_id
             return jsonify(job_status)
@@ -1319,13 +1319,17 @@ def api_file_url_statuses(file_id):
     if active_info['has_active_job'] and not active_info['is_owner']:
         return jsonify({'statuses': [], 'summary': {}, 'xlsx_count': 0, 'error': 'Forbidden'}), 403
 
-    if active_info['has_active_job'] and active_info['is_owner']:
+    if active_info.get('job_id') and active_info.get('is_owner', True):
         urls, code = job_manager.get_job_urls(active_info['job_id'], current_user_id=user_id)
-        if code != 200:
-            return jsonify({'statuses': [], 'summary': {}, 'xlsx_count': 0}), code
-    else:
-        urls = file_scraper_runner.get_statuses(file_id)
+        if code == 200 and urls:
+            summary = build_status_summary(urls)
+            return jsonify({
+                'statuses': urls,
+                'summary': summary,
+                'xlsx_count': summary.get('written_to_xlsx', 0),
+            })
 
+    urls = file_scraper_runner.get_statuses(file_id)
     summary = build_status_summary(urls)
     return jsonify({
         'statuses': urls,

@@ -367,6 +367,63 @@
   // SSE Webhook Client (Real-time Push Stream)
   // ==============================================================================
 
+  const getCacheKey = () => fileScraperId ? `tyrescart_scraper_cache_file_${fileScraperId}` : null;
+
+  const saveStateToLocalStorage = (summary, statuses) => {
+    const key = getCacheKey();
+    if (!key) return;
+    try {
+      const data = {
+        summary: summary || {},
+        statuses: (statuses && statuses.length) ? statuses : (lastKnownStatuses || []),
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (e) {
+      console.warn('[LocalStorage] Save failed:', e);
+    }
+  };
+
+  const loadStateFromLocalStorage = () => {
+    const key = getCacheKey();
+    if (!key) return false;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      if (data && data.summary) {
+        updateUiState(data.summary);
+        if (Array.isArray(data.statuses) && data.statuses.length > 0) {
+          renderUrlTreeList(data.statuses);
+        }
+        return true;
+      }
+    } catch (e) {
+      console.warn('[LocalStorage] Load failed:', e);
+    }
+    return false;
+  };
+
+  const closeEventSource = () => {
+    if (activeEventSource) {
+      activeEventSource.close();
+      activeEventSource = null;
+    }
+  };
+
+  const stopStatusPolling = () => {
+    if (statusIntervalId !== null) {
+      clearInterval(statusIntervalId);
+      statusIntervalId = null;
+    }
+  };
+
+  const startStatusPolling = () => {
+    if (statusIntervalId === null && !activeEventSource && isCurrentRunning) {
+      statusIntervalId = setInterval(refreshProgress, 2000);
+    }
+  };
+
   const startEventSource = (jobId) => {
     if (!jobId || (activeEventSource && activeEventSource._jobId === jobId)) {
       return;
@@ -405,6 +462,7 @@
     if (payload.type === 'snapshot') {
       updateUiState(payload.summary || {});
       renderUrlTreeList(payload.statuses || []);
+      saveStateToLocalStorage(payload.summary || {}, payload.statuses || []);
     } else if (payload.type === 'url_update') {
       updateUiState(payload.summary || {});
       if (payload.url) {
@@ -415,12 +473,15 @@
           lastKnownStatuses.push(payload.url);
         }
         renderUrlTreeList(lastKnownStatuses);
+        saveStateToLocalStorage(payload.summary || {}, lastKnownStatuses);
       }
     } else if (payload.type === 'status') {
       const st = (payload.status || '').toUpperCase();
       updateUiState(payload);
+      saveStateToLocalStorage(payload, lastKnownStatuses);
       if (payload.done || ['SUCCESS', 'STOPPED', 'FAILED', 'FAIL'].includes(st)) {
         closeEventSource();
+        stopStatusPolling();
         refreshProgress();
       }
     }
@@ -438,27 +499,45 @@
           const activeInfo = await activeRes.json();
           if (activeInfo.already_running && !activeInfo.is_owner) {
             showBlockedScreen();
-            startStatusPolling();
-            return;
-          }
-
-          if (!activeInfo.has_active_job) {
-            showMainProgress();
             closeEventSource();
             stopStatusPolling();
-            setStatus('Idle', 'bg-slate-100 text-slate-700');
-            updateControls({ running: false, status: 'IDLE' });
             return;
           }
 
           showMainProgress();
-          currentJobId = activeInfo.job_id;
 
-          // Connect SSE webhook stream for real-time live events!
-          if (currentJobId && (activeInfo.status === 'RUNNING' || activeInfo.already_running)) {
+          if (activeInfo.has_active_job && activeInfo.job_id) {
+            currentJobId = activeInfo.job_id;
             startEventSource(currentJobId);
             return;
           }
+
+          closeEventSource();
+          stopStatusPolling();
+
+          currentJobId = activeInfo.job_id || null;
+          const statusEndpoint = `/api/files/${fileScraperId}/status`;
+          const urlsEndpoint = `/api/files/${fileScraperId}/url-statuses`;
+
+          const [statusRes, urlsRes] = await Promise.all([
+            fetch(statusEndpoint).then((r) => (r.ok ? r.json() : null)),
+            fetch(urlsEndpoint).then((r) => (r.ok ? r.json() : null)),
+          ]);
+
+          if (statusRes) {
+            updateUiState(statusRes);
+            const statuses = Array.isArray(urlsRes)
+              ? urlsRes
+              : urlsRes && Array.isArray(urlsRes.statuses)
+              ? urlsRes.statuses
+              : [];
+            renderUrlTreeList(statuses);
+            saveStateToLocalStorage(statusRes, statuses);
+          } else {
+            setStatus(activeInfo.status || 'Idle', 'bg-slate-100 text-slate-700');
+            updateControls({ running: false, status: activeInfo.status || 'IDLE' });
+          }
+          return;
         }
       }
 
@@ -478,8 +557,8 @@
         : `/api/files/${fileScraperId}/url-statuses`;
 
       const [statusRes, urlsRes] = await Promise.all([
-        fetch(statusEndpoint).then((r) => r.ok ? r.json() : null),
-        fetch(urlsEndpoint).then((r) => r.ok ? r.json() : null),
+        fetch(statusEndpoint).then((r) => (r.ok ? r.json() : null)),
+        fetch(urlsEndpoint).then((r) => (r.ok ? r.json() : null)),
       ]);
 
       if (!statusRes) {
@@ -493,8 +572,11 @@
 
       const statuses = Array.isArray(urlsRes)
         ? urlsRes
-        : (urlsRes && Array.isArray(urlsRes.statuses) ? urlsRes.statuses : []);
+        : urlsRes && Array.isArray(urlsRes.statuses)
+        ? urlsRes.statuses
+        : [];
       renderUrlTreeList(statuses);
+      saveStateToLocalStorage(statusRes, statuses);
 
       if (isCurrentRunning && currentJobId) {
         startEventSource(currentJobId);
@@ -715,6 +797,7 @@
     });
   }
 
-  // Initial bootstrap on /scraperpage
+  // Initial bootstrap on /scraperpage (load instant localStorage cache first, then refresh)
+  loadStateFromLocalStorage();
   refreshProgress();
 })();
