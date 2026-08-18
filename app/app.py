@@ -1,11 +1,19 @@
+import os
+import sys
+
+# Ensure app directory and project root are always in sys.path for direct imports (e.g. gunicorn app.app:app)
+_app_dir = os.path.dirname(os.path.abspath(__file__))
+_root_dir = os.path.dirname(_app_dir)
+for _p in [_app_dir, _root_dir]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 import csv
 import io
 import json
-import os
 import re
 import secrets
 import subprocess
-import sys
 import threading
 import time
 import uuid
