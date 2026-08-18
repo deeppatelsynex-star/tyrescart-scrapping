@@ -419,7 +419,7 @@
   };
 
   const startStatusPolling = () => {
-    if (statusIntervalId === null && !activeEventSource && isCurrentRunning) {
+    if (statusIntervalId === null) {
       statusIntervalId = setInterval(refreshProgress, 2000);
     }
   };
@@ -429,7 +429,6 @@
       return;
     }
     closeEventSource();
-    stopStatusPolling();
 
     try {
       const es = new EventSource(`/api/scraper/job/${jobId}/events`);
@@ -447,7 +446,6 @@
 
       es.onerror = () => {
         closeEventSource();
-        // Fall back to HTTP polling if SSE stream closes
         startStatusPolling();
       };
     } catch (e) {
@@ -505,19 +503,15 @@
           }
 
           showMainProgress();
-
-          if (activeInfo.has_active_job && activeInfo.job_id) {
-            currentJobId = activeInfo.job_id;
-            startEventSource(currentJobId);
-            return;
-          }
-
-          closeEventSource();
-          stopStatusPolling();
-
           currentJobId = activeInfo.job_id || null;
-          const statusEndpoint = `/api/files/${fileScraperId}/status`;
-          const urlsEndpoint = `/api/files/${fileScraperId}/url-statuses`;
+          const isRunning = Boolean(activeInfo.has_active_job && activeInfo.job_id);
+
+          const statusEndpoint = currentJobId
+            ? `/api/scraper/job/${currentJobId}/status`
+            : `/api/files/${fileScraperId}/status`;
+          const urlsEndpoint = currentJobId
+            ? `/api/scraper/job/${currentJobId}/urls`
+            : `/api/files/${fileScraperId}/url-statuses`;
 
           const [statusRes, urlsRes] = await Promise.all([
             fetch(statusEndpoint).then((r) => (r.ok ? r.json() : null)),
@@ -534,8 +528,17 @@
             renderUrlTreeList(statuses);
             saveStateToLocalStorage(statusRes, statuses);
           } else {
-            setStatus(activeInfo.status || 'Idle', 'bg-slate-100 text-slate-700');
-            updateControls({ running: false, status: activeInfo.status || 'IDLE' });
+            const rawStatus = activeInfo.status || (isRunning ? 'RUNNING' : 'IDLE');
+            setStatus(isRunning ? 'Running' : (rawStatus === 'STOPPED' ? 'Stopped' : 'Idle'), isRunning ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700');
+            updateControls({ running: isRunning, status: rawStatus });
+          }
+
+          if (isRunning) {
+            startEventSource(currentJobId);
+            startStatusPolling();
+          } else {
+            closeEventSource();
+            stopStatusPolling();
           }
           return;
         }
@@ -580,6 +583,7 @@
 
       if (isCurrentRunning && currentJobId) {
         startEventSource(currentJobId);
+        startStatusPolling();
       } else {
         closeEventSource();
         stopStatusPolling();
@@ -627,7 +631,10 @@
         }
         if (window.AdminShared) window.AdminShared.showToast('Scraper started successfully!', 'success');
         currentJobId = data.job_id;
+        setStatus('Running', 'bg-emerald-100 text-emerald-700');
+        updateControls({ running: true, status: 'RUNNING' });
         startEventSource(currentJobId);
+        startStatusPolling();
         await refreshProgress();
       } catch (err) {
         if (window.AdminShared) window.AdminShared.showToast('Failed to start scraper.', 'error');
