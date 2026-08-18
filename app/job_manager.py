@@ -1,26 +1,27 @@
-"""Centralized Scraper Execution Engine using scraper_jobs + scraper_job_locks Table & Triggers.
+"""Centralized Scraper Execution Engine using logTbl as single source of truth.
 
 Architectural Guarantees:
-1. GLOBAL SCRAPER LOCK:
-   - Lock table `scraper_job_locks` with PRIMARY KEY (file_id) ensures exactly 1 active execution globally.
-   - MySQL trigger `before_scraper_job_insert` acquires the lock automatically when status='RUNNING' and finished_at IS NULL.
-   - Duplicate starts fail at the database level with code 1062 duplicate key error.
+1. GLOBAL SCRAPER LOCK (in-memory + logTbl status check):
+   - _start_lock threading.Lock prevents concurrent starts within this Flask process.
+   - logTbl rows with status='RUNNING' and end_time IS NULL are the persisted lock.
 2. USER-OWNED EXECUTION & PRIVACY:
-   - The user who started the scraper is the designated OWNER (started_by_user_id).
-   - Only the owner can view live counters, progress, logs, URLs, and Stop button.
+   - Only the owner (user_id in logTbl) can view live counters, progress, URLs, and Stop button.
    - Non-owners receive ONLY:
      {"already_running": true, "is_owner": false, "message": "This scraper is currently being used by another user."}
    - No job_id, process_id, logs, timestamps, or usernames are ever leaked to non-owners.
-3. LOCK RELEASE & LIFECYCLE:
-   - MySQL trigger `after_scraper_job_update` automatically deletes the lock when status IN ('SUCCESS', 'FAILED', 'STOPPED') and finished_at IS NOT NULL.
-   - 6-Hour Timeout Watchdog and Dead Process Recovery ensure dead jobs never keep the lock.
+3. SSE (Server-Sent Events / Webhook):
+   - Each active job has a thread-safe queue in _sse_queues[job_id].
+   - subscribe_sse(job_id) / unsubscribe_sse(job_id, q) manage client connections.
+4. LOCK RELEASE & LIFECYCLE:
+   - finalize_job() marks end_time + terminal status in logTbl.
+   - 6-Hour Timeout Watchdog ensures dead jobs never hold the lock.
 """
 
 import csv
 import json
 import logging
 import os
-import signal
+import queue
 import subprocess
 import sys
 import threading
@@ -30,7 +31,6 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 
 import psutil
-import pymysql
 
 from db import get_connection
 import files_repo
@@ -43,27 +43,47 @@ BASE_DIR = files_repo.BASE_DIR
 TMP_DIR = os.path.join(BASE_DIR, 'tmp', 'file_scrapers')
 os.makedirs(TMP_DIR, exist_ok=True)
 
-# Maximum execution runtime: 6 hours
 MAX_RUNTIME_SECONDS = 6 * 3600
 
 _lock = threading.RLock()
 _start_lock = threading.Lock()
-
-# In-memory live progress registry: job_id -> dict with process, urls, counters, etc.
 _active_jobs = {}
+_sse_queues = {}
+_sse_lock = threading.Lock()
+
+
+def _push_sse_event(job_id, event_data):
+    with _sse_lock:
+        for q in _sse_queues.get(job_id, []):
+            try:
+                q.put_nowait(event_data)
+            except Exception:
+                pass
+
+
+def subscribe_sse(job_id):
+    q = queue.Queue(maxsize=500)
+    with _sse_lock:
+        _sse_queues.setdefault(job_id, []).append(q)
+    return q
+
+
+def unsubscribe_sse(job_id, q):
+    with _sse_lock:
+        lst = _sse_queues.get(job_id, [])
+        if q in lst:
+            lst.remove(q)
+        if not lst and job_id in _sse_queues:
+            del _sse_queues[job_id]
 
 
 def _popen_kwargs():
-    """Returns platform-appropriate Popen kwargs for clean process isolation."""
     if os.name == 'nt':
         return {'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP}
     return {'start_new_session': True}
 
 
 def _kill_process_tree(process, force=False):
-    """Safely terminates only the targeted scraper process and its direct child
-    processes using psutil, never touching web workers or sibling scrapers.
-    """
     if not process:
         return
     pid = process.pid if hasattr(process, 'pid') else process
@@ -72,32 +92,21 @@ def _kill_process_tree(process, force=False):
     try:
         if psutil.pid_exists(pid):
             parent = psutil.Process(pid)
-            children = parent.children(recursive=True)
-            for child in children:
+            for child in parent.children(recursive=True):
                 try:
-                    if force:
-                        child.kill()
-                    else:
-                        child.terminate()
+                    child.kill() if force else child.terminate()
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
             try:
-                if force:
-                    parent.kill()
-                else:
-                    parent.terminate()
+                parent.kill() if force else parent.terminate()
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
             return
     except Exception:
         pass
-
     if hasattr(process, 'terminate'):
         try:
-            if force:
-                process.kill()
-            else:
-                process.terminate()
+            process.kill() if force else process.terminate()
         except (ProcessLookupError, OSError):
             pass
 
@@ -111,100 +120,95 @@ def _cleanup_temp(*paths):
             pass
 
 
-# ==============================================================================
-# Database Job Query Helpers (Source of Truth = scraper_jobs)
-# ==============================================================================
-
-def get_active_job(file_id):
-    """Returns the single active record from scraper_jobs for file_id, or None.
-    A job is active ONLY when status = 'RUNNING' AND finished_at IS NULL.
-    """
+def get_active_log(file_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT job_id, file_id, started_by_user_id, status,
-                       total_urls, pending_urls, running_urls, completed_urls, blocked_urls,
-                       total_products, written_to_xlsx, main_url_done, product_url_done,
-                       progress_percent, output_file_path, error_message, process_id,
-                       started_at, finished_at
-                FROM scraper_jobs
-                WHERE file_id = %s
-                  AND status = 'RUNNING'
-                  AND finished_at IS NULL
-                ORDER BY created_at DESC
-                LIMIT 1
+                SELECT id, job_id, scraper, file_id, user_id, status,
+                       no_of_url_found, total_success_url, total_block_url, data_scraped,
+                       total_products, pending_urls, running_urls, completed_urls, blocked_urls,
+                       main_url_done, product_url_done, progress_percent,
+                       output_file_path, error_message, process_id,
+                       start_time, end_time
+                FROM logTbl
+                WHERE file_id = %s AND status = 'RUNNING' AND end_time IS NULL
+                ORDER BY id DESC LIMIT 1
             """, (file_id,))
             return cursor.fetchone()
     finally:
         conn.close()
 
 
-def get_job_by_id(job_id):
-    """Fetches a specific job record from scraper_jobs."""
+def get_active_job(file_id):
+    """Alias for get_active_log to maintain backwards compatibility."""
+    return get_active_log(file_id)
+
+
+def get_log_by_job_id(job_id):
+    if not job_id:
+        return None
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT job_id, file_id, started_by_user_id, status,
-                       total_urls, pending_urls, running_urls, completed_urls, blocked_urls,
-                       total_products, written_to_xlsx, main_url_done, product_url_done,
-                       progress_percent, output_file_path, error_message, process_id,
-                       started_at, finished_at
-                FROM scraper_jobs
-                WHERE job_id = %s
-                LIMIT 1
+                SELECT id, job_id, scraper, file_id, user_id, status,
+                       no_of_url_found, total_success_url, total_block_url, data_scraped,
+                       total_products, pending_urls, running_urls, completed_urls, blocked_urls,
+                       main_url_done, product_url_done, progress_percent,
+                       output_file_path, error_message, process_id,
+                       start_time, end_time
+                FROM logTbl WHERE job_id = %s LIMIT 1
             """, (job_id,))
             return cursor.fetchone()
     finally:
         conn.close()
 
 
+def get_job_by_id(job_id):
+    """Alias for get_log_by_job_id for backwards compatibility."""
+    return get_log_by_job_id(job_id)
+
+
+def _close_stale_log_row(log_id):
+    try:
+        conn = get_connection()
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "UPDATE logTbl SET status='FAIL', end_time=NOW(), "
+                "error_message='Process terminated unexpectedly.' WHERE id=%s",
+                (log_id,)
+            )
+        conn.close()
+    except Exception:
+        pass
+
+
 def finalize_job(job_id, status, error_message=None, output_file_path=None, final_counters=None):
-    """Updates a job to terminal state (SUCCESS, FAILED, STOPPED) with finished_at.
-    The MySQL trigger `after_scraper_job_update` automatically deletes the lock.
-    Also synchronizes and finalizes the corresponding record in logTbl.
-    Accepts optional final_counters dict to persist the last computed progress values.
-    """
+    log_status = 'SUCCESS' if status == 'SUCCESS' else ('STOPPED' if status == 'STOPPED' else 'FAIL')
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # 1. Fetch job details
-            cursor.execute("""
-                SELECT file_id, started_by_user_id, process_id, total_urls, completed_urls, blocked_urls, written_to_xlsx
-                FROM scraper_jobs
-                WHERE job_id = %s
-            """, (job_id,))
-            job_row = cursor.fetchone()
-
-            # 2. Update scraper_jobs — also flush final counters if provided
             if final_counters:
                 cursor.execute("""
-                    UPDATE scraper_jobs
-                    SET status = %s,
-                        finished_at = NOW(),
-                        error_message = COALESCE(%s, error_message),
-                        output_file_path = COALESCE(%s, output_file_path),
-                        updated_at = NOW(),
-                        total_urls = %s,
-                        pending_urls = %s,
-                        running_urls = 0,
-                        completed_urls = %s,
-                        blocked_urls = %s,
-                        total_products = %s,
-                        written_to_xlsx = %s,
-                        main_url_done = %s,
-                        product_url_done = %s,
-                        progress_percent = %s
-                    WHERE job_id = %s
+                    UPDATE logTbl SET
+                        status=%s, end_time=NOW(),
+                        error_message=COALESCE(%s, error_message),
+                        output_file_path=COALESCE(%s, output_file_path),
+                        no_of_url_found=%s, total_success_url=%s, total_block_url=%s,
+                        data_scraped=%s, total_products=%s, pending_urls=0, running_urls=0,
+                        completed_urls=%s, blocked_urls=%s, main_url_done=%s,
+                        product_url_done=%s, progress_percent=%s
+                    WHERE job_id=%s
                 """, (
-                    status, error_message, output_file_path,
+                    log_status, error_message, output_file_path,
                     final_counters.get('total_urls', 0),
-                    final_counters.get('pending', 0),
                     final_counters.get('completed', 0),
                     final_counters.get('blocked', 0),
-                    final_counters.get('total_products', 0),
                     final_counters.get('written_to_xlsx', 0),
+                    final_counters.get('total_products', 0),
+                    final_counters.get('completed', 0),
+                    final_counters.get('blocked', 0),
                     final_counters.get('main_url_done', 0),
                     final_counters.get('product_url_done', 0),
                     final_counters.get('progress_percent', 0.0),
@@ -212,119 +216,103 @@ def finalize_job(job_id, status, error_message=None, output_file_path=None, fina
                 ))
             else:
                 cursor.execute("""
-                    UPDATE scraper_jobs
-                    SET status = %s,
-                        finished_at = NOW(),
-                        error_message = COALESCE(%s, error_message),
-                        output_file_path = COALESCE(%s, output_file_path),
-                        updated_at = NOW()
-                    WHERE job_id = %s
-                """, (status, error_message, output_file_path, job_id))
-
-            # 3. Ensure lock is deleted from scraper_job_locks
-            cursor.execute("""
-                DELETE FROM scraper_job_locks
-                WHERE job_id = %s
-            """, (job_id,))
-
-            # 4. Synchronize logTbl so audit log is never left as RUNNING when job finishes!
-            log_status = 'SUCCESS' if status == 'SUCCESS' else ('STOPPED' if status == 'STOPPED' else 'FAIL')
-            if job_row:
-                fid = job_row['file_id']
-                uid = job_row['started_by_user_id']
-                pid = job_row.get('process_id')
-                total_u = (final_counters.get('total_urls') if final_counters else None) or job_row.get('total_urls') or 0
-                comp_u = (final_counters.get('completed') if final_counters else None) or job_row.get('completed_urls') or 0
-                block_u = (final_counters.get('blocked') if final_counters else None) or job_row.get('blocked_urls') or 0
-                data_s = (final_counters.get('written_to_xlsx') if final_counters else None) or job_row.get('written_to_xlsx') or 0
-
-                if pid:
-                    cursor.execute("""
-                        UPDATE logTbl
-                        SET status = %s,
-                            end_time = NOW(),
-                            error_message = COALESCE(%s, error_message),
-                            output_file_path = COALESCE(%s, output_file_path),
-                            no_of_url_found = GREATEST(no_of_url_found, %s),
-                            total_success_url = GREATEST(total_success_url, %s),
-                            total_block_url = GREATEST(total_block_url, %s),
-                            data_scraped = GREATEST(data_scraped, %s)
-                        WHERE process_id = %s AND (status = 'RUNNING' OR end_time IS NULL)
-                    """, (log_status, error_message, output_file_path, total_u, comp_u, block_u, data_s, pid))
-
-                cursor.execute("""
-                    UPDATE logTbl
-                    SET status = %s,
-                        end_time = NOW(),
-                        error_message = COALESCE(%s, error_message),
-                        output_file_path = COALESCE(%s, output_file_path),
-                        no_of_url_found = GREATEST(no_of_url_found, %s),
-                        total_success_url = GREATEST(total_success_url, %s),
-                        total_block_url = GREATEST(total_block_url, %s),
-                        data_scraped = GREATEST(data_scraped, %s)
-                    WHERE file_id = %s AND user_id = %s AND (status = 'RUNNING' OR end_time IS NULL)
-                """, (log_status, error_message, output_file_path, total_u, comp_u, block_u, data_s, fid, uid))
+                    UPDATE logTbl SET status=%s, end_time=NOW(),
+                    error_message=COALESCE(%s, error_message),
+                    output_file_path=COALESCE(%s, output_file_path)
+                    WHERE job_id=%s
+                """, (log_status, error_message, output_file_path, job_id))
     except Exception:
-        logger.exception("Error finalizing job_id=%s in database.", job_id)
+        logger.exception('Error finalizing job_id=%s', job_id)
     finally:
         conn.close()
+    _push_sse_event(job_id, {
+        'type': 'status', 'status': log_status, 'done': True, 'error_message': error_message
+    })
 
-
-# ==============================================================================
-# Counter Calculation (Server-Side)
-# ==============================================================================
 
 def _recalc_counters(job_state):
-    """Calculates all authoritative counter metrics from the URL queue."""
     urls_dict = job_state.get('urls', {})
     items = list(urls_dict.values())
-
     main_urls = [u for u in items if u.get('type') == 'sitemap' or 'sitemap' in u.get('url', '').lower()]
-    product_urls = [u for u in items if u.get('type') == 'product' or '/product/' in u.get('url', '').lower() or u not in main_urls]
-
+    product_urls = [u for u in items if u not in main_urls]
     main_url_done = sum(1 for u in main_urls if (u.get('status') or '').lower() in ('done', 'success'))
     product_url_done = sum(1 for u in product_urls if (u.get('status') or '').lower() in ('done', 'success'))
-
     total_products = len(product_urls)
     total_urls = len(items)
-
     pending = sum(1 for u in items if (u.get('status') or '').lower() == 'pending')
     running = sum(1 for u in items if (u.get('status') or '').lower() == 'running')
     blocked = sum(1 for u in items if (u.get('status') or '').lower() in ('blocked', 'failed'))
     completed = main_url_done + product_url_done
-
     written_to_xlsx = product_url_done
     output_path = job_state.get('output_file_path')
     if output_path and os.path.exists(output_path):
         excel_rows = reports_repo.count_excel_data_rows(output_path)
         if excel_rows > 0:
             written_to_xlsx = excel_rows
-
     if total_products > 0:
         progress_pct = round(min(100.0, (product_url_done / float(total_products)) * 100.0), 1)
     elif total_urls > 0:
         progress_pct = round(min(100.0, (completed / float(total_urls)) * 100.0), 1)
     else:
         progress_pct = 0.0
-
-    job_state['main_url_done'] = main_url_done
-    job_state['product_url_done'] = product_url_done
-    job_state['total_products'] = total_products
-    job_state['total_urls'] = total_urls
-    job_state['pending'] = pending
-    job_state['running'] = running
-    job_state['blocked'] = blocked
-    job_state['completed'] = completed
-    job_state['written_to_xlsx'] = written_to_xlsx
-    job_state['progress_percent'] = progress_pct
+    job_state.update({
+        'main_url_done': main_url_done, 'product_url_done': product_url_done,
+        'total_products': total_products, 'total_urls': total_urls,
+        'pending': pending, 'running': running, 'blocked': blocked,
+        'completed': completed, 'written_to_xlsx': written_to_xlsx,
+        'progress_percent': progress_pct
+    })
 
 
-# ==============================================================================
-# Worker Thread Execution
-# ==============================================================================
+def _build_sse_status(state):
+    return {
+        'type': 'status',
+        'job_id': state.get('job_id'),
+        'file_id': state.get('file_id'),
+        'site_name': state.get('site_name', 'Scraper'),
+        'status': state.get('status', 'RUNNING'),
+        'running': state.get('status') == 'RUNNING',
+        'done': state.get('status') in ('SUCCESS', 'FAILED', 'STOPPED', 'FAIL'),
+        'total_product_urls': state.get('total_products', 0),
+        'total_urls': state.get('total_urls', 0),
+        'written_to_xlsx': state.get('written_to_xlsx', 0),
+        'pending': state.get('pending', 0),
+        'running_count': state.get('running', 0),
+        'blocked': state.get('blocked', 0),
+        'completed': state.get('completed', 0),
+        'main_url_done': state.get('main_url_done', 0),
+        'product_url_done': state.get('product_url_done', 0),
+        'progress_percent': state.get('progress_percent', 0.0),
+        'output_available': bool(
+            state.get('output_file_path') and os.path.exists(state['output_file_path'])
+            and state.get('status') != 'RUNNING'
+        ),
+        'error_message': state.get('error_message'),
+    }
 
-def _run_worker(job_id, file_id, log_id, script_path, input_path, output_placeholder):
-    """Background monitoring thread reading stdout from scraper process."""
+
+def _sync_counters_to_db(job_id, state):
+    try:
+        conn = get_connection()
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                UPDATE logTbl SET
+                    no_of_url_found=%s, total_success_url=%s, total_block_url=%s, data_scraped=%s,
+                    total_products=%s, pending_urls=%s, running_urls=%s, completed_urls=%s,
+                    blocked_urls=%s, main_url_done=%s, product_url_done=%s, progress_percent=%s
+                WHERE job_id=%s
+            """, (
+                state['total_urls'], state['completed'], state['blocked'], state['written_to_xlsx'],
+                state['total_products'], state['pending'], state['running'], state['completed'],
+                state['blocked'], state['main_url_done'], state['product_url_done'],
+                state['progress_percent'], job_id
+            ))
+        conn.close()
+    except Exception:
+        logger.exception('Counter sync failed for job_id=%s', job_id)
+
+
+def _run_worker(job_id, file_id, script_path, input_path, output_placeholder):
     with _lock:
         job_state = _active_jobs.get(job_id)
         if not job_state:
@@ -332,15 +320,11 @@ def _run_worker(job_id, file_id, log_id, script_path, input_path, output_placeho
         process = job_state['process']
 
     returncode = -1
-    was_stopped = False
-    was_timeout = False
-
     try:
         for line in iter(process.stdout.readline, ''):
             if not line:
                 break
-            line_str = line.rstrip('\n')
-            parsed = parse_status_line(line_str)
+            parsed = parse_status_line(line.rstrip('\n'))
             if parsed:
                 with _lock:
                     if job_id in _active_jobs:
@@ -361,51 +345,21 @@ def _run_worker(job_id, file_id, log_id, script_path, input_path, output_placeho
                                 'type': parsed.get('type') or 'root',
                             }
                         _recalc_counters(state)
-
-                        # Sync progress to database every 3 seconds
                         now = time.time()
                         if now - state.get('last_db_sync', 0) >= 3.0:
                             state['last_db_sync'] = now
-                            conn = get_connection()
-                            try:
-                                with conn.cursor() as cursor:
-                                    cursor.execute("""
-                                        UPDATE scraper_jobs
-                                        SET total_urls = %s,
-                                            pending_urls = %s,
-                                            running_urls = %s,
-                                            completed_urls = %s,
-                                            blocked_urls = %s,
-                                            total_products = %s,
-                                            written_to_xlsx = %s,
-                                            main_url_done = %s,
-                                            product_url_done = %s,
-                                            progress_percent = %s
-                                        WHERE job_id = %s
-                                    """, (
-                                        state['total_urls'], state['pending'], state['running'],
-                                        state['completed'], state['blocked'], state['total_products'],
-                                        state['written_to_xlsx'], state['main_url_done'],
-                                        state['product_url_done'], state['progress_percent'],
-                                        job_id
-                                    ))
-                            finally:
-                                conn.close()
-
-                            if log_id:
-                                reports_repo.update_log_progress(
-                                    log_id,
-                                    no_of_url_found=state['total_urls'],
-                                    total_success_url=state['completed'],
-                                    total_block_url=state['blocked'],
-                                    data_scraped=state['written_to_xlsx'],
-                                )
-
+                            _sync_counters_to_db(job_id, state)
+                        # Push live SSE event
+                        _push_sse_event(job_id, {
+                            'type': 'url_update',
+                            'url': state['urls'][url_key],
+                            'summary': _build_sse_status(state),
+                        })
         process.stdout.close()
         process.wait()
         returncode = process.returncode
     except Exception:
-        logger.exception("Scraper job_id=%s crashed during monitoring.", job_id)
+        logger.exception('Scraper job_id=%s crashed during monitoring.', job_id)
     finally:
         with _lock:
             state = _active_jobs.get(job_id, {})
@@ -413,10 +367,7 @@ def _run_worker(job_id, file_id, log_id, script_path, input_path, output_placeho
             was_timeout = state.get('timeout_stopped', False)
             _recalc_counters(state)
 
-        final_output_path = None
-        if output_placeholder and os.path.exists(output_placeholder):
-            final_output_path = output_placeholder
-
+        final_output_path = output_placeholder if (output_placeholder and os.path.exists(output_placeholder)) else None
         total_blocked = state.get('blocked', 0)
         total_completed = state.get('completed', 0)
         written_count = state.get('written_to_xlsx', 0)
@@ -437,18 +388,12 @@ def _run_worker(job_id, file_id, log_id, script_path, input_path, output_placeho
             final_status = 'FAILED'
             error_message = f'Scraper process exited with return code {returncode}.'
 
-        # Finalize job in scraper_jobs (Trigger releases the lock)
-        # Pass final counters so progress_percent, product_url_done etc. are persisted to DB
         finalize_job(
-            job_id=job_id,
-            status=final_status,
-            error_message=error_message,
-            output_file_path=final_output_path,
+            job_id=job_id, status=final_status,
+            error_message=error_message, output_file_path=final_output_path,
             final_counters={
                 'total_urls': state.get('total_urls', 0),
-                'pending': 0,  # no pending at finish
-                'completed': total_completed,
-                'blocked': total_blocked,
+                'pending': 0, 'completed': total_completed, 'blocked': total_blocked,
                 'total_products': state.get('total_products', 0),
                 'written_to_xlsx': written_count,
                 'main_url_done': state.get('main_url_done', 0),
@@ -456,112 +401,48 @@ def _run_worker(job_id, file_id, log_id, script_path, input_path, output_placeho
                 'progress_percent': state.get('progress_percent', 0.0),
             }
         )
-
-        if log_id:
-            reports_repo.finish_log_entry(
-                log_id,
-                status=final_status,
-                no_of_url_found=state.get('total_urls', 0),
-                total_success_url=total_completed,
-                total_block_url=total_blocked,
-                data_scraped=written_count,
-                output_file_path=final_output_path,
-                error_message=error_message,
-            )
-
         files_repo.set_working(file_id, 0)
         _cleanup_temp(input_path)
-
         with _lock:
             if job_id in _active_jobs:
                 _active_jobs[job_id]['status'] = final_status
                 _active_jobs[job_id]['running'] = 0
 
 
-# ==============================================================================
-# Public APIs: Start, Status, URLs, Stop
-# ==============================================================================
-
 def start_job(file_id, user_id):
-    """Starts a scraper job atomically using scraper_jobs + MySQL triggers.
-
-    Order of execution:
-    1. Authenticate user / get file_id.
-    2. Check if current user already owns an active running job on file_id -> resume.
-    3. Generate job_id, insert RUNNING job into scraper_jobs table.
-       -> MySQL trigger before_scraper_job_insert acquires PRIMARY KEY (file_id) lock in scraper_job_locks.
-       -> If another user is already running, insert fails with 1062 duplicate key error.
-       -> We catch 1062 and return HTTP 409 Conflict generic message.
-    4. Start Python subprocess, save process_id in scraper_jobs.
-    5. Return job information to owner.
-    """
     record = files_repo.get_file(file_id)
     if not record:
         return {'success': False, 'error': 'Scraper not found.'}
-
     if files_repo.bit_to_bool(record.get('is_deleted')):
         return {'success': False, 'error': 'This scraper is disabled. Please enable it first.'}
 
     with _start_lock:
-        active = get_active_job(file_id)
+        active = get_active_log(file_id)
         if active:
+            job_id = active.get('job_id')
             with _lock:
-                in_memory = (active['job_id'] in _active_jobs)
+                in_memory = (job_id in _active_jobs) if job_id else False
             pid = active.get('process_id')
             is_alive = in_memory or (pid and psutil.pid_exists(pid))
-
             if is_alive:
-                if active['started_by_user_id'] == user_id:
-                    return {
-                        'success': True,
-                        'job_id': active['job_id'],
-                        'file_id': file_id,
-                        'is_owner': True,
-                        'is_new_job': False,
-                        'message': 'Resuming your active scraper execution.'
-                    }
+                if active['user_id'] == user_id:
+                    return {'success': True, 'job_id': job_id, 'file_id': file_id,
+                            'is_owner': True, 'is_new_job': False,
+                            'message': 'Resuming your active scraper execution.'}
                 else:
-                    return {
-                        'success': False,
-                        'already_running': True,
-                        'is_owner': False,
-                        'message': 'This scraper is currently being used by another user.'
-                    }
+                    return {'success': False, 'already_running': True, 'is_owner': False,
+                            'message': 'This scraper is currently being used by another user.'}
             else:
-                # Dead process: finalize and free lock
-                finalize_job(active['job_id'], status='FAILED', error_message='Process terminated unexpectedly.')
+                if job_id:
+                    finalize_job(job_id, status='FAILED', error_message='Process terminated unexpectedly.')
+                else:
+                    _close_stale_log_row(active['id'])
                 files_repo.set_working(file_id, 0)
 
-        job_id = uuid.uuid4().hex[:16]
-
-        # Step 3: Insert RUNNING job into scraper_jobs (Trigger acquires lock)
-        conn = get_connection()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    INSERT INTO scraper_jobs (
-                        job_id, file_id, started_by_user_id, status, started_at
-                    )
-                    VALUES (%s, %s, %s, 'RUNNING', NOW())
-                """, (job_id, file_id, user_id))
-        except (pymysql.err.IntegrityError, Exception) as exc:
-            # Duplicate key error (1062) means another user acquired the lock simultaneously
-            logger.info("Job start lock rejected for file_id=%s: %s", file_id, exc)
-            return {
-                'success': False,
-                'already_running': True,
-                'is_owner': False,
-                'message': 'This scraper is currently being used by another user.'
-            }
-        finally:
-            conn.close()
-
-        # Step 4: Start Python subprocess
+        new_job_id = uuid.uuid4().hex[:16]
         try:
             script_path = files_repo.resolve_script_path(record['python_file_path'])
         except Exception as exc:
-            finalize_job(job_id, status='FAILED', error_message=f'Failed to resolve script: {exc}')
-            files_repo.set_working(file_id, 0)
             return {'success': False, 'error': str(exc)}
 
         urls = []
@@ -586,213 +467,113 @@ def start_job(file_id, user_id):
 
         try:
             process = subprocess.Popen(
-                args,
-                cwd=BASE_DIR,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-                **_popen_kwargs(),
+                args, cwd=BASE_DIR, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                text=True, bufsize=1, **_popen_kwargs(),
             )
         except OSError as exc:
             _cleanup_temp(input_path, output_placeholder)
-            finalize_job(job_id, status='FAILED', error_message='Failed to start scraper process')
-            files_repo.set_working(file_id, 0)
             return {'success': False, 'error': f'Failed to launch process: {exc}'}
 
         scraper_name = record.get('site_name') or 'Scraper'
-
-        # Update process_id in scraper_jobs
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    UPDATE scraper_jobs
-                    SET process_id = %s,
-                        total_urls = %s,
-                        total_products = %s,
-                        pending_urls = %s,
-                        output_file_path = %s
-                    WHERE job_id = %s
-                """, (process.pid, len(urls), len(urls), len(urls), output_placeholder, job_id))
+                    INSERT INTO logTbl
+                        (job_id, scraper, file_id, user_id, status, start_time,
+                         process_id, output_file_path, total_products, pending_urls)
+                    VALUES (%s, %s, %s, %s, 'RUNNING', NOW(), %s, %s, %s, %s)
+                """, (new_job_id, scraper_name, file_id, user_id,
+                      process.pid, output_placeholder, len(urls), len(urls)))
+        except Exception:
+            _cleanup_temp(input_path, output_placeholder)
+            logger.exception('Failed to insert logTbl row for file_id=%s', file_id)
+            return {'success': False, 'error': 'Failed to record job start.'}
         finally:
             conn.close()
 
-        # Also create report log in logTbl for audit trail
-        log_id = reports_repo.create_log_entry(
-            user_id=user_id,
-            file_id=file_id,
-            scraper_name=scraper_name,
-            process_id=process.pid,
-        )
-
         files_repo.set_working(file_id, 1)
-
         initial_urls = OrderedDict()
         for u in urls:
             initial_urls[u] = {'url': u, 'status': 'pending', 'parent': '', 'type': 'root'}
 
         with _lock:
-            _active_jobs[job_id] = {
-                'job_id': job_id,
-                'file_id': file_id,
-                'log_id': log_id,
-                'started_by_user_id': user_id,
-                'site_name': scraper_name,
-                'process': process,
-                'pid': process.pid,
-                'started_at': datetime.now(timezone.utc),
-                'status': 'RUNNING',
-                'urls': initial_urls,
-                'total_products': len(urls),
-                'total_urls': len(urls),
-                'written_to_xlsx': 0,
-                'pending': len(urls),
-                'running': 0,
-                'blocked': 0,
-                'completed': 0,
-                'main_url_done': 0,
-                'product_url_done': 0,
-                'progress_percent': 0.0,
-                'output_file_path': output_placeholder,
-                'error_message': None,
-                'stopped': False,
-                'timeout_stopped': False,
+            _active_jobs[new_job_id] = {
+                'job_id': new_job_id, 'file_id': file_id,
+                'started_by_user_id': user_id, 'site_name': scraper_name,
+                'process': process, 'pid': process.pid,
+                'started_at': datetime.now(timezone.utc), 'status': 'RUNNING',
+                'urls': initial_urls, 'total_products': len(urls), 'total_urls': len(urls),
+                'written_to_xlsx': 0, 'pending': len(urls), 'running': 0, 'blocked': 0,
+                'completed': 0, 'main_url_done': 0, 'product_url_done': 0,
+                'progress_percent': 0.0, 'output_file_path': output_placeholder,
+                'error_message': None, 'stopped': False, 'timeout_stopped': False,
                 'last_db_sync': time.time(),
             }
 
-        worker = threading.Thread(
+        threading.Thread(
             target=_run_worker,
-            args=(job_id, file_id, log_id, script_path, input_path, output_placeholder),
+            args=(new_job_id, file_id, script_path, input_path, output_placeholder),
             daemon=True,
-        )
-        worker.start()
+        ).start()
 
-        return {
-            'success': True,
-            'job_id': job_id,
-            'file_id': file_id,
-            'is_owner': True,
-            'is_new_job': True,
-            'message': 'Scraper job started successfully.'
-        }
+        return {'success': True, 'job_id': new_job_id, 'file_id': file_id,
+                'is_owner': True, 'is_new_job': True,
+                'message': 'Scraper job started successfully.'}
 
 
 def get_active_job_for_file(file_id, current_user_id):
-    """Checks active job for file_id and strictly enforces user privacy.
-
-    - If no active job -> returns {has_active_job: false, is_owner: true, status: 'IDLE'}
-    - If active and owner == current_user_id -> returns {has_active_job: true, is_owner: true, job_id: ...}
-    - If active and owner != current_user_id -> returns {has_active_job: true, already_running: true, is_owner: false, message: '...'}
-      (NEVER leaks job_id, process_id, counters, URLs, logs, or username to non-owners).
-    """
-    active = get_active_job(file_id)
+    active = get_active_log(file_id)
     record = files_repo.get_file(file_id)
     site_name = record['site_name'] if record else 'Scraper'
-
     if not active:
-        return {
-            'has_active_job': False,
-            'already_running': False,
-            'is_owner': True,
-            'file_id': file_id,
-            'site_name': site_name,
-            'status': 'IDLE'
-        }
-
+        return {'has_active_job': False, 'already_running': False, 'is_owner': True,
+                'file_id': file_id, 'site_name': site_name, 'status': 'IDLE'}
+    job_id = active.get('job_id')
     with _lock:
-        in_memory = (active['job_id'] in _active_jobs)
-
+        in_memory = (job_id in _active_jobs) if job_id else False
     pid = active.get('process_id')
     is_alive = in_memory or (pid and psutil.pid_exists(pid))
     if not is_alive:
-        finalize_job(active['job_id'], status='FAILED', error_message='Process terminated unexpectedly.')
+        if job_id:
+            finalize_job(job_id, status='FAILED', error_message='Process terminated unexpectedly.')
+        else:
+            _close_stale_log_row(active['id'])
         files_repo.set_working(file_id, 0)
-        return {
-            'has_active_job': False,
-            'already_running': False,
-            'is_owner': True,
-            'file_id': file_id,
-            'site_name': site_name,
-            'status': 'IDLE'
-        }
-
-    is_owner = (active['started_by_user_id'] == current_user_id)
-
+        return {'has_active_job': False, 'already_running': False, 'is_owner': True,
+                'file_id': file_id, 'site_name': site_name, 'status': 'IDLE'}
+    is_owner = (active['user_id'] == current_user_id)
     if not is_owner:
-        return {
-            'has_active_job': True,
-            'already_running': True,
-            'is_owner': False,
-            'file_id': file_id,
-            'site_name': site_name,
-            'status': 'RUNNING',
-            'message': 'This scraper is currently being used by another user.'
-        }
-
-    return {
-        'has_active_job': True,
-        'already_running': True,
-        'is_owner': True,
-        'job_id': active['job_id'],
-        'file_id': file_id,
-        'site_name': site_name,
-        'status': active['status']
-    }
+        return {'has_active_job': True, 'already_running': True, 'is_owner': False,
+                'file_id': file_id, 'site_name': site_name, 'status': 'RUNNING',
+                'message': 'This scraper is currently being used by another user.'}
+    return {'has_active_job': True, 'already_running': True, 'is_owner': True,
+            'job_id': job_id, 'file_id': file_id, 'site_name': site_name, 'status': active['status']}
 
 
 def get_job_status(job_id, current_user_id):
-    """Returns live authoritative progress ONLY to the authenticated owner."""
     with _lock:
         state = _active_jobs.get(job_id)
         if state:
             if state['started_by_user_id'] != current_user_id:
                 return {'success': False, 'error': 'Forbidden'}, 403
             _recalc_counters(state)
-            return {
-                'job_id': job_id,
-                'file_id': state['file_id'],
-                'site_name': state.get('site_name', 'Scraper'),
-                'status': state['status'],
-                'running': state['status'] == 'RUNNING',
-                'done': state['status'] in ('SUCCESS', 'FAILED', 'STOPPED'),
-                'total_product_urls': state['total_products'],
-                'total_urls': state['total_urls'],
-                'written_to_xlsx': state['written_to_xlsx'],
-                'pending': state['pending'],
-                'running_count': state['running'],
-                'blocked': state['blocked'],
-                'completed': state['completed'],
-                'main_url_done': state['main_url_done'],
-                'product_url_done': state['product_url_done'],
-                'progress_percent': state['progress_percent'],
-                'started_at': state['started_at'].isoformat() if isinstance(state.get('started_at'), datetime) else None,
-                'output_available': bool(state.get('output_file_path') and os.path.exists(state['output_file_path']) and state['status'] != 'RUNNING'),
-                'output_file_path': state.get('output_file_path'),
-                'error_message': state.get('error_message'),
-            }, 200
-
-    job = get_job_by_id(job_id)
+            return _build_sse_status(state), 200
+    job = get_log_by_job_id(job_id)
     if not job:
         return {'success': False, 'error': 'Job not found.'}, 404
-
-    if job['started_by_user_id'] != current_user_id:
+    if job['user_id'] != current_user_id:
         return {'success': False, 'error': 'Forbidden'}, 403
-
-    is_running = (job['status'] == 'RUNNING' and job['finished_at'] is None)
+    is_running = (job['status'] == 'RUNNING' and job['end_time'] is None)
     output_path = job.get('output_file_path')
     record = files_repo.get_file(job['file_id'])
-
     return {
-        'job_id': job['job_id'],
-        'file_id': job['file_id'],
+        'job_id': job['job_id'], 'file_id': job['file_id'],
         'site_name': record['site_name'] if record else 'Scraper',
-        'status': job['status'],
-        'running': is_running,
-        'done': not is_running,
+        'status': job['status'], 'running': is_running, 'done': not is_running,
         'total_product_urls': job.get('total_products') or 0,
-        'total_urls': job.get('total_urls') or 0,
-        'written_to_xlsx': job.get('written_to_xlsx') or 0,
+        'total_urls': job.get('no_of_url_found') or 0,
+        'written_to_xlsx': job.get('data_scraped') or 0,
         'pending': job.get('pending_urls') or 0,
         'running_count': job.get('running_urls') or 0,
         'blocked': job.get('blocked_urls') or 0,
@@ -800,66 +581,51 @@ def get_job_status(job_id, current_user_id):
         'main_url_done': job.get('main_url_done') or 0,
         'product_url_done': job.get('product_url_done') or 0,
         'progress_percent': job.get('progress_percent') or 0.0,
-        'started_at': job['started_at'].isoformat() if job.get('started_at') else None,
+        'started_at': job['start_time'].isoformat() if job.get('start_time') else None,
         'output_available': bool(output_path and os.path.exists(output_path) and not is_running),
-        'output_file_path': output_path,
-        'error_message': job.get('error_message'),
+        'output_file_path': output_path, 'error_message': job.get('error_message'),
     }, 200
 
 
 def get_job_urls(job_id, current_user_id):
-    """Returns URL queue and statuses ONLY to the authenticated owner."""
     with _lock:
         state = _active_jobs.get(job_id)
         if state:
             if state['started_by_user_id'] != current_user_id:
                 return {'success': False, 'error': 'Forbidden'}, 403
             return list(state['urls'].values()), 200
-
-    job = get_job_by_id(job_id)
+    job = get_log_by_job_id(job_id)
     if not job:
         return {'success': False, 'error': 'Job not found.'}, 404
-
-    if job['started_by_user_id'] != current_user_id:
+    if job['user_id'] != current_user_id:
         return {'success': False, 'error': 'Forbidden'}, 403
-
     if job.get('output_file_path') and os.path.exists(job['output_file_path']):
         try:
             import openpyxl
             wb = openpyxl.load_workbook(job['output_file_path'], read_only=True, data_only=True)
             sheet = wb.active
             headers = [str(c).strip().lower() for c in next(sheet.iter_rows(values_only=True), [])]
-            url_col_idx = next((idx for idx, h in enumerate(headers) if h in ('url', 'source', 'product url', 'link')), None)
+            url_col_idx = next((i for i, h in enumerate(headers) if h in ('url', 'source', 'product url', 'link')), None)
             urls = []
             if url_col_idx is not None:
                 for row in sheet.iter_rows(min_row=2, values_only=True):
                     if row and len(row) > url_col_idx and row[url_col_idx]:
-                        urls.append({
-                            'url': str(row[url_col_idx]).strip(),
-                            'status': 'done',
-                            'parent': '',
-                            'type': 'product'
-                        })
+                        urls.append({'url': str(row[url_col_idx]).strip(), 'status': 'done', 'parent': '', 'type': 'product'})
             wb.close()
             return urls, 200
         except Exception:
             pass
-
     return [], 200
 
 
 def stop_job(job_id, current_user_id, is_superadmin=False):
-    """Terminates the scraper process if requested by the owner (or SuperAdmin)."""
-    job = get_job_by_id(job_id)
+    job = get_log_by_job_id(job_id)
     if not job:
         return {'success': False, 'error': 'Job not found.'}, 404
-
-    if job['started_by_user_id'] != current_user_id and not is_superadmin:
+    if job['user_id'] != current_user_id and not is_superadmin:
         return {'success': False, 'error': 'Forbidden'}, 403
-
     file_id = job.get('file_id')
     process = None
-
     with _lock:
         state = _active_jobs.get(job_id)
         if state:
@@ -867,11 +633,9 @@ def stop_job(job_id, current_user_id, is_superadmin=False):
             state['status'] = 'STOPPED'
             state['running'] = 0
             process = state.get('process')
-
     pid = job.get('process_id')
     if pid and psutil.pid_exists(pid):
         _kill_process_tree(pid, force=True)
-
     if process:
         _kill_process_tree(process)
         try:
@@ -882,98 +646,67 @@ def stop_job(job_id, current_user_id, is_superadmin=False):
                 process.wait(timeout=2)
             except Exception:
                 pass
-
     finalize_job(job_id, status='STOPPED', error_message='Scraper stopped by user.')
-
     if file_id:
         files_repo.set_working(file_id, 0)
-
     return {'success': True, 'job_id': job_id, 'status': 'STOPPED', 'message': 'Scraper stopped successfully.'}, 200
 
 
 def stop_file(file_id, current_user_id, is_superadmin=False):
-    """Stops the active execution for file_id after validating ownership."""
-    active = get_active_job(file_id)
-    if active:
-        res, code = stop_job(active['job_id'], current_user_id, is_superadmin=is_superadmin)
-        return res, code
-
+    active = get_active_log(file_id)
+    if active and active.get('job_id'):
+        return stop_job(active['job_id'], current_user_id, is_superadmin=is_superadmin)
     files_repo.set_working(file_id, 0)
     return {'success': True, 'file_id': file_id, 'message': 'Scraper is not running.'}, 200
 
 
-# ==============================================================================
-# 6-Hour Timeout & Dead Process Watchdog
-# ==============================================================================
-
 def _watchdog_loop():
-    """Background watchdog thread that:
-    1. Terminates executions exceeding 6 hours max runtime.
-    2. Only cleans up dead processes managed by THIS local instance.
-       (Never kills jobs from remote instances/other servers sharing the DB!).
-    """
     while True:
         try:
             time.sleep(15)
             now = datetime.now(timezone.utc)
-
-            # 1. First, check jobs managed in memory by THIS instance
             with _lock:
                 managed_jobs = list(_active_jobs.items())
-
             for jid, state in managed_jobs:
                 proc = state.get('process')
                 pid = state.get('pid')
                 started_at = state.get('started_at')
-
-                # Check 6-hour timeout
                 if started_at and (now - started_at).total_seconds() > MAX_RUNTIME_SECONDS:
-                    logger.warning("Local Job %s exceeded 6 hours. Auto-terminating...", jid)
+                    logger.warning('Job %s exceeded 6 hours. Auto-terminating...', jid)
                     if pid and psutil.pid_exists(pid):
                         _kill_process_tree(pid, force=True)
-                    finalize_job(
-                        jid,
-                        status='STOPPED',
-                        error_message='Automatically stopped after maximum runtime of 6 hours.'
-                    )
+                    state['timeout_stopped'] = True
+                    finalize_job(jid, status='STOPPED',
+                                 error_message='Automatically stopped after maximum runtime of 6 hours.')
                     continue
-
-                # Check if local process died
                 if proc and proc.poll() is not None and state.get('status') == 'RUNNING':
                     ret = proc.poll()
-                    logger.info("Local Job %s process %s exited with code %s.", jid, pid, ret)
                     final_st = 'SUCCESS' if ret == 0 else 'FAILED'
                     err = None if ret == 0 else f'Process exited with return code {ret}.'
                     finalize_job(jid, status=final_st, error_message=err)
-
-            # 2. Database level: only terminate globally if job is > 6 hours old
             conn = get_connection()
             try:
                 with conn.cursor() as cursor:
                     cursor.execute("""
-                        UPDATE scraper_jobs
-                        SET status = 'STOPPED',
-                            finished_at = NOW(),
-                            error_message = 'Automatically stopped after maximum runtime of 6 hours.'
-                        WHERE status = 'RUNNING'
-                          AND finished_at IS NULL
-                          AND started_at < NOW() - INTERVAL 6 HOUR
+                        UPDATE logTbl SET status='STOPPED', end_time=NOW(),
+                        error_message='Automatically stopped after maximum runtime of 6 hours.'
+                        WHERE status='RUNNING' AND end_time IS NULL
+                        AND start_time < NOW() - INTERVAL 6 HOUR
                     """)
             finally:
                 conn.close()
-
         except Exception:
             pass
 
 
 _watchdog_thread_started = False
 
+
 def start_watchdog():
     global _watchdog_thread_started
     if not _watchdog_thread_started:
         _watchdog_thread_started = True
-        t = threading.Thread(target=_watchdog_loop, daemon=True)
-        t.start()
+        threading.Thread(target=_watchdog_loop, daemon=True).start()
 
 
 start_watchdog()

@@ -126,67 +126,6 @@ def has_superadmin():
         conn.close()
 
 
-def _hash_reset_token(raw_token):
-    return hashlib.sha256(raw_token.encode('utf-8')).hexdigest()
-
-
-def create_password_reset_token(user_id):
-    """Issues a new single-use reset token, invalidating any previous ones for this user.
-
-    Only the SHA-256 hash is stored, so a leaked database dump can't be used to
-    reset accounts -- the raw token (put in the emailed link) never touches the DB.
-    """
-    raw_token = secrets.token_urlsafe(32)
-    token_hash = _hash_reset_token(raw_token)
-    expires_at = datetime.utcnow() + timedelta(minutes=RESET_TOKEN_TTL_MINUTES)
-
-    conn = get_connection()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute('DELETE FROM password_reset_tbl WHERE userid = %s', (user_id,))
-            cursor.execute(
-                'INSERT INTO password_reset_tbl (userid, token_hash, expires_at) VALUES (%s, %s, %s)',
-                (user_id, token_hash, expires_at),
-            )
-    finally:
-        conn.close()
-    return raw_token
-
-
-def get_user_id_for_reset_token(raw_token):
-    """Returns the userid for a valid, unused, unexpired token, else None.
-
-    UTC_TIMESTAMP() is used (rather than NOW()) so the expiry check is correct
-    regardless of the MySQL session's configured timezone.
-    """
-    if not raw_token:
-        return None
-
-    token_hash = _hash_reset_token(raw_token)
-    conn = get_connection()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute(
-                'SELECT userid FROM password_reset_tbl '
-                'WHERE token_hash = %s AND used = 0 AND expires_at > UTC_TIMESTAMP()',
-                (token_hash,),
-            )
-            row = cursor.fetchone()
-            return row['userid'] if row else None
-    finally:
-        conn.close()
-
-
-def consume_reset_token(raw_token):
-    token_hash = _hash_reset_token(raw_token)
-    conn = get_connection()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute('UPDATE password_reset_tbl SET used = 1 WHERE token_hash = %s', (token_hash,))
-    finally:
-        conn.close()
-
-
 def login_required_page(view):
     """Protects a page route: redirects unauthenticated visitors to /login."""
     @functools.wraps(view)

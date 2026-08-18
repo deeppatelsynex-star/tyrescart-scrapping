@@ -1,5 +1,6 @@
 import csv
 import io
+import json
 import os
 import re
 import secrets
@@ -13,7 +14,7 @@ from collections import OrderedDict
 from datetime import datetime, timedelta
 
 import pymysql
-from flask import Flask, Response, jsonify, redirect, render_template, request, send_file, send_from_directory, session
+from flask import Flask, Response, jsonify, redirect, render_template, request, send_file, send_from_directory, session, stream_with_context
 from openpyxl import Workbook, load_workbook
 from werkzeug.utils import secure_filename
 
@@ -22,14 +23,10 @@ import files_repo
 import reports_repo
 import job_manager
 from auth import (
-    RESET_TOKEN_TTL_MINUTES,
     VALID_ROLES,
     bit_to_bool,
-    consume_reset_token,
-    create_password_reset_token,
     get_user_by_email,
     get_user_by_id,
-    get_user_id_for_reset_token,
     has_superadmin,
     hash_password,
     list_active_users,
@@ -274,105 +271,14 @@ def logout():
     return jsonify({'redirect': '/login'})
 
 
-RESET_REQUEST_COOLDOWN_SECONDS = 60
-_reset_request_lock = threading.Lock()
-_last_reset_request_at = {}
-
-
-def _reset_request_allowed(email):
-    """Throttles reset-link requests per email so the form can't be used to spam a mailbox."""
-    now = time.monotonic()
-    with _reset_request_lock:
-        last = _last_reset_request_at.get(email)
-        if last is not None and now - last < RESET_REQUEST_COOLDOWN_SECONDS:
-            return False
-        _last_reset_request_at[email] = now
-        return True
-
-
-@app.route('/forgot-password', methods=['GET'])
+@app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password_page():
-    if 'user_id' in session:
-        return redirect('/')
-    return render_template('forgot_password.html')
+    return redirect('/login')
 
 
-@app.route('/forgot-password', methods=['POST'])
-def forgot_password_submit():
-    data = request.get_json(silent=True) or request.form
-    email = (data.get('email') or '').strip()
-
-    if not email or not EMAIL_RE.match(email):
-        return jsonify({'error': 'Please enter a valid email address.'}), 400
-
-    # Unlike a public product, this is an internal admin-provisioned tool with
-    # no self-service signup, so telling the user "no account exists" is more
-    # useful than hiding it behind a generic message.
-    user = get_user_by_email(email)
-    if not user or bit_to_bool(user['IsDeleted']):
-        return jsonify({'error': 'No account found for that email. Please sign up first'}), 404
-
-    if not bit_to_bool(user['Status']):
-        return jsonify({'error': 'This account has been disabled. Contact an administrator.'}), 403
-
-    if not _reset_request_allowed(email):
-        return jsonify({'error': 'A reset link was already sent recently. Check your inbox, or wait a minute and try again.'}), 429
-
-    token = create_password_reset_token(user['userid'])
-    reset_link = f"{request.url_root.rstrip('/')}/reset-password?token={token}"
-    try:
-        email_body = render_template(
-            'emails/reset_password.html',
-            reset_link=reset_link,
-            expires_minutes=RESET_TOKEN_TTL_MINUTES,
-            user_name=user['Name'],
-            user_email=user['Email'],
-        )
-        send_email(user['Email'], 'Reset your TyresCart password', email_body)
-    except Exception:
-        app.logger.exception('Failed to send password reset email to %s', user['Email'])
-        return jsonify({'error': 'Failed to send the reset email. Please try again later.'}), 500
-
-    return jsonify({'message': 'A password reset link has been sent to your email.'})
-
-
-@app.route('/reset-password', methods=['GET'])
+@app.route('/reset-password', methods=['GET', 'POST'])
 def reset_password_page():
-    if 'user_id' in session:
-        return redirect('/')
-    return render_template('reset_password.html')
-
-
-@app.route('/reset-password', methods=['POST'])
-def reset_password_submit():
-    data = request.get_json(silent=True) or {}
-    token = data.get('token') or ''
-    new_password = data.get('new_password') or ''
-    confirm_password = data.get('confirm_password') or ''
-
-    if not token:
-        return jsonify({'error': 'This reset link is invalid or has expired.'}), 400
-    if not new_password or not confirm_password:
-        return jsonify({'error': 'All fields are required.'}), 400
-    if new_password != confirm_password:
-        return jsonify({'error': 'Passwords do not match.'}), 400
-    if len(new_password) < 8:
-        return jsonify({'error': 'Password must be at least 8 characters.'}), 400
-
-    user_id = get_user_id_for_reset_token(token)
-    if not user_id:
-        return jsonify({'error': 'This reset link is invalid or has expired.'}), 400
-
-    conn = get_connection()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute('UPDATE userTbl SET password = %s WHERE userid = %s', (hash_password(new_password), user_id))
-    finally:
-        conn.close()
-
-    consume_reset_token(token)
-
-    return jsonify({'message': 'Your password has been reset. You can now sign in.'})
+    return redirect('/login')
 
 
 @app.route('/api/me')
@@ -1272,6 +1178,63 @@ def api_scraper_job_urls(job_id):
         'summary': summary,
         'count': len(urls),
     })
+
+
+@app.route('/api/scraper/job/<string:job_id>/events')
+@login_required_api
+def api_scraper_job_events(job_id):
+    """Server-Sent Events (SSE) Webhook endpoint for live scraper progress and URL updates."""
+    user_id = session.get('user_id')
+    job = job_manager.get_log_by_job_id(job_id)
+    if not job:
+        with job_manager._lock:
+            state = job_manager._active_jobs.get(job_id)
+        if not state:
+            return jsonify({'error': 'Job not found.'}), 404
+        if state['started_by_user_id'] != user_id and session.get('role') != 'SuperAdmin':
+            return jsonify({'error': 'Forbidden'}), 403
+    elif job['user_id'] != user_id and session.get('role') != 'SuperAdmin':
+        return jsonify({'error': 'Forbidden'}), 403
+
+    import queue
+
+    def event_stream():
+        q = job_manager.subscribe_sse(job_id)
+        try:
+            # 1. Send initial snapshot immediately
+            status_data, _ = job_manager.get_job_status(job_id, current_user_id=user_id)
+            urls_data, _ = job_manager.get_job_urls(job_id, current_user_id=user_id)
+            initial_payload = {
+                'type': 'snapshot',
+                'summary': status_data,
+                'statuses': urls_data
+            }
+            yield f"data: {json.dumps(initial_payload)}\n\n"
+
+            # 2. Listen to queue and stream events
+            while True:
+                try:
+                    event = q.get(timeout=15.0)
+                    yield f"data: {json.dumps(event)}\n\n"
+                    if event.get('done') or (event.get('type') == 'status' and event.get('status') in ('SUCCESS', 'STOPPED', 'FAILED', 'FAIL')):
+                        break
+                except queue.Empty:
+                    # Heartbeat ping
+                    yield ": ping\n\n"
+        except GeneratorExit:
+            pass
+        finally:
+            job_manager.unsubscribe_sse(job_id, q)
+
+    return Response(
+        stream_with_context(event_stream()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive',
+        }
+    )
 
 
 @app.route('/api/scraper/job/<string:job_id>/stop', methods=['POST'])

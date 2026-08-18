@@ -227,39 +227,18 @@ def serialize_log(row):
 
 
 def reconcile_stale_logs():
-    """Reconciles any logTbl rows marked as RUNNING when scraper_jobs or process is already finished."""
+    """Closes any logTbl rows still marked RUNNING whose process is no longer alive."""
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # 1. Match finished scraper_jobs to update any lingering RUNNING logTbl rows
+            # Close RUNNING rows that have no job_id (legacy rows) and are over 6 hours old
             cursor.execute("""
-                UPDATE logTbl l
-                JOIN scraper_jobs j ON l.file_id = j.file_id AND l.user_id = j.started_by_user_id
-                SET l.status = CASE
-                        WHEN j.status = 'SUCCESS' THEN 'SUCCESS'
-                        WHEN j.status = 'STOPPED' THEN 'STOPPED'
-                        ELSE 'FAIL'
-                    END,
-                    l.end_time = COALESCE(j.finished_at, NOW()),
-                    l.error_message = COALESCE(j.error_message, l.error_message),
-                    l.no_of_url_found = GREATEST(l.no_of_url_found, j.total_urls),
-                    l.total_success_url = GREATEST(l.total_success_url, j.completed_urls),
-                    l.total_block_url = GREATEST(l.total_block_url, j.blocked_urls),
-                    l.data_scraped = GREATEST(l.data_scraped, j.written_to_xlsx)
-                WHERE (l.status = 'RUNNING' OR l.end_time IS NULL)
-                  AND j.status IN ('SUCCESS', 'FAILED', 'STOPPED')
-                  AND j.finished_at IS NOT NULL
-            """)
-
-            # 2. For any other RUNNING log without an active lock in scraper_job_locks
-            cursor.execute("""
-                UPDATE logTbl l
-                LEFT JOIN scraper_job_locks k ON l.file_id = k.file_id
-                SET l.status = 'STOPPED',
-                    l.end_time = NOW(),
-                    l.error_message = 'Scraper execution finished.'
-                WHERE (l.status = 'RUNNING' OR l.end_time IS NULL)
-                  AND k.file_id IS NULL
+                UPDATE logTbl
+                SET status = 'STOPPED',
+                    end_time = NOW(),
+                    error_message = 'Scraper execution finished.'
+                WHERE (status = 'RUNNING' OR end_time IS NULL)
+                  AND start_time < NOW() - INTERVAL 6 HOUR
             """)
     except Exception:
         pass

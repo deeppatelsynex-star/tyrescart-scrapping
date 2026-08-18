@@ -30,7 +30,7 @@ def running_count():
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                cursor.execute("SELECT COUNT(*) AS cnt FROM scraper_jobs WHERE status = 'RUNNING' AND finished_at IS NULL")
+                cursor.execute("SELECT COUNT(*) AS cnt FROM logTbl WHERE status = 'RUNNING' AND end_time IS NULL")
                 row = cursor.fetchone()
                 return row['cnt'] if row else 0
         finally:
@@ -42,8 +42,8 @@ def running_count():
 def get_statuses(file_id):
     """Returns live URL status list for file_id's active or recent job."""
     active = job_manager.get_active_job(file_id)
-    if active:
-        urls, _ = job_manager.get_job_urls(active['job_id'], current_user_id=active['started_by_user_id'])
+    if active and active.get('job_id'):
+        urls, _ = job_manager.get_job_urls(active['job_id'], current_user_id=active['user_id'])
         return urls
     return []
 

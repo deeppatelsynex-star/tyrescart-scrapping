@@ -1,5 +1,5 @@
 // ==============================================================================
-// Scraper Live Progress Controller (with User-Ownership & Global Lock Support)
+// Scraper Live Progress Controller (with SSE Webhook Stream & User-Ownership)
 // ==============================================================================
 
 (function () {
@@ -28,9 +28,17 @@
   let currentJobId = null;
   let isCurrentRunning = false;
   let statusIntervalId = null;
+  let activeEventSource = null;
   let fileScraperCsrfToken = null;
   const collapsedRoots = new Set();
   let lastKnownStatuses = [];
+
+  const closeEventSource = () => {
+    if (activeEventSource) {
+      activeEventSource.close();
+      activeEventSource = null;
+    }
+  };
 
   const stopStatusPolling = () => {
     if (statusIntervalId !== null) {
@@ -40,7 +48,7 @@
   };
 
   const startStatusPolling = () => {
-    if (statusIntervalId === null) {
+    if (statusIntervalId === null && !activeEventSource) {
       statusIntervalId = setInterval(refreshProgress, 2000);
     }
   };
@@ -52,6 +60,7 @@
   };
 
   const showBlockedScreen = () => {
+    closeEventSource();
     if (scraperBlockedScreen) scraperBlockedScreen.classList.remove('hidden');
     if (scraperMainContent) scraperMainContent.classList.add('hidden');
   };
@@ -200,12 +209,9 @@
   const renderRootNode = (root) => {
     let status = (root.status || 'pending').toLowerCase();
     const hasChildren = root.children && root.children.length > 0;
-    // Auto-collapse root nodes with many children to avoid browser freeze;
-    // user can still manually expand them. Roots with <= 15 children expand by default.
     const isLargeList = hasChildren && root.children.length > 15;
     const expanded = hasChildren && !collapsedRoots.has(root.url) && !isLargeList;
     const doneCount = hasChildren ? root.children.filter((c) => (c.status || '').toLowerCase() === 'done').length : 0;
-
 
     if (isCurrentRunning) {
       if (hasChildren) {
@@ -291,12 +297,138 @@
     `;
 
     const st = (state.status || '').toUpperCase();
-    // On success show 100%, otherwise use the persisted percent
     let pct = Math.min(100, Math.max(0, state.progress_percent || 0));
     if (st === 'SUCCESS') pct = 100;
     if (progressBar) progressBar.style.width = `${pct}%`;
     if (progressPercentage) progressPercentage.textContent = `${pct}%`;
   };
+
+  const renderUrlTreeList = (statuses) => {
+    if (!urlStatusList) return;
+    lastKnownStatuses = statuses || [];
+
+    if (!lastKnownStatuses.length) {
+      if (isCurrentRunning) {
+        urlStatusList.innerHTML = `
+          <li class="rounded-2xl border border-amber-200 bg-amber-50/80 p-5 text-sm text-amber-900 flex items-start gap-3.5 shadow-xs">
+            <svg class="w-5 h-5 animate-spin text-amber-600 shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <div class="space-y-1">
+              <p class="font-semibold text-amber-900">Scraper is running. Please wait…</p>
+              <p class="text-xs text-amber-700">The crawler is actively running on the server. URLs and progress will stream below.</p>
+            </div>
+          </li>
+        `;
+      } else {
+        urlStatusList.innerHTML = '<li class="rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">No URLs have been reported yet.</li>';
+      }
+    } else {
+      const tree = buildUrlTree(lastKnownStatuses);
+      const MAX_ROOTS = 50;
+      const visibleTree = tree.slice(0, MAX_ROOTS);
+      const hidden = tree.length - visibleTree.length;
+      const html = visibleTree.map(renderRootNode).join('');
+      const moreHtml = hidden > 0
+        ? `<li class="rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500 text-center">… and <strong>${hidden}</strong> more root URLs (total: ${tree.length})</li>`
+        : '';
+      urlStatusList.innerHTML = html + moreHtml;
+    }
+  };
+
+  const updateUiState = (statusRes) => {
+    if (!statusRes) return;
+    if (fileScraperSwitcher && (statusRes.site_name || statusRes.siteName)) {
+      fileScraperNameEl.textContent = `Scraper: ${statusRes.site_name || statusRes.siteName}`;
+      fileScraperSwitcher.classList.remove('hidden');
+    }
+
+    const st = (statusRes.status || '').toUpperCase();
+    isCurrentRunning = st === 'RUNNING' || statusRes.running === true;
+
+    if (isCurrentRunning) {
+      setStatus('Running', 'bg-emerald-100 text-emerald-700');
+    } else if (st === 'STOPPED') {
+      setStatus('Stopped', 'bg-amber-100 text-amber-800 border border-amber-200');
+    } else if (st === 'SUCCESS' || statusRes.done) {
+      setStatus('Finished', 'bg-emerald-50 text-emerald-800 border border-emerald-200');
+    } else if (st === 'FAILED' || st === 'FAIL') {
+      setStatus('Failed', 'bg-rose-100 text-rose-800 border border-rose-200');
+    } else {
+      setStatus('Idle', 'bg-slate-100 text-slate-700');
+    }
+
+    updateControls(statusRes);
+    renderSummaryPills(statusRes);
+  };
+
+  // ==============================================================================
+  // SSE Webhook Client (Real-time Push Stream)
+  // ==============================================================================
+
+  const startEventSource = (jobId) => {
+    if (!jobId || (activeEventSource && activeEventSource._jobId === jobId)) {
+      return;
+    }
+    closeEventSource();
+    stopStatusPolling();
+
+    try {
+      const es = new EventSource(`/api/scraper/job/${jobId}/events`);
+      es._jobId = jobId;
+      activeEventSource = es;
+
+      es.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          handleSsePayload(payload);
+        } catch (err) {
+          console.error('[SSE Parse Error]:', err);
+        }
+      };
+
+      es.onerror = () => {
+        closeEventSource();
+        // Fall back to HTTP polling if SSE stream closes
+        startStatusPolling();
+      };
+    } catch (e) {
+      console.warn('[SSE Connection Failed, falling back to polling]:', e);
+      startStatusPolling();
+    }
+  };
+
+  const handleSsePayload = (payload) => {
+    if (!payload) return;
+
+    if (payload.type === 'snapshot') {
+      updateUiState(payload.summary || {});
+      renderUrlTreeList(payload.statuses || []);
+    } else if (payload.type === 'url_update') {
+      updateUiState(payload.summary || {});
+      if (payload.url) {
+        const idx = lastKnownStatuses.findIndex((u) => u.url === payload.url.url);
+        if (idx >= 0) {
+          lastKnownStatuses[idx] = payload.url;
+        } else {
+          lastKnownStatuses.push(payload.url);
+        }
+        renderUrlTreeList(lastKnownStatuses);
+      }
+    } else if (payload.type === 'status') {
+      const st = (payload.status || '').toUpperCase();
+      updateUiState(payload);
+      if (payload.done || ['SUCCESS', 'STOPPED', 'FAILED', 'FAIL'].includes(st)) {
+        closeEventSource();
+        refreshProgress();
+      }
+    }
+  };
+
+  // ==============================================================================
+  // Fallback Polling / Initial Loader
+  // ==============================================================================
 
   const refreshProgress = async () => {
     try {
@@ -304,30 +436,35 @@
         const activeRes = await fetch(`/api/scraper/file/${fileScraperId}/active-job`);
         if (activeRes.ok) {
           const activeInfo = await activeRes.json();
-          // If scraper is actively running by another user, show blocked screen and keep polling
           if (activeInfo.already_running && !activeInfo.is_owner) {
             showBlockedScreen();
             startStatusPolling();
             return;
           }
 
-          // If not running by anyone, show idle screen
           if (!activeInfo.has_active_job) {
             showMainProgress();
+            closeEventSource();
             stopStatusPolling();
             setStatus('Idle', 'bg-slate-100 text-slate-700');
             updateControls({ running: false, status: 'IDLE' });
             return;
           }
 
-          // Active job belongs to current user
           showMainProgress();
           currentJobId = activeInfo.job_id;
+
+          // Connect SSE webhook stream for real-time live events!
+          if (currentJobId && (activeInfo.status === 'RUNNING' || activeInfo.already_running)) {
+            startEventSource(currentJobId);
+            return;
+          }
         }
       }
 
       if (!currentJobId && !fileScraperId) {
         stopStatusPolling();
+        closeEventSource();
         setStatus('Idle', 'bg-slate-100 text-slate-700');
         return;
       }
@@ -347,80 +484,26 @@
 
       if (!statusRes) {
         stopStatusPolling();
+        closeEventSource();
         setStatus('Idle', 'bg-slate-100 text-slate-700');
         return;
       }
 
-      if (fileScraperSwitcher && (statusRes.site_name || statusRes.siteName)) {
-        fileScraperNameEl.textContent = `Scraper: ${statusRes.site_name || statusRes.siteName}`;
-        fileScraperSwitcher.classList.remove('hidden');
-      }
+      updateUiState(statusRes);
 
-      const st = (statusRes.status || '').toUpperCase();
-      isCurrentRunning = st === 'RUNNING' || statusRes.running === true;
+      const statuses = Array.isArray(urlsRes)
+        ? urlsRes
+        : (urlsRes && Array.isArray(urlsRes.statuses) ? urlsRes.statuses : []);
+      renderUrlTreeList(statuses);
 
-      if (isCurrentRunning) {
-        setStatus('Running', 'bg-emerald-100 text-emerald-700');
-        startStatusPolling();
-      } else if (st === 'STOPPED') {
-        setStatus('Stopped', 'bg-amber-100 text-amber-800 border border-amber-200');
-        stopStatusPolling();
-      } else if (st === 'SUCCESS' || statusRes.done) {
-        setStatus('Finished', 'bg-emerald-50 text-emerald-800 border border-emerald-200');
-        stopStatusPolling();
-      } else if (st === 'FAILED') {
-        setStatus('Failed', 'bg-rose-100 text-rose-800 border border-rose-200');
-        stopStatusPolling();
+      if (isCurrentRunning && currentJobId) {
+        startEventSource(currentJobId);
       } else {
-        setStatus('Idle', 'bg-slate-100 text-slate-700');
+        closeEventSource();
         stopStatusPolling();
-      }
-
-      updateControls(statusRes);
-      renderSummaryPills(statusRes);
-
-      // Render URL Tree
-      if (urlStatusList) {
-        const statuses = Array.isArray(urlsRes)
-          ? urlsRes
-          : (urlsRes && Array.isArray(urlsRes.statuses) ? urlsRes.statuses : []);
-
-        // Only re-render when count changes (avoid DOM thrashing on large lists)
-        const prevCount = lastKnownStatuses.length;
-        lastKnownStatuses = statuses;
-        const shouldRender = !isCurrentRunning || Math.abs(statuses.length - prevCount) > 0;
-
-        if (!statuses.length) {
-          if (isCurrentRunning) {
-            urlStatusList.innerHTML = `
-              <li class="rounded-2xl border border-amber-200 bg-amber-50/80 p-5 text-sm text-amber-900 flex items-start gap-3.5 shadow-xs">
-                <svg class="w-5 h-5 animate-spin text-amber-600 shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                </svg>
-                <div class="space-y-1">
-                  <p class="font-semibold text-amber-900">Scraper is running. Please wait…</p>
-                  <p class="text-xs text-amber-700">The crawler is actively running on the server. URLs and progress will appear below.</p>
-                </div>
-              </li>
-            `;
-          } else {
-            urlStatusList.innerHTML = '<li class="rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">No URLs have been reported yet.</li>';
-          }
-        } else if (shouldRender) {
-          const tree = buildUrlTree(statuses);
-          const MAX_ROOTS = 50;
-          const visibleTree = tree.slice(0, MAX_ROOTS);
-          const hidden = tree.length - visibleTree.length;
-          const html = visibleTree.map(renderRootNode).join('');
-          const moreHtml = hidden > 0
-            ? `<li class="rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500 text-center">… and <strong>${hidden}</strong> more root URLs (total: ${tree.length})</li>`
-            : '';
-          urlStatusList.innerHTML = html + moreHtml;
-        }
       }
     } catch (error) {
-      console.error('[TyresCart Scraper Polling Error]:', error);
+      console.error('[TyresCart Scraper Refresh Error]:', error);
     }
   };
 
@@ -462,7 +545,7 @@
         }
         if (window.AdminShared) window.AdminShared.showToast('Scraper started successfully!', 'success');
         currentJobId = data.job_id;
-        startStatusPolling();
+        startEventSource(currentJobId);
         await refreshProgress();
       } catch (err) {
         if (window.AdminShared) window.AdminShared.showToast('Failed to start scraper.', 'error');
@@ -511,6 +594,7 @@
         const result = await response.json();
 
         isCurrentRunning = false;
+        closeEventSource();
         stopStatusPolling();
         setStatus('Stopped', 'bg-amber-100 text-amber-800 border border-amber-200');
         updateControls({ running: false, status: 'STOPPED' });
@@ -602,8 +686,7 @@
           toggleAllLabel.textContent = isCollapse ? 'Expand All' : 'Collapse All';
         }
         if (urlStatusList && lastKnownStatuses.length) {
-          const tree = buildUrlTree(lastKnownStatuses);
-          urlStatusList.innerHTML = tree.map(renderRootNode).join('');
+          renderUrlTreeList(lastKnownStatuses);
         }
       });
     }
