@@ -1,18 +1,18 @@
 import os
 
-# Production Gunicorn configuration optimized for Render & low-memory environments
+# Production Gunicorn configuration optimized for Render & persistent scraping
 bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"
 
-# Use 1-2 workers with gthread for concurrent web requests without memory bloat
-workers = int(os.environ.get('WEB_CONCURRENCY', '1'))
-threads = 4
+# Use 1 worker with gthread so all active job states, threads, and locks stay in a single process space
+workers = 1
+threads = int(os.environ.get('GUNICORN_THREADS', '8'))
 worker_class = 'gthread'
 
-# Extended timeout (5 minutes) to prevent Gunicorn from killing workers during long scrapers / exports
-timeout = 300
-keepalive = 5
+# Disable worker timeouts (timeout = 0) so long crawls and SSE streams never get killed
+timeout = 0
+keepalive = 65
 graceful_timeout = 30
 
-# Periodic recycling to prevent memory leaks over time
-max_requests = 1000
-max_requests_jitter = 50
+# Disable automatic worker recycling to prevent killing active background scraper processes
+max_requests = 0
+max_requests_jitter = 0

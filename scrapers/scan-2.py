@@ -257,8 +257,8 @@ class ExcelWriter:
             row = [item.get(h, "") for h in self.headers]
             self.ws.append(row)
             self.save_count += 1
-            # Auto-save every 5 items
-            if self.save_count % 5 == 0:
+            # Auto-save every 25 items
+            if self.save_count % 25 == 0:
                 self.wb.save(self.file_path)
 
     def close(self):
@@ -301,13 +301,17 @@ def main():
         return thread_sessions.session
 
     def worker_task(url, parent_url):
-        sess = get_thread_session()
-        item = parse_product_page(sess, url, parent_url)
-        if item:
-            writer.write_row(item)
-        return item
+        try:
+            sess = get_thread_session()
+            item = parse_product_page(sess, url, parent_url)
+            if item:
+                writer.write_row(item)
+            return item
+        except Exception:
+            emit_status(url, 'blocked', parent=parent_url, url_type='product')
+            return None
 
-    with ThreadPoolExecutor(max_workers=6) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(worker_task, url, parent) for url, parent in product_queue]
         for f in as_completed(futures):
             pass
