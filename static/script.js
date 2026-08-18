@@ -79,7 +79,7 @@
 
   const startStatusPolling = () => {
     if (statusIntervalId === null && !activeEventSource) {
-      statusIntervalId = setInterval(refreshProgress, 2000);
+      statusIntervalId = setInterval(refreshProgress, 3500);
     }
   };
 
@@ -438,6 +438,7 @@
       return;
     }
     closeEventSource();
+    stopStatusPolling();
 
     try {
       const es = new EventSource(`/api/scraper/job/${jobId}/events`);
@@ -544,7 +545,6 @@
 
           if (isRunning) {
             startEventSource(currentJobId);
-            startStatusPolling();
           } else {
             closeEventSource();
             stopStatusPolling();
