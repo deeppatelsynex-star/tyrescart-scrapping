@@ -425,26 +425,6 @@
     return false;
   };
 
-  const closeEventSource = () => {
-    if (activeEventSource) {
-      activeEventSource.close();
-      activeEventSource = null;
-    }
-  };
-
-  const stopStatusPolling = () => {
-    if (statusIntervalId !== null) {
-      clearInterval(statusIntervalId);
-      statusIntervalId = null;
-    }
-  };
-
-  const startStatusPolling = () => {
-    if (statusIntervalId === null) {
-      statusIntervalId = setInterval(refreshProgress, 2000);
-    }
-  };
-
   const startEventSource = (jobId) => {
     if (!jobId || (activeEventSource && activeEventSource._jobId === jobId)) {
       return;
