@@ -179,7 +179,12 @@ def get_all_active_jobs_map():
 
 
 def get_latest_log_for_file(file_id):
-    """Returns the most recent log record for file_id, or None."""
+    """Returns the most recent log record for file_id, or None (cached)."""
+    cache_key = f"latest_log:{file_id}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -194,7 +199,9 @@ def get_latest_log_for_file(file_id):
                 WHERE file_id = %s
                 ORDER BY id DESC LIMIT 1
             """, (file_id,))
-            return cursor.fetchone()
+            res = cursor.fetchone()
+            cache.set(cache_key, res, ttl=15)
+            return res
     finally:
         conn.close()
 
@@ -202,6 +209,11 @@ def get_latest_log_for_file(file_id):
 def get_log_by_job_id(job_id):
     if not job_id:
         return None
+    cache_key = f"job_log:{job_id}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -214,7 +226,9 @@ def get_log_by_job_id(job_id):
                        start_time, end_time
                 FROM logTbl WHERE job_id = %s LIMIT 1
             """, (job_id,))
-            return cursor.fetchone()
+            res = cursor.fetchone()
+            cache.set(cache_key, res, ttl=15)
+            return res
     finally:
         conn.close()
 

@@ -633,17 +633,39 @@
   const logList = document.getElementById('files-log-list');
   const logEmpty = document.getElementById('files-log-empty');
 
+  function loadCachedScraperLogs(fileId) {
+    try {
+      const raw = localStorage.getItem(`tyrescart_scraper_logs_${fileId}`);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      const logs = (data && data.logs) || [];
+      if (logs.length > 0) {
+        currentDrawerLogs = new Map(logs.map((l) => [l.id, l]));
+        if (logLoading) logLoading.classList.add('hidden');
+        if (logList) {
+          logList.classList.remove('hidden');
+          logList.innerHTML = logs.map(renderLogCardHtml).join('');
+        }
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
   function openLogDrawer(file) {
     if (!logModal || !logDrawer || !logBackdrop) return;
     if (logTitle) logTitle.textContent = `Scraper Logs — ${file?.siteName || 'Scraper'}`;
     if (logSubtitle) logSubtitle.textContent = `Execution history for ${file?.siteName || 'this scraper'}`;
 
-    if (logLoading) logLoading.classList.remove('hidden');
-    if (logList) {
-      logList.classList.add('hidden');
-      logList.innerHTML = '';
+    const hasCache = loadCachedScraperLogs(file.fileId);
+    if (!hasCache) {
+      if (logLoading) logLoading.classList.remove('hidden');
+      if (logList) {
+        logList.classList.add('hidden');
+        logList.innerHTML = '';
+      }
+      if (logEmpty) logEmpty.classList.add('hidden');
     }
-    if (logEmpty) logEmpty.classList.add('hidden');
 
     logModal.classList.remove('hidden');
     void logDrawer.offsetHeight;
@@ -680,12 +702,16 @@
 
       const logs = (data && data.logs) || [];
       currentDrawerLogs = new Map(logs.map((l) => [l.id, l]));
+      try {
+        localStorage.setItem(`tyrescart_scraper_logs_${fileId}`, JSON.stringify(data));
+      } catch (e) {}
 
       if (!logs.length) {
         if (logEmpty) {
           logEmpty.textContent = 'No logs recorded for this scraper yet.';
           logEmpty.classList.remove('hidden');
         }
+        if (logList) logList.classList.add('hidden');
         return;
       }
 
@@ -705,7 +731,7 @@
     } catch (err) {
       Shared.logError('Fetch Scraper Logs', err, { fileId });
       if (logLoading) logLoading.classList.add('hidden');
-      if (logEmpty) {
+      if (logEmpty && !currentDrawerLogs.size) {
         logEmpty.textContent = 'Failed to load logs. Please try again.';
         logEmpty.classList.remove('hidden');
       }

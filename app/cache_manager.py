@@ -73,12 +73,15 @@ def invalidate_scraper_cache(file_id=None):
         cache.delete(f"file:{file_id}")
 
 
-def invalidate_log_cache(file_id=None):
+def invalidate_log_cache(file_id=None, job_id=None):
     """Invalidates cached logs and report statistics."""
     cache.invalidate_prefix("logs:")
     cache.invalidate_prefix("stats:")
     if file_id:
         cache.delete(f"active_log:{file_id}")
+        cache.delete(f"latest_log:{file_id}")
+    if job_id:
+        cache.delete(f"job_log:{job_id}")
 
 
 # ==============================================================================
