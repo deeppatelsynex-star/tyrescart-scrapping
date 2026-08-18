@@ -3,6 +3,7 @@ from datetime import datetime
 import openpyxl
 
 from db import get_connection
+from cache_manager import cache, invalidate_log_cache, get_cached_excel_rows
 
 LOG_SELECT_FIELDS = (
     'l.id, l.scraper, l.file_id, l.user_id, l.start_time, l.end_time, '
@@ -13,7 +14,7 @@ LOG_SELECT_FIELDS = (
 )
 
 
-def count_excel_data_rows(excel_path):
+def _count_excel_data_rows_uncached(excel_path):
     """Safely counts non-empty data rows (excluding header) from an Excel file."""
     if not excel_path or not os.path.exists(excel_path):
         return 0
@@ -33,8 +34,14 @@ def count_excel_data_rows(excel_path):
         return 0
 
 
+def count_excel_data_rows(excel_path):
+    """Cached row count by file mtime to avoid reading multi-MB workbooks repeatedly."""
+    return get_cached_excel_rows(excel_path, _count_excel_data_rows_uncached)
+
+
 def create_log_entry(user_id, file_id, scraper_name, process_id=None):
     """Inserts a new scraper run audit record into logTbl when a crawler starts."""
+    invalidate_log_cache(file_id)
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -133,6 +140,7 @@ def finish_log_entry(log_id, status='SUCCESS', no_of_url_found=0, total_success_
     if data_scraped <= 0 and output_file_path and os.path.exists(output_file_path):
         data_scraped = count_excel_data_rows(output_file_path)
 
+    invalidate_log_cache()
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -253,6 +261,11 @@ def list_logs(search=None, status=None, user_id=None, file_id=None, page=1, per_
     per_page = max(1, min(per_page, 200))
     offset = (page - 1) * per_page
 
+    cache_key = f"logs:p{page}:pp{per_page}:s{status}:u{user_id}:f{file_id}:q{search}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -305,13 +318,20 @@ def list_logs(search=None, status=None, user_id=None, file_id=None, page=1, per_
                 f"ORDER BY l.id DESC LIMIT %s OFFSET %s"
             )
             cursor.execute(select_query, tuple(params + [per_page, offset]))
-            return cursor.fetchall(), total
+            result = (cursor.fetchall(), total)
+            cache.set(cache_key, result, ttl=15)
+            return result
     finally:
         conn.close()
 
 
 def get_logs_summary_stats():
-    """Calculates overall metrics from logTbl across all scraping sessions."""
+    """Calculates overall metrics from logTbl across all scraping sessions (cached with 15s TTL)."""
+    cache_key = "stats:summary"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -331,7 +351,7 @@ def get_logs_summary_stats():
                 """
             )
             row = cursor.fetchone()
-            return {
+            stats = {
                 'totalRuns': int(row.get('total_runs') or 0),
                 'totalUrlsFound': int(row.get('total_urls_found') or 0),
                 'totalSuccessUrls': int(row.get('total_success_urls') or 0),
@@ -342,5 +362,7 @@ def get_logs_summary_stats():
                 'stoppedRuns': int(row.get('stopped_runs') or 0),
                 'failedRuns': int(row.get('failed_runs') or 0),
             }
+            cache.set(cache_key, stats, ttl=15)
+            return stats
     finally:
         conn.close()

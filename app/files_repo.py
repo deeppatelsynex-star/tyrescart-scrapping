@@ -14,6 +14,7 @@ import pymysql
 from werkzeug.utils import secure_filename
 
 from db import get_connection
+from cache_manager import cache, invalidate_scraper_cache
 
 FILE_COLUMNS = 'file_id, logo, site_name, python_file_path, urls_json, working, is_deleted, deleted_at, created_by, create_date, update_date'
 FILE_SELECT_FIELDS = 'f.file_id, f.logo, f.site_name, f.python_file_path, f.urls_json, f.working, f.is_deleted, f.deleted_at, f.created_by, f.create_date, f.update_date, u.Name AS created_by_name, u.Email AS created_by_email'
@@ -41,16 +42,21 @@ def bit_to_bool(value):
 
 def list_available_scripts():
     """Every standalone scraper .py file in scrapers/, for the create/edit
-    form's dropdown -- registration is restricted to files that actually
-    exist there, rather than letting a user type an arbitrary path.
+    form's dropdown (cached with 30s TTL).
     """
+    cached = cache.get('files:scripts')
+    if cached is not None:
+        return cached
+
     if not os.path.isdir(SCRAPERS_DIR):
         return []
     names = [
         f for f in os.listdir(SCRAPERS_DIR)
         if f.endswith('.py') and not f.startswith('_') and f not in _NON_SCRAPER_FILES
     ]
-    return sorted(names)
+    result = sorted(names)
+    cache.set('files:scripts', result, ttl=30)
+    return result
 
 
 def validate_python_file_path(relative_path):
@@ -175,10 +181,15 @@ def serialize_file(row):
 
 
 def list_files(search=None, is_deleted=None, page=1, per_page=20):
-    """Returns (rows, total_count). If `is_deleted` is None, returns all scrapers."""
+    """Returns (rows, total_count). If `is_deleted` is None, returns all scrapers (cached with 30s TTL)."""
     page = max(1, page)
     per_page = max(1, min(per_page, 200))
     offset = (page - 1) * per_page
+
+    cache_key = f"files:p{page}:pp{per_page}:d{is_deleted}:q{search}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
 
     conn = get_connection()
     try:
@@ -208,12 +219,20 @@ def list_files(search=None, is_deleted=None, page=1, per_page=20):
                 f"ORDER BY f.file_id DESC LIMIT %s OFFSET %s"
             )
             cursor.execute(select_query, tuple(params + [per_page, offset]))
-            return cursor.fetchall(), total
+            result = (cursor.fetchall(), total)
+            cache.set(cache_key, result, ttl=30)
+            return result
     finally:
         conn.close()
 
 
 def get_file(file_id):
+    """Fetches a single file record by file_id (cached with 60s TTL)."""
+    cache_key = f"file:{file_id}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -223,7 +242,10 @@ def get_file(file_id):
                 'WHERE f.file_id = %s',
                 (file_id,),
             )
-            return cursor.fetchone()
+            row = cursor.fetchone()
+            if row:
+                cache.set(cache_key, row, ttl=60)
+            return row
     finally:
         conn.close()
 
@@ -260,7 +282,9 @@ def create_file(logo, site_name, python_file_path, created_by=None):
                 )
             except pymysql.err.IntegrityError:
                 raise FileValidationError('That Python file is already registered as a scraper.')
-            return cursor.lastrowid
+            new_id = cursor.lastrowid
+            invalidate_scraper_cache()
+            return new_id
     finally:
         conn.close()
 
@@ -278,6 +302,7 @@ def update_file(file_id, logo, site_name, python_file_path):
                 )
             except pymysql.err.IntegrityError:
                 raise FileValidationError('That Python file is already registered as a scraper.')
+            invalidate_scraper_cache(file_id)
     finally:
         conn.close()
 
@@ -287,6 +312,7 @@ def soft_delete_file(file_id):
     is_deleted = 1 and deleted_at = CURRENT_TIMESTAMP. The scraper's .py
     file is NOT deleted from disk so it can be restored anytime.
     """
+    invalidate_scraper_cache(file_id)
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -300,6 +326,7 @@ def soft_delete_file(file_id):
 
 def restore_file(file_id):
     """Restores a trashed/disabled scraper back to active status."""
+    invalidate_scraper_cache(file_id)
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -322,6 +349,7 @@ def set_file_enabled(file_id, enabled):
 def delete_file(file_id):
     """Permanently deletes the fileTbl record AND removes its .py file from scrapers/."""
     record = get_file(file_id)
+    invalidate_scraper_cache(file_id)
 
     conn = get_connection()
     try:
@@ -339,6 +367,7 @@ def delete_file(file_id):
 
 
 def set_working(file_id, working):
+    invalidate_scraper_cache(file_id)
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -348,6 +377,7 @@ def set_working(file_id, working):
 
 
 def set_urls(file_id, urls):
+    invalidate_scraper_cache(file_id)
     conn = get_connection()
     try:
         with conn.cursor() as cursor:

@@ -35,6 +35,7 @@ import psutil
 from db import get_connection
 import files_repo
 import reports_repo
+from cache_manager import cache, invalidate_log_cache, invalidate_scraper_cache, get_cached_excel_urls
 from scraper_status_utils import parse_status_line
 
 logger = logging.getLogger(__name__)
@@ -225,6 +226,7 @@ def finalize_job(job_id, status, error_message=None, output_file_path=None, fina
         logger.exception('Error finalizing job_id=%s', job_id)
     finally:
         conn.close()
+    invalidate_log_cache()
     _push_sse_event(job_id, {
         'type': 'status', 'status': log_status, 'done': True, 'error_message': error_message
     })
@@ -587,6 +589,24 @@ def get_job_status(job_id, current_user_id):
     }, 200
 
 
+def _parse_xlsx_urls_raw(file_path):
+    try:
+        import openpyxl
+        wb = openpyxl.load_workbook(file_path, read_only=True, data_only=True)
+        sheet = wb.active
+        headers = [str(c).strip().lower() for c in next(sheet.iter_rows(values_only=True), [])]
+        url_col_idx = next((i for i, h in enumerate(headers) if h in ('url', 'source', 'product url', 'link')), None)
+        urls = []
+        if url_col_idx is not None:
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                if row and len(row) > url_col_idx and row[url_col_idx]:
+                    urls.append({'url': str(row[url_col_idx]).strip(), 'status': 'done', 'parent': '', 'type': 'product'})
+        wb.close()
+        return urls
+    except Exception:
+        return []
+
+
 def get_job_urls(job_id, current_user_id):
     with _lock:
         state = _active_jobs.get(job_id)
@@ -600,21 +620,8 @@ def get_job_urls(job_id, current_user_id):
     if job['user_id'] != current_user_id:
         return {'success': False, 'error': 'Forbidden'}, 403
     if job.get('output_file_path') and os.path.exists(job['output_file_path']):
-        try:
-            import openpyxl
-            wb = openpyxl.load_workbook(job['output_file_path'], read_only=True, data_only=True)
-            sheet = wb.active
-            headers = [str(c).strip().lower() for c in next(sheet.iter_rows(values_only=True), [])]
-            url_col_idx = next((i for i, h in enumerate(headers) if h in ('url', 'source', 'product url', 'link')), None)
-            urls = []
-            if url_col_idx is not None:
-                for row in sheet.iter_rows(min_row=2, values_only=True):
-                    if row and len(row) > url_col_idx and row[url_col_idx]:
-                        urls.append({'url': str(row[url_col_idx]).strip(), 'status': 'done', 'parent': '', 'type': 'product'})
-            wb.close()
-            return urls, 200
-        except Exception:
-            pass
+        urls = get_cached_excel_urls(job['output_file_path'], _parse_xlsx_urls_raw)
+        return urls, 200
     return [], 200
 
 
