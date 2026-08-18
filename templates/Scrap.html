@@ -89,6 +89,14 @@ Scraper Live Progress
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div id="url-summary" class="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm font-semibold text-slate-700"></div>
           <div class="flex items-center gap-2 ml-auto">
+            <button id="toggle-all-urls" type="button"
+              class="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-100">
+              <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="7 13 12 18 17 13"></polyline>
+                <polyline points="7 6 12 11 17 6"></polyline>
+              </svg>
+              <span id="toggle-all-label">Collapse All</span>
+            </button>
             <a id="download-report" href="#" style="display: none;"
               class="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm sm:text-base font-semibold text-white shadow-xs transition hover:bg-slate-800">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"

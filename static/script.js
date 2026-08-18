@@ -771,36 +771,56 @@
 
     if (toggleAllBtn) {
       toggleAllBtn.addEventListener('click', () => {
-        const toggles = document.querySelectorAll('.tree-toggle');
-        const isCollapse = toggleAllLabel && toggleAllLabel.textContent.includes('Collapse');
-        toggles.forEach((btn) => {
-          const url = btn.dataset.url;
-          if (url) {
-            if (isCollapse) {
+        const rootLis = urlStatusList.querySelectorAll('li.root-url-item');
+        if (!rootLis.length) return;
+
+        // Determine if we should collapse or expand based on current state
+        const childLists = urlStatusList.querySelectorAll('.child-list');
+        const anyVisible = Array.from(childLists).some((cl) => !cl.classList.contains('hidden'));
+        const shouldCollapse = anyVisible;
+
+        rootLis.forEach((rootLi) => {
+          const childList = rootLi.querySelector('.child-list');
+          if (!childList) return;
+          const toggleBtn = rootLi.querySelector('.tree-toggle');
+          const header = rootLi.querySelector('.root-header');
+          const url = (header && header.dataset.url) || (toggleBtn && toggleBtn.dataset.url);
+
+          if (shouldCollapse) {
+            childList.classList.add('hidden');
+            if (toggleBtn) {
+              toggleBtn.setAttribute('aria-expanded', 'false');
+              toggleBtn.innerHTML = chevronIcon(false);
+            }
+            if (url) {
               collapsedRoots.add(url);
-            } else {
+              expandedRoots.delete(url);
+            }
+          } else {
+            childList.classList.remove('hidden');
+            if (toggleBtn) {
+              toggleBtn.setAttribute('aria-expanded', 'true');
+              toggleBtn.innerHTML = chevronIcon(true);
+            }
+            if (url) {
+              expandedRoots.add(url);
               collapsedRoots.delete(url);
             }
           }
         });
+
         if (toggleAllLabel) {
-          toggleAllLabel.textContent = isCollapse ? 'Expand All' : 'Collapse All';
-        }
-        if (urlStatusList && lastKnownStatuses.length) {
-          renderUrlTreeList(lastKnownStatuses);
+          toggleAllLabel.textContent = shouldCollapse ? 'Expand All' : 'Collapse All';
         }
       });
     }
 
     urlStatusList.addEventListener('click', (e) => {
-      // Don't toggle when clicking copy button or hyperlinks
-      if (e.target.closest('.btncopy') || e.target.closest('a')) return;
+      // Don't toggle when clicking copy button, hyperlinks, or inputs
+      if (e.target.closest('.btncopy') || e.target.closest('a') || e.target.closest('button:not(.tree-toggle)')) return;
 
       const headerOrToggle = e.target.closest('.tree-toggle') || e.target.closest('.root-header');
       if (!headerOrToggle) return;
-
-      const url = headerOrToggle.dataset.url;
-      if (!url) return;
 
       const rootLi = headerOrToggle.closest('li.root-url-item') || headerOrToggle.closest('li');
       if (!rootLi) return;
@@ -809,28 +829,31 @@
       if (!childList) return;
 
       const toggleBtn = rootLi.querySelector('.tree-toggle');
-      const childCount = childList.querySelectorAll('li').length;
+      const url = (headerOrToggle.dataset && headerOrToggle.dataset.url) || (toggleBtn && toggleBtn.dataset.url);
 
-      const currentlyExpanded = isRootExpanded(url, childCount);
-      const newExpanded = !currentlyExpanded;
+      // Direct DOM state check: if currently hidden, we are expanding; if open, collapsing
+      const isCurrentlyHidden = childList.classList.contains('hidden');
+      const willBeExpanded = isCurrentlyHidden;
 
-      if (newExpanded) {
-        expandedRoots.add(url);
-        collapsedRoots.delete(url);
-      } else {
-        collapsedRoots.add(url);
-        expandedRoots.delete(url);
-      }
-
-      if (toggleBtn) {
-        toggleBtn.setAttribute('aria-expanded', String(newExpanded));
-        toggleBtn.innerHTML = chevronIcon(newExpanded);
-      }
-
-      if (newExpanded) {
+      if (willBeExpanded) {
         childList.classList.remove('hidden');
       } else {
         childList.classList.add('hidden');
+      }
+
+      if (toggleBtn) {
+        toggleBtn.setAttribute('aria-expanded', String(willBeExpanded));
+        toggleBtn.innerHTML = chevronIcon(willBeExpanded);
+      }
+
+      if (url) {
+        if (willBeExpanded) {
+          expandedRoots.add(url);
+          collapsedRoots.delete(url);
+        } else {
+          collapsedRoots.add(url);
+          expandedRoots.delete(url);
+        }
       }
     });
   }
