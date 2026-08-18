@@ -22,8 +22,8 @@
   const fileScraperSwitcher = document.getElementById('file-scraper-switcher');
   const fileScraperNameEl = document.getElementById('file-scraper-name');
 
-  // Extract fileId strictly from query parameters (no cross-session localStorage)
-  const fileScraperId = new URLSearchParams(window.location.search).get('fileId');
+  // Extract fileId from query parameters or resolve dynamically
+  let fileScraperId = new URLSearchParams(window.location.search).get('fileId');
 
   let currentJobId = null;
   let isCurrentRunning = false;
@@ -32,6 +32,27 @@
   let fileScraperCsrfToken = null;
   const collapsedRoots = new Set();
   let lastKnownStatuses = [];
+
+  const resolveFileScraperId = async () => {
+    if (fileScraperId) return fileScraperId;
+    try {
+      const res = await fetch('/api/files?perPage=1');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.files && data.files.length > 0) {
+          fileScraperId = String(data.files[0].fileId);
+          try {
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('fileId', fileScraperId);
+            window.history.replaceState({}, '', newUrl);
+          } catch (e) {}
+          loadStateFromLocalStorage();
+          return fileScraperId;
+        }
+      }
+    } catch (e) {}
+    return null;
+  };
 
   const closeEventSource = () => {
     if (activeEventSource) {
@@ -805,6 +826,13 @@
   }
 
   // Initial bootstrap on /scraperpage (load instant localStorage cache first, then refresh)
-  loadStateFromLocalStorage();
-  refreshProgress();
+  const initPage = async () => {
+    if (!fileScraperId) {
+      await resolveFileScraperId();
+    }
+    loadStateFromLocalStorage();
+    await refreshProgress();
+  };
+
+  initPage();
 })();

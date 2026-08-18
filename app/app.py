@@ -163,6 +163,30 @@ def get_scraper_session():
 @app.route('/scraperpage')
 @login_required_page
 def Scrap():
+    file_id = request.args.get('fileId')
+    if not file_id:
+        user_id = session.get('user_id')
+        active_map = job_manager.get_all_active_jobs_map()
+        running_for_user = [fid for fid, info in active_map.items() if info.get('user_id') == user_id]
+        if running_for_user:
+            return redirect(f'/scraperpage?fileId={running_for_user[0]}')
+        if active_map:
+            return redirect(f'/scraperpage?fileId={list(active_map.keys())[0]}')
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT file_id FROM logTbl ORDER BY id DESC LIMIT 1")
+                latest_log = cursor.fetchone()
+                if latest_log and latest_log.get('file_id'):
+                    return redirect(f'/scraperpage?fileId={latest_log["file_id"]}')
+                cursor.execute("SELECT file_id FROM fileTbl WHERE is_deleted = 0 ORDER BY file_id ASC LIMIT 1")
+                first_file = cursor.fetchone()
+                if first_file:
+                    return redirect(f'/scraperpage?fileId={first_file["file_id"]}')
+        finally:
+            conn.close()
+
     return render_template("Scrap.html", page="scraping")
 
 
