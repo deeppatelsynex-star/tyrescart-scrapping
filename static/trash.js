@@ -93,8 +93,25 @@
     tableEl.classList.remove('hidden');
   }
 
-  async function loadTrash() {
-    Shared.hideError(errorEl);
+  const TRASH_CACHE_KEY = 'tyrescart_trash_cache';
+
+  function loadCachedTrash() {
+    try {
+      const raw = localStorage.getItem(TRASH_CACHE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data && Array.isArray(data.users) && data.users.length > 0) {
+        users = data.users;
+        table.clear();
+        table.rows.add(users);
+        table.draw(false);
+        showTable();
+      }
+    } catch (e) {}
+  }
+
+  async function loadTrash({ silent } = {}) {
+    if (!silent && !users.length) Shared.hideError(errorEl);
     try {
       const response = await fetch('/api/admin/users/trash');
       const data = await response.json().catch(() => ({}));
@@ -102,17 +119,20 @@
         const message = data.error || 'Unable to load trash.';
         Shared.logError('Trash Load', message, { status: response.status });
         Shared.showError(errorEl, message);
-        Shared.showToast(message, 'error');
+        if (!silent) Shared.showToast(message, 'error');
         return;
       }
       users = data.users || [];
+      try {
+        localStorage.setItem(TRASH_CACHE_KEY, JSON.stringify(data));
+      } catch (e) {}
       table.clear();
       table.rows.add(users);
       table.draw(false);
     } catch (err) {
       Shared.logError('Trash Load Network Error', err);
       Shared.showError(errorEl, 'Network error while loading trash.');
-      Shared.showToast('Network error while loading trash.', 'error');
+      if (!silent) Shared.showToast('Network error while loading trash.', 'error');
     } finally {
       showTable();
     }
@@ -177,6 +197,7 @@
       }
     });
 
-    loadMe().then(loadTrash);
+    loadCachedTrash();
+    loadMe().then(() => loadTrash({ silent: Boolean(users.length) }));
   });
 })();

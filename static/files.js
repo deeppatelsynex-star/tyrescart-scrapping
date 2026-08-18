@@ -279,9 +279,29 @@
     }, intervalMs);
   }
 
+  const FILES_CACHE_KEY = 'tyrescart_files_cache';
+
+  function loadCachedFiles() {
+    try {
+      const raw = localStorage.getItem(FILES_CACHE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data && Array.isArray(data.files) && data.files.length > 0) {
+        files = data.files;
+        filesById = new Map(files.map((f) => [f.fileId, f]));
+        lastFilesSnapshot = JSON.stringify(files);
+        table.clear();
+        table.rows.add(files);
+        table.draw(false);
+        showTable();
+        updateZipButtonState(data.anyRunning, data.hasAnyOutput);
+      }
+    } catch (e) {}
+  }
+
   async function loadFiles({ silent } = {}) {
-    if (!silent) Shared.hideError(errorEl);
-    if (refreshBtn) {
+    if (!silent && !files.length) Shared.hideError(errorEl);
+    if (refreshBtn && !silent) {
       refreshBtn.disabled = true;
       refreshIcon.classList.add('animate-spin');
     }
@@ -296,6 +316,9 @@
       }
       files = data.files || [];
       filesById = new Map(files.map((f) => [f.fileId, f]));
+      try {
+        localStorage.setItem(FILES_CACHE_KEY, JSON.stringify(data));
+      } catch (e) {}
 
       // Sync working states with browser IndexedDB
       if (window.IDBStorage) {
@@ -990,6 +1013,7 @@
       }
     });
 
-    loadMe().then(() => loadFiles());
+    loadCachedFiles();
+    loadMe().then(() => loadFiles({ silent: Boolean(files.length) }));
   });
 })();

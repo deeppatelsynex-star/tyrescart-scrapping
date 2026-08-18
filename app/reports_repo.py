@@ -234,8 +234,17 @@ def serialize_log(row):
     }
 
 
-def reconcile_stale_logs():
-    """Closes any logTbl rows still marked RUNNING whose process is no longer alive."""
+_last_reconcile_time = 0
+
+def reconcile_stale_logs(force=False):
+    """Closes any logTbl rows still marked RUNNING whose process is over 6 hours old (throttled)."""
+    global _last_reconcile_time
+    import time
+    now = time.time()
+    if not force and (now - _last_reconcile_time) < 300:
+        return
+    _last_reconcile_time = now
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:

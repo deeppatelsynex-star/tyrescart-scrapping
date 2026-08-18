@@ -969,20 +969,23 @@ def api_list_files():
     rows, total = files_repo.list_files(search=search, is_deleted=is_deleted, page=page, per_page=per_page)
     serialized = []
     user_id = session.get('user_id')
+    active_map = job_manager.get_all_active_jobs_map()
+    all_outputs = file_scraper_runner.get_all_output_paths()
+
     for r in rows:
+        fid = r['file_id']
         item = files_repo.serialize_file(r)
-        active = job_manager.get_active_job(r['file_id'])
+        active = active_map.get(fid)
         if active:
             item['working'] = True
-            item['is_owner'] = (active['started_by_user_id'] == user_id)
+            item['is_owner'] = (active.get('user_id') == user_id)
         else:
             item['working'] = False
             item['is_owner'] = True
-        item['outputAvailable'] = bool(file_scraper_runner.get_output_path(r['file_id']))
+        item['outputAvailable'] = bool(all_outputs.get(fid))
         serialized.append(item)
 
-    any_running = file_scraper_runner.running_count() > 0
-    all_outputs = file_scraper_runner.get_all_output_paths()
+    any_running = bool(active_map)
     has_any_output = bool(all_outputs)
 
     return jsonify({

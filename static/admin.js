@@ -435,8 +435,25 @@ window.AdminShared = (function () {
     tableEl.classList.remove('hidden');
   }
 
-  async function loadUsers() {
-    Shared.hideError(errorEl);
+  const USERS_CACHE_KEY = 'tyrescart_users_cache';
+
+  function loadCachedUsers() {
+    try {
+      const raw = localStorage.getItem(USERS_CACHE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data && Array.isArray(data.users) && data.users.length > 0) {
+        users = data.users;
+        table.clear();
+        table.rows.add(users);
+        table.draw(false);
+        showTable();
+      }
+    } catch (e) {}
+  }
+
+  async function loadUsers({ silent } = {}) {
+    if (!silent && !users.length) Shared.hideError(errorEl);
     try {
       const response = await fetch('/api/admin/users');
       const data = await response.json().catch(() => ({}));
@@ -444,17 +461,20 @@ window.AdminShared = (function () {
         const message = data.error || 'Unable to load users.';
         Shared.logError('Admin Load Users', message, { status: response.status });
         Shared.showError(errorEl, message);
-        Shared.showToast(message, 'error');
+        if (!silent) Shared.showToast(message, 'error');
         return;
       }
       users = data.users || [];
+      try {
+        localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(data));
+      } catch (e) {}
       table.clear();
       table.rows.add(users);
       table.draw(false);
     } catch (err) {
       Shared.logError('Admin Load Users Network Error', err);
       Shared.showError(errorEl, 'Network error while loading users.');
-      Shared.showToast('Network error while loading users.', 'error');
+      if (!silent) Shared.showToast('Network error while loading users.', 'error');
     } finally {
       showTable();
     }
@@ -599,6 +619,7 @@ window.AdminShared = (function () {
       }
     });
 
-    loadMe().then(loadUsers);
+    loadCachedUsers();
+    loadMe().then(() => loadUsers({ silent: Boolean(users.length) }));
   });
 })();

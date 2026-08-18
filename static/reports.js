@@ -148,14 +148,27 @@
     }));
   }
 
-  function showTable() {
-    loadingEl.classList.add('hidden');
-    tableEl.classList.remove('hidden');
+  const REPORTS_CACHE_KEY = 'tyrescart_reports_cache';
+
+  function loadCachedReports() {
+    try {
+      const raw = localStorage.getItem(REPORTS_CACHE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data && Array.isArray(data.reports) && data.reports.length > 0) {
+        reports = data.reports;
+        updateStatsCards(data.stats);
+        table.clear();
+        table.rows.add(reports);
+        table.draw(false);
+        showTable();
+      }
+    } catch (e) {}
   }
 
   async function loadReports({ silent } = {}) {
-    if (!silent) Shared.hideError(errorEl);
-    if (refreshBtn) {
+    if (!silent && !reports.length) Shared.hideError(errorEl);
+    if (refreshBtn && !silent) {
       refreshBtn.disabled = true;
       refreshIcon.classList.add('animate-spin');
     }
@@ -173,6 +186,12 @@
       }
 
       reports = data.reports || [];
+      try {
+        if (!statusParam) {
+          localStorage.setItem(REPORTS_CACHE_KEY, JSON.stringify(data));
+        }
+      } catch (e) {}
+
       updateStatsCards(data.stats);
 
       table.clear();
@@ -316,6 +335,7 @@
       }
     });
 
-    loadReports();
+    loadCachedReports();
+    loadReports({ silent: Boolean(reports.length) });
   });
 })();

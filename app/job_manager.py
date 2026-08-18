@@ -146,6 +146,38 @@ def get_active_job(file_id):
     return get_active_log(file_id)
 
 
+def get_all_active_jobs_map():
+    """Returns a dict {file_id: {'job_id': ..., 'user_id': ...}} of all currently running jobs.
+    Uses fast in-memory active jobs map first, falling back to 1 single DB query.
+    """
+    with _lock:
+        if _active_jobs:
+            return {
+                state['file_id']: {
+                    'job_id': state['job_id'],
+                    'user_id': state['started_by_user_id'],
+                    'status': state.get('status', 'RUNNING')
+                }
+                for state in _active_jobs.values()
+                if state.get('file_id') and state.get('status') == 'RUNNING' and not state.get('stopped')
+            }
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT file_id, job_id, user_id, status
+                FROM logTbl
+                WHERE status = 'RUNNING' AND end_time IS NULL
+            """)
+            rows = cursor.fetchall()
+            return {r['file_id']: r for r in rows if r.get('file_id')}
+    except Exception:
+        return {}
+    finally:
+        conn.close()
+
+
 def get_latest_log_for_file(file_id):
     """Returns the most recent log record for file_id, or None."""
     conn = get_connection()
