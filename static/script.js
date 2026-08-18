@@ -95,17 +95,17 @@
     const isRunning = state.status === 'RUNNING' || state.running === true;
     if (startButton) {
       startButton.disabled = isRunning;
-      startButton.style.display = isRunning ? 'none' : '';
+      startButton.style.display = isRunning ? 'none' : 'inline-flex';
     }
     if (stopButton) {
       stopButton.disabled = !isRunning;
-      stopButton.style.display = isRunning ? '' : 'none';
+      stopButton.style.display = isRunning ? 'inline-flex' : 'none';
     }
     if (downloadButton) {
       const downloadUrl = fileScraperId ? `/api/files/${fileScraperId}/download` : '/download-output';
       if (state.output_available || state.outputAvailable) {
         downloadButton.href = downloadUrl;
-        downloadButton.style.removeProperty('display');
+        downloadButton.style.display = 'inline-flex';
       } else {
         downloadButton.href = '#';
         downloadButton.style.display = 'none';
@@ -630,6 +630,9 @@
 
   if (startButton) {
     startButton.addEventListener('click', async () => {
+      if (!fileScraperId) {
+        await resolveFileScraperId();
+      }
       if (!fileScraperId) return;
       startButton.disabled = true;
       startButton.innerHTML = '<span>Starting…</span>';
