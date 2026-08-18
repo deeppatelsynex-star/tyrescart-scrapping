@@ -290,7 +290,10 @@
       <span class="rounded-full bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 text-xs sm:text-sm text-emerald-800 font-semibold shadow-2xs">Product URL Done: <strong class="text-emerald-950 font-bold">${productUrlDone}</strong></span>
     `;
 
-    const pct = Math.min(100, Math.max(0, state.progress_percent || 0));
+    const st = (state.status || '').toUpperCase();
+    // On success show 100%, otherwise use the persisted percent
+    let pct = Math.min(100, Math.max(0, state.progress_percent || 0));
+    if (st === 'SUCCESS') pct = 100;
     if (progressBar) progressBar.style.width = `${pct}%`;
     if (progressPercentage) progressPercentage.textContent = `${pct}%`;
   };

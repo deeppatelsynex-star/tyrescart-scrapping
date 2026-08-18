@@ -160,10 +160,11 @@ def get_job_by_id(job_id):
         conn.close()
 
 
-def finalize_job(job_id, status, error_message=None, output_file_path=None):
+def finalize_job(job_id, status, error_message=None, output_file_path=None, final_counters=None):
     """Updates a job to terminal state (SUCCESS, FAILED, STOPPED) with finished_at.
     The MySQL trigger `after_scraper_job_update` automatically deletes the lock.
     Also synchronizes and finalizes the corresponding record in logTbl.
+    Accepts optional final_counters dict to persist the last computed progress values.
     """
     conn = get_connection()
     try:
@@ -176,16 +177,49 @@ def finalize_job(job_id, status, error_message=None, output_file_path=None):
             """, (job_id,))
             job_row = cursor.fetchone()
 
-            # 2. Update scraper_jobs
-            cursor.execute("""
-                UPDATE scraper_jobs
-                SET status = %s,
-                    finished_at = NOW(),
-                    error_message = COALESCE(%s, error_message),
-                    output_file_path = COALESCE(%s, output_file_path),
-                    updated_at = NOW()
-                WHERE job_id = %s
-            """, (status, error_message, output_file_path, job_id))
+            # 2. Update scraper_jobs — also flush final counters if provided
+            if final_counters:
+                cursor.execute("""
+                    UPDATE scraper_jobs
+                    SET status = %s,
+                        finished_at = NOW(),
+                        error_message = COALESCE(%s, error_message),
+                        output_file_path = COALESCE(%s, output_file_path),
+                        updated_at = NOW(),
+                        total_urls = %s,
+                        pending_urls = %s,
+                        running_urls = 0,
+                        completed_urls = %s,
+                        blocked_urls = %s,
+                        total_products = %s,
+                        written_to_xlsx = %s,
+                        main_url_done = %s,
+                        product_url_done = %s,
+                        progress_percent = %s
+                    WHERE job_id = %s
+                """, (
+                    status, error_message, output_file_path,
+                    final_counters.get('total_urls', 0),
+                    final_counters.get('pending', 0),
+                    final_counters.get('completed', 0),
+                    final_counters.get('blocked', 0),
+                    final_counters.get('total_products', 0),
+                    final_counters.get('written_to_xlsx', 0),
+                    final_counters.get('main_url_done', 0),
+                    final_counters.get('product_url_done', 0),
+                    final_counters.get('progress_percent', 0.0),
+                    job_id
+                ))
+            else:
+                cursor.execute("""
+                    UPDATE scraper_jobs
+                    SET status = %s,
+                        finished_at = NOW(),
+                        error_message = COALESCE(%s, error_message),
+                        output_file_path = COALESCE(%s, output_file_path),
+                        updated_at = NOW()
+                    WHERE job_id = %s
+                """, (status, error_message, output_file_path, job_id))
 
             # 3. Ensure lock is deleted from scraper_job_locks
             cursor.execute("""
@@ -199,10 +233,10 @@ def finalize_job(job_id, status, error_message=None, output_file_path=None):
                 fid = job_row['file_id']
                 uid = job_row['started_by_user_id']
                 pid = job_row.get('process_id')
-                total_u = job_row.get('total_urls') or 0
-                comp_u = job_row.get('completed_urls') or 0
-                block_u = job_row.get('blocked_urls') or 0
-                data_s = job_row.get('written_to_xlsx') or 0
+                total_u = (final_counters.get('total_urls') if final_counters else None) or job_row.get('total_urls') or 0
+                comp_u = (final_counters.get('completed') if final_counters else None) or job_row.get('completed_urls') or 0
+                block_u = (final_counters.get('blocked') if final_counters else None) or job_row.get('blocked_urls') or 0
+                data_s = (final_counters.get('written_to_xlsx') if final_counters else None) or job_row.get('written_to_xlsx') or 0
 
                 if pid:
                     cursor.execute("""
@@ -404,11 +438,23 @@ def _run_worker(job_id, file_id, log_id, script_path, input_path, output_placeho
             error_message = f'Scraper process exited with return code {returncode}.'
 
         # Finalize job in scraper_jobs (Trigger releases the lock)
+        # Pass final counters so progress_percent, product_url_done etc. are persisted to DB
         finalize_job(
             job_id=job_id,
             status=final_status,
             error_message=error_message,
             output_file_path=final_output_path,
+            final_counters={
+                'total_urls': state.get('total_urls', 0),
+                'pending': 0,  # no pending at finish
+                'completed': total_completed,
+                'blocked': total_blocked,
+                'total_products': state.get('total_products', 0),
+                'written_to_xlsx': written_count,
+                'main_url_done': state.get('main_url_done', 0),
+                'product_url_done': state.get('product_url_done', 0),
+                'progress_percent': state.get('progress_percent', 0.0),
+            }
         )
 
         if log_id:
