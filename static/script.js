@@ -31,6 +31,15 @@
   let activeEventSource = null;
   let fileScraperCsrfToken = null;
   const collapsedRoots = new Set();
+  const expandedRoots = new Set();
+
+  const isRootExpanded = (rootUrl, childCount) => {
+    if (expandedRoots.has(rootUrl)) return true;
+    if (collapsedRoots.has(rootUrl)) return false;
+    // Default: auto-expand small lists (<= 10 items); keep large lists (> 10 items) collapsed initially
+    return childCount > 0 && childCount <= 10;
+  };
+
   let lastKnownStatuses = [];
 
   const resolveFileScraperId = async () => {
@@ -163,7 +172,7 @@
   `;
 
   const chevronIcon = (expanded) => `
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200 ${expanded ? 'rotate-90' : ''}">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200 ${expanded ? 'rotate-90 text-emerald-600' : 'text-slate-500'}">
       <polyline points="9 6 15 12 9 18"></polyline>
     </svg>
   `;
@@ -230,8 +239,7 @@
   const renderRootNode = (root) => {
     let status = (root.status || 'pending').toLowerCase();
     const hasChildren = root.children && root.children.length > 0;
-    const isLargeList = hasChildren && root.children.length > 15;
-    const expanded = hasChildren && !collapsedRoots.has(root.url) && !isLargeList;
+    const expanded = hasChildren && isRootExpanded(root.url, root.children.length);
     const doneCount = hasChildren ? root.children.filter((c) => (c.status || '').toLowerCase() === 'done').length : 0;
 
     if (isCurrentRunning) {
@@ -261,18 +269,18 @@
     }
 
     return `
-      <li class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-        <div class="flex items-start gap-3.5 px-4 sm:px-5 py-3.5">
+      <li class="root-url-item rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+        <div class="root-header flex items-start gap-3.5 px-4 sm:px-5 py-3.5 ${hasChildren ? 'cursor-pointer hover:bg-slate-50/70 transition select-none' : ''}" data-url="${root.url}">
           ${hasChildren
-        ? `<button type="button" class="tree-toggle mt-0.5 flex items-center justify-center rounded-lg p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 cursor-pointer" data-url="${root.url}" aria-expanded="${expanded}" aria-label="Toggle product list">${chevronIcon(expanded)}</button>`
-        : '<span class="w-[26px] shrink-0"></span>'}
+        ? `<button type="button" class="tree-toggle mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200/80 hover:text-slate-700 cursor-pointer transition" data-url="${root.url}" aria-expanded="${expanded}" aria-label="Toggle product list">${chevronIcon(expanded)}</button>`
+        : '<span class="w-[28px] shrink-0"></span>'}
           <div class="mt-0.5 shrink-0">${getStatusIcon(status)}</div>
           <div class="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="min-w-0">
               <p class="break-all text-sm sm:text-base font-bold text-slate-900 leading-snug">${root.url}</p>
               ${hasChildren ? `<span class="mt-1.5 inline-flex items-center rounded-full bg-slate-100 border border-slate-200/90 px-3 py-0.5 text-xs sm:text-sm font-semibold text-slate-700">${doneCount}/${root.children.length} products done</span>` : ''}
             </div>
-            <div class="flex shrink-0 items-center gap-2">
+            <div class="flex shrink-0 items-center gap-2" onclick="event.stopPropagation();">
               ${copyButton(root.url)}
             </div>
           </div>
@@ -785,25 +793,44 @@
     }
 
     urlStatusList.addEventListener('click', (e) => {
-      const toggle = e.target.closest('.tree-toggle');
-      if (!toggle) return;
+      // Don't toggle when clicking copy button or hyperlinks
+      if (e.target.closest('.btncopy') || e.target.closest('a')) return;
 
-      const url = toggle.dataset.url;
-      const isCollapsed = collapsedRoots.has(url);
+      const headerOrToggle = e.target.closest('.tree-toggle') || e.target.closest('.root-header');
+      if (!headerOrToggle) return;
 
-      if (isCollapsed) {
+      const url = headerOrToggle.dataset.url;
+      if (!url) return;
+
+      const rootLi = headerOrToggle.closest('li.root-url-item') || headerOrToggle.closest('li');
+      if (!rootLi) return;
+
+      const childList = rootLi.querySelector('.child-list');
+      if (!childList) return;
+
+      const toggleBtn = rootLi.querySelector('.tree-toggle');
+      const childCount = childList.querySelectorAll('li').length;
+
+      const currentlyExpanded = isRootExpanded(url, childCount);
+      const newExpanded = !currentlyExpanded;
+
+      if (newExpanded) {
+        expandedRoots.add(url);
         collapsedRoots.delete(url);
       } else {
         collapsedRoots.add(url);
+        expandedRoots.delete(url);
       }
 
-      const nowExpanded = !collapsedRoots.has(url);
-      toggle.setAttribute('aria-expanded', String(nowExpanded));
-      toggle.innerHTML = chevronIcon(nowExpanded);
+      if (toggleBtn) {
+        toggleBtn.setAttribute('aria-expanded', String(newExpanded));
+        toggleBtn.innerHTML = chevronIcon(newExpanded);
+      }
 
-      const childList = toggle.closest('li').querySelector('.child-list');
-      if (childList) {
-        childList.classList.toggle('hidden', !nowExpanded);
+      if (newExpanded) {
+        childList.classList.remove('hidden');
+      } else {
+        childList.classList.add('hidden');
       }
     });
   }
