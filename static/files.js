@@ -47,7 +47,7 @@
   const uploadSpinner = document.getElementById('files-form-upload-spinner');
   const submitSpinner = document.getElementById('files-form-submit-spinner');
 
-  let csrfToken = null;
+  let csrfToken = (typeof window !== 'undefined' && window.__CSRF_TOKEN__) ? window.__CSRF_TOKEN__ : null;
   let currentRole = (typeof window !== 'undefined' && window.__CURRENT_USER_ROLE__) ? window.__CURRENT_USER_ROLE__ : null;
   let files = [];
   let filesById = new Map();
@@ -603,13 +603,13 @@
       table.draw(false);
       return;
     }
-    Shared.showToast(enable ? 'Enabling scraper…' : 'Disabling scraper…', 'info');
-    inFlightToggles.add(fileId);
-    table.draw(false);
+    if (!csrfToken) {
+      await loadMe();
+    }
     try {
       const response = await fetch(`/api/files/${fileId}/toggle-status`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken || '' },
         body: JSON.stringify({ enabled: enable }),
       });
       const data = await response.json().catch(() => ({}));

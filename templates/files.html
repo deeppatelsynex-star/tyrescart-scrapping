@@ -56,7 +56,7 @@ Scraper
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <link rel="stylesheet" href="/static/internal.css" />
-<script>window.__CURRENT_USER_ROLE__ = "{{ session.get('role', '') }}";</script>
+<script>window.__CURRENT_USER_ROLE__ = "{{ session.get('role', '') }}"; window.__CSRF_TOKEN__ = "{{ session.get('csrf_token', '') }}";</script>
 {% endblock ExtraHead %}
 
 {% block MainContent %}
