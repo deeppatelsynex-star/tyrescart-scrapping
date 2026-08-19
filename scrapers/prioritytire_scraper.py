@@ -81,22 +81,25 @@ def load_input_urls():
     return DEFAULT_SITEMAPS
 
 
+PROXY = os.environ.get("SCRAPER_PROXY") or os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY")
+
 def fetch_with_impersonation(session, url, max_retries=3):
-    """Fetches URL with rotating browser TLS impersonations and exponential backoff."""
+    """Fetches URL with rotating browser TLS impersonations, optional proxy, and exponential backoff."""
+    proxies = {"http": PROXY, "https": PROXY} if PROXY else None
     for attempt in range(max_retries):
         imp = IMPERSONATIONS[attempt % len(IMPERSONATIONS)]
         try:
             r = session.get(
                 url,
                 impersonate=imp,
-                headers=DEFAULT_HEADERS,
+                proxies=proxies,
                 timeout=25,
             )
             if r.status_code == 200 and len(r.text) > 100:
                 return r
-            time.sleep(0.3 * (attempt + 1))
+            time.sleep(0.25 * (attempt + 1))
         except Exception:
-            time.sleep(0.3 * (attempt + 1))
+            time.sleep(0.25 * (attempt + 1))
     return None
 
 
@@ -114,7 +117,7 @@ def extract_product_urls_from_sitemap(session, sitemap_url):
             urls = sel.css("loc::text").getall()
 
         product_urls = []
-        for u in urls:
+        for i, u in enumerate(urls):
             u_clean = u.strip()
             if not u_clean:
                 continue
@@ -122,7 +125,9 @@ def extract_product_urls_from_sitemap(session, sitemap_url):
             if any(path.startswith(p) for p in SKIP_URL_PREFIXES):
                 continue
             product_urls.append(u_clean)
-            emit_status(u_clean, 'pending', parent=sitemap_url, url_type='product')
+            # Emit pending status for UI display (first 50 per sitemap to prevent event queue saturation)
+            if i < 50:
+                emit_status(u_clean, 'pending', parent=sitemap_url, url_type='product')
 
         emit_status(sitemap_url, 'done', url_type='sitemap')
         return product_urls
