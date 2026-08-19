@@ -58,6 +58,21 @@ def get_user_by_id(user_id):
         conn.close()
 
 
+from datetime import datetime, timedelta, timezone
+
+IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def to_ist_12h(dt, with_seconds=False):
+    if not dt:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    ist_dt = dt.astimezone(IST)
+    fmt = '%d %b %Y %I:%M:%S %p' if with_seconds else '%d %b %Y %I:%M %p'
+    return ist_dt.strftime(fmt)
+
+
 def serialize_user(user):
     return {
         'userId': user['userid'],
@@ -67,18 +82,10 @@ def serialize_user(user):
         'status': bit_to_bool(user['Status']),
         'isDeleted': bit_to_bool(user['IsDeleted']),
         'avatar': user.get('avatar'),
-        'updatedAt': user['updated_at'].strftime('%d %b %Y %H:%M') if user.get('updated_at') else None,
-        'createdAt': user['created_at'].strftime('%d %b %Y %H:%M') if user.get('created_at') else None,
-        # Raw ISO timestamps alongside the human-readable strings above, so the
-        # admin/trash tables can sort chronologically and render in the
-        # viewer's own local timezone instead of the server's. The DB (and
-        # this server) run in UTC, but MySQL's TIMESTAMP values come back as
-        # timezone-naive datetimes -- the explicit 'Z' tells the browser's
-        # Date parser these are UTC, not "local time with no offset given"
-        # (its default assumption for a bare ISO string), which would silently
-        # skip the UTC->local conversion entirely.
+        'updatedAt': to_ist_12h(user.get('updated_at')),
+        'createdAt': to_ist_12h(user.get('created_at')),
         'createdAtRaw': user['created_at'].isoformat() + 'Z' if user.get('created_at') else None,
-        'deletedAt': user['deleted_at'].strftime('%d %b %Y %H:%M') if user.get('deleted_at') else None,
+        'deletedAt': to_ist_12h(user.get('deleted_at')),
         'deletedAtRaw': user['deleted_at'].isoformat() + 'Z' if user.get('deleted_at') else None,
     }
 

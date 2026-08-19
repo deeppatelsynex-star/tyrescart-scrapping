@@ -201,8 +201,20 @@ def serialize_log(row):
     output_path = row.get('output_file_path')
     output_available = bool(output_path and os.path.exists(output_path))
 
-    duration_str = format_duration(start_time, end_time) if (status != 'RUNNING' and end_time is not None) else 'Running…'
-    duration_secs = int((end_time - start_time).total_seconds()) if (start_time and end_time) else None
+    duration_str = None
+    duration_secs = None
+    if start_time and end_time:
+        secs = max(0, int((end_time - start_time).total_seconds()))
+        duration_secs = secs
+        m, s = divmod(secs, 60)
+        h, m = divmod(m, 60)
+        duration_str = f'{h:02d}:{m:02d}:{s:02d}' if h else f'{m:02d}:{s:02d}'
+    elif start_time and status == 'RUNNING':
+        secs = max(0, int((datetime.now() - start_time).total_seconds()))
+        duration_secs = secs
+        m, s = divmod(secs, 60)
+        h, m = divmod(m, 60)
+        duration_str = f'{h:02d}:{m:02d}:{s:02d}' if h else f'{m:02d}:{s:02d}'
 
     scraper_name = row.get('scraper') or row.get('site_name') or 'Scraper'
 
@@ -219,9 +231,9 @@ def serialize_log(row):
         'userRole': row.get('user_role') or 'Admin',
         'userAvatar': row.get('user_avatar'),
         'status': status,
-        'startTime': start_time.strftime('%d %b %Y %H:%M:%S') if start_time else None,
+        'startTime': to_ist_12h(start_time, with_seconds=True),
         'startTimeRaw': start_time.isoformat() + 'Z' if start_time else None,
-        'endTime': end_time.strftime('%d %b %Y %H:%M:%S') if end_time else None,
+        'endTime': to_ist_12h(end_time, with_seconds=True),
         'endTimeRaw': end_time.isoformat() + 'Z' if end_time else None,
         'duration': duration_str,
         'durationSeconds': duration_secs,

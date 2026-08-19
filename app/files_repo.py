@@ -148,6 +148,21 @@ def resolve_script_path(relative_path):
     return os.path.join(SCRAPERS_DIR, validated)
 
 
+from datetime import datetime, timezone, timedelta
+
+IST = timezone(timedelta(hours=5, minutes=30))
+
+
+def to_ist_12h(dt, with_seconds=False):
+    if not dt:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    ist_dt = dt.astimezone(IST)
+    fmt = '%d %b %Y %I:%M:%S %p' if with_seconds else '%d %b %Y %I:%M %p'
+    return ist_dt.strftime(fmt)
+
+
 def serialize_file(row):
     urls = []
     if row.get('urls_json'):
@@ -166,16 +181,16 @@ def serialize_file(row):
         'working': bit_to_bool(row['working']),
         'isDeleted': is_deleted,
         'isEnabled': not is_deleted,
-        'deletedDate': row['deleted_at'].strftime('%d %b %Y %H:%M') if row.get('deleted_at') else None,
+        'deletedDate': to_ist_12h(row.get('deleted_at')),
         'deletedDateRaw': row['deleted_at'].isoformat() + 'Z' if row.get('deleted_at') else None,
         'createdBy': row.get('created_by'),
         'createdByName': created_by_name,
         'createdByEmail': row.get('created_by_email'),
         'urls': urls,
         'urlCount': len(urls),
-        'createDate': row['create_date'].strftime('%d %b %Y %H:%M') if row.get('create_date') else None,
+        'createDate': to_ist_12h(row.get('create_date')),
         'createDateRaw': row['create_date'].isoformat() + 'Z' if row.get('create_date') else None,
-        'updateDate': row['update_date'].strftime('%d %b %Y %H:%M') if row.get('update_date') else None,
+        'updateDate': to_ist_12h(row.get('update_date')),
         'updateDateRaw': row['update_date'].isoformat() + 'Z' if row.get('update_date') else None,
     }
 

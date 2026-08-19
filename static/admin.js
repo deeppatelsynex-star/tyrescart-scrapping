@@ -218,8 +218,8 @@ window.AdminShared = (function () {
     const d = new Date(isoString);
     if (isNaN(d.getTime())) return null;
     return {
-      datePart: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      timePart: d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      datePart: d.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }),
+      timePart: d.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }),
     };
   }
 
