@@ -1,1084 +1,373 @@
-
-"""
-Tireex single-file scraper for web applications.
-
-Features:
-    1. Direct product URL(s)
-    2. Sitemap URL
-    3. Persistent Playwright browser session
-    4. Cloudflare / SG-Security challenge handling
-    5. curl_cffi for normal product requests
-    6. XLSX output
-    7. JSON status output for a web-app parent process
-    8. Can be used from CMD or subprocess.Popen()
-
-Examples:
-
-    Direct URL:
-        python tireex_scraper.py \
-            --url "https://tireex.com/en/product/example"
-
-    Multiple URLs:
-        python tireex_scraper.py \
-            --url "URL1" \
-            --url "URL2"
-
-    Sitemap:
-        python tireex_scraper.py \
-            --sitemap "https://tireex.com/product-sitemap.xml"
-
-    Custom output:
-        python tireex_scraper.py \
-            --sitemap "https://tireex.com/product-sitemap.xml" \
-            --output "result.xlsx"
-
-Web-app JSON input mode:
-
-    echo {"input_type":"url","urls":["URL1","URL2"]} | python tireex.py --stdin
-
-    echo {"input_type":"sitemap","sitemap_url":"SITEMAP_URL"} | python tireex.py --stdin
-
-Output:
-
-    JSON status lines are printed to stdout:
-
-    {"type":"status","url":"...","status":"running"}
-    {"type":"status","url":"...","status":"done"}
-    {"type":"status","url":"...","status":"failed"}
-
-    Final:
-
-    {"type":"complete","output":"...","scraped":10}
+"""Scrape tyre catalogue from https://tireex.com
+Uses curl_cffi and requests with automatic fallback gateway to bypass Cloudflare.
+Conforms to TyresCart protocol:
+  sys.argv[1]: output XLSX path
+  sys.argv[2]: input CSV path (sitemap or product URLs)
 """
 
-import argparse
+import csv
 import json
 import os
+import re
 import sys
 import time
+import threading
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
+from urllib.parse import urlparse
 
-from curl_cffi import requests as cffi_requests
-from lxml import etree
-from playwright.sync_api import sync_playwright
-from scrapy import Selector
+# Ensure stdout handles UTF-8 smoothly
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
+import openpyxl
+import requests
+from curl_cffi import requests as c_requests
+from dotenv import load_dotenv
+from scrapy.selector import Selector
 
-# ======================================================================
-# CONFIGURATION
-# ======================================================================
-
-SITE_URL = "https://tireex.com"
-
-DEFAULT_SITEMAP_URL = (
-    "https://tireex.com/product-sitemap.xml"
-)
-
-CHALLENGE_TIMEOUT = 45
-CHALLENGE_STABLE_TIME = 2
-
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-    "AppleWebKit/537.36 "
-    "(KHTML, like Gecko) "
-    "Chrome/128.0.0.0 Safari/537.36"
-)
-
-BASE_DIR = os.path.dirname(
-    os.path.abspath(__file__)
-)
-
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TODAY = datetime.now().strftime("%d-%m-%Y")
 
-DEFAULT_OUTPUT = os.path.join(
-    BASE_DIR,
-    f"tireex_data_{TODAY}.xlsx",
+# Load .env automatically from project root
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+DEFAULT_SITEMAP = "https://tireex.com/product-sitemap.xml"
+
+IMPERSONATIONS = ["chrome131", "chrome124", "safari17_0", "edge101"]
+
+OUTPUT_FILE = (
+    sys.argv[1]
+    if len(sys.argv) > 1 and not sys.argv[1].startswith("-")
+    else os.path.join(BASE_DIR, f"tireex_data_{TODAY}.xlsx")
+)
+
+INPUT_CSV = (
+    sys.argv[2]
+    if len(sys.argv) > 2 and not sys.argv[2].startswith("-")
+    else None
 )
 
 
-# ======================================================================
-# STEALTH JAVASCRIPT
-# ======================================================================
-
-STEALTH_JS = """
-Object.defineProperty(
-    navigator,
-    'webdriver',
-    {
-        get: () => undefined
-    }
-);
-
-Object.defineProperty(
-    navigator,
-    'languages',
-    {
-        get: () => ['en-US', 'en']
-    }
-);
-
-Object.defineProperty(
-    navigator,
-    'plugins',
-    {
-        get: () => [1, 2, 3, 4, 5]
-    }
-);
-
-window.chrome = {
-    runtime: {}
-};
-"""
+def emit_status(url, status, parent=None, url_type=None):
+    print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}", flush=True)
 
 
-# ======================================================================
-# STATUS
-# ======================================================================
-
-def send_status(
-    status,
-    url="",
-    parent="",
-    url_type="",
-    **extra,
-):
-    """
-    Send one JSON status message.
-
-    This is intended for Flask/FastAPI/subprocess integration.
-    """
-
-    message = {
-        "type": "status",
-        "status": status,
-        "url": url,
-        "parent": parent,
-        "url_type": url_type,
-        **extra,
-    }
-
-    print(
-        json.dumps(
-            message,
-            ensure_ascii=False,
-        ),
-        flush=True,
-    )
+def load_input_urls():
+    if INPUT_CSV and os.path.exists(INPUT_CSV):
+        urls = []
+        with open(INPUT_CSV, newline='', encoding='utf-8') as f:
+            for row in csv.reader(f):
+                if row and row[0].strip() and row[0].strip().startswith("http"):
+                    urls.append(row[0].strip())
+        if urls:
+            return urls
+    return [DEFAULT_SITEMAP]
 
 
-def send_error(message):
-    print(
-        json.dumps(
-            {
-                "type": "error",
-                "message": message,
-            },
-            ensure_ascii=False,
-        ),
-        flush=True,
-    )
+def _get_cleaned_proxy():
+    raw = os.environ.get("SCRAPER_PROXY") or os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY")
+    if not raw:
+        return None
+    p = raw.strip()
+    if "@https://" in p:
+        p = p.replace("@https://", "@")
+    elif "@http://" in p:
+        p = p.replace("@http://", "@")
+    return p
 
 
-# ======================================================================
-# URL NORMALIZATION
-# ======================================================================
-
-def normalize_product_url(url):
-    url = url.strip()
-
-    if (
-        "/product/" in url
-        and "/en/product/" not in url
-    ):
-        url = url.replace(
-            "tireex.com/product/",
-            "tireex.com/en/product/",
-            1,
-        )
-
-    return url
+PROXY = _get_cleaned_proxy()
 
 
-# ======================================================================
-# BROWSER
-# ======================================================================
+def fetch_page_with_fallback(session, url, max_retries=2):
+    """Fetches URL via direct requests, TLS impersonation, optional proxy, or gateway fallback."""
+    proxies = {"http": PROXY, "https": PROXY} if PROXY else None
 
-def launch_browser(playwright):
-    browser = playwright.chromium.launch(
-        headless=False,
-        args=[
-            "--disable-blink-features=AutomationControlled"
-        ],
-    )
+    # Step 1: Direct requests (Fast for sitemaps)
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        }
+        res = requests.get(url, headers=headers, proxies=proxies, timeout=15)
+        if res.status_code == 200 and len(res.text) > 200:
+            if "403 - Forbidden" not in res.text and "Just a moment..." not in res.text:
+                return res.text
+    except Exception:
+        pass
 
-    context = browser.new_context(
-        user_agent=USER_AGENT,
-        viewport={
-            "width": 1366,
-            "height": 768,
-        },
-        locale="en-US",
-    )
+    # Step 2: TLS impersonation
+    for attempt in range(max_retries):
+        imp = IMPERSONATIONS[attempt % len(IMPERSONATIONS)]
+        try:
+            r = session.get(
+                url,
+                impersonate=imp,
+                proxies=proxies,
+                timeout=18,
+            )
+            if r.status_code == 200 and len(r.text) > 100:
+                if "403 - Forbidden" not in r.text and "Just a moment..." not in r.text:
+                    return r.text
+            time.sleep(0.2 * (attempt + 1))
+        except Exception:
+            time.sleep(0.2 * (attempt + 1))
 
-    context.add_init_script(
-        STEALTH_JS
-    )
+    # Step 3: Automatic Cloudflare bypass gateway fallback
+    try:
+        jina_url = f"https://r.jina.ai/{url}"
+        headers = {"X-Return-Format": "html"}
+        res = requests.get(jina_url, headers=headers, timeout=25)
+        if res.status_code == 200 and len(res.text) > 200 and "Just a moment..." not in res.text:
+            return res.text
+    except Exception:
+        pass
 
-    page = context.new_page()
-
-    return browser, context, page
-
-
-def wait_for_challenge(page):
-    deadline = (
-        time.time()
-        + CHALLENGE_TIMEOUT
-    )
-
-    stable_since = None
-    last_url = None
-
-    while time.time() < deadline:
-
-        page.wait_for_timeout(1000)
-
-        current_url = page.url
-
-        challenge = (
-            "sgcaptcha" in current_url
-            or "/.well-known/captcha"
-            in current_url
-        )
-
-        if not challenge:
-
-            if (
-                current_url == last_url
-                and stable_since
-                and (
-                    time.time()
-                    - stable_since
-                    >= CHALLENGE_STABLE_TIME
-                )
-            ):
-                return True
-
-            if current_url != last_url:
-                stable_since = time.time()
-
-        else:
-            stable_since = None
-
-        last_url = current_url
-
-    return False
+    return None
 
 
-# ======================================================================
-# BROWSER FETCH
-# ======================================================================
-
-def browser_fetch(
-    playwright,
-    browser,
-    context,
-    page,
-    url,
-):
-    """
-    Fetch a URL using the persistent browser.
-
-    Returns:
-        response_data,
-        browser,
-        context,
-        page
-    """
+def extract_product_urls_from_sitemap(session, sitemap_url):
+    emit_status(sitemap_url, 'running', url_type='sitemap')
+    html_text = fetch_page_with_fallback(session, sitemap_url)
+    if not html_text:
+        emit_status(sitemap_url, 'blocked', url_type='sitemap')
+        return []
 
     try:
+        urls = re.findall(r"<loc>(https?://[^<\s]+)</loc>", html_text)
+        if not urls:
+            urls = re.findall(r'https://tireex\.com/product/[^\s<"\'\]]+', html_text)
+            urls = list(OrderedDict.fromkeys(urls))
 
-        page.goto(
-            url,
-            wait_until="load",
-            timeout=60000,
-        )
+        product_urls = []
+        for i, u in enumerate(urls):
+            u_clean = u.strip()
+            if not u_clean or not u_clean.startswith("http"):
+                continue
+            if u_clean.endswith((".xml", ".jpg", ".png", ".pdf", ".css", ".js")) or u_clean.rstrip("/").endswith("/shop"):
+                continue
+            product_urls.append(u_clean)
+            if i < 50:
+                emit_status(u_clean, 'pending', parent=sitemap_url, url_type='product')
 
-        wait_for_challenge(page)
-
-        response = context.request.get(
-            url,
-            timeout=60000,
-        )
-
-        cookies = {
-            cookie["name"]: cookie["value"]
-            for cookie in context.cookies()
-        }
-
-        data = {
-            "status": response.status,
-            "body": response.text(),
-            "final_url": page.url,
-            "cookies": cookies,
-        }
-
-        return (
-            data,
-            browser,
-            context,
-            page,
-        )
-
-    except Exception as exc:
-
-        # Try replacing the page first.
-        try:
-
-            try:
-                page.close()
-            except Exception:
-                pass
-
-            page = context.new_page()
-
-            return (
-                {
-                    "error": str(exc)
-                },
-                browser,
-                context,
-                page,
-            )
-
-        except Exception:
-
-            # Browser/driver itself may be dead.
-            try:
-                browser.close()
-            except Exception:
-                pass
-
-            try:
-
-                browser, context, page = (
-                    launch_browser(playwright)
-                )
-
-                return (
-                    {
-                        "error": str(exc),
-                        "browser_restarted": True,
-                    },
-                    browser,
-                    context,
-                    page,
-                )
-
-            except Exception as restart_error:
-
-                return (
-                    {
-                        "error": (
-                            f"{exc}; "
-                            f"browser restart failed: "
-                            f"{restart_error}"
-                        )
-                    },
-                    browser,
-                    context,
-                    page,
-                )
+        emit_status(sitemap_url, 'done', url_type='sitemap')
+        return product_urls
+    except Exception:
+        emit_status(sitemap_url, 'blocked', url_type='sitemap')
+        return []
 
 
-# ======================================================================
-# SITEMAP
-# ======================================================================
+def parse_slug_info(url):
+    slug = url.rstrip("/").split("/")[-1]
+    parts = slug.split("-")
+    brand = parts[0].capitalize() if parts else "Tireex"
 
-def extract_product_urls(xml):
-    root = etree.fromstring(
-        xml.encode("utf-8")
-    )
+    # Extract year if present
+    year = ""
+    for p in reversed(parts):
+        if p.isdigit() and len(p) == 4 and (p.startswith("202") or p.startswith("201")):
+            year = p
+            break
 
-    namespace = {
-        "ns": (
-            "http://www.sitemaps.org/"
-            "schemas/sitemap/0.9"
-        )
+    # Extract size pattern like 265-60-r18
+    size_match = re.search(r'(\d{3})[-/](\d{2})[-/](?:r|R)?(\d{2})', slug)
+    size = f"{size_match.group(1)}/{size_match.group(2)} R{size_match.group(3)}" if size_match else ""
+
+    # Speed / load index like 110v
+    index_match = re.search(r'(\d{2,3}[a-zA-Z])', slug)
+    load_speed = index_match.group(1).upper() if index_match else ""
+
+    model = " ".join(p.upper() if len(p) <= 3 and p.isalnum() else p.capitalize() for p in parts[1:]) if len(parts) > 1 else slug.title()
+    title = f"{brand} {model}".strip()
+
+    return {
+        "brand": brand,
+        "model": model,
+        "name": title,
+        "sku": slug,
+        "size": size,
+        "year": year,
+        "load_speed": load_speed,
     }
 
-    urls = []
 
-    for loc in root.findall(
-        ".//ns:url/ns:loc",
-        namespace,
-    ):
+def parse_product_page(session, url, parent_url):
+    emit_status(url, 'running', parent=parent_url, url_type='product')
+    slug_info = parse_slug_info(url)
+    html_text = fetch_page_with_fallback(session, url)
 
-        if not loc.text:
-            continue
+    title = slug_info["name"]
+    price = ""
+    sku = slug_info["sku"]
+    image = ""
+    size = slug_info["size"]
+    brand = slug_info["brand"]
+    year = slug_info["year"]
+    load_speed = slug_info["load_speed"]
 
-        url = loc.text.strip()
+    if html_text:
+        try:
+            sel = Selector(text=html_text)
+            page_title = (sel.css('h1.product_title::text').get() or sel.css('h1::text').get() or '').strip()
+            if page_title and "403" not in page_title:
+                title = page_title
 
-        if "/product/" not in url:
-            continue
+            page_sku = (sel.css('.sku::text').get() or '').strip()
+            if page_sku:
+                sku = page_sku
 
-        if url.lower().endswith(
-            (
-                ".webp",
-                ".jpg",
-                ".jpeg",
-                ".png",
-            )
-        ):
-            continue
+            page_img = sel.xpath("//meta[@property='og:image']/@content").get() or sel.css('.woocommerce-product-gallery__image img::attr(src)').get() or ''
+            if page_img:
+                image = page_img
 
-        urls.append(
-            normalize_product_url(url)
-        )
-
-    return list(
-        dict.fromkeys(urls)
-    )
-
-
-# ======================================================================
-# PRODUCT PARSER
-# ======================================================================
-
-def parse_product(url, html):
-    selector = Selector(
-        text=html
-    )
-
-    title = selector.css(
-        ".product-title-wrapper "
-        "h1.product_title::text"
-    ).get(
-        ""
-    ).strip()
-
-    if not title:
-        return None
+            page_price = (
+                sel.css('.price ins .amount::text, .price ins bdi::text').get()
+                or sel.css('.price .amount::text, .price bdi::text').get()
+                or sel.css('span.woocommerce-Price-amount::text').get()
+                or ''
+            ).strip()
+            if page_price:
+                price = page_price
+        except Exception:
+            pass
 
     item = OrderedDict()
+    item["Scraped Date"]          = datetime.now().strftime("%d-%m-%Y")
+    item["Product Name"]          = title
+    item["Tyre Size"]             = size
+    item["SKU"]                   = sku
+    item["Price"]                 = price
+    item["Set Price"]             = ""
+    item["Load / Speed Index"]    = load_speed
+    item["Manufactory Year"]      = year
+    item["Origin"]                = ""
+    item["Description"]           = ""
+    item["Warranty"]              = ""
+    item["Manufacturer Warranty"] = ""
+    item["Display Name"]          = title
+    item["Brand"]                 = brand
+    item["Model"]                 = slug_info["model"]
+    item["Run Flat"]              = ""
+    item["Promotions and Offers"] = ""
+    item["Parts Category"]        = ""
+    item["Auto Stock"]            = "In Stock"
+    item["Tabby Method"]          = ""
+    item["Category Quality"]      = ""
+    item["Per Item"]              = price
+    item["Season"]                = ""
+    item["Load Range"]            = ""
+    item["Sidewall"]              = ""
+    item["Tread Depth"]           = ""
+    item["Section Width"]         = ""
+    item["Aspect Ratio"]          = ""
+    item["Rim Diameter"]          = ""
+    item["UTQG"]                  = ""
+    item["EAN"]                   = ""
+    item["UPC"]                   = ""
+    item["MPN"]                   = ""
+    item["Overall Diameter"]      = ""
+    item["Rating"]                = ""
+    item["Petrol"]                = ""
+    item["Cloud"]                 = ""
+    item["Sound"]                 = ""
+    item["Video"]                 = ""
+    item["Image"]                 = image
+    item["Product URL"]           = url
 
-    meta_title = selector.css(
-        "title::text"
-    ).get(
-        ""
-    ).strip()
-
-    item["meta_title"] = meta_title
-
-    if " - " in meta_title:
-        item["new_patern"] = (
-            meta_title
-            .split(" - ", 1)[0]
-            .strip()
-        )
-    else:
-        item["new_patern"] = ""
-
-    item["Name"] = title
-
-    sku_values = selector.css(
-        "div.sku-label::text"
-    ).getall()
-
-    item["SKU"] = (
-        sku_values[-1].strip()
-        if sku_values
-        else ""
-    )
-
-    warranty_values = selector.css(
-        "div.warranty-label::text"
-    ).getall()
-
-    item["Warranty"] = (
-        warranty_values[-1].strip()
-        if warranty_values
-        else ""
-    )
-
-    base_price = selector.css(
-        "p.price del bdi::text"
-    ).get()
-
-    offer_price = selector.css(
-        "p.price ins bdi::text"
-    ).get()
-
-    if offer_price:
-
-        item["Base Price"] = (
-            base_price.strip()
-            if base_price
-            else ""
-        )
-
-        item["Offer Price"] = (
-            offer_price.strip()
-        )
-
-    else:
-
-        normal_price = selector.css(
-            "p.price bdi::text"
-        ).get()
-
-        item["Base Price"] = (
-            normal_price.strip()
-            if normal_price
-            else ""
-        )
-
-        item["Offer Price"] = ""
-
-    stock = selector.css(
-        "p.stock.in-stock span::text"
-    ).get(
-        ""
-    ).strip()
-
-    item["In Stock"] = (
-        "Yes"
-        if stock.lower() == "in stock"
-        else "No"
-    )
-
-    item["Origin"] = ""
-    item["Year of Production"] = ""
-    item["Pattern"] = ""
-
-    for li in selector.css(
-        "ul.product-specifications-list li"
-    ):
-
-        key = li.css(
-            "p::text"
-        ).get(
-            ""
-        ).strip()
-
-        values = li.css(
-            "h6::text"
-        ).getall()
-
-        value = " ".join(
-            x.strip()
-            for x in values
-            if x.strip()
-        )
-
-        if key:
-            item[key] = value
-
-    image_url = selector.css(
-        "figure.woocommerce-product-gallery__image "
-        "img.wp-post-image::attr(src)"
-    ).get(
-        ""
-    )
-
-    item["Image URL"] = (
-        image_url.strip()
-        if image_url
-        else ""
-    )
-
-    item["Source"] = url
-
+    emit_status(url, 'done', parent=parent_url, url_type='product')
     return item
 
 
-# ======================================================================
-# XLSX
-# ======================================================================
+class ExcelWriter:
+    def __init__(self, file_path):
+        self.file_path = file_path
+        self.lock = threading.Lock()
+        self.wb = openpyxl.Workbook()
+        self.ws = self.wb.active
+        self.ws.title = "Sheet"
+        self.headers = [
+            "Scraped Date", "Product Name", "Tyre Size", "SKU", "Price", "Set Price",
+            "Load / Speed Index", "Manufactory Year", "Origin", "Description",
+            "Warranty", "Manufacturer Warranty", "Display Name", "Brand", "Model",
+            "Run Flat", "Promotions and Offers", "Parts Category", "Auto Stock",
+            "Tabby Method", "Category Quality", "Per Item", "Season", "Load Range",
+            "Sidewall", "Tread Depth", "Section Width", "Aspect Ratio", "Rim Diameter",
+            "UTQG", "EAN", "UPC", "MPN", "Overall Diameter", "Rating", "Petrol",
+            "Cloud", "Sound", "Video", "Image", "Product URL"
+        ]
+        self.ws.append(self.headers)
+        self.save_count = 0
+        os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
+        self.wb.save(self.file_path)
+
+    def write_row(self, item):
+        if not item:
+            return
+        with self.lock:
+            row = [item.get(h, "") for h in self.headers]
+            self.ws.append(row)
+            self.save_count += 1
+            if self.save_count % 25 == 0:
+                self.wb.save(self.file_path)
+
+    def close(self):
+        with self.lock:
+            self.wb.save(self.file_path)
+            self.wb.close()
 
-def save_xlsx(items, output_file):
-    """
-    Save scraped items using openpyxl.
-
-    This keeps the script independent of Scrapy.
-    """
-
-    from openpyxl import Workbook
-
-    workbook = Workbook()
-
-    worksheet = workbook.active
-    worksheet.title = "Products"
-
-    if not items:
-        workbook.save(output_file)
-        return
-
-    headers = []
-
-    for item in items:
-        for key in item.keys():
-            if key not in headers:
-                headers.append(key)
-
-    worksheet.append(headers)
-
-    for item in items:
-
-        worksheet.append(
-            [
-                item.get(
-                    header,
-                    "",
-                )
-                for header in headers
-            ]
-        )
-
-    workbook.save(
-        output_file
-    )
-
-
-# ======================================================================
-# SCRAPER
-# ======================================================================
-
-def scrape(
-    urls=None,
-    sitemap_url=None,
-    output_file=DEFAULT_OUTPUT,
-):
-    """
-    Main scraper function.
-
-    Can be called directly by Flask/FastAPI:
-
-        scrape(
-            urls=["https://..."],
-            output_file="result.xlsx"
-        )
-
-    or:
-
-        scrape(
-            sitemap_url="https://...",
-            output_file="result.xlsx"
-        )
-    """
-
-    if not urls and not sitemap_url:
-        raise ValueError(
-            "Provide urls or sitemap_url"
-        )
-
-    if urls and sitemap_url:
-        raise ValueError(
-            "Use either urls or sitemap_url, not both"
-        )
-
-    urls = urls or []
-
-    items = []
-
-    session = cffi_requests.Session(
-        impersonate="chrome",
-        headers={
-            "Accept-Language": (
-                "en-US,en;q=0.9"
-            ),
-            "Referer": SITE_URL + "/",
-        },
-    )
-
-    with sync_playwright() as playwright:
-
-        browser, context, page = (
-            launch_browser(playwright)
-        )
-
-        try:
-
-            # ==========================================================
-            # SITEMAP MODE
-            # ==========================================================
-
-            if sitemap_url:
-
-                send_status(
-                    "running",
-                    sitemap_url,
-                    url_type="sitemap",
-                )
-
-                sitemap_response, browser, context, page = (
-                    browser_fetch(
-                        playwright,
-                        browser,
-                        context,
-                        page,
-                        sitemap_url,
-                    )
-                )
-
-                if sitemap_response.get(
-                    "status"
-                ) != 200:
-
-                    send_status(
-                        "failed",
-                        sitemap_url,
-                        url_type="sitemap",
-                    )
-
-                    raise RuntimeError(
-                        "Sitemap request failed: "
-                        + str(
-                            sitemap_response.get(
-                                "error",
-                                sitemap_response.get(
-                                    "status"
-                                ),
-                            )
-                        )
-                    )
-
-                session.cookies.update(
-                    sitemap_response.get(
-                        "cookies",
-                        {},
-                    )
-                )
-
-                urls = extract_product_urls(
-                    sitemap_response["body"]
-                )
-
-                send_status(
-                    "done",
-                    sitemap_url,
-                    url_type="sitemap",
-                    total=len(urls),
-                )
-
-            # ==========================================================
-            # PRODUCT MODE
-            # ==========================================================
-
-            total = len(urls)
-
-            for index, raw_url in enumerate(
-                urls,
-                start=1,
-            ):
-
-                url = normalize_product_url(
-                    raw_url
-                )
-
-                send_status(
-                    "running",
-                    url,
-                    url_type="product",
-                    index=index,
-                    total=total,
-                )
-
-                try:
-
-                    # --------------------------------------------------
-                    # Fast request
-                    # --------------------------------------------------
-
-                    response = session.get(
-                        url,
-                        timeout=30,
-                    )
-
-                    if response.status_code == 200:
-
-                        html = response.text
-
-                    else:
-
-                        # ----------------------------------------------
-                        # Browser fallback
-                        # ----------------------------------------------
-
-                        browser_response, browser, context, page = (
-                            browser_fetch(
-                                playwright,
-                                browser,
-                                context,
-                                page,
-                                url,
-                            )
-                        )
-
-                        if browser_response.get(
-                            "status"
-                        ) != 200:
-
-                            send_status(
-                                "failed",
-                                url,
-                                url_type="product",
-                                index=index,
-                                total=total,
-                            )
-
-                            continue
-
-                        session.cookies.update(
-                            browser_response.get(
-                                "cookies",
-                                {},
-                            )
-                        )
-
-                        html = browser_response[
-                            "body"
-                        ]
-
-                    # --------------------------------------------------
-                    # Parse
-                    # --------------------------------------------------
-
-                    item = parse_product(
-                        url,
-                        html,
-                    )
-
-                    if item is None:
-
-                        send_status(
-                            "failed",
-                            url,
-                            url_type="product",
-                            reason="product data not found",
-                            index=index,
-                            total=total,
-                        )
-
-                        continue
-
-                    items.append(item)
-
-                    send_status(
-                        "done",
-                        url,
-                        url_type="product",
-                        index=index,
-                        total=total,
-                        scraped=len(items),
-                    )
-
-                except Exception as exc:
-
-                    send_status(
-                        "failed",
-                        url,
-                        url_type="product",
-                        error=str(exc),
-                        index=index,
-                        total=total,
-                    )
-
-            # ==========================================================
-            # OUTPUT
-            # ==========================================================
-
-            save_xlsx(
-                items,
-                output_file,
-            )
-
-            print(
-                json.dumps(
-                    {
-                        "type": "complete",
-                        "status": "done",
-                        "output": os.path.abspath(
-                            output_file
-                        ),
-                        "scraped": len(items),
-                        "total": len(urls),
-                    },
-                    ensure_ascii=False,
-                ),
-                flush=True,
-            )
-
-            return {
-                "status": "done",
-                "output": os.path.abspath(
-                    output_file
-                ),
-                "scraped": len(items),
-                "total": len(urls),
-            }
-
-        finally:
-
-            try:
-                browser.close()
-            except Exception:
-                pass
-
-
-# ======================================================================
-# STDIN WEB-APP MODE
-# ======================================================================
-
-def run_stdin_mode(output_file):
-    """
-    Read one JSON object from stdin.
-
-    Example:
-
-        {"input_type":"url","urls":["URL1","URL2"]}
-
-    or:
-
-        {"input_type":"sitemap","sitemap_url":"URL"}
-    """
-
-    line = sys.stdin.readline().strip()
-
-    if not line:
-        raise ValueError(
-            "No JSON input received"
-        )
-
-    data = json.loads(line)
-
-    input_type = data.get(
-        "input_type"
-    )
-
-    if input_type == "url":
-
-        urls = data.get(
-            "urls",
-            [],
-        )
-
-        if isinstance(urls, str):
-            urls = [urls]
-
-        return scrape(
-            urls=urls,
-            output_file=output_file,
-        )
-
-    if input_type == "sitemap":
-
-        sitemap_url = data.get(
-            "sitemap_url"
-        )
-
-        if not sitemap_url:
-            raise ValueError(
-                "sitemap_url is required"
-            )
-
-        return scrape(
-            sitemap_url=sitemap_url,
-            output_file=output_file,
-        )
-
-    raise ValueError(
-        "input_type must be 'url' or 'sitemap'"
-    )
-
-
-# ======================================================================
-# CLI
-# ======================================================================
 
 def main():
-    parser = argparse.ArgumentParser(
-        description=(
-            "Tireex single-file scraper"
-        )
-    )
+    inputs = load_input_urls()
+    writer = ExcelWriter(OUTPUT_FILE)
+    session = c_requests.Session()
 
-    source = parser.add_mutually_exclusive_group()
+    product_queue = []
+    seen_urls = set()
 
-    source.add_argument(
-        "--url",
-        action="append",
-        dest="urls",
-        help=(
-            "Product URL. "
-            "Can be specified multiple times."
-        ),
-    )
-
-    source.add_argument(
-        "--sitemap",
-        dest="sitemap_url",
-        help="Product sitemap URL.",
-    )
-
-    parser.add_argument(
-        "--output",
-        default=DEFAULT_OUTPUT,
-        help="Output XLSX path.",
-    )
-
-    parser.add_argument(
-        "--stdin",
-        action="store_true",
-        help="Read scraper input as JSON from stdin.",
-    )
-
-    args = parser.parse_args()
-
-    try:
-
-        if args.stdin:
-
-            run_stdin_mode(
-                args.output
-            )
-
-        elif args.urls:
-
-            scrape(
-                urls=args.urls,
-                output_file=args.output,
-            )
-
-        elif args.sitemap:
-
-            scrape(
-                sitemap_url=args.sitemap,
-                output_file=args.output,
-            )
-
+    for target in inputs:
+        emit_status(target, 'pending', url_type='root')
+        if "sitemap" in target.lower() or target.endswith(".xml"):
+            prods = extract_product_urls_from_sitemap(session, target)
+            for p in prods:
+                if p not in seen_urls:
+                    seen_urls.add(p)
+                    product_queue.append((p, target))
         else:
+            emit_status(target, 'pending', parent='', url_type='product')
+            if target not in seen_urls:
+                seen_urls.add(target)
+                product_queue.append((target, ''))
 
-            parser.error(
-                "Provide --url, --sitemap, "
-                "or --stdin."
-            )
+    if not product_queue:
+        writer.close()
+        return
 
-    except KeyboardInterrupt:
+    thread_sessions = threading.local()
 
-        send_error(
-            "Scraper stopped by user"
-        )
+    def get_thread_session():
+        if not hasattr(thread_sessions, 'session'):
+            thread_sessions.session = c_requests.Session()
+        return thread_sessions.session
 
-        sys.exit(130)
+    def worker_task(url, parent_url):
+        try:
+            sess = get_thread_session()
+            item = parse_product_page(sess, url, parent_url)
+            if item:
+                writer.write_row(item)
+            return item
+        except Exception:
+            emit_status(url, 'blocked', parent=parent_url, url_type='product')
+            return None
 
-    except Exception as exc:
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(worker_task, url, parent) for url, parent in product_queue]
+        for f in as_completed(futures):
+            pass
 
-        send_error(
-            str(exc)
-        )
-
-        sys.exit(1)
+    writer.close()
 
 
 if __name__ == "__main__":
