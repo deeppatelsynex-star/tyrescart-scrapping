@@ -220,8 +220,8 @@
     }
     const isXlsx = !!item.written_to_xlsx;
     return `
-      <li class="flex items-start gap-3 rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 shadow-2xs">
-        <div class="mt-0.5 shrink-0">${getStatusIcon(status)}</div>
+      <li class="child-url-item flex items-start gap-3 rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 shadow-2xs transition-colors" data-url="${item.url}">
+        <div class="mt-0.5 shrink-0 status-icon">${getStatusIcon(status)}</div>
         <div class="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div class="min-w-0 flex flex-wrap items-center gap-2">
             <p class="break-all text-sm sm:text-base font-normal text-slate-800">${item.url}</p>
@@ -269,16 +269,16 @@
     }
 
     return `
-      <li class="root-url-item rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+      <li class="root-url-item rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs" data-url="${root.url}">
         <div class="root-header flex items-start gap-3.5 px-4 sm:px-5 py-3.5 ${hasChildren ? 'cursor-pointer hover:bg-slate-50/70 transition select-none' : ''}" data-url="${root.url}">
           ${hasChildren
         ? `<button type="button" class="tree-toggle mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200/80 hover:text-slate-700 cursor-pointer transition" data-url="${root.url}" aria-expanded="${expanded}" aria-label="Toggle product list">${chevronIcon(expanded)}</button>`
         : '<span class="w-[28px] shrink-0"></span>'}
-          <div class="mt-0.5 shrink-0">${getStatusIcon(status)}</div>
+          <div class="mt-0.5 shrink-0 status-icon">${getStatusIcon(status)}</div>
           <div class="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="min-w-0">
               <p class="break-all text-sm sm:text-base font-bold text-slate-900 leading-snug">${root.url}</p>
-              ${hasChildren ? `<span class="mt-1.5 inline-flex items-center rounded-full bg-slate-100 border border-slate-200/90 px-3 py-0.5 text-xs sm:text-sm font-semibold text-slate-700">${doneCount}/${root.children.length} products done</span>` : ''}
+              ${hasChildren ? `<span class="mt-1.5 inline-flex items-center rounded-full bg-slate-100 border border-slate-200/90 px-3 py-0.5 text-xs sm:text-sm font-semibold text-slate-700 root-child-count">${doneCount}/${root.children.length} products done</span>` : ''}
             </div>
             <div class="flex shrink-0 items-center gap-2">
               ${copyButton(root.url)}
@@ -464,6 +464,45 @@
     }
   };
 
+  let treeRenderTimeout = null;
+  let lastTreeRenderTime = 0;
+  const TREE_RENDER_THROTTLE_MS = 1000;
+
+  const scheduleThrottledTreeRender = () => {
+    const now = Date.now();
+    const elapsed = now - lastTreeRenderTime;
+    if (elapsed >= TREE_RENDER_THROTTLE_MS) {
+      lastTreeRenderTime = now;
+      if (treeRenderTimeout) {
+        clearTimeout(treeRenderTimeout);
+        treeRenderTimeout = null;
+      }
+      renderUrlTreeList(lastKnownStatuses);
+    } else if (!treeRenderTimeout) {
+      treeRenderTimeout = setTimeout(() => {
+        lastTreeRenderTime = Date.now();
+        treeRenderTimeout = null;
+        renderUrlTreeList(lastKnownStatuses);
+      }, TREE_RENDER_THROTTLE_MS - elapsed);
+    }
+  };
+
+  const updateUrlItemInPlace = (item) => {
+    if (!urlStatusList || !item || !item.url) return false;
+    try {
+      const escapedUrl = CSS.escape(item.url);
+      const el = urlStatusList.querySelector(`[data-url="${escapedUrl}"]`);
+      if (!el) return false;
+      const statusIcon = el.querySelector('.status-icon');
+      if (statusIcon) {
+        statusIcon.innerHTML = getStatusIcon((item.status || 'pending').toLowerCase());
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
   const handleSsePayload = (payload) => {
     if (!payload) return;
 
@@ -477,10 +516,15 @@
         const idx = lastKnownStatuses.findIndex((u) => u.url === payload.url.url);
         if (idx >= 0) {
           lastKnownStatuses[idx] = payload.url;
+          // In-place update: 0ms, 0 flicker, never destroys copy button or resets expanded state
+          const updatedInPlace = updateUrlItemInPlace(payload.url);
+          if (!updatedInPlace) {
+            scheduleThrottledTreeRender();
+          }
         } else {
           lastKnownStatuses.push(payload.url);
+          scheduleThrottledTreeRender();
         }
-        renderUrlTreeList(lastKnownStatuses);
         saveStateToLocalStorage(payload.summary || {}, lastKnownStatuses);
       }
     } else if (payload.type === 'status') {
@@ -488,6 +532,11 @@
       updateUiState(payload);
       saveStateToLocalStorage(payload, lastKnownStatuses);
       if (payload.done || ['SUCCESS', 'STOPPED', 'FAILED', 'FAIL'].includes(st)) {
+        if (treeRenderTimeout) {
+          clearTimeout(treeRenderTimeout);
+          treeRenderTimeout = null;
+        }
+        renderUrlTreeList(lastKnownStatuses);
         closeEventSource();
         stopStatusPolling();
         refreshProgress();

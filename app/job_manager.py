@@ -317,7 +317,7 @@ def _recalc_counters(job_state):
     if output_path and os.path.exists(output_path):
         excel_rows = reports_repo.count_excel_data_rows(output_path)
         if excel_rows > 0:
-            written_to_xlsx = excel_rows
+            written_to_xlsx = max(product_url_done, excel_rows)
     if total_products > 0:
         progress_pct = round(min(100.0, (product_url_done / float(total_products)) * 100.0), 1)
     elif total_urls > 0:
