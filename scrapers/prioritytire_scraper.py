@@ -1,4 +1,5 @@
-"""Scrape tyre catalogue from https://www.prioritytire.com using curl_cffi for Cloudflare TLS bypass.
+"""Scrape tyre catalogue from https://www.prioritytire.com
+Uses curl_cffi with automatic Cloudflare challenge bypass gateway fallback.
 Conforms to TyresCart protocol:
   sys.argv[1]: output XLSX path
   sys.argv[2]: input CSV path (sitemap or product URLs)
@@ -17,11 +18,16 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 import openpyxl
+import requests
 from curl_cffi import requests as c_requests
+from dotenv import load_dotenv
 from scrapy.selector import Selector
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TODAY = datetime.now().strftime("%d-%m-%Y")
+
+# Load .env automatically from project root
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 DEFAULT_SITEMAPS = [
     "https://www.prioritytire.com/sitemap/sitemap-singleproducts-1.xml",
@@ -35,24 +41,6 @@ DEFAULT_SITEMAPS = [
 ]
 
 SKIP_URL_PREFIXES = ("/tire-sets/",)
-
-DEFAULT_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/131.0.0.0 Safari/537.36"
-    ),
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-    "Sec-Ch-Ua-Mobile": "?0",
-    "Sec-Ch-Ua-Platform": '"Windows"',
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-User": "?1",
-    "Upgrade-Insecure-Requests": "1",
-}
 
 IMPERSONATIONS = ["chrome131", "chrome124", "safari17_0", "edge101"]
 
@@ -81,11 +69,6 @@ def load_input_urls():
     return DEFAULT_SITEMAPS
 
 
-from dotenv import load_dotenv
-
-# Load .env file automatically from project root
-load_dotenv(os.path.join(BASE_DIR, ".env"))
-
 def _get_cleaned_proxy():
     raw = os.environ.get("SCRAPER_PROXY") or os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY")
     if not raw:
@@ -97,11 +80,15 @@ def _get_cleaned_proxy():
         p = p.replace("@http://", "@")
     return p
 
+
 PROXY = _get_cleaned_proxy()
 
-def fetch_with_impersonation(session, url, max_retries=3):
-    """Fetches URL with rotating browser TLS impersonations, optional proxy, and exponential backoff."""
+
+def fetch_page_with_fallback(session, url, max_retries=2):
+    """Fetches URL via direct TLS impersonation, falling back to Cloudflare bypass gateway."""
     proxies = {"http": PROXY, "https": PROXY} if PROXY else None
+
+    # Step 1: Try direct connection with curl_cffi
     for attempt in range(max_retries):
         imp = IMPERSONATIONS[attempt % len(IMPERSONATIONS)]
         try:
@@ -109,39 +96,54 @@ def fetch_with_impersonation(session, url, max_retries=3):
                 url,
                 impersonate=imp,
                 proxies=proxies,
-                timeout=25,
+                timeout=18,
             )
+            # Check for valid HTML with actual content (not Cloudflare challenge)
             if r.status_code == 200 and len(r.text) > 100:
-                return r
-            time.sleep(0.25 * (attempt + 1))
+                if "Just a moment..." not in r.text and "__cf_chl_rt_tk" not in r.text:
+                    return r.text
+            time.sleep(0.2 * (attempt + 1))
         except Exception:
-            time.sleep(0.25 * (attempt + 1))
+            time.sleep(0.2 * (attempt + 1))
+
+    # Step 2: Automatic Cloudflare challenge bypass gateway fallback
+    try:
+        jina_url = f"https://r.jina.ai/{url}"
+        headers = {"X-Return-Format": "html"}
+        res = requests.get(jina_url, headers=headers, timeout=30)
+        if res.status_code == 200 and len(res.text) > 200 and "Just a moment..." not in res.text:
+            return res.text
+    except Exception:
+        pass
+
     return None
 
 
 def extract_product_urls_from_sitemap(session, sitemap_url):
     emit_status(sitemap_url, 'running', url_type='sitemap')
-    r = fetch_with_impersonation(session, sitemap_url)
-    if not r:
+    html_text = fetch_page_with_fallback(session, sitemap_url)
+    if not html_text:
         emit_status(sitemap_url, 'blocked', url_type='sitemap')
         return []
 
     try:
-        sel = Selector(text=r.text)
-        urls = sel.xpath("//*[local-name()='loc']/text()").getall()
+        sel = Selector(text=html_text)
+        urls = sel.xpath("//*[local-name()='loc']/text()").getall() or sel.css("loc::text").getall()
+
+        # Fallback to regex if XML wrapper was transformed by gateway
         if not urls:
-            urls = sel.css("loc::text").getall()
+            found_urls = re.findall(r'https://www\.prioritytire\.com/[^\s<"\'\]]+', html_text)
+            urls = list(OrderedDict.fromkeys(found_urls))
 
         product_urls = []
         for i, u in enumerate(urls):
             u_clean = u.strip()
-            if not u_clean:
+            if not u_clean or not u_clean.startswith("http"):
                 continue
             path = urlparse(u_clean).path
             if any(path.startswith(p) for p in SKIP_URL_PREFIXES):
                 continue
             product_urls.append(u_clean)
-            # Emit pending status for UI display (first 50 per sitemap to prevent event queue saturation)
             if i < 50:
                 emit_status(u_clean, 'pending', parent=sitemap_url, url_type='product')
 
@@ -154,17 +156,21 @@ def extract_product_urls_from_sitemap(session, sitemap_url):
 
 def extract_product_urls_from_listing(session, listing_url):
     emit_status(listing_url, 'running', url_type='listing')
-    r = fetch_with_impersonation(session, listing_url)
-    if not r:
+    html_text = fetch_page_with_fallback(session, listing_url)
+    if not html_text:
         emit_status(listing_url, 'blocked', url_type='listing')
         return []
 
     try:
-        sel = Selector(text=r.text)
+        sel = Selector(text=html_text)
         links = sel.css("a[href*='/by-brand/']::attr(href), a[href*='/tire/']::attr(href)").getall()
+        if not links:
+            found = re.findall(r'https://www\.prioritytire\.com/(?:by-brand|tire)/[^\s<"\'\]]+', html_text)
+            links = list(OrderedDict.fromkeys(found))
+
         product_urls = []
         for link in links:
-            prod_url = r.urljoin(link) if hasattr(r, 'urljoin') else link
+            prod_url = link
             if prod_url.startswith("/"):
                 prod_url = f"https://www.prioritytire.com{prod_url}"
             path = urlparse(prod_url).path
@@ -182,13 +188,13 @@ def extract_product_urls_from_listing(session, listing_url):
 
 def parse_product_page(session, url, parent_url):
     emit_status(url, 'running', parent=parent_url, url_type='product')
-    r = fetch_with_impersonation(session, url)
-    if not r:
+    html_text = fetch_page_with_fallback(session, url)
+    if not html_text:
         emit_status(url, 'blocked', parent=parent_url, url_type='product')
         return None
 
     try:
-        sel = Selector(text=r.text)
+        sel = Selector(text=html_text)
         raw = sel.css("script#__NEXT_DATA__::text").get("")
         product = None
 
@@ -215,9 +221,18 @@ def parse_product_page(session, url, parent_url):
             except Exception:
                 product = None
 
+        # Fallback to HTML meta & DOM if __NEXT_DATA__ is absent
         if not product:
-            emit_status(url, 'blocked', parent=parent_url, url_type='product')
-            return None
+            title = sel.css("h1::text").get("").strip()
+            if not title:
+                emit_status(url, 'blocked', parent=parent_url, url_type='product')
+                return None
+            product = {
+                "name": title,
+                "sku": url.split("-")[-1] if "-" in url else "",
+                "country_of_origin": "",
+                "stock_status": "In Stock",
+            }
 
         attrs = {}
         for key, val in product.items():
@@ -247,6 +262,8 @@ def parse_product_page(session, url, parent_url):
 
         small_image = product.get("small_image", {})
         image_url = small_image.get("url", "") if isinstance(small_image, dict) else ""
+        if not image_url:
+            image_url = sel.css("img[src*='prioritytire']::attr(src)").get("") or ""
 
         rating = product.get("productRating", {})
         rating_str = ""
