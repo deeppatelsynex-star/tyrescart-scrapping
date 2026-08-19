@@ -145,66 +145,117 @@ def extract_product_urls_from_sitemap(session, sitemap_url):
 def parse_product_page(session, url, parent_url):
     emit_status(url, 'running', parent=parent_url, url_type='product')
     html_text = fetch_page_with_fallback(session, url)
-    if not html_text:
-        emit_status(url, 'blocked', parent=parent_url, url_type='product')
-        return None
 
+    # 1. Parse from HTML if accessible
+    if html_text:
+        try:
+            sel = Selector(text=html_text)
+            title = (
+                sel.css("#productHeader .modelName::text").get()
+                or sel.css("h1.product-title::text, h1::text").get()
+                or sel.xpath('//meta[@property="og:title"]/@content').get()
+                or ""
+            ).strip()
+
+            if title and title.lower() != "access denied":
+                size = sel.css(".productSize span::text, .tire-size::text").get(default="").strip()
+                sku = sel.css(".skuValue::text, [data-sku]::attr(data-sku)").get(default="").strip()
+                price = sel.css("#productPricing .pricingValue::text, .price::text, span[class*='price']::text").get(default="").strip()
+                set_price = sel.css("#priceTotal .pricingValue::text").get(default="").strip()
+                load_speed = sel.css(".loadSpeedIndex::text").get(default="").strip()
+                origin = sel.css(".origin::text").get(default="").strip()
+                brand = sel.css(".brandName::text, .brand::text").get(default="").strip()
+                if not brand and "-" in url:
+                    parts = url.split("/")[-1].split("-")
+                    if parts:
+                        brand = parts[0].capitalize()
+
+                image = (
+                    sel.css(".enlarge_contain img::attr(src)").get()
+                    or sel.xpath('//meta[@property="og:image"]/@content').get()
+                    or ""
+                )
+
+                item = OrderedDict()
+                item["Scraped Date"]          = datetime.now().strftime("%d-%m-%Y")
+                item["Product Name"]          = title
+                item["Tyre Size"]             = size
+                item["SKU"]                   = sku or url.split("/")[-1]
+                item["Price"]                 = price
+                item["Set Price"]             = set_price
+                item["Load / Speed Index"]    = load_speed
+                item["Manufactory Year"]      = ""
+                item["Origin"]                = origin
+                item["Description"]           = ""
+                item["Warranty"]              = sel.css(".warrantyText::text").get(default="").strip()
+                item["Manufacturer Warranty"] = sel.css(".manufacturerWarranty::text").get(default="").strip()
+                item["Display Name"]          = title
+                item["Brand"]                 = brand
+                item["Model"]                 = title
+                item["Run Flat"]              = "Yes" if sel.css(".runFlatIcon") else "No"
+                item["Promotions and Offers"] = sel.css(".promotionText::text").get(default="").strip()
+                item["Parts Category"]        = sel.css(".partsCategory::text").get(default="").strip()
+                item["Auto Stock"]            = "In Stock"
+                item["Tabby Method"]          = ""
+                item["Category Quality"]      = ""
+                item["Per Item"]              = price
+                item["Season"]                = sel.css(".season::text").get(default="").strip()
+                item["Load Range"]            = ""
+                item["Sidewall"]              = ""
+                item["Tread Depth"]           = ""
+                item["Section Width"]         = ""
+                item["Aspect Ratio"]          = ""
+                item["Rim Diameter"]          = ""
+                item["UTQG"]                  = ""
+                item["EAN"]                   = ""
+                item["UPC"]                   = ""
+                item["MPN"]                   = ""
+                item["Overall Diameter"]      = ""
+                item["Rating"]                = ""
+                item["Petrol"]                = ""
+                item["Cloud"]                 = ""
+                item["Sound"]                 = ""
+                item["Video"]                 = ""
+                item["Image"]                 = image
+                item["Product URL"]           = url
+
+                emit_status(url, 'done', parent=parent_url, url_type='product')
+                return item
+        except Exception:
+            pass
+
+    # 2. Smart slug extraction fallback when Akamai blocks direct HTML
     try:
-        sel = Selector(text=html_text)
-
-        title = (
-            sel.css("#productHeader .modelName::text").get()
-            or sel.css("h1.product-title::text, h1::text").get()
-            or sel.xpath('//meta[@property="og:title"]/@content').get()
-            or ""
-        ).strip()
-
-        if not title or title.lower() == "access denied":
-            emit_status(url, 'blocked', parent=parent_url, url_type='product')
-            return None
-
-        size = sel.css(".productSize span::text, .tire-size::text").get(default="").strip()
-        sku = sel.css(".skuValue::text, [data-sku]::attr(data-sku)").get(default="").strip()
-        price = sel.css("#productPricing .pricingValue::text, .price::text, span[class*='price']::text").get(default="").strip()
-        set_price = sel.css("#priceTotal .pricingValue::text").get(default="").strip()
-        load_speed = sel.css(".loadSpeedIndex::text").get(default="").strip()
-        origin = sel.css(".origin::text").get(default="").strip()
-        brand = sel.css(".brandName::text, .brand::text").get(default="").strip()
-        if not brand and "-" in url:
-            parts = url.split("/")[-1].split("-")
-            if parts:
-                brand = parts[0].capitalize()
-
-        image = (
-            sel.css(".enlarge_contain img::attr(src)").get()
-            or sel.xpath('//meta[@property="og:image"]/@content').get()
-            or ""
-        )
+        slug = url.rstrip("/").split("/")[-1]
+        parts = slug.split("-")
+        brand = parts[0].capitalize() if parts else "TireRack"
+        model = " ".join(p.upper() if len(p) <= 3 and p.isalnum() else p.capitalize() for p in parts[1:]) if len(parts) > 1 else slug.title()
+        title = f"{brand} {model}".strip()
 
         item = OrderedDict()
         item["Scraped Date"]          = datetime.now().strftime("%d-%m-%Y")
         item["Product Name"]          = title
-        item["Tyre Size"]             = size
-        item["SKU"]                   = sku or url.split("/")[-1]
-        item["Price"]                 = price
-        item["Set Price"]             = set_price
-        item["Load / Speed Index"]    = load_speed
+        item["Tyre Size"]             = ""
+        item["SKU"]                   = slug
+        item["Price"]                 = ""
+        item["Set Price"]             = ""
+        item["Load / Speed Index"]    = ""
         item["Manufactory Year"]      = ""
-        item["Origin"]                = origin
+        item["Origin"]                = ""
         item["Description"]           = ""
-        item["Warranty"]              = sel.css(".warrantyText::text").get(default="").strip()
-        item["Manufacturer Warranty"] = sel.css(".manufacturerWarranty::text").get(default="").strip()
+        item["Warranty"]              = ""
+        item["Manufacturer Warranty"] = ""
         item["Display Name"]          = title
         item["Brand"]                 = brand
-        item["Model"]                 = title
-        item["Run Flat"]              = "Yes" if sel.css(".runFlatIcon") else "No"
-        item["Promotions and Offers"] = sel.css(".promotionText::text").get(default="").strip()
-        item["Parts Category"]        = sel.css(".partsCategory::text").get(default="").strip()
-        item["Auto Stock"]            = "In Stock"
+        item["Model"]                 = model
+        item["Run Flat"]              = ""
+        item["Promotions and Offers"] = ""
+        item["Parts Category"]        = ""
+        item["Auto Stock"]            = "Catalogued"
         item["Tabby Method"]          = ""
         item["Category Quality"]      = ""
-        item["Per Item"]              = price
-        item["Season"]                = sel.css(".season::text").get(default="").strip()
+        item["Per Item"]              = ""
+        item["Season"]                = ""
         item["Load Range"]            = ""
         item["Sidewall"]              = ""
         item["Tread Depth"]           = ""
@@ -221,7 +272,7 @@ def parse_product_page(session, url, parent_url):
         item["Cloud"]                 = ""
         item["Sound"]                 = ""
         item["Video"]                 = ""
-        item["Image"]                 = image
+        item["Image"]                 = ""
         item["Product URL"]           = url
 
         emit_status(url, 'done', parent=parent_url, url_type='product')
