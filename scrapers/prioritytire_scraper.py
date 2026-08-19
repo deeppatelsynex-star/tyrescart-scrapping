@@ -81,7 +81,23 @@ def load_input_urls():
     return DEFAULT_SITEMAPS
 
 
-PROXY = os.environ.get("SCRAPER_PROXY") or os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY")
+from dotenv import load_dotenv
+
+# Load .env file automatically from project root
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+def _get_cleaned_proxy():
+    raw = os.environ.get("SCRAPER_PROXY") or os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY")
+    if not raw:
+        return None
+    p = raw.strip()
+    if "@https://" in p:
+        p = p.replace("@https://", "@")
+    elif "@http://" in p:
+        p = p.replace("@http://", "@")
+    return p
+
+PROXY = _get_cleaned_proxy()
 
 def fetch_with_impersonation(session, url, max_retries=3):
     """Fetches URL with rotating browser TLS impersonations, optional proxy, and exponential backoff."""
