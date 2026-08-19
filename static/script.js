@@ -280,7 +280,7 @@
               <p class="break-all text-sm sm:text-base font-bold text-slate-900 leading-snug">${root.url}</p>
               ${hasChildren ? `<span class="mt-1.5 inline-flex items-center rounded-full bg-slate-100 border border-slate-200/90 px-3 py-0.5 text-xs sm:text-sm font-semibold text-slate-700">${doneCount}/${root.children.length} products done</span>` : ''}
             </div>
-            <div class="flex shrink-0 items-center gap-2" onclick="event.stopPropagation();">
+            <div class="flex shrink-0 items-center gap-2">
               ${copyButton(root.url)}
             </div>
           </div>
@@ -719,23 +719,41 @@
     urlStatusList.addEventListener('click', async (e) => {
       const button = e.target.closest('.btncopy');
       if (!button) return;
+      e.stopPropagation();
 
-      const url = button.dataset.url;
+      const url = button.getAttribute('data-url') || button.dataset.url;
+      if (!url) return;
+
+      let copied = false;
       try {
         if (navigator.clipboard && window.isSecureContext) {
           await navigator.clipboard.writeText(url);
-        } else {
+          copied = true;
+        }
+      } catch (err) {
+        copied = false;
+      }
+
+      if (!copied) {
+        try {
           const textarea = document.createElement('textarea');
           textarea.value = url;
           textarea.style.position = 'fixed';
-          textarea.style.left = '-9999px';
+          textarea.style.top = '0';
+          textarea.style.left = '0';
+          textarea.style.opacity = '0';
+          textarea.style.pointerEvents = 'none';
           document.body.appendChild(textarea);
           textarea.focus();
           textarea.select();
-          document.execCommand('copy');
+          copied = document.execCommand('copy');
           document.body.removeChild(textarea);
+        } catch (err) {
+          copied = false;
         }
+      }
 
+      if (copied) {
         if (!button.dataset.originalHtml) {
           button.dataset.originalHtml = button.innerHTML;
           button.dataset.originalClass = button.className;
@@ -749,7 +767,7 @@
         button.className = 'btncopy flex items-center justify-center rounded-xl border border-emerald-500 bg-emerald-500 p-1.5 text-white transition cursor-pointer';
         button.title = 'Copied!';
 
-        if (window.AdminShared) {
+        if (window.AdminShared && typeof window.AdminShared.showToast === 'function') {
           window.AdminShared.showToast('URL copied to clipboard!', 'success');
         }
 
@@ -759,8 +777,8 @@
           button.className = button.dataset.originalClass;
           button.title = 'Copy URL';
         }, 1500);
-      } catch (error) {
-        if (window.AdminShared) {
+      } else {
+        if (window.AdminShared && typeof window.AdminShared.showToast === 'function') {
           window.AdminShared.showToast('Failed to copy URL', 'error');
         }
       }
