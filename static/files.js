@@ -48,7 +48,7 @@
   const submitSpinner = document.getElementById('files-form-submit-spinner');
 
   let csrfToken = null;
-  let currentRole = null;
+  let currentRole = (typeof window !== 'undefined' && window.__CURRENT_USER_ROLE__) ? window.__CURRENT_USER_ROLE__ : null;
   let files = [];
   let filesById = new Map();
   let table = null;
@@ -57,7 +57,10 @@
   let inFlightToggles = new Set(); // file_id
   let uploadedFileName = null;
 
-  const canUploadScripts = () => currentRole === 'SuperAdmin' || currentRole === 'Admin';
+  const canUploadScripts = () => {
+    const role = currentRole || (typeof window !== 'undefined' ? window.__CURRENT_USER_ROLE__ : null);
+    return role === 'SuperAdmin' || role === 'Admin';
+  };
   let lastFilesSnapshot = null;
 
   function logoCellHtml(row) {
@@ -255,10 +258,15 @@
       if (!response.ok) return;
       const data = await response.json();
       csrfToken = data.csrfToken;
+      const previousRole = currentRole;
       currentRole = data.user ? data.user.role : null;
+      window.__CURRENT_USER_ROLE__ = currentRole;
       newBtn?.classList.toggle('hidden', !canUploadScripts());
       uploadPanel?.classList.toggle('hidden', !canUploadScripts());
       noAccessNote?.classList.toggle('hidden', canUploadScripts());
+      if (table && files.length && previousRole !== currentRole) {
+        table.rows().invalidate().draw(false);
+      }
     } catch (err) {}
   }
 
