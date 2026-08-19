@@ -58,8 +58,8 @@
   let uploadedFileName = null;
 
   const canUploadScripts = () => {
-    const role = currentRole || (typeof window !== 'undefined' ? window.__CURRENT_USER_ROLE__ : null);
-    return role === 'SuperAdmin' || role === 'Admin';
+    const role = ((currentRole || (typeof window !== 'undefined' ? window.__CURRENT_USER_ROLE__ : null)) || '').toString().trim().toLowerCase();
+    return role === 'superadmin' || role === 'admin';
   };
   let lastFilesSnapshot = null;
 
@@ -603,6 +603,13 @@
       table.draw(false);
       return;
     }
+    inFlightToggles.add(fileId);
+    if (file) {
+      file.isEnabled = enable;
+      file.isDeleted = !enable;
+    }
+    table.draw(false);
+
     if (!csrfToken) {
       await loadMe();
     }
@@ -617,13 +624,21 @@
         const err = data.error || 'Unable to update status.';
         Shared.logError('Toggle Scraper Status', err, { fileId, enable, status: response.status });
         Shared.showToast(err, 'error');
+        if (file) {
+          file.isEnabled = !enable;
+          file.isDeleted = enable;
+        }
         return;
       }
       Shared.showToast(data.message || (enable ? 'Scraper enabled.' : 'Scraper disabled.'), 'success');
-      await loadFiles();
+      await loadFiles({ silent: true });
     } catch (err) {
       Shared.logError('Toggle Scraper Status Network Error', err, { fileId, enable });
       Shared.showToast('Network error while updating status.', 'error');
+      if (file) {
+        file.isEnabled = !enable;
+        file.isDeleted = enable;
+      }
     } finally {
       inFlightToggles.delete(fileId);
       table.draw(false);
@@ -1000,7 +1015,7 @@
       }
     });
 
-    $(tableEl.tBodies[0]).on('change', 'input[data-action="toggle-status"]', function () {
+    $(tableEl).on('change', 'input[data-action="toggle-status"]', function () {
       const id = Number(this.getAttribute('data-id'));
       const isChecked = this.checked;
       toggleFileStatus(id, isChecked);
