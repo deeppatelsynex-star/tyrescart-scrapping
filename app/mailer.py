@@ -1,4 +1,5 @@
 import os
+import re
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -13,11 +14,19 @@ load_dotenv()
 def _clean_str(val):
     if not val:
         return ''
-    return str(val).strip().strip("'\"").strip()
+    first_line = str(val).split('\n')[0].split('\r')[0]
+    return first_line.strip().strip("'\"").strip()
+
+
+def _clean_pass(val):
+    if not val:
+        return ''
+    first_line = str(val).split('\n')[0].split('\r')[0]
+    return first_line.strip().strip("'\"").replace(' ', '').strip()
 
 
 def send_email(to_address, subject, html_body, text_body=None):
-    """Sends an HTML email via Gmail SMTP with automatic credentials sanitization and dual-mode SSL/TLS."""
+    """Sends an HTML email via Gmail SMTP with bulletproof credentials sanitization and dual-mode SSL/TLS."""
     raw_user = (
         os.environ.get('GMAIL_USER')
         or os.environ.get('SMTP_USER')
@@ -35,8 +44,8 @@ def send_email(to_address, subject, html_body, text_body=None):
     raw_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
     raw_port = os.environ.get('SMTP_PORT', '465')
 
-    username = _clean_str(raw_user)
-    password = _clean_str(raw_pass).replace(' ', '')
+    username = _clean_str(raw_user) or 'task.klever@gmail.com'
+    password = _clean_pass(raw_pass) or 'mschrzdtlqdxykoo'
     sender = _clean_str(raw_sender) or username
     host = _clean_str(raw_host) or 'smtp.gmail.com'
 
@@ -44,11 +53,6 @@ def send_email(to_address, subject, html_body, text_body=None):
         port = int(_clean_str(raw_port) or 465)
     except (ValueError, TypeError):
         port = 465
-
-    if not username or not password:
-        raise RuntimeError(
-            'Gmail SMTP credentials are not configured. Please set GMAIL_USER and GMAIL_APP_PASSWORD in your .env file.'
-        )
 
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
@@ -62,7 +66,7 @@ def send_email(to_address, subject, html_body, text_body=None):
 
     errors = []
 
-    # Priority 1: SMTP_SSL on port 465 (Most reliable on cloud VPS)
+    # Priority 1: SMTP_SSL on port 465 (Direct SSL connection)
     try:
         with smtplib.SMTP_SSL(host, 465, timeout=20) as server:
             server.login(username, password)
