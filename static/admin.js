@@ -480,11 +480,36 @@ window.AdminShared = (function () {
     }
   }
 
+  function updateRoleOptions(user) {
+    roleSelect.innerHTML = '';
+    if (user && user.role === 'SuperAdmin') {
+      const opt = document.createElement('option');
+      opt.value = 'SuperAdmin';
+      opt.textContent = 'SuperAdmin';
+      roleSelect.appendChild(opt);
+      roleSelect.value = 'SuperAdmin';
+      roleSelect.disabled = true;
+      roleSelect.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-500');
+    } else {
+      roleSelect.disabled = false;
+      roleSelect.classList.remove('bg-slate-100', 'cursor-not-allowed', 'text-slate-500');
+      const optUser = document.createElement('option');
+      optUser.value = 'User';
+      optUser.textContent = 'User';
+      const optAdmin = document.createElement('option');
+      optAdmin.value = 'Admin';
+      optAdmin.textContent = 'Admin';
+      roleSelect.appendChild(optUser);
+      roleSelect.appendChild(optAdmin);
+      roleSelect.value = (user && user.role) ? user.role : 'User';
+    }
+  }
+
   function resetForm() {
     form.reset();
     idInput.value = '';
     Shared.hideError(modalError);
-    roleSelect.value = 'User';
+    updateRoleOptions(null);
     statusInput.checked = true;
   }
 
@@ -492,6 +517,7 @@ window.AdminShared = (function () {
     resetForm();
     modalTitle.textContent = 'New User';
     submitLabel.textContent = 'Create User';
+    updateRoleOptions(null);
     passwordInput.required = true;
     passwordHint.classList.add('hidden');
     Shared.openModal(modal);
@@ -504,7 +530,7 @@ window.AdminShared = (function () {
     idInput.value = user.userId;
     nameInput.value = user.name;
     emailInput.value = user.email;
-    roleSelect.value = user.role;
+    updateRoleOptions(user);
     statusInput.checked = !!user.status;
     passwordInput.required = false;
     passwordHint.classList.remove('hidden');
@@ -516,10 +542,12 @@ window.AdminShared = (function () {
     Shared.hideError(modalError);
 
     const id = idInput.value;
+    const editingUser = id ? usersById.get(Number(id)) : null;
+    const selectedRole = (editingUser && editingUser.role === 'SuperAdmin') ? 'SuperAdmin' : roleSelect.value;
     const payload = {
       name: nameInput.value.trim(),
       email: emailInput.value.trim(),
-      role: roleSelect.value,
+      role: selectedRole,
       status: statusInput.checked,
     };
     if (passwordInput.value) {
