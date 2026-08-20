@@ -1,7 +1,7 @@
 import os
 
 # Production Gunicorn configuration optimized for Render & persistent scraping
-bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"
+bind = f"0.0.0.0:{os.environ.get('PORT', '8090')}"
 
 # Use 1 worker with gthread (16 threads) so SSE streams and parallel requests have ample capacity
 workers = 1
