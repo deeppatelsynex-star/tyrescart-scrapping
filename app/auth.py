@@ -190,3 +190,54 @@ def require_csrf(view):
             return jsonify({'error': 'Invalid or missing CSRF token.'}), 403
         return view(*args, **kwargs)
     return wrapped
+
+
+import threading
+
+_reset_tokens = {}
+_reset_lock = threading.Lock()
+
+
+def create_password_reset_token(user_id):
+    token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(token.encode('utf-8')).hexdigest()
+    expires_at = datetime.now() + timedelta(minutes=RESET_TOKEN_TTL_MINUTES)
+    with _reset_lock:
+        now = datetime.now()
+        expired = [k for k, v in _reset_tokens.items() if v['expires_at'] < now]
+        for k in expired:
+            _reset_tokens.pop(k, None)
+        _reset_tokens[token_hash] = {
+            'user_id': user_id,
+            'expires_at': expires_at,
+        }
+    return token
+
+
+def verify_and_consume_reset_token(token):
+    if not token or not isinstance(token, str):
+        return None
+    token_hash = hashlib.sha256(token.strip().encode('utf-8')).hexdigest()
+    with _reset_lock:
+        info = _reset_tokens.get(token_hash)
+        if not info:
+            return None
+        if info['expires_at'] < datetime.now():
+            _reset_tokens.pop(token_hash, None)
+            return None
+        _reset_tokens.pop(token_hash, None)
+        return info['user_id']
+
+
+def update_user_password(user_id, new_password):
+    hashed = hash_password(new_password)
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                'UPDATE userTbl SET password = %s, updated_at = CURRENT_TIMESTAMP WHERE userid = %s',
+                (hashed, user_id),
+            )
+    finally:
+        conn.close()
+
