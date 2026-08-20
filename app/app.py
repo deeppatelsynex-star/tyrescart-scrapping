@@ -309,8 +309,6 @@ def logout():
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password_page():
     if request.method == 'GET':
-        if 'user_id' in session:
-            return redirect('/')
         return render_template('forgot_password.html')
 
     data = request.get_json(silent=True) or request.form or {}
@@ -345,8 +343,6 @@ def forgot_password_page():
 @app.route('/reset-password', methods=['GET', 'POST'])
 def reset_password_page():
     if request.method == 'GET':
-        if 'user_id' in session:
-            return redirect('/')
         return render_template('reset_password.html')
 
     data = request.get_json(silent=True) or request.form or {}
