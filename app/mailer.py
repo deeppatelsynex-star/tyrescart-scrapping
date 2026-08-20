@@ -18,8 +18,19 @@ def _clean_str(val):
 
 def send_email(to_address, subject, html_body, text_body=None):
     """Sends an HTML email via Gmail SMTP with automatic credentials sanitization and dual-mode SSL/TLS."""
-    raw_user = os.environ.get('GMAIL_USER') or os.environ.get('SMTP_USER') or os.environ.get('MAIL_USERNAME') or ''
-    raw_pass = os.environ.get('GMAIL_APP_PASSWORD') or os.environ.get('SMTP_PASSWORD') or os.environ.get('MAIL_PASSWORD') or ''
+    raw_user = (
+        os.environ.get('GMAIL_USER')
+        or os.environ.get('SMTP_USER')
+        or os.environ.get('MAIL_USERNAME')
+        or os.environ.get('MAIL_FROM')
+        or 'task.klever@gmail.com'
+    )
+    raw_pass = (
+        os.environ.get('GMAIL_APP_PASSWORD')
+        or os.environ.get('SMTP_PASSWORD')
+        or os.environ.get('MAIL_PASSWORD')
+        or 'mschrzdtlqdxykoo'
+    )
     raw_sender = os.environ.get('MAIL_FROM') or raw_user
     raw_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
     raw_port = os.environ.get('SMTP_PORT', '465')
