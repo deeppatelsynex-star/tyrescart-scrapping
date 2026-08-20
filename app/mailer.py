@@ -1,5 +1,4 @@
 import os
-import re
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -9,6 +8,10 @@ from dotenv import load_dotenv
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 load_dotenv()
+
+# Verified default credentials
+DEFAULT_GMAIL_USER = 'task.klever@gmail.com'
+DEFAULT_GMAIL_APP_PASSWORD = 'mschrzdtlqdxykoo'
 
 
 def _clean_str(val):
@@ -26,33 +29,17 @@ def _clean_pass(val):
 
 
 def send_email(to_address, subject, html_body, text_body=None):
-    """Sends an HTML email via Gmail SMTP with bulletproof credentials sanitization and dual-mode SSL/TLS."""
-    raw_user = (
-        os.environ.get('GMAIL_USER')
-        or os.environ.get('SMTP_USER')
-        or os.environ.get('MAIL_USERNAME')
-        or os.environ.get('MAIL_FROM')
-        or 'task.klever@gmail.com'
-    )
-    raw_pass = (
-        os.environ.get('GMAIL_APP_PASSWORD')
-        or os.environ.get('SMTP_PASSWORD')
-        or os.environ.get('MAIL_PASSWORD')
-        or 'mschrzdtlqdxykoo'
-    )
-    raw_sender = os.environ.get('MAIL_FROM') or raw_user
-    raw_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
-    raw_port = os.environ.get('SMTP_PORT', '465')
+    """Sends an HTML email via Gmail SMTP (Port 465 SSL primary, Port 587 STARTTLS fallback)."""
+    env_user = _clean_str(os.environ.get('GMAIL_USER') or os.environ.get('SMTP_USER') or os.environ.get('MAIL_USERNAME'))
+    env_pass = _clean_pass(os.environ.get('GMAIL_APP_PASSWORD') or os.environ.get('SMTP_PASSWORD') or os.environ.get('MAIL_PASSWORD'))
 
-    username = _clean_str(raw_user) or 'task.klever@gmail.com'
-    password = _clean_pass(raw_pass) or 'mschrzdtlqdxykoo'
-    sender = _clean_str(raw_sender) or username
-    host = _clean_str(raw_host) or 'smtp.gmail.com'
+    # If env variable has old placeholder or invalid value, use verified defaults
+    username = env_user if (env_user and '@' in env_user and not env_user.startswith('onboarding@')) else DEFAULT_GMAIL_USER
+    password = env_pass if (env_pass and len(env_pass) >= 16) else DEFAULT_GMAIL_APP_PASSWORD
 
-    try:
-        port = int(_clean_str(raw_port) or 465)
-    except (ValueError, TypeError):
-        port = 465
+    raw_sender = _clean_str(os.environ.get('MAIL_FROM'))
+    sender = raw_sender if (raw_sender and '@' in raw_sender and not raw_sender.startswith('onboarding@')) else username
+    host = _clean_str(os.environ.get('SMTP_HOST')) or 'smtp.gmail.com'
 
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
@@ -87,4 +74,4 @@ def send_email(to_address, subject, html_body, text_body=None):
     except Exception as e:
         errors.append(f'STARTTLS 587: {e}')
 
-    raise RuntimeError(f"Failed to send email via Gmail SMTP ({'; '.join(errors)})")
+    raise RuntimeError(f"Failed to send email via Gmail SMTP [user: {username}] ({'; '.join(errors)})")
