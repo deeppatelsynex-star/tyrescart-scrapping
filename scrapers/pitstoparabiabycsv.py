@@ -1,345 +1,295 @@
-# MUST be first
-
-# asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
-# from twisted.internet import asyncioreactor
-# asyncioreactor.install()
-
-import re
-import os
-import sys
 import csv
+import os
+import re
+import sys
+import time
 from datetime import datetime
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from curl_cffi import requests
+from parsel import Selector
+import openpyxl
 
-from scrapy import Spider, Request, Selector # type: ignore
+# =========================
+# OUTPUT & INPUT SETUP
+# =========================
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TODAY = datetime.now().strftime("%d-%m-%Y")
+
+OUTPUT_FILE = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
+    BASE_DIR, f"pitstoparabia_data_{TODAY}.xlsx"
+)
+CSV_FILE = sys.argv[2] if len(sys.argv) > 2 else os.path.join(
+    BASE_DIR, "testurls.csv"
+)
+
+# Optional Proxy from environment
+PROXY = os.environ.get('SCRAPER_PROXY') or None
+
+HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Sec-Ch-Ua": '"Not A(Brand";v="8", "Chromium";v="131", "Google Chrome";v="131"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
+}
 
 
-class TyreScraper(Spider):
-    name = "pitstoparabia"
+def emit_status(url, status, parent=None, url_type=None):
+    """Protocol for dashboard live progress."""
+    print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}", flush=True)
 
-    # =========================
-    # OUTPUT FILE
-    # =========================
-    # A per-run output path can be passed as the first CLI arg so concurrent
-    # runs (one per user session) don't overwrite each other's file.
-    # This script lives in scrapers/, but its default output/CSV paths stay
-    # anchored to the project root (one level up) to match where app.py and
-    # testurls.csv actually live.
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    today = datetime.now().strftime("%d-%m-%Y")
 
-    output_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
-        base_dir,
-        f"pitstoparabia_data_{today}.xlsx"
-    )
+def normalise_url(url):
+    return (url or '').split('#', 1)[0].rstrip('/')
 
-    # =========================
-    # CSV FILE
-    # =========================
-    csv_file = sys.argv[2] if len(sys.argv) > 2 else os.path.join(
-        base_dir,
-        "testurls.csv"
-    )
 
-    # =========================
-    # SETTINGS
-    # =========================
-    custom_settings = {
+def clean_text_list(texts):
+    return [t.strip() for t in texts if t and t.strip()]
 
-        # XLSX Export
-        "FEED_EXPORTERS": {
-            "xlsx": "scrapy_xlsx.XlsxItemExporter"
-        },
-        "COOKIES_ENABLED": True,
-        "FEEDS": {
-            output_file: {
-                "format": "xlsx",
-                "encoding": "utf8",
-                "store_empty": False,
-            }
-        },
 
-        "DOWNLOAD_DELAY": 0.5,
-        "CONCURRENT_REQUESTS": 3,
+def get_sel_text(selector_list):
+    results = []
+    for sel in selector_list:
+        texts = sel.xpath('.//text()[not(parent::script) and not(parent::style)]').getall()
+        results.extend(clean_text_list(texts))
+    return results
 
-        "LOG_LEVEL": "INFO",
-    }
 
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/127.0.0.0 Safari/537.36"
-        ),
-        "Accept-Language": "en-US,en;q=0.9",
-    }
+class PitstopArabiaScraper:
+    def __init__(self, output_file, input_csv, max_workers=5):
+        self.output_file = output_file
+        self.input_csv = input_csv
+        self.max_workers = max_workers
+        self.seen_urls = set()
+        self.seen_product_keys = set()
+        self.scraped_items = []
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.pending_requests = {}
-        self.failed_sources = set()
-        self.seen_listing_pages = set()
-        self.seen_detail_urls = set()
-        self.exported_product_urls = set()
+    def fetch(self, url, referer=None, retries=3):
+        headers = HEADERS.copy()
+        if referer:
+            headers['Referer'] = referer
 
-    def emit_status(self, url, status, parent=None, url_type=None):
-        print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}")
+        for attempt in range(retries):
+            impersonate = 'chrome131' if attempt % 2 == 0 else 'safari17_0'
+            try:
+                kwargs = {
+                    'headers': headers,
+                    'impersonate': impersonate,
+                    'timeout': 20,
+                }
+                if PROXY:
+                    kwargs['proxies'] = {'http': PROXY, 'https': PROXY}
 
-    @staticmethod
-    def normalise_url(url):
-        """Use a consistent key while preserving meaningful query parameters."""
-        return (url or '').split('#', 1)[0].rstrip('/')
+                resp = requests.get(url, **kwargs)
+                if resp.status_code == 200:
+                    return resp
+                elif resp.status_code == 403:
+                    time.sleep(1.5 * (attempt + 1))
+                else:
+                    time.sleep(1.0)
+            except Exception:
+                time.sleep(1.5 * (attempt + 1))
+        return None
 
-    def source_url(self, response_or_failure):
-        request = getattr(response_or_failure, 'request', response_or_failure)
-        return request.meta.get('source_url', request.url)
+    def parse_product_detail(self, url, html, source_url):
+        emit_status(url, 'running')
+        sel = Selector(text=html)
 
-    def display_url(self, response_or_failure):
-        request = getattr(response_or_failure, 'request', response_or_failure)
-        return request.meta.get('display_url', request.url)
+        # Check in-stock
+        add_to_cart_btn = sel.css('button#product-addtocart-button, div.actions.add-to-cart button, button.tocart, button.add-to-cart')
+        out_of_stock_div = sel.css('div.stock.unavailable, .stock.unavailable')
 
-    def make_tracked_request(self, url, source_url, callback):
-        self.pending_requests[source_url] = self.pending_requests.get(source_url, 0) + 1
-        headers = self.headers.copy()
-        headers['Referer'] = source_url
-        return Request(
-            url=url,
-            callback=callback,
-            errback=self.request_failed,
-            headers=headers,
-            meta={'source_url': source_url, 'display_url': url},
-            dont_filter=True,
-            
-        )
+        if add_to_cart_btn:
+            in_stock = 'Yes'
+        elif out_of_stock_div:
+            in_stock = 'No'
+        else:
+            txt = ' '.join(sel.css('div.stock::text, .stock::text').getall()).lower()
+            in_stock = 'No' if ('out of stock' in txt or 'unavailable' in txt) else ''
 
-    def mark_source_running(self, source_url):
-        self.emit_status(source_url, 'running')
+        if in_stock != 'Yes':
+            emit_status(url, 'done')
+            return None
 
-    def finish_source_request(self, source_url):
-        remaining = self.pending_requests.get(source_url, 1) - 1
-        if remaining > 0:
-            self.pending_requests[source_url] = remaining
+        brand_val = (sel.css('.brand a::attr(title)').get() or '').strip()
+        raw_name = (sel.css('h1[itemprop="name"]::text').get() or '').strip()
+
+        item = OrderedDict()
+        item['Sku'] = (sel.css('.sku::text').get() or '').strip()
+        item['Product Name'] = raw_name.replace(brand_val, '').replace('  ', '').strip()
+        item['Brand'] = brand_val
+        item['InStock'] = in_stock
+        item['Size'] = (sel.css('.size_block span:contains("Size:") + b::text').get() or '').strip().replace('  ', '').replace('/None', '')
+        item['Serv. Desc'] = ''.join([t.strip() for t in sel.css('span:contains("Serv. Desc")').xpath('parent::*/text()').getall() if t.strip()]).replace(' ', '')
+        item['Year'] = (sel.css('[title="Year of manufacture"]::text').get() or '').strip()
+        item['Country'] = ''.join([t.strip() for t in sel.css('span:contains("Country")').xpath('parent::*/text()').getall() if t.strip()])
+        item['Tyre Type'] = (sel.css('.detail_left .v_type::attr(alt)').get() or '').strip().replace('Run Flat', 'Runflat')
+        item['Tyre Marking'] = (sel.css('[itemprop="name"] .part_no::text').get() or '').strip()
+        item['Price'] = (sel.css('[class="product-info-price product_price"] .price::text').get() or '').strip().replace('AED ', '')
+        item['Set Price'] = (sel.css('.set_price .price::text').get() or '').strip().replace('AED ', '')
+        item['Promo Text'] = ' | '.join(get_sel_text(sel.css('.offer_block_inner')))
+        item['Promo Code'] = (sel.css('.promo_cnt b::text').get() or '').strip()
+        item['Vehicle Type'] = (sel.css('.product_thumbnail_container .v_type::attr(alt)').get() or '').strip()
+        item['Warranty'] = ' '.join(get_sel_text(sel.css('.warranty span')))
+        item['Sidewall Style'] = (sel.css('span:contains("Sidewall Style")').xpath('parent::li/text()').get() or '').strip()
+
+        try:
+            item['UTQG'] = ' '.join(get_sel_text(sel.css('span:contains("UTQG")').xpath('parent::*/span'))[1:])
+        except Exception:
+            item['UTQG'] = ' '.join([t.strip() for t in sel.css('span:contains("UTQG")').xpath('parent::*/span/text()').getall()][1:])
+
+        item['Fuel Efficiency Rating'] = (sel.css('.tyres_labels .tyre_label::attr(title)').re_first(r'Fuel Efficiency Rating:(.+)') or '').strip()
+        item['Wet Grip Rating'] = (sel.css('.tyres_labels .tyre_label::attr(title)').re_first(r'Wet Grip Rating:(.+)') or '').strip()
+        item['External Noise'] = (sel.css('.tyres_labels .tyre_label::attr(title)').re_first(r'External Noise:(.+)') or '').strip()
+
+        images = sel.css('[property="og:image"]::attr(content)').getall()
+        item['Image'] = images[-1] if images else ''
+        item['Source'] = url
+
+        emit_status(url, 'done')
+        return item
+
+    def process_source_url(self, source_url):
+        emit_status(source_url, 'running')
+        resp = self.fetch(source_url)
+        if not resp:
+            emit_status(source_url, 'blocked')
             return
 
-        self.pending_requests.pop(source_url, None)
-        status = 'blocked' if source_url in self.failed_sources else 'done'
-        self.emit_status(source_url, status)
-
-    def request_failed(self, failure):
-        source_url = self.source_url(failure)
-        self.emit_status(self.display_url(failure), 'blocked')
-        self.failed_sources.add(source_url)
-        self.logger.error('Request failed for %s: %s', failure.request.url, failure.value)
-        self.finish_source_request(source_url)
-
-    # =========================
-    # START
-    # =========================
-    async def start(self):
-        submitted_urls = set()
-        with open(self.csv_file, newline='', encoding='utf-8') as f:
-            reader = csv.reader(f)
-            for row in reader:
-                if not row:
-                    continue
-                source_url = row[0].strip()
-                normalised_source_url = self.normalise_url(source_url)
-
-                if not source_url.startswith("http") or normalised_source_url in submitted_urls:
-                    continue
-
-                submitted_urls.add(normalised_source_url)
-                # An explicitly submitted product URL is already scheduled below,
-                # so a listing page must not schedule it a second time.
-                self.seen_detail_urls.add(normalised_source_url)
-                self.emit_status(source_url, 'pending', url_type='root')
-
-                yield self.make_tracked_request(source_url, source_url, self.parse_input_url)
-    
-    # async def start(self):
-
-    #     # yield Request(
-    #     #     "https://www.pitstoparabia.com/en/tyres/265-35-r18",
-    #     #     callback=self.parse_listing,
-    #     #     headers=self.headers,
-    #     #     dont_filter=True,
-    #     # )
-    #     yield Request(
-    #         url='https://www.pitstoparabia.com/en/tyres/265-35-r18',
-    #         callback=self.parse_listing,
-    #         headers=self.headers,
-    #         dont_filter=True
-        # )
-    
-    # =========================
-    # PARSE INPUT URL
-    # =========================
-    def parse_input_url(self, response):
-        is_product_page = bool(response.css(
-            'h1[itemprop="name"], .product-info-price, #product-addtocart-button'
-        ).get())
+        sel = Selector(text=resp.text)
+        is_product_page = bool(sel.css('h1[itemprop="name"], .product-info-price, #product-addtocart-button').get())
 
         if is_product_page:
-            yield from self.parse_detail(response)
-        else:
-            yield from self.parse_listing(response)
+            item = self.parse_product_detail(source_url, resp.text, source_url)
+            if item:
+                self.scraped_items.append(item)
+            emit_status(source_url, 'done')
+            return
 
-    # =========================
-    # PARSE LISTING PAGE
-    # =========================
-    def parse_listing(self, response):
-        source_url = self.source_url(response)
-        display_url = self.display_url(response)
-        request_blocked = False
-        self.emit_status(display_url, 'running')
+        # Listing Crawling with Pagination
+        current_page_url = source_url
+        current_html = resp.text
+        listing_pages_seen = set()
 
-        try:
-            if response.status == 403:
-                request_blocked = True
-                self.failed_sources.add(source_url)
-                self.logger.warning('Blocked listing URL %s', response.url)
-                self.emit_status(display_url, 'blocked')
-                return
+        while current_page_url:
+            norm_page = normalise_url(current_page_url)
+            if norm_page in listing_pages_seen:
+                break
+            listing_pages_seen.add(norm_page)
 
-            self.seen_listing_pages.add((source_url, self.normalise_url(response.url)))
-            product_links = response.css('a.product-item-link::attr(href)').getall()
-            self.logger.info('Found %s products for %s', len(product_links), source_url)
+            page_sel = Selector(text=current_html)
+            product_links = page_sel.css('a.product-item-link::attr(href)').getall()
 
+            # Process product links in parallel
+            product_tasks = []
             for link in product_links:
-                product_url = response.urljoin(link)
-                product_key = self.normalise_url(product_url)
-                if not product_key or product_key in self.seen_detail_urls:
+                if not link or not link.strip():
                     continue
+                link = link.strip()
+                if link.startswith('http'):
+                    full_product_url = link
+                elif link.startswith('/'):
+                    full_product_url = f"https://www.pitstoparabia.com{link}"
+                else:
+                    full_product_url = f"https://www.pitstoparabia.com/en/tyres/{link}"
 
-                self.seen_detail_urls.add(product_key)
-                self.emit_status(product_url, 'pending', parent=source_url, url_type='product')
-                yield self.make_tracked_request(product_url, source_url, self.parse_detail)
+                prod_key = normalise_url(full_product_url)
+                if prod_key not in self.seen_product_keys:
+                    self.seen_product_keys.add(prod_key)
+                    emit_status(full_product_url, 'pending', parent=source_url, url_type='product')
+                    product_tasks.append(full_product_url)
 
-            next_page = response.css(
-                'a.next::attr(href), .pages-item-next a::attr(href), a.action.next::attr(href)'
-            ).get()
+            # Scrape product detail pages
+            if product_tasks:
+                with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                    future_to_url = {
+                        executor.submit(self.fetch, purl, current_page_url): purl for purl in product_tasks
+                    }
+                    for future in as_completed(future_to_url):
+                        purl = future_to_url[future]
+                        try:
+                            presp = future.result()
+                            if presp and presp.status_code == 200:
+                                item = self.parse_product_detail(purl, presp.text, source_url)
+                                if item:
+                                    self.scraped_items.append(item)
+                            else:
+                                emit_status(purl, 'blocked')
+                        except Exception:
+                            emit_status(purl, 'blocked')
+
+            # Find next page
+            next_page = page_sel.css('a.next::attr(href), .pages-item-next a::attr(href), a.action.next::attr(href)').get()
             if next_page:
-                next_page_url = response.urljoin(next_page)
-                page_key = (source_url, self.normalise_url(next_page_url))
-                if page_key not in self.seen_listing_pages:
-                    self.seen_listing_pages.add(page_key)
-                    self.emit_status(next_page_url, 'pending', parent=source_url, url_type='listing')
-                    yield self.make_tracked_request(next_page_url, source_url, self.parse_listing)
-        finally:
-            if display_url != source_url and not request_blocked:
-                self.emit_status(display_url, 'done')
-            self.finish_source_request(source_url)
-
-    # =========================
-    # PRODUCT DETAIL
-    # =========================
-    def parse_detail(self, response):
-        source_url = self.source_url(response)
-        display_url = self.display_url(response)
-        request_blocked = False
-        self.emit_status(display_url, 'running')
-
-        try:
-            if response.status == 403:
-                request_blocked = True
-                self.failed_sources.add(source_url)
-                self.logger.warning('Blocked product URL %s', response.url)
-                self.emit_status(display_url, 'blocked')
-                return
-
-            product_key = self.normalise_url(response.url)
-            if product_key in self.exported_product_urls:
-                return
-            self.exported_product_urls.add(product_key)
-
-            # If an Add to Cart button exists with id "product-addtocart-button" or a tocart/add-to-cart class, we assume in-stock.
-            add_to_cart_btn = response.css('button#product-addtocart-button, div.actions.add-to-cart button, button.tocart, button.add-to-cart')
-            out_of_stock_div = response.css('div.stock.unavailable, .stock.unavailable')
-
-            if add_to_cart_btn:
-                InStock = 'Yes'
-            elif out_of_stock_div:
-                InStock = 'No'
+                if not next_page.startswith('http'):
+                    next_page = f"https://www.pitstoparabia.com{next_page}" if next_page.startswith('/') else f"https://www.pitstoparabia.com/en/tyres/{next_page}"
+                
+                emit_status(next_page, 'pending', parent=source_url, url_type='listing')
+                emit_status(next_page, 'running')
+                next_resp = self.fetch(next_page, referer=current_page_url)
+                if next_resp and next_resp.status_code == 200:
+                    emit_status(next_page, 'done')
+                    current_page_url = next_page
+                    current_html = next_resp.text
+                else:
+                    emit_status(next_page, 'blocked')
+                    break
             else:
-                # fallback: if there's a stock text containing "out of stock"
-                txt = ' '.join(response.css('div.stock::text, .stock::text').getall()).lower()
-                InStock = 'No' if 'out of stock' in txt or 'unavailable' in txt else ''
+                break
 
-            if InStock != 'Yes':
-                return
+        emit_status(source_url, 'done')
 
-            brand_val = response.css('.brand a::attr(title)').get('').strip()
-            item = OrderedDict()
-            raw_name = response.css('h1[itemprop="name"]::text').get('').strip()
-            item['Sku'] = response.css('.sku::text').get('').strip()
-            item['Product Name'] = raw_name.replace(brand_val, '').replace('  ', '').strip()
-            item['Brand'] = brand_val
-            item['InStock'] = InStock
-            item['Size'] = response.css('.size_block span:contains("Size:") + b::text').get('').strip().replace('  ', '').replace('/None', '')
-            item['Serv. Desc'] = ''.join([t.strip() for t in response.css('span:contains("Serv. Desc")').xpath('parent::*/text()').getall() if t.strip()]).replace(' ', '')
-            item['Year'] = response.css('[title="Year of manufacture"]::text').get('').strip()
-            item['Country'] = ''.join([t.strip() for t in response.css('span:contains("Country")').xpath('parent::*/text()').getall() if t.strip()])
-            item['Tyre Type'] = response.css('.detail_left .v_type::attr(alt)').get('').strip().replace('Run Flat', 'Runflat')
-            item['Tyre Marking'] = response.css('[itemprop="name"] .part_no::text').get('').strip()
-            item['Price'] = response.css('[class="product-info-price product_price"] .price::text').get('').strip().replace('AED ', '')
-            item['Set Price'] = response.css('.set_price .price::text').get('').strip().replace('AED ', '')
-            item['Promo Text'] = ' | '.join(self.get_sel_text(response.css('.offer_block_inner')))
-            item['Promo Code'] = response.css('.promo_cnt b::text').get('').strip()
-            item['Vehicle Type'] = response.css('.product_thumbnail_container .v_type::attr(alt)').get('').strip()
-            item['Warranty'] = ' '.join(self.get_sel_text(response.css('.warranty span')))
-            item['Sidewall Style'] = response.css('span:contains("Sidewall Style")').xpath('parent::li/text()').get('').strip()
+    def run(self):
+        seed_urls = []
+        if os.path.exists(self.input_csv):
+            with open(self.input_csv, 'r', encoding='utf-8', errors='ignore') as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    if row and row[0].strip().startswith('http'):
+                        url = row[0].strip()
+                        norm = normalise_url(url)
+                        if norm not in self.seen_urls:
+                            self.seen_urls.add(norm)
+                            seed_urls.append(url)
 
-            try:
-                item['UTQG'] = ' '.join(self.get_sel_text(response.css('span:contains("UTQG")').xpath('parent::*/span/text()'))[1:])
-            except Exception:
-                item['UTQG'] = ' '.join([t.strip() for t in response.css('span:contains("UTQG")').xpath('parent::*/span/text()').getall()][1:])
+        if not seed_urls:
+            print("No valid URLs found in CSV.")
+            return
 
-            item['Fuel Efficiency Rating'] = (response.css('.tyres_labels .tyre_label::attr(title)').re_first('Fuel Efficiency Rating:(.+)') or '').strip()
-            item['Wet Grip Rating'] = (response.css('.tyres_labels .tyre_label::attr(title)').re_first('Wet Grip Rating:(.+)') or '').strip()
-            item['External Noise'] = (response.css('.tyres_labels .tyre_label::attr(title)').re_first('External Noise:(.+)') or '').strip()
+        for url in seed_urls:
+            emit_status(url, 'pending', url_type='root')
 
-            images = response.css('[property="og:image"]::attr(content)').getall()
-            item['Image'] = images[-1] if images else ''
-            item['Source'] = response.url
+        for url in seed_urls:
+            self.process_source_url(url)
 
-            yield item
-        finally:
-            if display_url != source_url and not request_blocked:
-                self.emit_status(display_url, 'done')
-            self.finish_source_request(source_url)
+        # Write to Excel
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Products"
 
-    def get_sel_text(self, selector, dont_skip=None):
-        dont_skip = dont_skip or []
-        assert isinstance(dont_skip, list), "'dont_skip' must be a 'list' or None type"
+        headers = [
+            'Sku', 'Product Name', 'Brand', 'InStock', 'Size', 'Serv. Desc',
+            'Year', 'Country', 'Tyre Type', 'Tyre Marking', 'Price', 'Set Price',
+            'Promo Text', 'Promo Code', 'Vehicle Type', 'Warranty', 'Sidewall Style',
+            'UTQG', 'Fuel Efficiency Rating', 'Wet Grip Rating', 'External Noise',
+            'Image', 'Source'
+        ]
+        ws.append(headers)
 
-        required_tags = ['a', 'i', 'u', 'strong', 'b', 'em', 'span', 'sup', 'sub', 'font']
-        required_tags.extend(dont_skip)
+        for item in self.scraped_items:
+            ws.append([item.get(h, '') for h in headers])
 
-        results = []
-        for text in selector.getall():
-            for tag in required_tags:
-                text = re.sub(r'<\s*%s>' % tag, '', text)
-                text = re.sub(r'</\s*%s>' % tag, '', text)
-                text = re.sub(r'<\s*%s[^\w][^>]*>' % tag, '', text)
-                text = re.sub(r'</\s*%s[^\w]\s*>' % tag, '', text)
+        os.makedirs(os.path.dirname(os.path.abspath(self.output_file)), exist_ok=True)
+        wb.save(self.output_file)
+        print(f"Scraping completed. Saved {len(self.scraped_items)} items to {self.output_file}")
 
-            text = text.replace('\r\n', ' ')
-            text = re.sub(r'<!--.*?-->', '', text, re.S)
-            sel = Selector(text=text)
 
-            all_texts = sel.xpath(''.join([
-                'descendant::text()/parent::*[name()!="td"]',
-                '[name()!="script"][name()!="style"]/text()'
-            ])).getall()
-            all_texts = [x.strip() for x in all_texts]
-            results += all_texts
-
-        results = list(filter(None, results))
-        return results
-from scrapy.crawler import CrawlerProcess
-
-if __name__ == "__main__":
-    process = CrawlerProcess(TyreScraper.custom_settings)
-    process.crawl(TyreScraper)
-    process.start()
+if __name__ == '__main__':
+    scraper = PitstopArabiaScraper(OUTPUT_FILE, CSV_FILE)
+    scraper.run()
