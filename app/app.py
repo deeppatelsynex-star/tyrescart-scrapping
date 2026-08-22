@@ -183,6 +183,7 @@ def client_root_placeholder():
 
 @app.route('/tcsadmin/login', methods=['GET'])
 @app.route('/tcsadmin', methods=['GET'])
+@app.route('/tcsadmin/', methods=['GET'])
 @app.route('/login', methods=['GET'])
 def login_page():
     if 'user_id' in session:
@@ -190,7 +191,6 @@ def login_page():
     return render_template('login.html')
 
 
-@app.route('/tcsadmin/')
 @app.route('/tcsadmin/dashboard')
 @app.route('/tcsadmin/scrapers')
 @app.route('/tcsadmin/docs/scraper')
