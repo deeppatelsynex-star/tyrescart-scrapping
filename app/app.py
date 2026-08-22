@@ -190,40 +190,6 @@ def login_page():
     return render_template('login.html')
 
 
-@app.route('/login', methods=['GET'])
-def redirect_login():
-    return redirect('/tcsadmin/login')
-
-
-@app.route('/scrapers')
-@app.route('/scraper')
-@app.route('/files')
-def redirect_scrapers():
-    return redirect('/tcsadmin/docs/scraper')
-
-
-@app.route('/dashboard')
-def redirect_dashboard():
-    return redirect('/tcsadmin/dashboard')
-
-
-@app.route('/reports')
-@app.route('/logs')
-def redirect_reports():
-    return redirect('/tcsadmin/reports')
-
-
-@app.route('/admin')
-@app.route('/Admin')
-def redirect_admin():
-    return redirect('/tcsadmin/Admin')
-
-
-@app.route('/trash')
-def redirect_trash():
-    return redirect('/tcsadmin/trash')
-
-
 @app.route('/tcsadmin/dashboard')
 @login_required_page
 def dashboard_page():
@@ -316,7 +282,6 @@ def _clear_login_failures(email):
 
 @app.route('/tcsadmin/login', methods=['POST'])
 @app.route('/tcsadmin', methods=['POST'])
-@app.route('/login', methods=['POST'])
 def login_submit():
     data = request.get_json(silent=True) or request.form
     email = (data.get('email') or '').strip()
@@ -356,14 +321,12 @@ def login_submit():
 
 
 @app.route('/tcsadmin/logout', methods=['POST'])
-@app.route('/logout', methods=['POST'])
 def logout():
     session.clear()
     return jsonify({'redirect': '/tcsadmin/login'})
 
 
 @app.route('/tcsadmin/forgot-password', methods=['GET', 'POST'])
-@app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password_page():
     if request.method == 'GET':
         return render_template('forgot_password.html')
@@ -398,7 +361,6 @@ def forgot_password_page():
 
 
 @app.route('/tcsadmin/reset-password', methods=['GET', 'POST'])
-@app.route('/reset-password', methods=['GET', 'POST'])
 def reset_password_page():
     if request.method == 'GET':
         return render_template('reset_password.html')
