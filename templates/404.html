@@ -82,7 +82,7 @@
       
       <!-- Brand Logo -->
       <div class="flex flex-col items-center">
-        <a href="/login" class="inline-flex items-center gap-2.5 mb-2 hover:opacity-90 transition">
+        <a href="/tcsadmin/login" class="inline-flex items-center gap-2.5 mb-2 hover:opacity-90 transition">
           <img src="/static/assets/images/favicon-color.webp" alt="TyresCart" class="w-12 h-12 rounded-2xl shadow-sm" />
         </a>
         <h2 class="text-xl font-bold text-slate-900 tracking-tight">TyresCart</h2>
@@ -107,14 +107,14 @@
         </div>
         <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Looking for something?</h1>
         <p class="text-xs sm:text-sm text-slate-500 leading-relaxed">
-          The page <code class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-rose-600 font-mono font-bold">{{ requested_path or request.path }}</code> doesn't exist or requires you to log in first.
+          The page <code class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-rose-600 font-mono font-bold">{{ requested_path or request.path }}</code> is not found or has been moved.
         </p>
       </div>
 
       <!-- Action Buttons -->
       <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-        <a href="/login" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition cursor-pointer">
-          Sign In to Account
+        <a href="/tcsadmin/login" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition cursor-pointer">
+          Sign In to Admin
         </a>
         <button type="button" onclick="window.history.back()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition cursor-pointer">
           Go Back
