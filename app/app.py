@@ -190,18 +190,10 @@ def login_page():
     return render_template('login.html')
 
 
-@app.route('/tcsadmin/dashboard')
-@login_required_page
-def dashboard_page():
-    return render_template('Dashboard.html', page='Dashboard')
-
-
 @app.route('/tcsadmin/docs/scraper')
 @app.route('/tcsadmin/scrapers')
 @app.route('/tcsadmin/scraper')
 @app.route('/tcsadmin/files')
-@app.route('/tcsadmin/products')
-@app.route('/tcsadmin/brands')
 @login_required_page
 def files_page():
     return render_template('files.html', page='files')
