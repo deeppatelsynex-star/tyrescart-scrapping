@@ -15,6 +15,27 @@ Scraper Live Progress
 </a>
 {% endblock HeaderActions %}
 
+{% block ExtraHead %}
+<style>
+  .stat-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  @media (max-width: 1024px) {
+    .stat-cards-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 640px) {
+    .stat-cards-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+  }
+</style>
+{% endblock ExtraHead %}
+
 {% block MainContent %}
 <div id="scraper-dashboard" class="content flex-1 overflow-auto p-3 sm:p-6 pb-24 sm:pb-6 w-full">
   <div class="w-full space-y-4 sm:space-y-5 min-h-full">
@@ -90,7 +111,7 @@ Scraper Live Progress
       <div id="completion-summary" class="hidden dcard p-4 sm:p-5"></div>
 
       <!-- All 6 Stat Cards in a Single Row -->
-      <div class="w-full" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem;">
+      <div class="stat-cards-grid w-full">
         <!-- 1. Total URLs -->
         <div class="dcard stat-card p-3">
           <div class="flex items-center gap-1.5 mb-1">
