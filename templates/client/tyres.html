@@ -1,0 +1,232 @@
+{% extends "client/base.html" %}
+
+{% block Title %}All Tyres in UAE — Buy Car, SUV & 4x4 Tyres | TyresCart{% endblock Title %}
+
+{% block Content %}
+<div class="bg-slate-100 py-4 border-b border-slate-200 text-xs">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 text-slate-500">
+    <a href="/" class="hover:text-emerald-600 transition">Home</a>
+    <span>/</span>
+    <span class="text-slate-900 font-bold">Tyres Catalog</span>
+    {% if current_filters.brand %}
+    <span>/</span>
+    <span class="text-emerald-600 font-bold">{{ current_filters.brand }}</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+    
+    <!-- Filter Sidebar (Desktop & Mobile) -->
+    <aside class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-6 lg:sticky lg:top-24">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+          <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          Filter Tyres
+        </h3>
+        <a href="/tyres" class="text-xs font-semibold text-rose-600 hover:underline">Reset All</a>
+      </div>
+
+      <form action="/tyres" method="GET" class="space-y-5">
+        
+        <!-- Search Keyword -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Keyword Search</label>
+          <input type="text" name="q" value="{{ current_filters.query or '' }}" placeholder="Model, pattern, size..." class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+
+        <!-- Tyre Brand -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Brand</label>
+          <select name="brand" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+            <option value="">All Brands</option>
+            {% for b in brands %}
+            <option value="{{ b.name }}" {% if current_filters.brand == b.name %}selected{% endif %}>{{ b.name }} ({{ b.count }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Size Selectors -->
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Width</label>
+            <select name="width" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs bg-slate-50">
+              <option value="">Any</option>
+              {% for w in [155, 165, 175, 185, 195, 205, 215, 225, 235, 245, 255, 265, 275, 285, 295, 305] %}
+              <option value="{{ w }}" {% if current_filters.width == w %}selected{% endif %}>{{ w }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Profile</label>
+            <select name="profile" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs bg-slate-50">
+              <option value="">Any</option>
+              {% for p in [30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80] %}
+              <option value="{{ p }}" {% if current_filters.profile == p %}selected{% endif %}>{{ p }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Rim</label>
+            <select name="rim" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs bg-slate-50">
+              <option value="">Any</option>
+              {% for r in [13, 14, 15, 16, 17, 18, 19, 20, 21, 22] %}
+              <option value="{{ r }}" {% if current_filters.rim == r %}selected{% endif %}>R{{ r }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Vehicle Type -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Vehicle Type</label>
+          <select name="vehicle_type" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+            <option value="">All Vehicles</option>
+            <option value="Car" {% if current_filters.vehicle_type == 'Car' %}selected{% endif %}>Passenger Car</option>
+            <option value="SUV" {% if current_filters.vehicle_type == 'SUV' %}selected{% endif %}>SUV & 4x4</option>
+            <option value="Commercial" {% if current_filters.vehicle_type == 'Commercial' %}selected{% endif %}>Van & Commercial</option>
+          </select>
+        </div>
+
+        <!-- Price Range -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Price Range (AED)</label>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="number" name="min_price" value="{{ current_filters.min_price or '' }}" placeholder="Min" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs" />
+            <input type="number" name="max_price" value="{{ current_filters.max_price or '' }}" placeholder="Max" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs" />
+          </div>
+        </div>
+
+        <!-- In Stock Only Toggle -->
+        <div class="flex items-center gap-2 pt-1">
+          <input type="checkbox" id="instock_only" name="instock_only" value="1" {% if current_filters.instock_only %}checked{% endif %} class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+          <label for="instock_only" class="text-xs font-medium text-slate-700 cursor-pointer">In Stock Only</label>
+        </div>
+
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-2.5 px-4 rounded-xl shadow-xs transition text-xs cursor-pointer">
+          Apply Filters
+        </button>
+      </form>
+    </aside>
+
+    <!-- Products Results Grid & Sorting -->
+    <div class="lg:col-span-3 space-y-6">
+      
+      <!-- Top Bar: Results Count + Sort -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+        <div>
+          <span class="text-sm font-bold text-slate-900">Showing {{ result.products|length }} of {{ result.total }} Tyres</span>
+          {% if current_filters.query or current_filters.brand or current_filters.width %}
+          <span class="text-xs text-emerald-600 font-semibold block sm:inline sm:ml-2">(Filtered)</span>
+          {% endif %}
+        </div>
+
+        <form action="/tyres" method="GET" class="flex items-center gap-2">
+          {% for k, v in request.args.items() %}
+            {% if k != 'sort' %}
+            <input type="hidden" name="{{ k }}" value="{{ v }}" />
+            {% endif %}
+          {% endfor %}
+          <label class="text-xs font-bold text-slate-600">Sort By:</label>
+          <select name="sort" onchange="this.form.submit()" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+            <option value="relevance" {% if current_filters.sort == 'relevance' %}selected{% endif %}>Relevance</option>
+            <option value="price_asc" {% if current_filters.sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+            <option value="price_desc" {% if current_filters.sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+            <option value="brand_asc" {% if current_filters.sort == 'brand_asc' %}selected{% endif %}>Brand: A to Z</option>
+            <option value="name_asc" {% if current_filters.sort == 'name_asc' %}selected{% endif %}>Name: A to Z</option>
+          </select>
+        </form>
+      </div>
+
+      <!-- Tyre Cards Grid -->
+      {% if result.products %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for product in result.products %}
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between card-hover relative group">
+          
+          <!-- Top Badges -->
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="text-[10px] font-black uppercase tracking-wider bg-slate-900 text-white px-2 py-0.5 rounded-md">{{ product.brand }}</span>
+            {% if product.instock %}
+            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> In Stock
+            </span>
+            {% else %}
+            <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">Out of Stock</span>
+            {% endif %}
+          </div>
+
+          <!-- Image -->
+          <a href="/tyres/{{ product.sku }}" class="block aspect-square mb-4 overflow-hidden rounded-xl bg-slate-50 flex items-center justify-center p-3">
+            <img src="{{ product.image }}" alt="{{ product.title }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+          </a>
+
+          <!-- Details -->
+          <div class="space-y-1.5 mb-4">
+            <span class="text-xs font-bold text-slate-400 block">{{ product.size }} • {{ product.year }}</span>
+            <a href="/tyres/{{ product.sku }}" class="text-sm font-bold text-slate-900 group-hover:text-emerald-600 line-clamp-2 transition-colors">
+              {{ product.title }}
+            </a>
+          </div>
+
+          <!-- Specs Badges -->
+          <div class="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold text-slate-600 mb-4">
+            <span class="px-2 py-0.5 bg-slate-100 rounded">{{ product.vehicle_type }}</span>
+            <span class="px-2 py-0.5 bg-slate-100 rounded">{{ product.warranty }}</span>
+          </div>
+
+          <!-- Price and Action -->
+          <div class="border-t border-slate-100 pt-3 flex items-center justify-between gap-2 mt-auto">
+            <div>
+              <span class="text-[10px] text-slate-400 block leading-tight">Per Tyre (Inc. VAT)</span>
+              <span class="text-base font-black text-slate-900">{{ product.formatted_price }}</span>
+              {% if product.formatted_set_price %}
+              <span class="text-[10px] text-emerald-600 block font-semibold">Set of 4: {{ product.formatted_set_price }}</span>
+              {% endif %}
+            </div>
+            <a href="/tyres/{{ product.sku }}" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-xs">
+              View Details
+            </a>
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if result.total_pages > 1 %}
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 flex items-center justify-between text-xs font-semibold text-slate-700 shadow-xs">
+        <div>
+          {% if result.has_prev %}
+          <a href="/tyres?page={{ result.page - 1 }}{% for k, v in request.args.items() %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 transition">← Previous</a>
+          {% endif %}
+        </div>
+        <span>Page {{ result.page }} of {{ result.total_pages }}</span>
+        <div>
+          {% if result.has_next %}
+          <a href="/tyres?page={{ result.page + 1 }}{% for k, v in request.args.items() %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 transition">Next →</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <!-- Empty State -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-12 text-center space-y-4">
+        <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+          <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900">No matching tyres found</h3>
+        <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+          Try loosening your filter criteria (e.g. select "All Brands" or clear size filters) to see more results.
+        </p>
+        <a href="/tyres" class="inline-block px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl">Clear All Filters</a>
+      </div>
+      {% endif %}
+
+    </div>
+
+  </div>
+</div>
+{% endblock Content %}

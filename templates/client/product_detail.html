@@ -1,0 +1,155 @@
+{% extends "client/base.html" %}
+
+{% block Title %}{{ product.title }} ({{ product.size }}) — Best Price UAE | TyresCart{% endblock Title %}
+
+{% block Content %}
+<!-- Breadcrumbs -->
+<div class="bg-slate-100 py-3.5 border-b border-slate-200 text-xs">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 text-slate-500">
+    <a href="/" class="hover:text-emerald-600 transition">Home</a>
+    <span>/</span>
+    <a href="/tyres" class="hover:text-emerald-600 transition">Tyres</a>
+    <span>/</span>
+    <a href="/tyres?brand={{ product.brand }}" class="hover:text-emerald-600 transition">{{ product.brand }}</a>
+    <span>/</span>
+    <span class="text-slate-900 font-bold truncate max-w-xs sm:max-w-md">{{ product.title }}</span>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+    
+    <!-- Left Column: Product Image & Performance Badges -->
+    <div class="lg:col-span-6 space-y-6">
+      <div class="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xs relative flex flex-col items-center justify-center min-h-[380px]">
+        <div class="absolute top-4 left-4 flex flex-col gap-1.5">
+          <span class="px-2.5 py-1 bg-slate-900 text-white rounded-lg text-xs font-black uppercase tracking-wider">{{ product.brand }}</span>
+          {% if product.instock %}
+          <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold flex items-center gap-1 border border-emerald-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> In Stock (UAE)
+          </span>
+          {% endif %}
+        </div>
+
+        <img src="{{ product.image }}" alt="{{ product.title }}" class="max-h-80 max-w-full object-contain hover:scale-105 transition-transform duration-300" />
+      </div>
+
+      <!-- EU Tyre Performance Label Metrics -->
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center space-y-1 shadow-xs">
+          <span class="text-[10px] font-bold uppercase text-slate-400 block">Fuel Efficiency</span>
+          <span class="text-xl font-black text-emerald-600">{{ product.fuel_efficiency }}</span>
+          <span class="text-[10px] text-slate-500 block">Low Rolling Resist.</span>
+        </div>
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center space-y-1 shadow-xs">
+          <span class="text-[10px] font-bold uppercase text-slate-400 block">Wet Braking</span>
+          <span class="text-xl font-black text-sky-600">{{ product.wet_grip }}</span>
+          <span class="text-[10px] text-slate-500 block">Short Distance</span>
+        </div>
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center space-y-1 shadow-xs">
+          <span class="text-[10px] font-bold uppercase text-slate-400 block">Noise Level</span>
+          <span class="text-xl font-black text-indigo-600">{{ product.noise }}</span>
+          <span class="text-[10px] text-slate-500 block">Quiet Ride</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Product Info, Pricing & CTA -->
+    <div class="lg:col-span-6 space-y-6">
+      
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full uppercase tracking-wide">{{ product.brand }} Tyres</span>
+          <span class="text-xs text-slate-400">• SKU: {{ product.sku }}</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 leading-snug">{{ product.title }}</h1>
+        <p class="text-base sm:text-lg font-bold text-slate-600 mt-1">Size: <span class="text-emerald-700 font-extrabold">{{ product.size }}</span> {% if product.serv_desc %}({{ product.serv_desc }}){% endif %}</p>
+      </div>
+
+      <!-- Price Box Card -->
+      <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-xl space-y-4">
+        <div class="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-800 pb-4">
+          <div>
+            <span class="text-xs text-slate-400 block">Single Tyre Price (All-Inclusive)</span>
+            <span class="text-3xl font-black text-emerald-400">{{ product.formatted_price }}</span>
+          </div>
+          {% if product.formatted_set_price %}
+          <div class="text-right">
+            <span class="text-xs text-slate-400 block">Set of 4 Tyres</span>
+            <span class="text-xl font-extrabold text-white">{{ product.formatted_set_price }}</span>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <a href="https://wa.me/971501234567?text=Hi%20TyresCart,%20I%20want%20to%20order%20{{ product.title|urlencode }}%20(SKU:%20{{ product.sku }})" target="_blank" class="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3.5 px-4 rounded-xl shadow-md transition text-sm">
+            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.071.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824z"/></svg>
+            <span>Book Mobile Fitting</span>
+          </a>
+          <a href="tel:+971501234567" class="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 px-4 rounded-xl border border-slate-700 transition text-sm">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>Call Tyre Expert</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Included Free Services Checklist -->
+      <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-2xl p-4 sm:p-5 space-y-2.5 text-xs text-slate-700">
+        <h4 class="font-bold text-emerald-900 text-sm flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          Everything Included in Your Tyre Order:
+        </h4>
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-medium">
+          <li class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Free Doorstep Mobile Fitting Van</li>
+          <li class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Precision Digital Wheel Balancing</li>
+          <li class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Free New Valve Replacement</li>
+          <li class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 1-Year Official Manufacturer Warranty</li>
+        </ul>
+      </div>
+
+      <!-- Full Tyre Specifications Table -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+        <h3 class="text-sm font-bold text-slate-900 mb-3 border-b border-slate-100 pb-2">Technical Specifications</h3>
+        <dl class="divide-y divide-slate-100 text-xs">
+          <div class="py-2 flex justify-between"><dt class="text-slate-500 font-medium">Brand</dt><dd class="font-bold text-slate-900">{{ product.brand }}</dd></div>
+          <div class="py-2 flex justify-between"><dt class="text-slate-500 font-medium">Tyre Pattern / Model</dt><dd class="font-bold text-slate-900">{{ product.product_name }}</dd></div>
+          <div class="py-2 flex justify-between"><dt class="text-slate-500 font-medium">Tyre Size</dt><dd class="font-bold text-emerald-700">{{ product.size }}</dd></div>
+          <div class="py-2 flex justify-between"><dt class="text-slate-500 font-medium">Vehicle Application</dt><dd class="font-bold text-slate-900">{{ product.vehicle_type }}</dd></div>
+          <div class="py-2 flex justify-between"><dt class="text-slate-500 font-medium">Speed / Load Index</dt><dd class="font-bold text-slate-900">{{ product.serv_desc or 'Standard' }}</dd></div>
+          <div class="py-2 flex justify-between"><dt class="text-slate-500 font-medium">Production Year (DOT)</dt><dd class="font-bold text-slate-900">{{ product.year }}</dd></div>
+          <div class="py-2 flex justify-between"><dt class="text-slate-500 font-medium">Country of Origin</dt><dd class="font-bold text-slate-900">{{ product.country }}</dd></div>
+          <div class="py-2 flex justify-between"><dt class="text-slate-500 font-medium">UTQG Rating</dt><dd class="font-bold text-slate-900">{{ product.utqg }}</dd></div>
+          <div class="py-2 flex justify-between"><dt class="text-slate-500 font-medium">Warranty</dt><dd class="font-bold text-emerald-700">{{ product.warranty }}</dd></div>
+        </dl>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Related Tyres Section -->
+  {% if related_products %}
+  <div class="mt-16 border-t border-slate-200 pt-10">
+    <h3 class="text-xl font-bold text-slate-900 mb-6">Other Tyres in Similar Category</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {% for r in related_products %}
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between card-hover">
+        <a href="/tyres/{{ r.sku }}" class="block aspect-square mb-3 overflow-hidden rounded-xl bg-slate-50 flex items-center justify-center p-2">
+          <img src="{{ r.image }}" alt="{{ r.title }}" class="max-h-full max-w-full object-contain" />
+        </a>
+        <div class="space-y-1 mb-3">
+          <span class="text-[10px] font-bold uppercase text-slate-400">{{ r.brand }}</span>
+          <a href="/tyres/{{ r.sku }}" class="text-xs font-bold text-slate-900 hover:text-emerald-600 block line-clamp-2">{{ r.title }}</a>
+        </div>
+        <div class="border-t border-slate-100 pt-2 flex items-center justify-between">
+          <span class="text-xs font-black text-slate-900">{{ r.formatted_price }}</span>
+          <a href="/tyres/{{ r.sku }}" class="text-[11px] font-bold text-emerald-600 hover:underline">View →</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock Content %}

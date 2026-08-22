@@ -22,7 +22,7 @@ from collections import OrderedDict
 from datetime import datetime, timedelta
 
 import pymysql
-from flask import Flask, Response, jsonify, redirect, render_template, request, send_file, send_from_directory, session, stream_with_context
+from flask import Flask, Response, abort, jsonify, redirect, render_template, request, send_file, send_from_directory, session, stream_with_context
 from openpyxl import Workbook, load_workbook
 from werkzeug.utils import secure_filename
 
@@ -53,6 +53,7 @@ from auth import (
 from db import get_connection
 from mailer import send_email
 from scraper_status_utils import build_status_summary, get_xlsx_info, parse_status_line
+import products_repo
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
@@ -166,9 +167,240 @@ def get_scraper_session():
     return state
 
 
-# @app.route('/')
-# def index():
-#     return render_template("Dashboard.html", page="Dashboard")
+# ============================================================================
+# 1. PUBLIC CLIENT APPLICATION (Customer-facing website)
+# Base URL: https://tyrescart-scrapping.klever.ae/
+# ============================================================================
+
+@app.route('/')
+def client_home():
+    """Client Homepage -- search widget, popular brands, featured tyre deals."""
+    all_products = products_repo.get_all_products()
+    featured = [p for p in all_products if p.get('instock')][:8]
+    if len(featured) < 8:
+        featured = all_products[:8]
+    brands = products_repo.get_brands()
+    stats = products_repo.get_stats()
+    return render_template(
+        'client/index.html',
+        active_page='home',
+        featured_products=featured,
+        brands=brands,
+        stats=stats,
+    )
+
+
+@app.route('/tyres')
+def client_tyres():
+    """Client Tyre Catalog / Search Results with rich filtering and sorting."""
+    brand = request.args.get('brand', '').strip() or None
+    width = request.args.get('width', '').strip() or None
+    profile = request.args.get('profile', '').strip() or None
+    rim = request.args.get('rim', '').strip() or None
+    vehicle_type = request.args.get('vehicle_type', '').strip() or None
+    min_price = request.args.get('min_price', '').strip() or None
+    max_price = request.args.get('max_price', '').strip() or None
+    instock_only = bool(request.args.get('instock_only'))
+    query = request.args.get('q', '').strip() or None
+    sort = request.args.get('sort', 'relevance').strip()
+
+    try:
+        page = int(request.args.get('page', 1))
+    except ValueError:
+        page = 1
+
+    result = products_repo.query_products(
+        brand=brand,
+        width=width,
+        profile=profile,
+        rim=rim,
+        vehicle_type=vehicle_type,
+        min_price=min_price,
+        max_price=max_price,
+        instock_only=instock_only,
+        query=query,
+        sort=sort,
+        page=page,
+        per_page=20,
+    )
+
+    brands = products_repo.get_brands()
+    current_filters = {
+        'brand': brand,
+        'width': int(width) if width and width.isdigit() else None,
+        'profile': int(profile) if profile and profile.isdigit() else None,
+        'rim': int(rim) if rim and rim.isdigit() else None,
+        'vehicle_type': vehicle_type,
+        'min_price': min_price,
+        'max_price': max_price,
+        'instock_only': instock_only,
+        'query': query,
+        'sort': sort,
+    }
+
+    return render_template(
+        'client/tyres.html',
+        active_page='tyres',
+        result=result,
+        brands=brands,
+        current_filters=current_filters,
+    )
+
+
+@app.route('/tyres/<sku>')
+def client_product_detail(sku):
+    """Client Single Tyre Details page."""
+    product = products_repo.get_product_by_sku(sku)
+    if not product:
+        abort(404)
+
+    all_products = products_repo.get_all_products()
+    related = [
+        p for p in all_products
+        if p.get('sku') != product.get('sku') and (p.get('brand') == product.get('brand') or p.get('rim') == product.get('rim'))
+    ][:4]
+
+    return render_template(
+        'client/product_detail.html',
+        active_page='tyres',
+        product=product,
+        related_products=related,
+    )
+
+
+@app.route('/search')
+def client_search():
+    """Client quick tyre search tool."""
+    brands = products_repo.get_brands()
+    stats = products_repo.get_stats()
+    query = request.args.get('q', '').strip()
+    return render_template(
+        'client/search.html',
+        active_page='search',
+        brands=brands,
+        stats=stats,
+        query=query,
+    )
+
+
+@app.route('/brands')
+def client_brands():
+    """Client tyre brands directory."""
+    brands = products_repo.get_brands()
+    stats = products_repo.get_stats()
+    return render_template(
+        'client/brands.html',
+        active_page='brands',
+        brands=brands,
+        stats=stats,
+    )
+
+
+@app.route('/contact')
+def client_contact():
+    """Client contact & mobile fitting centers page."""
+    return render_template('client/contact.html', active_page='contact')
+
+
+@app.route('/api/client/tyres')
+def api_client_tyres():
+    """Public JSON API for client tyre filtering/search."""
+    brand = request.args.get('brand', '').strip() or None
+    width = request.args.get('width', '').strip() or None
+    profile = request.args.get('profile', '').strip() or None
+    rim = request.args.get('rim', '').strip() or None
+    vehicle_type = request.args.get('vehicle_type', '').strip() or None
+    query = request.args.get('q', '').strip() or None
+    sort = request.args.get('sort', 'relevance').strip()
+    try:
+        page = int(request.args.get('page', 1))
+    except ValueError:
+        page = 1
+
+    res = products_repo.query_products(
+        brand=brand,
+        width=width,
+        profile=profile,
+        rim=rim,
+        vehicle_type=vehicle_type,
+        query=query,
+        sort=sort,
+        page=page,
+        per_page=20,
+    )
+    return jsonify(res)
+
+
+@app.route('/api/client/brands')
+def api_client_brands():
+    """Public JSON API for tyre brands."""
+    return jsonify({'brands': products_repo.get_brands(), 'stats': products_repo.get_stats()})
+
+
+# ============================================================================
+# 2. SCRAPER ADMIN & API APPLICATION
+# Base URL: https://tyrescart-scrapping.klever.ae/tcsadmin/
+# ============================================================================
+
+@app.route('/tcsadmin/login', methods=['GET'])
+@app.route('/tcsadmin', methods=['GET'])
+def admin_login_page():
+    if 'user_id' in session:
+        return redirect('/tcsadmin/scrapers')
+    return render_template('login.html')
+
+
+@app.route('/tcsadmin/')
+@app.route('/tcsadmin/dashboard')
+@login_required_page
+def admin_dashboard_page():
+    stats = products_repo.get_stats()
+    brands = products_repo.get_brands()
+    return render_template('files.html', page='files', stats=stats, brands=brands)
+
+
+@app.route('/tcsadmin/scrapers')
+@app.route('/tcsadmin/docs/scraper')
+@app.route('/tcsadmin/scraper')
+@app.route('/tcsadmin/files')
+@login_required_page
+def files_page():
+    return render_template('files.html', page='files')
+
+
+@app.route('/tcsadmin/products')
+@login_required_page
+def admin_products_page():
+    query = request.args.get('q', '').strip() or None
+    brand = request.args.get('brand', '').strip() or None
+    try:
+        page = int(request.args.get('page', 1))
+    except ValueError:
+        page = 1
+
+    res = products_repo.query_products(query=query, brand=brand, page=page, per_page=50)
+    brands = products_repo.get_brands()
+    stats = products_repo.get_stats()
+    return render_template(
+        'admin_pages/products.html',
+        page='products',
+        products=res['products'],
+        total=res['total'],
+        page_num=res['page'],
+        total_pages=res['total_pages'],
+        query=query,
+        selected_brand=brand,
+        brands=brands,
+        stats=stats,
+    )
+
+
+@app.route('/tcsadmin/brands')
+@login_required_page
+def admin_brands_page():
+    brands = products_repo.get_brands()
+    stats = products_repo.get_stats()
+    return render_template('admin_pages/brands.html', page='admin_brands', brands=brands, stats=stats)
 
 
 @app.route('/tcsadmin/scraperpage')
@@ -201,32 +433,11 @@ def Scrap():
     return render_template("Scrap.html", page="scraping")
 
 
-@app.route('/tcsadmin/docs/scraper')
-@app.route('/tcsadmin/scraper')
-@app.route('/tcsadmin/files')
-@login_required_page
-def files_page():
-    return render_template('files.html', page='files')
-
-
 @app.route('/tcsadmin/docs/guide')
 @app.route('/tcsadmin/docs/scraper-guide')
 @login_required_page
 def scraper_guide_page():
-    """Documentation only -- explains the existing scraper contract
-    (argv output/input paths, URL_STATUS protocol, FEEDS/xlsx export) using
-    scrapers/pitstoparabiabycsv.py as the reference implementation. Does not
-    change the scraper system, database, or upload flow in any way.
-    """
     return render_template('scraper_guide.html', page='docs')
-
-
-@app.route('/tcsadmin', methods=['GET'])
-@app.route('/login', methods=['GET'])
-def login_page():
-    if 'user_id' in session:
-        return redirect('/tcsadmin/docs/scraper')
-    return render_template('login.html')
 
 
 LOGIN_MAX_ATTEMPTS = 5
@@ -265,6 +476,7 @@ def _clear_login_failures(email):
         _login_attempts.pop(email, None)
 
 
+@app.route('/tcsadmin/login', methods=['POST'])
 @app.route('/tcsadmin', methods=['POST'])
 @app.route('/login', methods=['POST'])
 def login_submit():
@@ -302,13 +514,14 @@ def login_submit():
     session['role'] = user['Role']
     session['csrf_token'] = secrets.token_hex(16)
 
-    return jsonify({'redirect': '/tcsadmin/docs/scraper'})
+    return jsonify({'redirect': '/tcsadmin/scrapers'})
 
 
+@app.route('/tcsadmin/logout', methods=['POST'])
 @app.route('/logout', methods=['POST'])
 def logout():
     session.clear()
-    return jsonify({'redirect': '/tcsadmin'})
+    return jsonify({'redirect': '/tcsadmin/login'})
 
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
@@ -383,6 +596,7 @@ def reset_password_page():
 
 
 @app.route('/tcsadmin/api/me')
+@app.route('/api/me')
 @login_required_api
 def api_me():
     user = get_user_by_id(session['user_id'])
@@ -393,6 +607,7 @@ def api_me():
 
 
 @app.route('/tcsadmin/api/profile', methods=['PUT'])
+@app.route('/api/profile', methods=['PUT'])
 @login_required_api
 @require_csrf
 def api_update_profile():
@@ -431,6 +646,7 @@ def api_update_profile():
 
 
 @app.route('/tcsadmin/api/profile/avatar', methods=['DELETE'])
+@app.route('/api/profile/avatar', methods=['DELETE'])
 @login_required_api
 @require_csrf
 def api_remove_avatar():
@@ -446,6 +662,7 @@ def api_remove_avatar():
 
 
 @app.route('/tcsadmin/api/change-password', methods=['POST'])
+@app.route('/api/change-password', methods=['POST'])
 @login_required_api
 @require_csrf
 def api_change_password():
@@ -1576,6 +1793,7 @@ def api_file_logs(file_id):
 
 
 @app.route('/tcsadmin/api/reports')
+@app.route('/api/reports')
 @login_required_api
 @role_required_api('SuperAdmin')
 def api_list_reports():
@@ -1613,6 +1831,7 @@ def api_list_reports():
 
 
 @app.route('/tcsadmin/api/reports/<int:report_id>/download')
+@app.route('/api/reports/<int:report_id>/download')
 @login_required_api
 @role_required_api('SuperAdmin')
 def api_download_report_output(report_id):

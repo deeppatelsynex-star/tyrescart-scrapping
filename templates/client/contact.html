@@ -1,0 +1,85 @@
+{% extends "client/base.html" %}
+
+{% block Title %}Contact & Mobile Fitting Centers in UAE | TyresCart{% endblock Title %}
+
+{% block Content %}
+<div class="bg-slate-900 text-white py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-2">
+    <span class="text-xs font-bold uppercase tracking-widest text-emerald-400">Doorstep Installation</span>
+    <h1 class="text-3xl sm:text-4xl font-black">Mobile Fitting & Customer Care</h1>
+    <p class="text-sm text-slate-300 max-w-lg mx-auto">Get in touch with our certified tyre technicians across Dubai, Abu Dhabi, and the Northern Emirates.</p>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Contact Info Cards -->
+    <div class="space-y-4">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Customer Helpline</span>
+        <h3 class="text-lg font-bold text-slate-900">+971 50 123 4567</h3>
+        <p class="text-xs text-slate-500">Available Mon – Sat, 8:00 AM – 9:00 PM</p>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">WhatsApp Instant Support</span>
+        <h3 class="text-lg font-bold text-slate-900">+971 50 123 4567</h3>
+        <p class="text-xs text-slate-500">Send tyre sidewall photos for instant recommendation</p>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Fitting Coverage</span>
+        <h3 class="text-base font-bold text-slate-900">All UAE Emirates</h3>
+        <p class="text-xs text-slate-500">Dubai, Abu Dhabi, Sharjah, Ajman, RAK, Fujairah, UAQ</p>
+      </div>
+    </div>
+
+    <!-- Contact / Inquiry Form -->
+    <div class="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-200 shadow-xs space-y-5">
+      <h2 class="text-xl font-bold text-slate-900">Send Us an Inquiry or Fitting Request</h2>
+      
+      <form class="space-y-4" onsubmit="event.preventDefault(); alert('Thank you! A tyre specialist will contact you shortly.');">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Your Full Name</label>
+            <input type="text" required placeholder="e.g. Mohammed Ali" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Mobile Phone Number</label>
+            <input type="tel" required placeholder="+971 50 000 0000" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">City / Emirate</label>
+            <select class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+              <option>Dubai</option>
+              <option>Abu Dhabi</option>
+              <option>Sharjah</option>
+              <option>Ajman</option>
+              <option>Ras Al Khaimah</option>
+              <option>Fujairah</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Tyre Size (if known)</label>
+            <input type="text" placeholder="e.g. 225/45 R17" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Message or Specific Tyre Request</label>
+          <textarea rows="3" placeholder="Tell us about your vehicle model, year, or preferred tyre brand..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+        </div>
+
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm shadow-md transition cursor-pointer">
+          Submit Tyre Request
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock Content %}

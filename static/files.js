@@ -316,7 +316,7 @@
     try {
       const response = await fetch('/tcsadmin/api/files?perPage=100');
       if (response.status === 401) {
-        window.location.href = '/tcsadmin';
+        window.location.href = '/tcsadmin/login';
         return;
       }
       const data = await response.json().catch(() => ({}));

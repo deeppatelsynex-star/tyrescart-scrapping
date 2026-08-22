@@ -304,14 +304,14 @@
           window.AdminShared.showToast('Signing out… please wait', 'info');
         }
         try {
-          const response = await fetch('/logout', { method: 'POST' });
+          const response = await fetch('/tcsadmin/logout', { method: 'POST' });
           const data = await response.json().catch(() => ({}));
-          window.location.href = data.redirect || '/login';
+          window.location.href = data.redirect || '/tcsadmin/login';
         } catch (err) {
           if (window.AdminShared) {
             window.AdminShared.logError('Logout Error', err);
           }
-          window.location.href = '/login';
+          window.location.href = '/tcsadmin/login';
         }
       });
     }

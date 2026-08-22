@@ -134,11 +134,11 @@ def has_superadmin():
 
 
 def login_required_page(view):
-    """Protects a page route: redirects unauthenticated visitors to /tcsadmin."""
+    """Protects a page route: redirects unauthenticated visitors to /tcsadmin/login."""
     @functools.wraps(view)
     def wrapped(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect('/tcsadmin')
+            return redirect('/tcsadmin/login')
         return view(*args, **kwargs)
     return wrapped
 

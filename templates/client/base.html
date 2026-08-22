@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block Title %}Buy Tyres Online in UAE | Best Prices & Free Fitting{% endblock Title %} — TyresCart</title>
+  <meta name="description" content="Shop 100% genuine tyres in UAE with TyresCart. Best prices on Michelin, Bridgestone, Pirelli, Continental, Goodyear & more. Free doorstep mobile fitting." />
+  <link rel="icon" type="image/webp" href="/static/assets/images/favicon-color.webp" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            },
+            accent: {
+              500: '#f59e0b',
+              600: '#d97706',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .hero-gradient { background: radial-gradient(circle at 20% 20%, #064e3b 0%, #0f172a 100%); }
+    .card-hover { transition: all 0.25s ease; }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 24px -10px rgba(0,0,0,0.1); }
+  </style>
+  {% block ExtraHead %}{% endblock ExtraHead %}
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased flex flex-col min-h-screen">
+
+  <!-- Top Announcement Bar -->
+  <div class="bg-slate-900 text-slate-300 text-xs py-2 px-4 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-4">
+        <span class="inline-flex items-center gap-1.5 text-emerald-400 font-semibold">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Free Doorstep Mobile Fitting Across Dubai & UAE
+        </span>
+        <span class="hidden md:inline text-slate-500">|</span>
+        <span class="hidden md:inline">100% Genuine Tyres with 1-Year Official Warranty</span>
+      </div>
+      <div class="flex items-center gap-4 text-xs font-medium">
+        <a href="tel:+971501234567" class="hover:text-emerald-400 transition flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          +971 50 123 4567
+        </a>
+        <span>AED (Dirhams)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Storefront Header -->
+  <header class="bg-white sticky top-0 z-40 border-b border-slate-200/80 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 sm:h-20 gap-4">
+        
+        <!-- Logo -->
+        <a href="/" class="flex items-center gap-3 shrink-0">
+          <img src="/static/assets/images/favicon-color.webp" alt="TyresCart Logo" class="w-9 h-9 sm:w-10 sm:h-10" />
+          <div>
+            <span class="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Tyres<span class="text-emerald-600">Cart</span></span>
+            <span class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 -mt-1">UAE Tyre Marketplace</span>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden lg:flex items-center gap-7 text-sm font-semibold text-slate-700">
+          <a href="/" class="hover:text-emerald-600 transition {% if active_page == 'home' %}text-emerald-600{% endif %}">Home</a>
+          <a href="/tyres" class="hover:text-emerald-600 transition {% if active_page == 'tyres' %}text-emerald-600{% endif %}">All Tyres</a>
+          <a href="/brands" class="hover:text-emerald-600 transition {% if active_page == 'brands' %}text-emerald-600{% endif %}">Brands</a>
+          <a href="/search" class="hover:text-emerald-600 transition {% if active_page == 'search' %}text-emerald-600{% endif %}">Find by Size</a>
+          <a href="/contact" class="hover:text-emerald-600 transition {% if active_page == 'contact' %}text-emerald-600{% endif %}">Fitting Centers</a>
+          <a href="/contact" class="hover:text-emerald-600 transition">Contact Us</a>
+        </nav>
+
+        <!-- Search Bar & CTAs -->
+        <div class="flex items-center gap-3">
+          <form action="/search" method="GET" class="hidden sm:flex items-center relative">
+            <input type="text" name="q" placeholder="Search tyre model, size, brand..." value="{{ request.args.get('q', '') }}" class="w-48 md:w-64 pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-100 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition" />
+            <svg class="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </form>
+
+          <a href="/tyres" class="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-xs hover:shadow-md transition">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="14.83" y1="9.17" x2="18.36" y2="5.64"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>
+            <span>Explore Tyres</span>
+          </a>
+
+          <!-- Mobile Hamburger Toggle -->
+          <button type="button" id="mobile-menu-btn" class="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100" aria-label="Toggle menu">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Mobile Drawer Menu -->
+    <div id="mobile-menu" class="hidden lg:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3">
+      <form action="/search" method="GET" class="relative mb-3">
+        <input type="text" name="q" placeholder="Search tyre model, size, brand..." class="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-slate-100 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </form>
+      <a href="/" class="block text-sm font-semibold text-slate-700 hover:text-emerald-600 py-1.5">Home</a>
+      <a href="/tyres" class="block text-sm font-semibold text-slate-700 hover:text-emerald-600 py-1.5">All Tyres</a>
+      <a href="/brands" class="block text-sm font-semibold text-slate-700 hover:text-emerald-600 py-1.5">Tyre Brands</a>
+      <a href="/search" class="block text-sm font-semibold text-slate-700 hover:text-emerald-600 py-1.5">Find By Size</a>
+      <a href="/contact" class="block text-sm font-semibold text-slate-700 hover:text-emerald-600 py-1.5">Fitting Centers & Support</a>
+    </div>
+  </header>
+
+  <!-- Main Content Body -->
+  <main class="flex-1">
+    {% block Content %}{% endblock Content %}
+  </main>
+
+  <!-- Storefront Footer -->
+  <footer class="bg-slate-900 text-slate-400 text-sm mt-16 border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
+        
+        <!-- Brand / About -->
+        <div class="lg:col-span-2 space-y-4">
+          <div class="flex items-center gap-3">
+            <img src="/static/assets/images/favicon-color.webp" alt="TyresCart Logo" class="w-8 h-8" />
+            <span class="text-xl font-bold text-white tracking-tight">Tyres<span class="text-emerald-500">Cart</span></span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-400 max-w-sm leading-relaxed">
+            UAE's leading digital platform for genuine car, SUV, and commercial vehicle tyres. Free mobile doorstep fitting, balancing, and 1-year warranty included on all orders.
+          </p>
+          <div class="flex items-center gap-4 text-xs font-semibold text-slate-300">
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Dubai</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Abu Dhabi</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Sharjah</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Ajman</span>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-200 mb-4">Tyres by Vehicle</h4>
+          <ul class="space-y-2.5 text-xs sm:text-sm">
+            <li><a href="/tyres?vehicle_type=Car" class="hover:text-emerald-400 transition">Passenger Car Tyres</a></li>
+            <li><a href="/tyres?vehicle_type=SUV" class="hover:text-emerald-400 transition">SUV & 4x4 Tyres</a></li>
+            <li><a href="/tyres?vehicle_type=Commercial" class="hover:text-emerald-400 transition">Van & Light Truck Tyres</a></li>
+            <li><a href="/tyres?vehicle_type=Performance" class="hover:text-emerald-400 transition">Ultra High Performance</a></li>
+            <li><a href="/tyres?vehicle_type=Runflat" class="hover:text-emerald-400 transition">Run-Flat Tyres</a></li>
+          </ul>
+        </div>
+
+        <!-- Popular Brands -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-200 mb-4">Top Tyre Brands</h4>
+          <ul class="space-y-2.5 text-xs sm:text-sm">
+            <li><a href="/tyres?brand=Michelin" class="hover:text-emerald-400 transition">Michelin Tyres</a></li>
+            <li><a href="/tyres?brand=Bridgestone" class="hover:text-emerald-400 transition">Bridgestone Tyres</a></li>
+            <li><a href="/tyres?brand=Pirelli" class="hover:text-emerald-400 transition">Pirelli Tyres</a></li>
+            <li><a href="/tyres?brand=Continental" class="hover:text-emerald-400 transition">Continental Tyres</a></li>
+            <li><a href="/tyres?brand=Goodyear" class="hover:text-emerald-400 transition">Goodyear Tyres</a></li>
+            <li><a href="/brands" class="text-emerald-400 font-semibold hover:underline">View All 35+ Brands →</a></li>
+          </ul>
+        </div>
+
+        <!-- Customer Care & Security -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-200 mb-4">Customer Support</h4>
+          <ul class="space-y-2.5 text-xs sm:text-sm">
+            <li><a href="/contact" class="hover:text-emerald-400 transition">Mobile Fitting Centers</a></li>
+            <li><a href="/contact" class="hover:text-emerald-400 transition">Warranty & Returns</a></li>
+            <li><a href="/contact" class="hover:text-emerald-400 transition">How Mobile Fitting Works</a></li>
+            <li><a href="/contact" class="hover:text-emerald-400 transition">Frequently Asked Questions</a></li>
+            <li><a href="/contact" class="hover:text-emerald-400 transition">Contact Customer Care</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="border-t border-slate-800 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <p>© 2026 TyresCart UAE. All rights reserved. Prices include 5% VAT.</p>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-1 bg-slate-800 text-slate-300 rounded text-[10px] font-bold">100% Genuine</span>
+          <span class="px-2 py-1 bg-slate-800 text-slate-300 rounded text-[10px] font-bold">Free UAE Fitting</span>
+          <span class="px-2 py-1 bg-slate-800 text-slate-300 rounded text-[10px] font-bold">1 Year Warranty</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    if (mobileBtn && mobileMenu) {
+      mobileBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+      });
+    }
+  </script>
+  {% block ExtraScripts %}{% endblock ExtraScripts %}
+</body>
+</html>
