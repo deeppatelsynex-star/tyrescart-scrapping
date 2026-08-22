@@ -192,10 +192,17 @@ def login_page():
 
 
 @app.route('/tcsadmin/dashboard')
+@login_required_page
+def dashboard_page():
+    return render_template('Dashboard.html', page='Dashboard')
+
+
 @app.route('/tcsadmin/scrapers')
 @app.route('/tcsadmin/docs/scraper')
 @app.route('/tcsadmin/scraper')
 @app.route('/tcsadmin/files')
+@app.route('/tcsadmin/products')
+@app.route('/tcsadmin/brands')
 @app.route('/scrapers')
 @app.route('/scraper')
 @app.route('/files')
@@ -325,6 +332,7 @@ def logout():
     return jsonify({'redirect': '/tcsadmin/login'})
 
 
+@app.route('/tcsadmin/forgot-password', methods=['GET', 'POST'])
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password_page():
     if request.method == 'GET':
@@ -340,7 +348,7 @@ def forgot_password_page():
     if user and bit_to_bool(user.get('Status')) and not bit_to_bool(user.get('IsDeleted')):
         try:
             token = create_password_reset_token(user['userid'])
-            reset_link = f"{request.host_url.rstrip('/')}/reset-password?token={token}"
+            reset_link = f"{request.host_url.rstrip('/')}/tcsadmin/reset-password?token={token}"
             html_body = render_template(
                 'emails/reset_password.html',
                 user_name=user.get('Name') or 'there',
@@ -359,6 +367,7 @@ def forgot_password_page():
     })
 
 
+@app.route('/tcsadmin/reset-password', methods=['GET', 'POST'])
 @app.route('/reset-password', methods=['GET', 'POST'])
 def reset_password_page():
     if request.method == 'GET':
