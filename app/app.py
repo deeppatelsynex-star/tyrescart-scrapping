@@ -88,6 +88,7 @@ def client_home():
 @app.route('/tcsadmin/login', methods=['GET'])
 @app.route('/tcsadmin', methods=['GET'])
 @app.route('/tcsadmin/', methods=['GET'])
+@app.route('/login', methods=['GET'])
 def login_page():
     if 'user_id' in session:
         return redirect('/tcsadmin/docs/scraper')
@@ -247,6 +248,7 @@ def login_submit():
 
 
 @app.route('/tcsadmin/logout', methods=['GET', 'POST'])
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
     session.clear()
     if request.method == 'GET' or not (request.is_json or (request.headers.get('Accept') and 'application/json' in request.headers.get('Accept'))):
