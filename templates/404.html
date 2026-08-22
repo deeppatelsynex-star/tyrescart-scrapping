@@ -1,131 +1,75 @@
-{% if session.get('user_id') %}
-  {% extends "base.html" %}
-  {% block MainContent %}
-  <div class="flex-1 flex flex-col items-center justify-center p-6 md:p-12 min-h-[calc(100vh-80px)] overflow-y-auto bg-gradient-to-b from-slate-50/50 via-white to-slate-50/80">
-    <div class="max-w-xl w-full text-center space-y-6 animate-in fade-in zoom-in duration-300">
-      
-      <!-- Decorative Graphic & 404 Badge -->
-      <div class="relative flex flex-col items-center justify-center">
-        <div class="absolute -inset-4 bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
-        <div class="relative inline-flex items-center justify-center w-28 h-28 rounded-3xl bg-white border border-slate-200/80 shadow-xl shadow-slate-200/50 mb-2">
-          <svg class="w-14 h-14 text-emerald-600 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M16 16s-1.5-2-4-2-4 2-4 2"></path>
-            <line x1="9" y1="9" x2="9.01" y2="9"></line>
-            <line x1="15" y1="9" x2="15.01" y2="9"></line>
-          </svg>
-          <span class="absolute -bottom-2 -right-2 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-500 text-white shadow-sm">404</span>
-        </div>
-      </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/x-icon" />
+  <title>404 - Page Not Found | TyresCart</title>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4 text-slate-900">
+  <div class="w-full max-w-lg text-center space-y-6 bg-white border border-slate-200/80 rounded-3xl p-8 sm:p-10 shadow-xl shadow-slate-200/60 animate-in fade-in zoom-in duration-200">
+    
+    <!-- Brand Logo -->
+    <div class="flex flex-col items-center">
+      <a href="/tcsadmin/login" class="inline-flex items-center gap-2.5 mb-2 hover:opacity-90 transition">
+        <img src="/static/assets/images/favicon-color.webp" alt="TyresCart" class="w-12 h-12 rounded-2xl shadow-sm" />
+      </a>
+      <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Tyres<span class="text-emerald-600">Cart</span></h2>
+      <span class="text-xs text-slate-400 font-medium">Scraping & Data Management</span>
+    </div>
 
-      <!-- Main Text -->
-      <div class="space-y-2.5">
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/70 mb-1">
-          <svg class="w-3.5 h-3.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          Page Not Found
-        </div>
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Oops! Page Doesn't Exist</h1>
-        <p class="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-          The requested URL <code class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/80 text-rose-600 font-mono text-xs font-bold break-all">{{ requested_path or request.path }}</code> was not found on this server.
-        </p>
-      </div>
+    <!-- 404 Illustration Badge -->
+    <div class="relative inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-emerald-50 border border-emerald-100 text-emerald-600 shadow-inner">
+      <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M16 16s-1.5-2-4-2-4 2-4 2"></path>
+        <line x1="9" y1="9" x2="9.01" y2="9"></line>
+        <line x1="15" y1="9" x2="15.01" y2="9"></line>
+      </svg>
+      <span class="absolute -bottom-2 -right-2 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-500 text-white shadow-sm">404</span>
+    </div>
 
-      <!-- Action Buttons -->
-      <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-        <a href="/tcsadmin/docs/scraper" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm transition hover:shadow-md cursor-pointer">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          Back to Scrapers
-        </a>
-        <a href="/tcsadmin/reports" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 text-sm font-semibold shadow-xs transition cursor-pointer">
-          <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          Audit Logs
-        </a>
-        <button type="button" onclick="window.history.back()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition cursor-pointer">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-          Go Back
-        </button>
+    <!-- Main Message -->
+    <div class="space-y-2">
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/70 mb-1">
+        <svg class="w-3.5 h-3.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Page Not Found
       </div>
+      <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Oops! Page Doesn't Exist</h1>
+      <p class="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">
+        The requested URL <code class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-rose-600 font-mono font-bold break-all">{{ requested_path or request.path }}</code> was not found on this server.
+      </p>
+    </div>
 
-      <!-- Quick Helpful Links -->
-      <div class="pt-6 border-t border-slate-200/70">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-3">Helpful Shortcuts</span>
-        <div class="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-600">
-          <a href="/tcsadmin/docs/scraper" class="hover:text-emerald-600 transition flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Scraper Management</a>
-          <a href="/tcsadmin/reports" class="hover:text-indigo-600 transition flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>Execution Reports</a>
-          <a href="/tcsadmin/docs/guide" class="hover:text-sky-600 transition flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>Scraper Guide</a>
-          {% if session.get('role') in ['SuperAdmin', 'Admin'] %}
-          <a href="/tcsadmin/Admin" class="hover:text-purple-600 transition flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>User Admin</a>
-          <a href="/tcsadmin/trash" class="hover:text-rose-600 transition flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Trash Bin</a>
-          {% endif %}
-        </div>
-      </div>
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+      {% if session.get('user_id') %}
+      <a href="/tcsadmin/docs/scraper" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs sm:text-sm font-bold shadow-sm hover:shadow-md transition cursor-pointer">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Back to Scrapers
+      </a>
+      {% else %}
+      <a href="/tcsadmin/login" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs sm:text-sm font-bold shadow-sm hover:shadow-md transition cursor-pointer">
+        Sign In to Admin
+      </a>
+      {% endif %}
+      <button type="button" onclick="window.history.back()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold transition cursor-pointer">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Go Back
+      </button>
+    </div>
 
+    <!-- Footer -->
+    <div class="pt-4 border-t border-slate-100 text-[11px] text-slate-400">
+      &copy; 2026 TyresCart Scraping Platform. All rights reserved.
     </div>
   </div>
-  {% endblock MainContent %}
-
-{% else %}
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
-    <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/x-icon" />
-    <title>404 - Page Not Found | TyresCart</title>
-  </head>
-  <body class="font-sans antialiased min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4 text-slate-900">
-    <div class="w-full max-w-lg text-center space-y-6 bg-white border border-slate-200/80 rounded-3xl p-8 sm:p-10 shadow-xl shadow-slate-200/60">
-      
-      <!-- Brand Logo -->
-      <div class="flex flex-col items-center">
-        <a href="/tcsadmin/login" class="inline-flex items-center gap-2.5 mb-2 hover:opacity-90 transition">
-          <img src="/static/assets/images/favicon-color.webp" alt="TyresCart" class="w-12 h-12 rounded-2xl shadow-sm" />
-        </a>
-        <h2 class="text-xl font-bold text-slate-900 tracking-tight">TyresCart</h2>
-        <span class="text-xs text-slate-500">Scraping Platform</span>
-      </div>
-
-      <!-- Illustration / 404 Badge -->
-      <div class="relative inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-emerald-50 border border-emerald-100 text-emerald-600 shadow-inner">
-        <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <path d="M16 16s-1.5-2-4-2-4 2-4 2"></path>
-          <line x1="9" y1="9" x2="9.01" y2="9"></line>
-          <line x1="15" y1="9" x2="15.01" y2="9"></line>
-        </svg>
-        <span class="absolute -bottom-2 -right-2 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-500 text-white shadow-sm">404</span>
-      </div>
-
-      <!-- Main Text -->
-      <div class="space-y-2">
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/70 mb-1">
-          Page Not Found
-        </div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Looking for something?</h1>
-        <p class="text-xs sm:text-sm text-slate-500 leading-relaxed">
-          The page <code class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-rose-600 font-mono font-bold">{{ requested_path or request.path }}</code> is not found or has been moved.
-        </p>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-        <a href="/tcsadmin/login" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition cursor-pointer">
-          Sign In to Admin
-        </a>
-        <button type="button" onclick="window.history.back()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition cursor-pointer">
-          Go Back
-        </button>
-      </div>
-
-      <!-- Footer -->
-      <div class="pt-4 border-t border-slate-100 text-xs text-slate-400">
-        &copy; TyresCart Scraping Engine. All rights reserved.
-      </div>
-    </div>
-  </body>
-  </html>
-{% endif %}
+</body>
+</html>
