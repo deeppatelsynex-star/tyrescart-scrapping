@@ -70,13 +70,14 @@ def add_performance_headers(response):
 
 
 # ============================================================================
-# 1. CLIENT-SIDE ROUTES (Disabled for now -- returns 404)
+# 1. CLIENT-SIDE STOREFRONT ROUTES
 # ============================================================================
 
 @app.route('/')
-def client_root_placeholder():
-    """Client storefront disabled for now -- serves 404 page."""
-    abort(404)
+@app.route('/home')
+def client_home():
+    """Client storefront home landing page."""
+    return render_template('Client/Home.html')
 
 
 # ============================================================================
