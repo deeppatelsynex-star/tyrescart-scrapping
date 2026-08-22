@@ -89,63 +89,52 @@ Scraper Live Progress
       <!-- Completion summary (shown only when finished/stopped/failed) -->
       <div id="completion-summary" class="hidden dcard p-4 sm:p-5"></div>
 
-      <!-- Stat cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        <div class="dcard stat-card">
-          <div class="flex items-center gap-2.5 mb-2">
-            <span class="stat-icon tone-cyan">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z"/></svg>
+      <!-- 4 Compact Stat Cards in Single Row -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="dcard stat-card p-3.5 sm:p-4">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="stat-icon tone-cyan w-7 h-7 flex items-center justify-center rounded-lg">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z"/></svg>
             </span>
-            <span class="stat-label">Total URLs</span>
+            <span class="stat-label text-xs font-medium text-slate-500">Total URLs</span>
           </div>
-          <p id="stat-total-urls" class="stat-value text-2xl font-bold">0</p>
+          <p id="stat-total-urls" class="stat-value text-xl sm:text-2xl font-bold">0</p>
         </div>
-        <div class="dcard stat-card">
-          <div class="flex items-center gap-2.5 mb-2">
-            <span class="stat-icon tone-emerald">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+
+        <div class="dcard stat-card p-3.5 sm:p-4">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="stat-icon tone-emerald w-7 h-7 flex items-center justify-center rounded-lg">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
             </span>
-            <span class="stat-label">Completed</span>
+            <span class="stat-label text-xs font-medium text-slate-500">Completed</span>
           </div>
-          <p id="stat-completed" class="stat-value text-2xl font-bold">0</p>
-          <p id="stat-completed-pct" class="text-xs font-semibold mt-0.5" style="color: var(--emerald);">0%</p>
+          <div class="flex items-baseline gap-2">
+            <p id="stat-completed" class="stat-value text-xl sm:text-2xl font-bold">0</p>
+            <span id="stat-completed-pct" class="text-xs font-semibold" style="color: var(--emerald);">0%</span>
+          </div>
         </div>
-        <div class="dcard stat-card">
-          <div class="flex items-center gap-2.5 mb-2">
-            <span class="stat-icon tone-cyan">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
+
+        <div class="dcard stat-card p-3.5 sm:p-4">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="stat-icon tone-cyan w-7 h-7 flex items-center justify-center rounded-lg">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
             </span>
-            <span class="stat-label">Running</span>
+            <span class="stat-label text-xs font-medium text-slate-500">Running</span>
           </div>
-          <p id="stat-running" class="stat-value text-2xl font-bold">0</p>
-          <p id="stat-running-label" class="hidden text-xs font-semibold mt-0.5" style="color: var(--emerald);"><span class="inline-flex items-center gap-1.5"><span class="stat-live-dot"></span>Live</span></p>
+          <div class="flex items-baseline gap-2">
+            <p id="stat-running" class="stat-value text-xl sm:text-2xl font-bold">0</p>
+            <span id="stat-running-label" class="hidden text-xs font-semibold" style="color: var(--emerald);"><span class="inline-flex items-center gap-1.5"><span class="stat-live-dot"></span>Live</span></span>
+          </div>
         </div>
-        <div class="dcard stat-card">
-          <div class="flex items-center gap-2.5 mb-2">
-            <span class="stat-icon tone-slate">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+
+        <div class="dcard stat-card p-3.5 sm:p-4">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="stat-icon tone-slate w-7 h-7 flex items-center justify-center rounded-lg">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
             </span>
-            <span class="stat-label">Pending</span>
+            <span class="stat-label text-xs font-medium text-slate-500">Pending</span>
           </div>
-          <p id="stat-pending" class="stat-value text-2xl font-bold">0</p>
-        </div>
-        <div class="dcard stat-card">
-          <div class="flex items-center gap-2.5 mb-2">
-            <span class="stat-icon tone-rose">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
-            </span>
-            <span class="stat-label">Blocked</span>
-          </div>
-          <p id="stat-blocked" class="stat-value text-2xl font-bold">0</p>
-        </div>
-        <div class="dcard stat-card">
-          <div class="flex items-center gap-2.5 mb-2">
-            <span class="stat-icon tone-cyan">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4Z"/></svg>
-            </span>
-            <span class="stat-label">Products</span>
-          </div>
-          <p id="stat-products" class="stat-value text-2xl font-bold">0</p>
+          <p id="stat-pending" class="stat-value text-xl sm:text-2xl font-bold">0</p>
         </div>
       </div>
 
