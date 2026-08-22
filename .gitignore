@@ -13,4 +13,6 @@ tmp/
 *.log
 .vscode/
 scratch/
-AGENTS.md
+AGENTS.md
+*.postman_collection.json
+*.postman_environment.json

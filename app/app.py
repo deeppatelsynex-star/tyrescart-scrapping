@@ -88,7 +88,6 @@ def client_home():
 @app.route('/tcsadmin/login', methods=['GET'])
 @app.route('/tcsadmin', methods=['GET'])
 @app.route('/tcsadmin/', methods=['GET'])
-@app.route('/login', methods=['GET'])
 def login_page():
     if 'user_id' in session:
         return redirect('/tcsadmin/docs/scraper')
