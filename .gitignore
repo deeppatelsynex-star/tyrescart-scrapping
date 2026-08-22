@@ -9,4 +9,8 @@ TEST_FLOW.md
 __pycache__/
 *.pyc
 tmp/
-*.xlsx
+*.xlsx
+*.log
+.vscode/
+scratch/
+AGENTS.md
