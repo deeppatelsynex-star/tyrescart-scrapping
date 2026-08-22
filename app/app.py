@@ -184,11 +184,44 @@ def client_root_placeholder():
 @app.route('/tcsadmin/login', methods=['GET'])
 @app.route('/tcsadmin', methods=['GET'])
 @app.route('/tcsadmin/', methods=['GET'])
-@app.route('/login', methods=['GET'])
 def login_page():
     if 'user_id' in session:
         return redirect('/tcsadmin/docs/scraper')
     return render_template('login.html')
+
+
+@app.route('/login', methods=['GET'])
+def redirect_login():
+    return redirect('/tcsadmin/login')
+
+
+@app.route('/scrapers')
+@app.route('/scraper')
+@app.route('/files')
+def redirect_scrapers():
+    return redirect('/tcsadmin/docs/scraper')
+
+
+@app.route('/dashboard')
+def redirect_dashboard():
+    return redirect('/tcsadmin/dashboard')
+
+
+@app.route('/reports')
+@app.route('/logs')
+def redirect_reports():
+    return redirect('/tcsadmin/reports')
+
+
+@app.route('/admin')
+@app.route('/Admin')
+def redirect_admin():
+    return redirect('/tcsadmin/Admin')
+
+
+@app.route('/trash')
+def redirect_trash():
+    return redirect('/tcsadmin/trash')
 
 
 @app.route('/tcsadmin/dashboard')
@@ -197,15 +230,12 @@ def dashboard_page():
     return render_template('Dashboard.html', page='Dashboard')
 
 
-@app.route('/tcsadmin/scrapers')
 @app.route('/tcsadmin/docs/scraper')
+@app.route('/tcsadmin/scrapers')
 @app.route('/tcsadmin/scraper')
 @app.route('/tcsadmin/files')
 @app.route('/tcsadmin/products')
 @app.route('/tcsadmin/brands')
-@app.route('/scrapers')
-@app.route('/scraper')
-@app.route('/files')
 @login_required_page
 def files_page():
     return render_template('files.html', page='files')
