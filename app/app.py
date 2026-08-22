@@ -90,7 +90,7 @@ def client_home():
 @app.route('/tcsadmin/', methods=['GET'])
 def login_page():
     if 'user_id' in session:
-        return redirect('/tcsadmin/scrapers')
+        return redirect('/tcsadmin/docs/scraper')
     return render_template('login.html')
 
 
@@ -246,9 +246,11 @@ def login_submit():
     return jsonify({'redirect': '/tcsadmin/docs/scraper'})
 
 
-@app.route('/tcsadmin/logout', methods=['POST'])
+@app.route('/tcsadmin/logout', methods=['GET', 'POST'])
 def logout():
     session.clear()
+    if request.method == 'GET' or not (request.is_json or (request.headers.get('Accept') and 'application/json' in request.headers.get('Accept'))):
+        return redirect('/tcsadmin/login')
     return jsonify({'redirect': '/tcsadmin/login'})
 
 
