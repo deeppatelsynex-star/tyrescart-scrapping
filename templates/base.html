@@ -246,6 +246,7 @@
         <div id="pw-error" class="hidden mb-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs px-3 py-2"></div>
         <div id="pw-success" class="hidden mb-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs px-3 py-2"></div>
         <form id="change-password-form" class="space-y-3">
+          <input type="text" name="username" value="{{ session.get('email', '') }}" autocomplete="username" class="hidden" style="display:none;" />
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">Current Password</label>
             <div class="relative">
@@ -305,10 +306,10 @@
       </div>
     </div>
 
-    <script src="/static/idb_storage.js"></script>
-    <script src="/static/script.js"></script>
-    <script src="/static/profile.js"></script>
-    <script src="/static/admin.js"></script>
+    <script src="/static/idb_storage.js?v=2.1.0"></script>
+    <script src="/static/script.js?v=2.1.0"></script>
+    <script src="/static/profile.js?v=2.1.0"></script>
+    <script src="/static/admin.js?v=2.1.0"></script>
     {% block ExtraScripts %}{% endblock ExtraScripts %}
   </body>
 </html>
