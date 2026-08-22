@@ -77,7 +77,7 @@
 
   async function loadMe() {
     try {
-      const response = await fetch('/api/me');
+      const response = await fetch('/tcsadmin/api/me');
       if (!response.ok) return;
       const data = await response.json();
       csrfToken = data.csrfToken;
@@ -113,7 +113,7 @@
   async function loadTrash({ silent } = {}) {
     if (!silent && !users.length) Shared.hideError(errorEl);
     try {
-      const response = await fetch('/api/admin/users/trash');
+      const response = await fetch('/tcsadmin/api/admin/users/trash');
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to load trash.';
@@ -144,7 +144,7 @@
     restoreConfirmBtn.disabled = true;
     Shared.showToast('Restoring user account…', 'info');
     try {
-      const response = await fetch(`/api/admin/users/${pendingId}/recover`, {
+      const response = await fetch(`/tcsadmin/api/admin/users/${pendingId}/recover`, {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
       });

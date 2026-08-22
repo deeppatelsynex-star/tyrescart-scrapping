@@ -4,6 +4,7 @@ import openpyxl
 
 from db import get_connection
 from cache_manager import cache, invalidate_log_cache, get_cached_excel_rows
+from auth import to_ist_12h
 
 LOG_SELECT_FIELDS = (
     'l.id, l.scraper, l.file_id, l.user_id, l.start_time, l.end_time, '

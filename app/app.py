@@ -171,7 +171,7 @@ def get_scraper_session():
 #     return render_template("Dashboard.html", page="Dashboard")
 
 
-@app.route('/scraperpage')
+@app.route('/tcsadmin/scraperpage')
 @login_required_page
 def Scrap():
     file_id = request.args.get('fileId')
@@ -180,9 +180,9 @@ def Scrap():
         active_map = job_manager.get_all_active_jobs_map()
         running_for_user = [fid for fid, info in active_map.items() if info.get('user_id') == user_id]
         if running_for_user:
-            return redirect(f'/scraperpage?fileId={running_for_user[0]}')
+            return redirect(f'/tcsadmin/scraperpage?fileId={running_for_user[0]}')
         if active_map:
-            return redirect(f'/scraperpage?fileId={list(active_map.keys())[0]}')
+            return redirect(f'/tcsadmin/scraperpage?fileId={list(active_map.keys())[0]}')
 
         conn = get_connection()
         try:
@@ -190,24 +190,24 @@ def Scrap():
                 cursor.execute("SELECT file_id FROM logTbl ORDER BY id DESC LIMIT 1")
                 latest_log = cursor.fetchone()
                 if latest_log and latest_log.get('file_id'):
-                    return redirect(f'/scraperpage?fileId={latest_log["file_id"]}')
+                    return redirect(f'/tcsadmin/scraperpage?fileId={latest_log["file_id"]}')
                 cursor.execute("SELECT file_id FROM fileTbl WHERE is_deleted = 0 ORDER BY file_id ASC LIMIT 1")
                 first_file = cursor.fetchone()
                 if first_file:
-                    return redirect(f'/scraperpage?fileId={first_file["file_id"]}')
+                    return redirect(f'/tcsadmin/scraperpage?fileId={first_file["file_id"]}')
         finally:
             conn.close()
 
     return render_template("Scrap.html", page="scraping")
 
 
-@app.route('/')
+@app.route('/tcsadmin')
 @login_required_page
 def files_page():
     return render_template('files.html', page='files')
 
 
-@app.route('/docs/scraper')
+@app.route('/tcsadmin/docs/scraper')
 @login_required_page
 def scraper_guide_page():
     """Documentation only -- explains the existing scraper contract
@@ -221,7 +221,7 @@ def scraper_guide_page():
 @app.route('/login', methods=['GET'])
 def login_page():
     if 'user_id' in session:
-        return redirect('/')
+        return redirect('/tcsadmin')
     return render_template('login.html')
 
 
@@ -297,7 +297,7 @@ def login_submit():
     session['role'] = user['Role']
     session['csrf_token'] = secrets.token_hex(16)
 
-    return jsonify({'redirect': '/'})
+    return jsonify({'redirect': '/tcsadmin'})
 
 
 @app.route('/logout', methods=['POST'])
@@ -377,7 +377,7 @@ def reset_password_page():
     })
 
 
-@app.route('/api/me')
+@app.route('/tcsadmin/api/me')
 @login_required_api
 def api_me():
     user = get_user_by_id(session['user_id'])
@@ -387,7 +387,7 @@ def api_me():
     return jsonify({'user': serialize_user(user), 'csrfToken': session.get('csrf_token')})
 
 
-@app.route('/api/profile', methods=['PUT'])
+@app.route('/tcsadmin/api/profile', methods=['PUT'])
 @login_required_api
 @require_csrf
 def api_update_profile():
@@ -425,7 +425,7 @@ def api_update_profile():
     return jsonify({'user': serialize_user(user)})
 
 
-@app.route('/api/profile/avatar', methods=['DELETE'])
+@app.route('/tcsadmin/api/profile/avatar', methods=['DELETE'])
 @login_required_api
 @require_csrf
 def api_remove_avatar():
@@ -440,7 +440,7 @@ def api_remove_avatar():
     return jsonify({'user': serialize_user(user)})
 
 
-@app.route('/api/change-password', methods=['POST'])
+@app.route('/tcsadmin/api/change-password', methods=['POST'])
 @login_required_api
 @require_csrf
 def api_change_password():
@@ -488,28 +488,28 @@ def api_change_password():
     return jsonify({'message': 'Password changed successfully.'})
 
 
-@app.route('/Admin')
+@app.route('/tcsadmin/Admin')
 @login_required_page
 @role_required_page('SuperAdmin', 'Admin')
 def admin_page():
     return render_template('admin.html', page='admin')
 
 
-@app.route('/trash')
+@app.route('/tcsadmin/trash')
 @login_required_page
 @role_required_page('SuperAdmin', 'Admin')
 def trash_page():
     return render_template('trash.html', page='trash')
 
 
-@app.route('/reports')
+@app.route('/tcsadmin/reports')
 @login_required_page
 @role_required_page('SuperAdmin')
 def reports_page():
     return render_template('reports.html', page='reports')
 
 
-@app.route('/api/admin/users', methods=['GET'])
+@app.route('/tcsadmin/api/admin/users', methods=['GET'])
 @login_required_api
 @role_required_api('SuperAdmin', 'Admin')
 def api_admin_list_users():
@@ -518,14 +518,14 @@ def api_admin_list_users():
     return jsonify({'users': [serialize_user(u) for u in list_active_users()]})
 
 
-@app.route('/api/admin/users/trash', methods=['GET'])
+@app.route('/tcsadmin/api/admin/users/trash', methods=['GET'])
 @login_required_api
 @role_required_api('SuperAdmin', 'Admin')
 def api_admin_list_trash():
     return jsonify({'users': [serialize_user(u) for u in list_deleted_users()]})
 
 
-@app.route('/api/admin/users', methods=['POST'])
+@app.route('/tcsadmin/api/admin/users', methods=['POST'])
 @login_required_api
 @role_required_api('SuperAdmin')
 @require_csrf
@@ -567,7 +567,7 @@ def api_admin_create_user():
     return jsonify({'user': serialize_user(get_user_by_id(new_user_id))}), 201
 
 
-@app.route('/api/admin/users/<int:user_id>', methods=['PUT'])
+@app.route('/tcsadmin/api/admin/users/<int:user_id>', methods=['PUT'])
 @login_required_api
 @role_required_api('SuperAdmin', 'Admin')
 @require_csrf
@@ -634,7 +634,7 @@ def api_admin_update_user(user_id):
     return jsonify({'user': serialize_user(updated)})
 
 
-@app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+@app.route('/tcsadmin/api/admin/users/<int:user_id>', methods=['DELETE'])
 @login_required_api
 @role_required_api('SuperAdmin', 'Admin')
 @require_csrf
@@ -668,7 +668,7 @@ def api_admin_delete_user(user_id):
     return jsonify({'message': 'User deleted.'})
 
 
-@app.route('/api/admin/users/<int:user_id>/recover', methods=['POST'])
+@app.route('/tcsadmin/api/admin/users/<int:user_id>/recover', methods=['POST'])
 @login_required_api
 @role_required_api('SuperAdmin')
 @require_csrf
@@ -805,7 +805,7 @@ def _run_job_groups(state):
             state.job_status = 'completed_unseen'
 
 
-@app.route('/api/scraper/analyze', methods=['POST'])
+@app.route('/tcsadmin/api/scraper/analyze', methods=['POST'])
 @login_required_api
 def analyze_scraper_input():
     """Preview step: classifies the submitted URLs (file upload or pasted text)
@@ -827,7 +827,7 @@ def analyze_scraper_input():
     })
 
 
-@app.route('/StartScraper', methods=['POST'])
+@app.route('/tcsadmin/StartScraper', methods=['POST'])
 @login_required_api
 def start_scraper():
     state = get_scraper_session()
@@ -898,7 +898,7 @@ def start_scraper():
     })
 
 
-@app.route('/stop-scraper', methods=['POST'])
+@app.route('/tcsadmin/stop-scraper', methods=['POST'])
 @login_required_api
 def stop_scraper():
     state = get_scraper_session()
@@ -925,7 +925,7 @@ def stop_scraper():
 
     return jsonify({'stopped': True, 'message': 'Scraper has been stopped.'})
 
-@app.route('/scraper-url-statuses')
+@app.route('/tcsadmin/scraper-url-statuses')
 @login_required_api
 def scraper_url_statuses_endpoint():
     state = get_scraper_session()
@@ -961,7 +961,7 @@ def scraper_url_statuses_endpoint():
     })
 
 
-@app.route('/scraper-status')
+@app.route('/tcsadmin/scraper-status')
 @login_required_api
 def scraper_status():
     state = get_scraper_session()
@@ -1000,7 +1000,7 @@ def scraper_status():
     })
 
 
-@app.route('/download-output')
+@app.route('/tcsadmin/download-output')
 @login_required_api
 def download_output():
     state = get_scraper_session()
@@ -1028,7 +1028,7 @@ def _parse_urls_text(urls_text):
     return urls, None
 
 
-@app.route('/api/files/running')
+@app.route('/tcsadmin/api/files/running')
 @login_required_api
 def api_list_running_files():
     """Every currently-running registered scraper (fileId + siteName only) --
@@ -1044,7 +1044,7 @@ def api_list_running_files():
     return jsonify({'files': running})
 
 
-@app.route('/api/files')
+@app.route('/tcsadmin/api/files')
 @login_required_api
 def api_list_files():
     search = request.args.get('search', '').strip() or None
@@ -1094,7 +1094,7 @@ def api_list_files():
     })
 
 
-@app.route('/api/files', methods=['POST'])
+@app.route('/tcsadmin/api/files', methods=['POST'])
 @login_required_api
 @role_required_api('SuperAdmin', 'Admin')
 @require_csrf
@@ -1124,7 +1124,7 @@ def api_create_file():
     return jsonify({'file': files_repo.serialize_file(files_repo.get_file(file_id))}), 201
 
 
-@app.route('/api/files/<int:file_id>', methods=['PUT'])
+@app.route('/tcsadmin/api/files/<int:file_id>', methods=['PUT'])
 @login_required_api
 @require_csrf
 def api_update_file(file_id):
@@ -1158,7 +1158,7 @@ def api_update_file(file_id):
     return jsonify({'file': files_repo.serialize_file(files_repo.get_file(file_id))})
 
 
-@app.route('/api/files/<int:file_id>', methods=['DELETE'])
+@app.route('/tcsadmin/api/files/<int:file_id>', methods=['DELETE'])
 @login_required_api
 @require_csrf
 def api_delete_file(file_id):
@@ -1172,7 +1172,7 @@ def api_delete_file(file_id):
     return jsonify({'message': 'Scraper permanently deleted.'})
 
 
-@app.route('/api/files/<int:file_id>/toggle-status', methods=['POST'])
+@app.route('/tcsadmin/api/files/<int:file_id>/toggle-status', methods=['POST'])
 @login_required_api
 @require_csrf
 def api_toggle_file_status(file_id):
@@ -1202,7 +1202,7 @@ def api_toggle_file_status(file_id):
     })
 
 
-@app.route('/api/files/<int:file_id>/restore', methods=['POST'])
+@app.route('/tcsadmin/api/files/<int:file_id>/restore', methods=['POST'])
 @login_required_api
 @require_csrf
 def api_restore_file(file_id):
@@ -1227,7 +1227,7 @@ def api_restore_file(file_id):
 # Centralized Job-Based Scraper APIs (with User Ownership Protection)
 # ==============================================================================
 
-@app.route('/api/scraper/start', methods=['POST'])
+@app.route('/tcsadmin/api/scraper/start', methods=['POST'])
 @login_required_api
 @require_csrf
 def api_scraper_job_start():
@@ -1247,7 +1247,7 @@ def api_scraper_job_start():
     return jsonify(result)
 
 
-@app.route('/api/scraper/file/<int:file_id>/active-job')
+@app.route('/tcsadmin/api/scraper/file/<int:file_id>/active-job')
 @login_required_api
 def api_scraper_file_active_job(file_id):
     user_id = session.get('user_id')
@@ -1255,7 +1255,7 @@ def api_scraper_file_active_job(file_id):
     return jsonify(active_info)
 
 
-@app.route('/api/scraper/job/<string:job_id>/status')
+@app.route('/tcsadmin/api/scraper/job/<string:job_id>/status')
 @login_required_api
 def api_scraper_job_status(job_id):
     user_id = session.get('user_id')
@@ -1263,7 +1263,7 @@ def api_scraper_job_status(job_id):
     return jsonify(data), code
 
 
-@app.route('/api/scraper/job/<string:job_id>/urls')
+@app.route('/tcsadmin/api/scraper/job/<string:job_id>/urls')
 @login_required_api
 def api_scraper_job_urls(job_id):
     user_id = session.get('user_id')
@@ -1279,7 +1279,7 @@ def api_scraper_job_urls(job_id):
     })
 
 
-@app.route('/api/scraper/job/<string:job_id>/events')
+@app.route('/tcsadmin/api/scraper/job/<string:job_id>/events')
 @login_required_api
 def api_scraper_job_events(job_id):
     """Server-Sent Events (SSE) Webhook endpoint for live scraper progress and URL updates."""
@@ -1336,7 +1336,7 @@ def api_scraper_job_events(job_id):
     )
 
 
-@app.route('/api/scraper/job/<string:job_id>/stop', methods=['POST'])
+@app.route('/tcsadmin/api/scraper/job/<string:job_id>/stop', methods=['POST'])
 @login_required_api
 @require_csrf
 def api_scraper_job_stop(job_id):
@@ -1348,7 +1348,7 @@ def api_scraper_job_stop(job_id):
 
 # --- Backward Compatible Routes for /api/files/ endpoints ---
 
-@app.route('/api/files/<int:file_id>/start', methods=['POST'])
+@app.route('/tcsadmin/api/files/<int:file_id>/start', methods=['POST'])
 @login_required_api
 @require_csrf
 def api_start_file(file_id):
@@ -1359,7 +1359,7 @@ def api_start_file(file_id):
     return jsonify(result)
 
 
-@app.route('/api/files/<int:file_id>/stop', methods=['POST'])
+@app.route('/tcsadmin/api/files/<int:file_id>/stop', methods=['POST'])
 @login_required_api
 @require_csrf
 def api_stop_file(file_id):
@@ -1369,7 +1369,7 @@ def api_stop_file(file_id):
     return jsonify(result), code
 
 
-@app.route('/api/files/<int:file_id>/status')
+@app.route('/tcsadmin/api/files/<int:file_id>/status')
 @login_required_api
 def api_file_status(file_id):
     record = files_repo.get_file(file_id)
@@ -1409,7 +1409,7 @@ def api_file_status(file_id):
     })
 
 
-@app.route('/api/files/<int:file_id>/url-statuses')
+@app.route('/tcsadmin/api/files/<int:file_id>/url-statuses')
 @login_required_api
 def api_file_url_statuses(file_id):
     user_id = session.get('user_id')
@@ -1443,7 +1443,7 @@ def _format_scraper_output_filename(site_name, extension='xlsx'):
     return f"{clean_site}_{today}.{extension}"
 
 
-@app.route('/api/files/<int:file_id>/download')
+@app.route('/tcsadmin/api/files/<int:file_id>/download')
 @login_required_api
 def api_file_download(file_id):
     record = files_repo.get_file(file_id)
@@ -1463,7 +1463,7 @@ def api_file_download(file_id):
     )
 
 
-@app.route('/api/files/download-zip')
+@app.route('/tcsadmin/api/files/download-zip')
 @login_required_api
 def api_files_download_zip():
     # 1. Reject download if any crawler is still actively running
@@ -1509,7 +1509,7 @@ def api_files_download_zip():
     )
 
 
-@app.route('/api/files/upload-script', methods=['POST'])
+@app.route('/tcsadmin/api/files/upload-script', methods=['POST'])
 @login_required_api
 @role_required_api('SuperAdmin', 'Admin')
 @require_csrf
@@ -1532,7 +1532,7 @@ def api_upload_file_script():
     return jsonify({'fileName': filename})
 
 
-@app.route('/api/files/parse-urls', methods=['POST'])
+@app.route('/tcsadmin/api/files/parse-urls', methods=['POST'])
 @login_required_api
 def api_parse_urls():
     if request.files and 'file' in request.files:
@@ -1555,7 +1555,7 @@ def api_parse_urls():
     return jsonify({'urls': urls, 'errors': errors})
 
 
-@app.route('/api/files/<int:file_id>/logs')
+@app.route('/tcsadmin/api/files/<int:file_id>/logs')
 @login_required_api
 def api_file_logs(file_id):
     record = files_repo.get_file(file_id)
@@ -1570,7 +1570,7 @@ def api_file_logs(file_id):
     })
 
 
-@app.route('/api/reports')
+@app.route('/tcsadmin/api/reports')
 @login_required_api
 @role_required_api('SuperAdmin')
 def api_list_reports():
@@ -1607,7 +1607,7 @@ def api_list_reports():
     })
 
 
-@app.route('/api/reports/<int:report_id>/download')
+@app.route('/tcsadmin/api/reports/<int:report_id>/download')
 @login_required_api
 @role_required_api('SuperAdmin')
 def api_download_report_output(report_id):
@@ -1634,7 +1634,7 @@ def api_download_report_output(report_id):
 @app.errorhandler(404)
 def handle_404_error(e):
     """Gracefully handles unwanted page or API requests by serving custom 404."""
-    if request.path.startswith('/api/') or request.headers.get('Accept') == 'application/json':
+    if request.path.startswith('/tcsadmin/api/') or request.headers.get('Accept') == 'application/json':
         return jsonify({
             'error': 'The requested API resource was not found.',
             'status': 404,
@@ -1656,3 +1656,4 @@ def handle_404_error(e):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8090))
     app.run(host="0.0.0.0", port=port, debug=True)
+#updated

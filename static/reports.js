@@ -67,7 +67,7 @@
     const isFail = (row.status || '').toUpperCase() === 'FAIL' || (row.status || '').toUpperCase() === 'FAILED';
     const msg = row.errorMessage || '';
     if (isRunning && row.fileId) {
-      return `<a href="/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer">Live Progress →</a>`;
+      return `<a href="/tcsadmin/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer">Live Progress →</a>`;
     }
     if (isFail) {
       return `
@@ -179,7 +179,7 @@
 
     try {
       const statusParam = statusFilterEl ? statusFilterEl.value : '';
-      const url = `/api/reports?perPage=200${statusParam ? `&status=${encodeURIComponent(statusParam)}` : ''}`;
+      const url = `/tcsadmin/api/reports?perPage=200${statusParam ? `&status=${encodeURIComponent(statusParam)}` : ''}`;
       const response = await fetch(url);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {

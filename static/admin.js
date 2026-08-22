@@ -415,7 +415,7 @@ window.AdminShared = (function () {
 
   async function loadMe() {
     try {
-      const response = await fetch('/api/me');
+      const response = await fetch('/tcsadmin/api/me');
       if (!response.ok) return;
       const data = await response.json();
       csrfToken = data.csrfToken;
@@ -455,7 +455,7 @@ window.AdminShared = (function () {
   async function loadUsers({ silent } = {}) {
     if (!silent && !users.length) Shared.hideError(errorEl);
     try {
-      const response = await fetch('/api/admin/users');
+      const response = await fetch('/tcsadmin/api/admin/users');
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to load users.';
@@ -557,7 +557,7 @@ window.AdminShared = (function () {
     submitBtn.disabled = true;
     Shared.showToast(id ? 'Saving user changes…' : 'Creating new user…', 'info');
     try {
-      const response = await fetch(id ? `/api/admin/users/${id}` : '/api/admin/users', {
+      const response = await fetch(id ? `/tcsadmin/api/admin/users/${id}` : '/tcsadmin/api/admin/users', {
         method: id ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify(payload),
@@ -588,7 +588,7 @@ window.AdminShared = (function () {
     deleteConfirmBtn.disabled = true;
     Shared.showToast('Moving user to trash…', 'info');
     try {
-      const response = await fetch(`/api/admin/users/${pendingDeleteId}`, {
+      const response = await fetch(`/tcsadmin/api/admin/users/${pendingDeleteId}`, {
         method: 'DELETE',
         headers: { 'X-CSRF-Token': csrfToken },
       });

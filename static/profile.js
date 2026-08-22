@@ -42,7 +42,7 @@
   }
 
   async function fetchMe() {
-    const res = await fetch('/api/me');
+    const res = await fetch('/tcsadmin/api/me');
     if (!res.ok) return;
     const data = await res.json();
     currentUser = data.user;
@@ -104,7 +104,7 @@
         email: document.getElementById('cp-email').value.trim(),
         avatar: document.getElementById('cp-avatar-url').value.trim() || null,
       };
-      const response = await fetch('/api/profile', {
+      const response = await fetch('/tcsadmin/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify(payload),
@@ -147,7 +147,7 @@
       window.AdminShared.showToast('Removing avatar…', 'info');
     }
     try {
-      const response = await fetch('/api/profile/avatar', {
+      const response = await fetch('/tcsadmin/api/profile/avatar', {
         method: 'DELETE',
         headers: { 'X-CSRF-Token': csrfToken },
       });
@@ -216,7 +216,7 @@
     }
 
     try {
-      const response = await fetch('/api/change-password', {
+      const response = await fetch('/tcsadmin/api/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify({ current_password: current, new_password: next, confirm_password: confirm }),

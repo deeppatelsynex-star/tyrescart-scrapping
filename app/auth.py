@@ -163,7 +163,7 @@ def role_required_page(*roles):
         @functools.wraps(view)
         def wrapped(*args, **kwargs):
             if session.get('role') not in roles:
-                return redirect('/')
+                return redirect('/tcsadmin')
             return view(*args, **kwargs)
         return wrapped
     return decorator
@@ -241,3 +241,4 @@ def update_user_password(user_id, new_password):
     finally:
         conn.close()
 
+#updated

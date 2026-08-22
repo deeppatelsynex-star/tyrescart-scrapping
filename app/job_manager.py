@@ -522,6 +522,15 @@ def start_job(file_id, user_id):
                 urls = []
 
         output_placeholder = os.path.join(TMP_DIR, f'file_{file_id}_output.xlsx')
+        if os.path.exists(output_placeholder):
+            # Reused across every run of this file_id -- a leftover file from a
+            # prior run (e.g. one killed by a server restart before Scrapy's
+            # feed export overwrote it) would otherwise have its row count misread
+            # as this brand-new job's progress in _recalc_counters().
+            try:
+                os.remove(output_placeholder)
+            except OSError:
+                pass
         input_path = None
         if urls:
             input_path = os.path.join(TMP_DIR, f'file_{file_id}_urls.csv')

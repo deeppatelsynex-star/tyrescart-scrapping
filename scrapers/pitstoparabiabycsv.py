@@ -124,10 +124,14 @@ class PitstopArabiaScraper:
         item['Sku'] = (sel.css('.sku::text').get() or '').strip()
         item['Product Name'] = raw_name.replace(brand_val, '').replace('  ', '').strip()
         item['Brand'] = brand_val
+
         item['InStock'] = in_stock
         item['Size'] = (sel.css('.size_block span:contains("Size:") + b::text').get() or '').strip().replace('  ', '').replace('/None', '')
-        item['Serv. Desc'] = ''.join([t.strip() for t in sel.css('span:contains("Serv. Desc")').xpath('parent::*/text()').getall() if t.strip()]).replace(' ', '')
+        item['Serv. Desc'] = '' if re.search(r'--[A-Za-z]', (sd := ''.join([t.strip() for t in sel.css('span:contains("Serv. Desc")').xpath('parent::*/text()').getall() if t.strip()]).replace(' ', ''))) else sd
         item['Year'] = (sel.css('[title="Year of manufacture"]::text').get() or '').strip()
+        item['product_name'] = ' '.join(filter(None, [
+            item['Brand'], item['Size'], item['Serv. Desc'], item['Product Name'], item['Year']
+        ]))
         item['Country'] = ''.join([t.strip() for t in sel.css('span:contains("Country")').xpath('parent::*/text()').getall() if t.strip()])
         item['Tyre Type'] = (sel.css('.detail_left .v_type::attr(alt)').get() or '').strip().replace('Run Flat', 'Runflat')
         item['Tyre Marking'] = (sel.css('[itemprop="name"] .part_no::text').get() or '').strip()
@@ -153,6 +157,7 @@ class PitstopArabiaScraper:
         item['Source'] = url
 
         emit_status(url, 'done')
+        print(item['product_name'])
         return item
 
     def process_source_url(self, source_url):
@@ -274,7 +279,7 @@ class PitstopArabiaScraper:
         ws.title = "Products"
 
         headers = [
-            'Sku', 'Product Name', 'Brand', 'InStock', 'Size', 'Serv. Desc',
+            'Sku', 'Product Name', 'product_name', 'Brand', 'InStock', 'Size', 'Serv. Desc',
             'Year', 'Country', 'Tyre Type', 'Tyre Marking', 'Price', 'Set Price',
             'Promo Text', 'Promo Code', 'Vehicle Type', 'Warranty', 'Sidewall Style',
             'UTQG', 'Fuel Efficiency Rating', 'Wet Grip Rating', 'External Noise',

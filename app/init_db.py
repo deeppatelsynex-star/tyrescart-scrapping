@@ -198,9 +198,9 @@ def main():
     try:
         with conn.cursor() as cursor:
             cursor.execute(CREATE_USER_TBL)
-            add_missing_columns(cursor)
             cursor.execute(CREATE_FILE_TBL)
             cursor.execute(CREATE_LOG_TBL)
+            add_missing_columns(cursor)
             cleanup_deprecated_tables(cursor)
             add_missing_indexes(cursor)
             update_legacy_stopped_logs(cursor)

@@ -86,7 +86,7 @@
   function statusBadgeHtml(row) {
     if (row.working) {
       if (row.is_owner) {
-        return `<a href="/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors" title="Click to view your live progress"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Running</a>`;
+        return `<a href="/tcsadmin/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors" title="Click to view your live progress"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Running</a>`;
       }
       return `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200/80" title="This scraper is currently being used by another user">In Use</span>`;
     }
@@ -105,7 +105,7 @@
       if (row.is_owner) {
         const startStopLabel = busyAction === 'stop' ? 'Stopping…' : 'Stop';
         startStopBtn = `<button type="button" data-action="stop" data-id="${row.fileId}" ${busyAction === 'stop' ? 'disabled' : ''} class="text-xs font-semibold ${busyAction === 'stop' ? 'text-slate-300 cursor-not-allowed' : 'text-rose-600 hover:underline cursor-pointer'}">${startStopLabel}</button>`;
-        viewLiveBtn = `<a href="/scraperpage?fileId=${row.fileId}" class="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer">View Progress</a>`;
+        viewLiveBtn = `<a href="/tcsadmin/scraperpage?fileId=${row.fileId}" class="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer">View Progress</a>`;
       } else {
         startStopBtn = `<button type="button" disabled class="text-xs font-semibold text-slate-400 cursor-not-allowed" title="This scraper is currently being used by another user.">In Use</button>`;
       }
@@ -116,7 +116,7 @@
     }
 
     const downloadBtn = row.outputAvailable && !row.working
-      ? `<a href="/api/files/${row.fileId}/download" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer" title="Download output Excel">Download</a>`
+      ? `<a href="/tcsadmin/api/files/${row.fileId}/download" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer" title="Download output Excel">Download</a>`
       : '';
     const logBtn = `<button type="button" data-action="view-logs" data-id="${row.fileId}" class="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer">Log</button>`;
 
@@ -254,7 +254,7 @@
 
   async function loadMe() {
     try {
-      const response = await fetch('/api/me');
+      const response = await fetch('/tcsadmin/api/me');
       if (!response.ok) return;
       const data = await response.json();
       csrfToken = data.csrfToken;
@@ -314,7 +314,7 @@
       refreshIcon.classList.add('animate-spin');
     }
     try {
-      const response = await fetch('/api/files?perPage=100');
+      const response = await fetch('/tcsadmin/api/files?perPage=100');
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to load scrapers.';
@@ -420,7 +420,7 @@
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const response = await fetch('/api/files/parse-urls', {
+      const response = await fetch('/tcsadmin/api/files/parse-urls', {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
         body: formData,
@@ -452,7 +452,7 @@
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const response = await fetch('/api/files/upload-script', {
+      const response = await fetch('/tcsadmin/api/files/upload-script', {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
         body: formData,
@@ -535,7 +535,7 @@
 
     setSubmitLoading(true, idleLabel);
     try {
-      const response = await fetch(id ? `/api/files/${id}` : '/api/files', {
+      const response = await fetch(id ? `/tcsadmin/api/files/${id}` : '/tcsadmin/api/files', {
         method: id ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
         body: JSON.stringify(payload),
@@ -568,7 +568,7 @@
     Shared.hideError(deleteError);
     deleteConfirmBtn.disabled = true;
     try {
-      const response = await fetch(`/api/files/${pendingDeleteId}`, {
+      const response = await fetch(`/tcsadmin/api/files/${pendingDeleteId}`, {
         method: 'DELETE',
         headers: { 'X-CSRF-Token': csrfToken },
       });
@@ -614,7 +614,7 @@
       await loadMe();
     }
     try {
-      const response = await fetch(`/api/files/${fileId}/toggle-status`, {
+      const response = await fetch(`/tcsadmin/api/files/${fileId}/toggle-status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken || '' },
         body: JSON.stringify({ enabled: enable }),
@@ -719,7 +719,7 @@
 
   async function fetchScraperLogs(fileId) {
     try {
-      const response = await fetch(`/api/files/${fileId}/logs`);
+      const response = await fetch(`/tcsadmin/api/files/${fileId}/logs`);
       const data = await response.json().catch(() => ({}));
       if (logLoading) logLoading.classList.add('hidden');
 
@@ -836,7 +836,7 @@
           <div class="flex items-center gap-2 text-slate-600">
             <span class="font-semibold text-slate-900">${itemsScraped}</span> items / products scraped
           </div>
-          ${log.status === 'RUNNING' && log.fileId ? `<a href="/scraperpage?fileId=${log.fileId}" class="font-semibold text-indigo-600 hover:underline">View Live Progress →</a>` : ''}
+          ${log.status === 'RUNNING' && log.fileId ? `<a href="/tcsadmin/scraperpage?fileId=${log.fileId}" class="font-semibold text-indigo-600 hover:underline">View Live Progress →</a>` : ''}
         </div>
 
         ${actionSection}
@@ -935,7 +935,7 @@
       if (!csrfToken) {
         await loadMe();
       }
-      const response = await fetch(`/api/files/${fileId}/start`, {
+      const response = await fetch(`/tcsadmin/api/files/${fileId}/start`, {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
       });
@@ -958,7 +958,7 @@
       inFlightStarts.delete(fileId);
       table.draw(false);
       if (started) {
-        window.location.href = `/scraperpage?fileId=${fileId}`;
+        window.location.href = `/tcsadmin/scraperpage?fileId=${fileId}`;
       } else {
         await loadFiles({ silent: true });
       }
@@ -970,7 +970,7 @@
     inFlightStarts.set(fileId, 'stop');
     table.draw(false);
     try {
-      const response = await fetch(`/api/files/${fileId}/stop`, {
+      const response = await fetch(`/tcsadmin/api/files/${fileId}/stop`, {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
       });
