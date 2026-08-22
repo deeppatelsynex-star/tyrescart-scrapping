@@ -1,0 +1,1306 @@
+import csv
+from datetime import datetime
+import io
+import json
+from collections import OrderedDict
+import os
+import queue
+import re
+import secrets
+import subprocess
+import sys
+import threading
+import time
+import uuid
+import zipfile
+
+from flask import Response, jsonify, request, send_file, send_from_directory, session, stream_with_context
+from openpyxl import Workbook, load_workbook
+import pymysql
+
+from auth import (
+    VALID_ROLES,
+    bit_to_bool,
+    get_user_by_id,
+    has_superadmin,
+    hash_password,
+    list_active_users,
+    list_deleted_users,
+    login_required_api,
+    require_csrf,
+    role_required_api,
+    serialize_user,
+    verify_password,
+)
+from db import get_connection
+
+EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TMP_SCRAPERS_DIR = os.path.join(BASE_DIR, 'tmp', 'scrapers')
+sys.path.insert(0, os.path.join(BASE_DIR, 'scrapers'))
+
+import file_scraper_runner
+import files_repo
+import job_manager
+import reports_repo
+from scraper_config import SCRIPT_MAP
+from scraper_input import (
+    InputError,
+    build_entries,
+    extract_input_source,
+    format_invalid_url_message,
+    format_unsupported_message,
+    parse_csv_urls,
+    parse_text_urls,
+    validate_url_list,
+)
+from scraper_status_utils import build_status_summary, parse_status_line
+
+
+class ScraperSession:
+    """In-memory state for one browser session's ad-hoc scraping runs."""
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.process = None
+        self.url_statuses = []
+        self.job_status = 'idle'  # idle | running | completed_unseen | failed_unseen
+        self.stopped = False
+        self.job_id = None
+        self.output_file = None
+        self.thread = None
+        self.pending_groups = []
+        self.skipped = {'invalid': [], 'unsupported': []}
+
+
+_scraper_sessions = {}
+_sessions_lock = threading.Lock()
+
+
+def get_scraper_session():
+    sid = session.get('sid')
+    if not sid:
+        sid = secrets.token_hex(16)
+        session['sid'] = sid
+    with _sessions_lock:
+        if sid not in _scraper_sessions:
+            _scraper_sessions[sid] = ScraperSession()
+        return _scraper_sessions[sid]
+
+
+def get_xlsx_info(output_file):
+    if not output_file or not os.path.exists(output_file):
+        return 0, set()
+    try:
+        wb = load_workbook(output_file, read_only=True)
+        ws = wb.active
+        rows = list(ws.iter_rows(values_only=True))
+        wb.close()
+        if not rows:
+            return 0, set()
+        header = [str(c).strip().lower() if c is not None else '' for c in rows[0]]
+        url_col_idx = None
+        for candidate in ('url', 'product url', 'link', 'product link'):
+            if candidate in header:
+                url_col_idx = header.index(candidate)
+                break
+        urls = set()
+        count = 0
+        for row in rows[1:]:
+            if any(cell is not None for cell in row):
+                count += 1
+                if url_col_idx is not None and url_col_idx < len(row):
+                    val = row[url_col_idx]
+                    if val:
+                        urls.add(str(val).strip())
+        return count, urls
+    except Exception:
+        return 0, set()
+
+
+def _record_status_line(state, cleaned_line):
+    parsed_status = parse_status_line(cleaned_line)
+    if not parsed_status:
+        return
+    with state.lock:
+        existing = next((item for item in state.url_statuses if item['url'] == parsed_status['url']), None)
+        if existing:
+            existing['status'] = parsed_status['status']
+            if parsed_status.get('parent'):
+                existing['parent'] = parsed_status['parent']
+            if parsed_status.get('type'):
+                existing['type'] = parsed_status['type']
+        else:
+            state.url_statuses.append({
+                'url': parsed_status['url'],
+                'status': parsed_status['status'],
+                'parent': parsed_status.get('parent') or '',
+                'type': parsed_status.get('type') or 'root',
+            })
+
+
+def _merge_xlsx_outputs(source_paths, destination):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Products'
+    header_written = False
+
+    for path in source_paths:
+        try:
+            src_wb = load_workbook(path, read_only=True)
+        except Exception:
+            continue
+        try:
+            rows = src_wb.active.iter_rows(values_only=True)
+            header = next(rows, None)
+            if header is None:
+                continue
+            if not header_written:
+                ws.append(list(header))
+                header_written = True
+            for row in rows:
+                ws.append(list(row))
+        finally:
+            src_wb.close()
+
+    if not header_written:
+        ws.append(['No data'])
+
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+    wb.save(destination)
+
+
+def _run_job_groups(state):
+    group_outputs = []
+    had_failure = False
+
+    for group in state.pending_groups:
+        with state.lock:
+            if state.stopped:
+                break
+
+        process = subprocess.Popen(
+            [sys.executable, '-u', group['script_path'], group['output_path'], group['input_path']],
+            cwd=BASE_DIR,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        with state.lock:
+            state.process = process
+
+        for line in iter(process.stdout.readline, ''):
+            if not line:
+                break
+            _record_status_line(state, line.rstrip('\n'))
+        process.stdout.close()
+        process.wait()
+
+        with state.lock:
+            state.process = None
+        if process.returncode not in (0, None) and not state.stopped:
+            had_failure = True
+        if os.path.exists(group['output_path']):
+            group_outputs.append(group['output_path'])
+
+    _merge_xlsx_outputs(group_outputs, state.output_file)
+
+    for group in state.pending_groups:
+        for path in (group['input_path'], group['output_path']):
+            try:
+                if os.path.exists(path):
+                    os.remove(path)
+            except OSError:
+                pass
+
+    with state.lock:
+        if state.stopped:
+            state.job_status = 'idle'
+        elif had_failure:
+            state.job_status = 'failed_unseen'
+        else:
+            state.job_status = 'completed_unseen'
+
+
+def _parse_urls_text(urls_text):
+    raw_urls = parse_text_urls(urls_text)
+    urls, errors = validate_url_list(raw_urls)
+    if errors:
+        lines = [f"Invalid URL on row {e['row']}: {e['value']}" for e in errors]
+        return [], 'Invalid URL(s):\n' + '\n'.join(lines)
+    if not urls:
+        return [], 'At least one valid URL is required.'
+    return urls, None
+
+
+def _format_scraper_output_filename(site_name, extension='xlsx'):
+    clean_site = re.sub(r'[^A-Za-z0-9]+', '_', site_name or '').strip('_').upper() or 'SCRAPER'
+    today = datetime.now().strftime('%d-%m-%Y')
+    return f"{clean_site}_{today}.{extension}"
+
+
+def register_api_routes(app):
+    """Registers all REST, JSON, and Scraper execution APIs on the Flask application."""
+
+    # ==========================================================================
+    # 1. User, Profile & Authentication APIs
+    # ==========================================================================
+
+    @app.route('/tcsadmin/api/me')
+    @app.route('/api/me')
+    @login_required_api
+    def api_me():
+        user = get_user_by_id(session['user_id'])
+        if not user:
+            session.clear()
+            return jsonify({'error': 'Authentication required.'}), 401
+        return jsonify({'user': serialize_user(user), 'csrfToken': session.get('csrf_token')})
+
+    @app.route('/tcsadmin/api/profile', methods=['PUT'])
+    @app.route('/api/profile', methods=['PUT'])
+    @login_required_api
+    @require_csrf
+    def api_update_profile():
+        data = request.get_json(silent=True) or {}
+        name = (data.get('name') or '').strip()
+        email = (data.get('email') or '').strip()
+        avatar = data.get('avatar')
+        avatar = avatar.strip() if isinstance(avatar, str) else None
+        avatar = avatar or None
+
+        if not name:
+            return jsonify({'error': 'Name is required.'}), 400
+        if not email or not EMAIL_RE.match(email):
+            return jsonify({'error': 'A valid email is required.'}), 400
+        if avatar and len(avatar) > 500:
+            return jsonify({'error': 'Avatar URL is too long.'}), 400
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                try:
+                    cursor.execute(
+                        'UPDATE userTbl SET Name = %s, Email = %s, avatar = %s WHERE userid = %s',
+                        (name, email, avatar, session['user_id']),
+                    )
+                except pymysql.err.IntegrityError:
+                    return jsonify({'error': 'That email is already in use.'}), 409
+        finally:
+            conn.close()
+
+        session['name'] = name
+        session['email'] = email
+
+        user = get_user_by_id(session['user_id'])
+        return jsonify({'user': serialize_user(user)})
+
+    @app.route('/tcsadmin/api/profile/avatar', methods=['DELETE'])
+    @app.route('/api/profile/avatar', methods=['DELETE'])
+    @login_required_api
+    @require_csrf
+    def api_remove_avatar():
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute('UPDATE userTbl SET avatar = NULL WHERE userid = %s', (session['user_id'],))
+        finally:
+            conn.close()
+
+        user = get_user_by_id(session['user_id'])
+        return jsonify({'user': serialize_user(user)})
+
+    @app.route('/tcsadmin/api/change-password', methods=['POST'])
+    @app.route('/api/change-password', methods=['POST'])
+    @login_required_api
+    @require_csrf
+    def api_change_password():
+        fail_count = session.get('pwd_fail_count', 0)
+        if fail_count >= 5:
+            session.clear()
+            return jsonify({'error': 'Too many failed attempts. Please log in again.'}), 429
+
+        data = request.get_json(silent=True) or {}
+        current_password = data.get('current_password') or ''
+        new_password = data.get('new_password') or ''
+        confirm_password = data.get('confirm_password') or ''
+
+        if not current_password or not new_password or not confirm_password:
+            return jsonify({'error': 'All fields are required.'}), 400
+        if new_password != confirm_password:
+            return jsonify({'error': 'New password and confirmation do not match.'}), 400
+        if len(new_password) < 8:
+            return jsonify({'error': 'New password must be at least 8 characters.'}), 400
+
+        user = get_user_by_id(session['user_id'])
+        if not user or not verify_password(current_password, user['password']):
+            session['pwd_fail_count'] = fail_count + 1
+            return jsonify({'error': 'Current password is incorrect.'}), 400
+
+        if verify_password(new_password, user['password']):
+            return jsonify({'error': 'New password must be different from the current password.'}), 400
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    'UPDATE userTbl SET password = %s WHERE userid = %s',
+                    (hash_password(new_password), session['user_id']),
+                )
+        finally:
+            conn.close()
+
+        session.pop('pwd_fail_count', None)
+        session['sid'] = secrets.token_hex(16)
+        session['csrf_token'] = secrets.token_hex(16)
+
+        return jsonify({'message': 'Password changed successfully.'})
+
+    # ==========================================================================
+    # 2. Admin User Management APIs
+    # ==========================================================================
+
+    @app.route('/tcsadmin/api/admin/users', methods=['GET'])
+    @app.route('/api/admin/users', methods=['GET'])
+    @login_required_api
+    @role_required_api('SuperAdmin', 'Admin')
+    def api_admin_list_users():
+        return jsonify({'users': [serialize_user(u) for u in list_active_users()]})
+
+    @app.route('/tcsadmin/api/admin/users/trash', methods=['GET'])
+    @app.route('/api/admin/users/trash', methods=['GET'])
+    @login_required_api
+    @role_required_api('SuperAdmin', 'Admin')
+    def api_admin_list_trash():
+        return jsonify({'users': [serialize_user(u) for u in list_deleted_users()]})
+
+    @app.route('/tcsadmin/api/admin/users', methods=['POST'])
+    @app.route('/api/admin/users', methods=['POST'])
+    @login_required_api
+    @role_required_api('SuperAdmin')
+    @require_csrf
+    def api_admin_create_user():
+        data = request.get_json(silent=True) or {}
+        name = (data.get('name') or '').strip()
+        email = (data.get('email') or '').strip()
+        password = data.get('password') or ''
+        role = (data.get('role') or '').strip()
+        status = data.get('status', True)
+
+        if not name:
+            return jsonify({'error': 'Name is required.'}), 400
+        if not email or not EMAIL_RE.match(email):
+            return jsonify({'error': 'A valid email is required.'}), 400
+        if not password or len(password) < 8:
+            return jsonify({'error': 'Password must be at least 8 characters.'}), 400
+        if role not in VALID_ROLES:
+            return jsonify({'error': f"Role must be one of: {', '.join(VALID_ROLES)}."}), 400
+        if role == 'SuperAdmin' and has_superadmin():
+            return jsonify({'error': 'A SuperAdmin already exists. Only one SuperAdmin account is allowed.'}), 409
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                try:
+                    cursor.execute(
+                        'INSERT INTO userTbl (Name, Email, password, Status, IsDeleted, Role) '
+                        'VALUES (%s, %s, %s, %s, 0, %s)',
+                        (name, email, hash_password(password), 1 if status else 0, role),
+                    )
+                except pymysql.err.IntegrityError:
+                    return jsonify({'error': 'A user with that email already exists.'}), 409
+                new_user_id = cursor.lastrowid
+        finally:
+            conn.close()
+
+        return jsonify({'user': serialize_user(get_user_by_id(new_user_id))}), 201
+
+    @app.route('/tcsadmin/api/admin/users/<int:user_id>', methods=['PUT'])
+    @app.route('/api/admin/users/<int:user_id>', methods=['PUT'])
+    @login_required_api
+    @role_required_api('SuperAdmin', 'Admin')
+    @require_csrf
+    def api_admin_update_user(user_id):
+        target = get_user_by_id(user_id)
+        if not target:
+            return jsonify({'error': 'User not found.'}), 404
+
+        actor_role = session.get('role')
+        if target['Role'] == 'SuperAdmin' and actor_role != 'SuperAdmin':
+            return jsonify({'error': 'Only a SuperAdmin can modify a SuperAdmin account.'}), 403
+
+        data = request.get_json(silent=True) or {}
+        name = (data.get('name') or '').strip()
+        email = (data.get('email') or '').strip()
+        role = (data.get('role') or '').strip()
+        password = data.get('password') or ''
+        status = data.get('status', True)
+
+        if not name:
+            return jsonify({'error': 'Name is required.'}), 400
+        if not email or not EMAIL_RE.match(email):
+            return jsonify({'error': 'A valid email is required.'}), 400
+        if role not in VALID_ROLES:
+            return jsonify({'error': f"Role must be one of: {', '.join(VALID_ROLES)}."}), 400
+        if role == 'SuperAdmin' and actor_role != 'SuperAdmin':
+            return jsonify({'error': 'Only a SuperAdmin can grant the SuperAdmin role.'}), 403
+        if role == 'SuperAdmin' and target['Role'] != 'SuperAdmin' and has_superadmin():
+            return jsonify({'error': 'A SuperAdmin already exists. Only one SuperAdmin account is allowed.'}), 409
+        if password and len(password) < 8:
+            return jsonify({'error': 'Password must be at least 8 characters.'}), 400
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                try:
+                    if password:
+                        cursor.execute(
+                            'UPDATE userTbl SET Name = %s, Email = %s, Role = %s, Status = %s, password = %s '
+                            'WHERE userid = %s',
+                            (name, email, role, 1 if status else 0, hash_password(password), user_id),
+                        )
+                    else:
+                        cursor.execute(
+                            'UPDATE userTbl SET Name = %s, Email = %s, Role = %s, Status = %s WHERE userid = %s',
+                            (name, email, role, 1 if status else 0, user_id),
+                        )
+                except pymysql.err.IntegrityError:
+                    return jsonify({'error': 'That email is already in use.'}), 409
+        finally:
+            conn.close()
+
+        updated = get_user_by_id(user_id)
+        if user_id == session.get('user_id'):
+            session['name'] = updated['Name']
+            session['email'] = updated['Email']
+            session['role'] = updated['Role']
+
+        return jsonify({'user': serialize_user(updated)})
+
+    @app.route('/tcsadmin/api/admin/users/<int:user_id>', methods=['DELETE'])
+    @app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+    @login_required_api
+    @role_required_api('SuperAdmin', 'Admin')
+    @require_csrf
+    def api_admin_delete_user(user_id):
+        target = get_user_by_id(user_id)
+        if not target:
+            return jsonify({'error': 'User not found.'}), 404
+
+        if target['Role'] == 'SuperAdmin':
+            return jsonify({'error': 'SuperAdmin accounts can never be deleted.'}), 403
+        if user_id == session.get('user_id'):
+            return jsonify({'error': 'You cannot delete your own account.'}), 403
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    'UPDATE userTbl SET IsDeleted = 1, deleted_at = UTC_TIMESTAMP() WHERE userid = %s',
+                    (user_id,),
+                )
+        finally:
+            conn.close()
+
+        return jsonify({'message': 'User deleted.'})
+
+    @app.route('/tcsadmin/api/admin/users/<int:user_id>/recover', methods=['POST'])
+    @app.route('/api/admin/users/<int:user_id>/recover', methods=['POST'])
+    @login_required_api
+    @role_required_api('SuperAdmin')
+    @require_csrf
+    def api_admin_recover_user(user_id):
+        target = get_user_by_id(user_id)
+        if not target:
+            return jsonify({'error': 'User not found.'}), 404
+        if not bit_to_bool(target['IsDeleted']):
+            return jsonify({'error': 'This account is not deleted.'}), 400
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute('UPDATE userTbl SET IsDeleted = 0, deleted_at = NULL WHERE userid = %s', (user_id,))
+        finally:
+            conn.close()
+
+        return jsonify({'message': 'User recovered.'})
+
+    # ==========================================================================
+    # 3. File / Registered Scraper APIs
+    # ==========================================================================
+
+    @app.route('/tcsadmin/api/files/running')
+    @app.route('/api/files/running')
+    @login_required_api
+    def api_list_running_files():
+        rows, _ = files_repo.list_files(per_page=200)
+        running = [
+            {'fileId': r['file_id'], 'siteName': r['site_name']}
+            for r in rows
+            if file_scraper_runner.is_running(r['file_id'])
+        ]
+        return jsonify({'files': running})
+
+    @app.route('/tcsadmin/api/files')
+    @app.route('/api/files')
+    @login_required_api
+    def api_list_files():
+        search = request.args.get('search', '').strip() or None
+        raw_trash = request.args.get('trash')
+        is_deleted = None
+        if raw_trash is not None:
+            is_deleted = raw_trash.lower() in ('1', 'true', 'yes')
+
+        try:
+            page = int(request.args.get('page', 1))
+        except ValueError:
+            page = 1
+        try:
+            per_page = int(request.args.get('perPage', 20))
+        except ValueError:
+            per_page = 20
+
+        rows, total = files_repo.list_files(search=search, is_deleted=is_deleted, page=page, per_page=per_page)
+        serialized = []
+        user_id = session.get('user_id')
+        active_map = job_manager.get_all_active_jobs_map()
+        all_outputs = file_scraper_runner.get_all_output_paths()
+
+        for r in rows:
+            fid = r['file_id']
+            item = files_repo.serialize_file(r)
+            active = active_map.get(fid)
+            if active:
+                item['working'] = True
+                item['is_owner'] = (active.get('user_id') == user_id)
+            else:
+                item['working'] = False
+                item['is_owner'] = True
+            item['outputAvailable'] = bool(all_outputs.get(fid))
+            serialized.append(item)
+
+        any_running = bool(active_map)
+        has_any_output = bool(all_outputs)
+
+        return jsonify({
+            'files': serialized,
+            'total': total,
+            'page': page,
+            'perPage': per_page,
+            'anyRunning': any_running,
+            'hasAnyOutput': has_any_output,
+        })
+
+    @app.route('/tcsadmin/api/files', methods=['POST'])
+    @app.route('/api/files', methods=['POST'])
+    @login_required_api
+    @role_required_api('SuperAdmin', 'Admin')
+    @require_csrf
+    def api_create_file():
+        data = request.get_json(silent=True) or {}
+        site_name = (data.get('siteName') or '').strip()
+        python_file_path = (data.get('pythonFilePath') or '').strip()
+        logo = (data.get('logo') or '').strip() or None
+        urls_text = data.get('urlsText') or ''
+
+        if not site_name:
+            return jsonify({'error': 'Name is required.'}), 400
+        if not python_file_path:
+            return jsonify({'error': 'Python file is required.'}), 400
+
+        urls, url_error = _parse_urls_text(urls_text)
+        if url_error:
+            return jsonify({'error': url_error}), 400
+
+        try:
+            created_by = session.get('user_id')
+            file_id = files_repo.create_file(logo, site_name, python_file_path, created_by=created_by)
+        except files_repo.FileValidationError as exc:
+            return jsonify({'error': str(exc)}), 400
+
+        files_repo.set_urls(file_id, urls)
+        return jsonify({'file': files_repo.serialize_file(files_repo.get_file(file_id))}), 201
+
+    @app.route('/tcsadmin/api/files/<int:file_id>', methods=['PUT'])
+    @app.route('/api/files/<int:file_id>', methods=['PUT'])
+    @login_required_api
+    @require_csrf
+    def api_update_file(file_id):
+        record = files_repo.get_file(file_id)
+        if not record:
+            return jsonify({'error': 'Scraper not found.'}), 404
+        if file_scraper_runner.is_running(file_id):
+            return jsonify({'error': 'Stop this scraper before editing it.'}), 409
+
+        data = request.get_json(silent=True) or {}
+        site_name = (data.get('siteName') or '').strip()
+        python_file_path = (data.get('pythonFilePath') or '').strip()
+        logo = (data.get('logo') or '').strip() or None
+        urls_text = data.get('urlsText') or ''
+
+        if not site_name:
+            return jsonify({'error': 'Name is required.'}), 400
+        if not python_file_path:
+            return jsonify({'error': 'Python file is required.'}), 400
+
+        urls, url_error = _parse_urls_text(urls_text)
+        if url_error:
+            return jsonify({'error': url_error}), 400
+
+        try:
+            files_repo.update_file(file_id, logo, site_name, python_file_path)
+        except files_repo.FileValidationError as exc:
+            return jsonify({'error': str(exc)}), 400
+
+        files_repo.set_urls(file_id, urls)
+        return jsonify({'file': files_repo.serialize_file(files_repo.get_file(file_id))})
+
+    @app.route('/tcsadmin/api/files/<int:file_id>', methods=['DELETE'])
+    @app.route('/api/files/<int:file_id>', methods=['DELETE'])
+    @login_required_api
+    @require_csrf
+    def api_delete_file(file_id):
+        record = files_repo.get_file(file_id)
+        if not record:
+            return jsonify({'error': 'Scraper not found.'}), 404
+        if file_scraper_runner.is_running(file_id):
+            return jsonify({'error': 'Stop this scraper before deleting it.'}), 409
+
+        files_repo.delete_file(file_id)
+        return jsonify({'message': 'Scraper permanently deleted.'})
+
+    @app.route('/tcsadmin/api/files/<int:file_id>/toggle-status', methods=['POST'])
+    @app.route('/api/files/<int:file_id>/toggle-status', methods=['POST'])
+    @login_required_api
+    @require_csrf
+    def api_toggle_file_status(file_id):
+        record = files_repo.get_file(file_id)
+        if not record:
+            return jsonify({'error': 'Scraper not found.'}), 404
+
+        if file_scraper_runner.is_running(file_id):
+            return jsonify({'error': 'Stop this scraper before disabling it.'}), 409
+
+        data = request.get_json(silent=True) or {}
+        currently_deleted = files_repo.bit_to_bool(record.get('is_deleted'))
+
+        if 'enabled' in data:
+            new_enabled = bool(data['enabled'])
+        else:
+            new_enabled = currently_deleted
+
+        files_repo.set_file_enabled(file_id, new_enabled)
+        updated = files_repo.get_file(file_id)
+        return jsonify({
+            'success': True,
+            'isEnabled': new_enabled,
+            'isDeleted': not new_enabled,
+            'message': 'Scraper enabled.' if new_enabled else 'Scraper disabled.',
+            'file': files_repo.serialize_file(updated),
+        })
+
+    @app.route('/tcsadmin/api/files/<int:file_id>/restore', methods=['POST'])
+    @app.route('/api/files/<int:file_id>/restore', methods=['POST'])
+    @login_required_api
+    @require_csrf
+    def api_restore_file(file_id):
+        record = files_repo.get_file(file_id)
+        if not record:
+            return jsonify({'error': 'Scraper not found.'}), 404
+
+        files_repo.restore_file(file_id)
+        updated = files_repo.get_file(file_id)
+        return jsonify({
+            'success': True,
+            'message': 'Scraper restored to Active list.',
+            'file': files_repo.serialize_file(updated),
+        })
+
+    @app.route('/tcsadmin/api/files/upload-script', methods=['POST'])
+    @app.route('/api/files/upload-script', methods=['POST'])
+    @login_required_api
+    @role_required_api('SuperAdmin', 'Admin')
+    @require_csrf
+    def api_upload_file_script():
+        if not request.files or 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded.'}), 400
+
+        upload = request.files['file']
+        candidate_name = (upload.filename or '').strip()
+        if candidate_name:
+            existing = files_repo.get_file_by_path(candidate_name)
+            if existing and file_scraper_runner.is_running(existing['file_id']):
+                return jsonify({'error': 'Stop this scraper before replacing its Python file.'}), 409
+
+        try:
+            filename = files_repo.save_uploaded_script(upload)
+        except files_repo.FileValidationError as exc:
+            return jsonify({'error': str(exc)}), 400
+
+        return jsonify({'fileName': filename})
+
+    @app.route('/tcsadmin/api/files/parse-urls', methods=['POST'])
+    @app.route('/api/files/parse-urls', methods=['POST'])
+    @login_required_api
+    def api_parse_urls():
+        if request.files and 'file' in request.files:
+            upload = request.files['file']
+            filename = (upload.filename or '').lower()
+            if not filename.endswith('.csv'):
+                return jsonify({'error': 'Please upload a .csv file.'}), 400
+            raw_bytes = upload.read()
+            if not raw_bytes:
+                return jsonify({'error': 'The uploaded file is empty.'}), 400
+            raw_urls = [url for url, _declared_type in parse_csv_urls(raw_bytes)]
+        else:
+            data = request.get_json(silent=True) or {}
+            raw_urls = parse_text_urls(data.get('text') or '')
+
+        urls, errors = validate_url_list(raw_urls)
+        if not urls:
+            return jsonify({'error': 'No valid URLs were found.', 'errors': errors}), 400
+
+        return jsonify({'urls': urls, 'errors': errors})
+
+    # ==========================================================================
+    # 4. Scraper Execution, Job Manager & Streaming APIs
+    # ==========================================================================
+
+    @app.route('/tcsadmin/api/scraper/start', methods=['POST'])
+    @app.route('/api/scraper/start', methods=['POST'])
+    @login_required_api
+    @require_csrf
+    def api_scraper_job_start():
+        data = request.get_json(silent=True) or {}
+        file_id = data.get('file_id') or request.form.get('file_id') or request.args.get('file_id')
+        if not file_id:
+            return jsonify({'success': False, 'error': 'Missing file_id parameter.'}), 400
+        try:
+            file_id = int(file_id)
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Invalid file_id.'}), 400
+
+        user_id = session.get('user_id')
+        result = job_manager.start_job(file_id, user_id=user_id)
+        if not result.get('success'):
+            return jsonify(result), 409
+        return jsonify(result)
+
+    @app.route('/tcsadmin/api/scraper/file/<int:file_id>/active-job')
+    @app.route('/api/scraper/file/<int:file_id>/active-job')
+    @login_required_api
+    def api_scraper_file_active_job(file_id):
+        user_id = session.get('user_id')
+        active_info = job_manager.get_active_job_for_file(file_id, current_user_id=user_id)
+        return jsonify(active_info)
+
+    @app.route('/tcsadmin/api/scraper/job/<string:job_id>/status')
+    @app.route('/api/scraper/job/<string:job_id>/status')
+    @login_required_api
+    def api_scraper_job_status(job_id):
+        user_id = session.get('user_id')
+        data, code = job_manager.get_job_status(job_id, current_user_id=user_id)
+        return jsonify(data), code
+
+    @app.route('/tcsadmin/api/scraper/job/<string:job_id>/urls')
+    @app.route('/api/scraper/job/<string:job_id>/urls')
+    @login_required_api
+    def api_scraper_job_urls(job_id):
+        user_id = session.get('user_id')
+        urls, code = job_manager.get_job_urls(job_id, current_user_id=user_id)
+        if code != 200:
+            return jsonify(urls), code
+        summary = build_status_summary(urls)
+        return jsonify({
+            'job_id': job_id,
+            'statuses': urls,
+            'summary': summary,
+            'count': len(urls),
+        })
+
+    @app.route('/tcsadmin/api/scraper/job/<string:job_id>/events')
+    @app.route('/api/scraper/job/<string:job_id>/events')
+    @login_required_api
+    def api_scraper_job_events(job_id):
+        user_id = session.get('user_id')
+        job = job_manager.get_log_by_job_id(job_id)
+        if not job:
+            with job_manager._lock:
+                state = job_manager._active_jobs.get(job_id)
+            if not state:
+                return jsonify({'error': 'Job not found.'}), 404
+            if state['started_by_user_id'] != user_id and session.get('role') != 'SuperAdmin':
+                return jsonify({'error': 'Forbidden'}), 403
+        elif job['user_id'] != user_id and session.get('role') != 'SuperAdmin':
+            return jsonify({'error': 'Forbidden'}), 403
+
+        def event_stream():
+            q = job_manager.subscribe_sse(job_id)
+            try:
+                status_data, _ = job_manager.get_job_status(job_id, current_user_id=user_id)
+                urls_data, _ = job_manager.get_job_urls(job_id, current_user_id=user_id)
+                initial_payload = {
+                    'type': 'snapshot',
+                    'summary': status_data,
+                    'statuses': urls_data
+                }
+                yield f"data: {json.dumps(initial_payload)}\n\n"
+
+                while True:
+                    try:
+                        event = q.get(timeout=15.0)
+                        yield f"data: {json.dumps(event)}\n\n"
+                        if event.get('done') or (event.get('type') == 'status' and event.get('status') in ('SUCCESS', 'STOPPED', 'FAILED', 'FAIL')):
+                            break
+                    except queue.Empty:
+                        yield ": ping\n\n"
+            except GeneratorExit:
+                pass
+            finally:
+                job_manager.unsubscribe_sse(job_id, q)
+
+        return Response(
+            stream_with_context(event_stream()),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'X-Accel-Buffering': 'no',
+                'Connection': 'keep-alive',
+            }
+        )
+
+    @app.route('/tcsadmin/api/scraper/job/<string:job_id>/stop', methods=['POST'])
+    @app.route('/api/scraper/job/<string:job_id>/stop', methods=['POST'])
+    @login_required_api
+    @require_csrf
+    def api_scraper_job_stop(job_id):
+        user_id = session.get('user_id')
+        is_superadmin = (session.get('role') == 'SuperAdmin')
+        result, code = job_manager.stop_job(job_id, current_user_id=user_id, is_superadmin=is_superadmin)
+        return jsonify(result), code
+
+    @app.route('/tcsadmin/api/files/<int:file_id>/start', methods=['POST'])
+    @app.route('/api/files/<int:file_id>/start', methods=['POST'])
+    @login_required_api
+    @require_csrf
+    def api_start_file(file_id):
+        user_id = session.get('user_id')
+        result = job_manager.start_job(file_id, user_id=user_id)
+        if not result.get('success'):
+            return jsonify(result), 409
+        return jsonify(result)
+
+    @app.route('/tcsadmin/api/files/<int:file_id>/stop', methods=['POST'])
+    @app.route('/api/files/<int:file_id>/stop', methods=['POST'])
+    @login_required_api
+    @require_csrf
+    def api_stop_file(file_id):
+        user_id = session.get('user_id')
+        is_superadmin = (session.get('role') == 'SuperAdmin')
+        result, code = job_manager.stop_file(file_id, current_user_id=user_id, is_superadmin=is_superadmin)
+        return jsonify(result), code
+
+    @app.route('/tcsadmin/api/files/<int:file_id>/status')
+    @app.route('/api/files/<int:file_id>/status')
+    @login_required_api
+    def api_file_status(file_id):
+        record = files_repo.get_file(file_id)
+        if not record:
+            return jsonify({'error': 'Scraper not found.'}), 404
+
+        user_id = session.get('user_id')
+        active_info = job_manager.get_active_job_for_file(file_id, current_user_id=user_id)
+
+        if active_info.get('job_id'):
+            job_status, code = job_manager.get_job_status(active_info['job_id'], current_user_id=user_id)
+            if code == 200:
+                job_status['is_owner'] = True
+                job_status['working'] = bool(active_info.get('has_active_job'))
+                job_status['siteName'] = record['site_name']
+                job_status['fileId'] = file_id
+                return jsonify(job_status)
+
+        output_path = file_scraper_runner.get_output_path(file_id)
+        return jsonify({
+            'job_id': None,
+            'running': False,
+            'working': False,
+            'done': True,
+            'is_owner': True,
+            'siteName': record['site_name'],
+            'fileId': file_id,
+            'outputAvailable': bool(output_path and os.path.exists(output_path)),
+            'total_product_urls': 0,
+            'written_to_xlsx': 0,
+            'pending': 0,
+            'running_count': 0,
+            'blocked': 0,
+            'main_url_done': 0,
+            'product_url_done': 0,
+            'progress_percent': 0.0,
+        })
+
+    @app.route('/tcsadmin/api/files/<int:file_id>/url-statuses')
+    @app.route('/api/files/<int:file_id>/url-statuses')
+    @login_required_api
+    def api_file_url_statuses(file_id):
+        user_id = session.get('user_id')
+        active_info = job_manager.get_active_job_for_file(file_id, current_user_id=user_id)
+
+        if active_info['has_active_job'] and not active_info['is_owner']:
+            return jsonify({'statuses': [], 'summary': {}, 'xlsx_count': 0, 'error': 'Forbidden'}), 403
+
+        if active_info.get('job_id') and active_info.get('is_owner', True):
+            urls, code = job_manager.get_job_urls(active_info['job_id'], current_user_id=user_id)
+            if code == 200 and urls:
+                summary = build_status_summary(urls)
+                return jsonify({
+                    'statuses': urls,
+                    'summary': summary,
+                    'xlsx_count': summary.get('written_to_xlsx', 0),
+                })
+
+        urls = file_scraper_runner.get_statuses(file_id)
+        summary = build_status_summary(urls)
+        return jsonify({
+            'statuses': urls,
+            'summary': summary,
+            'xlsx_count': summary.get('written_to_xlsx', 0),
+        })
+
+    @app.route('/tcsadmin/api/files/<int:file_id>/download')
+    @app.route('/api/files/<int:file_id>/download')
+    @login_required_api
+    def api_file_download(file_id):
+        record = files_repo.get_file(file_id)
+        if not record:
+            return jsonify({'error': 'Scraper not found.'}), 404
+
+        output_path = file_scraper_runner.get_output_path(file_id)
+        if not output_path or not os.path.exists(output_path):
+            return jsonify({'error': 'No output available for this scraper yet. Run it first.'}), 404
+
+        filename = _format_scraper_output_filename(record['site_name'])
+        return send_file(
+            output_path,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename,
+        )
+
+    @app.route('/tcsadmin/api/files/download-zip')
+    @app.route('/api/files/download-zip')
+    @login_required_api
+    def api_files_download_zip():
+        if file_scraper_runner.running_count() > 0:
+            return jsonify({
+                'error': 'Scraping is in progress. Please wait until all scrapers finish before downloading ZIP.',
+                'anyRunning': True,
+            }), 409
+
+        all_outputs = file_scraper_runner.get_all_output_paths()
+        if not all_outputs:
+            return jsonify({'error': 'No completed scraper reports available to download.'}), 404
+
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+            used_names = set()
+            for file_id, file_path in all_outputs.items():
+                if not os.path.exists(file_path):
+                    continue
+                record = files_repo.get_file(file_id)
+                site_name = record['site_name'] if record else f"scraper_{file_id}"
+                base_filename = _format_scraper_output_filename(site_name)
+                filename = base_filename
+                counter = 1
+                while filename in used_names:
+                    root, ext = os.path.splitext(base_filename)
+                    filename = f"{root}_{counter}{ext}"
+                    counter += 1
+                used_names.add(filename)
+                zf.write(file_path, arcname=filename)
+
+        if not used_names:
+            return jsonify({'error': 'No valid output files found to package.'}), 404
+
+        zip_buffer.seek(0)
+        today = datetime.now().strftime('%d-%m-%Y')
+        zip_filename = f"scrapers_output_{today}.zip"
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=zip_filename,
+        )
+
+    @app.route('/tcsadmin/api/files/<int:file_id>/logs')
+    @app.route('/api/files/<int:file_id>/logs')
+    @login_required_api
+    def api_file_logs(file_id):
+        record = files_repo.get_file(file_id)
+        if not record:
+            return jsonify({'error': 'Scraper not found.'}), 404
+        rows, total = reports_repo.list_logs(file_id=file_id, per_page=100)
+        return jsonify({
+            'fileId': file_id,
+            'siteName': record.get('site_name') or 'Scraper',
+            'logs': [reports_repo.serialize_log(r) for r in rows],
+            'total': total,
+        })
+
+    # ==========================================================================
+    # 5. Reports & Audit Log APIs
+    # ==========================================================================
+
+    @app.route('/tcsadmin/api/reports')
+    @app.route('/api/reports')
+    @login_required_api
+    @role_required_api('SuperAdmin')
+    def api_list_reports():
+        search = request.args.get('search', '').strip() or None
+        status = request.args.get('status', '').strip() or None
+        user_id_raw = request.args.get('userId', '').strip()
+        user_id = int(user_id_raw) if user_id_raw.isdigit() else None
+        file_id_raw = request.args.get('fileId', '').strip()
+        file_id = int(file_id_raw) if file_id_raw.isdigit() else None
+        try:
+            page = int(request.args.get('page', 1))
+        except ValueError:
+            page = 1
+        try:
+            per_page = int(request.args.get('perPage', 20))
+        except ValueError:
+            per_page = 20
+
+        rows, total = reports_repo.list_logs(
+            search=search,
+            status=status,
+            user_id=user_id,
+            file_id=file_id,
+            page=page,
+            per_page=per_page,
+        )
+        stats = reports_repo.get_logs_summary_stats()
+        return jsonify({
+            'reports': [reports_repo.serialize_log(r) for r in rows],
+            'total': total,
+            'page': page,
+            'perPage': per_page,
+            'stats': stats,
+        })
+
+    @app.route('/tcsadmin/api/reports/<int:report_id>/download')
+    @app.route('/api/reports/<int:report_id>/download')
+    @login_required_api
+    @role_required_api('SuperAdmin')
+    def api_download_report_output(report_id):
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM logTbl WHERE id = %s", (report_id,))
+                record = cursor.fetchone()
+        finally:
+            conn.close()
+
+        if not record or not record.get('output_file_path') or not os.path.exists(record['output_file_path']):
+            return jsonify({'error': 'Output file not available for this run.'}), 404
+
+        filename = _format_scraper_output_filename(record['scraper'])
+        return send_file(
+            record['output_file_path'],
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename,
+        )
+
+    # ==========================================================================
+    # 6. Legacy / Ad-hoc Scraper APIs
+    # ==========================================================================
+
+    @app.route('/tcsadmin/api/scraper/analyze', methods=['POST'])
+    @app.route('/api/scraper/analyze', methods=['POST'])
+    @login_required_api
+    def analyze_scraper_input():
+        try:
+            raw_items = extract_input_source(request)
+        except InputError as exc:
+            return jsonify({'error': str(exc)}), 400
+
+        entries, errors, unsupported = build_entries(raw_items)
+
+        return jsonify({
+            'entries': entries,
+            'errors': errors,
+            'unsupported': unsupported,
+            'message': format_invalid_url_message(errors) or format_unsupported_message(unsupported) or None,
+        })
+
+    @app.route('/tcsadmin/StartScraper', methods=['POST'])
+    @app.route('/StartScraper', methods=['POST'])
+    @login_required_api
+    def start_scraper():
+        state = get_scraper_session()
+
+        try:
+            raw_items = extract_input_source(request)
+        except InputError as exc:
+            return jsonify({'error': str(exc)}), 400
+
+        entries, errors, unsupported = build_entries(raw_items)
+
+        if not entries:
+            message = (
+                format_invalid_url_message(errors)
+                or format_unsupported_message(unsupported)
+                or 'No valid URLs were provided.'
+            )
+            return jsonify({'error': message, 'errors': errors, 'unsupported': unsupported}), 400
+
+        with state.lock:
+            process_running = state.process is not None and state.process.poll() is None
+            if process_running or state.job_status == 'running':
+                return jsonify({'error': 'Scraper is already running.'}), 409
+
+            state.url_statuses.clear()
+            state.stopped = False
+            state.job_id = uuid.uuid4().hex
+            state.job_status = 'running'
+            state.skipped = {'invalid': errors, 'unsupported': unsupported}
+
+            job_id_short = state.job_id[:8]
+
+            groups_by_type = OrderedDict()
+            for entry in entries:
+                groups_by_type.setdefault(entry['type'], []).append(entry['url'])
+
+            os.makedirs(TMP_SCRAPERS_DIR, exist_ok=True)
+            pending_groups = []
+            for url_type, urls in groups_by_type.items():
+                input_path = os.path.join(TMP_SCRAPERS_DIR, f'job_{job_id_short}_{url_type}.csv')
+                with open(input_path, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    for url in urls:
+                        writer.writerow([url])
+
+                pending_groups.append({
+                    'type': url_type,
+                    'input_path': input_path,
+                    'output_path': os.path.join(TMP_SCRAPERS_DIR, f'job_{job_id_short}_{url_type}_output.xlsx'),
+                    'script_path': os.path.join(BASE_DIR, 'scrapers', SCRIPT_MAP[url_type]),
+                })
+            state.pending_groups = pending_groups
+
+            timestamp = datetime.now().strftime('%d-%m-%Y_%H%M%S')
+            state.output_file = os.path.join(BASE_DIR, f'pitstoparabia_data_{job_id_short}_{timestamp}.xlsx')
+
+            state.thread = threading.Thread(target=_run_job_groups, args=(state,), daemon=True)
+            state.thread.start()
+
+        return jsonify({
+            'message': f'Scraper started. Job ID: {state.job_id}',
+            'jobId': state.job_id,
+            'groups': [g['type'] for g in pending_groups],
+            'skipped': {'invalid': errors, 'unsupported': unsupported},
+        })
+
+    @app.route('/tcsadmin/stop-scraper', methods=['POST'])
+    @app.route('/stop-scraper', methods=['POST'])
+    @login_required_api
+    def stop_scraper():
+        state = get_scraper_session()
+        with state.lock:
+            process_running = state.process is not None and state.process.poll() is None
+            if not process_running and state.job_status != 'running':
+                return jsonify({'stopped': False, 'message': 'No scraper process is running.'})
+
+            state.stopped = True
+            if process_running:
+                try:
+                    state.process.terminate()
+                    state.process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    state.process.kill()
+                    state.process.wait()
+                finally:
+                    state.process = None
+
+        return jsonify({'stopped': True, 'message': 'Scraper has been stopped.'})
+
+    @app.route('/tcsadmin/scraper-url-statuses')
+    @app.route('/scraper-url-statuses')
+    @login_required_api
+    def scraper_url_statuses_endpoint():
+        state = get_scraper_session()
+        with state.lock:
+            statuses = list(state.url_statuses)
+            running = state.process is not None and state.process.poll() is None
+            output_file = state.output_file
+            if not running and state.job_status == 'idle' and state.url_statuses:
+                state.url_statuses.clear()
+
+        xlsx_count, xlsx_urls = get_xlsx_info(output_file)
+        if xlsx_urls:
+            if statuses:
+                for item in statuses:
+                    u = item.get('url', '').strip()
+                    if u in xlsx_urls:
+                        item['status'] = 'done'
+                        item['written_to_xlsx'] = True
+            else:
+                statuses = [
+                    {'url': u, 'status': 'done', 'parent': '', 'type': 'product', 'written_to_xlsx': True}
+                    for u in sorted(xlsx_urls)
+                ]
+
+        return jsonify({
+            'statuses': statuses,
+            'summary': build_status_summary(statuses),
+            'xlsx_count': xlsx_count,
+        })
+
+    @app.route('/tcsadmin/scraper-status')
+    @app.route('/scraper-status')
+    @login_required_api
+    def scraper_status():
+        state = get_scraper_session()
+        with state.lock:
+            running = state.process is not None and state.process.poll() is None
+            if running:
+                state.job_status = 'running'
+
+            current = state.job_status
+            if current in ('completed_unseen', 'failed_unseen'):
+                reported_status = 'completed' if current == 'completed_unseen' else 'failed'
+                state.job_status = 'idle'
+            elif current == 'running':
+                reported_status = 'running'
+            else:
+                reported_status = 'idle'
+
+            has_active_job = reported_status == 'running'
+            job_id = state.job_id if has_active_job else None
+            output_file = state.output_file
+
+        output_available = bool(output_file and os.path.exists(output_file))
+
+        return jsonify({
+            'running': reported_status == 'running',
+            'done': reported_status in ('completed', 'failed'),
+            'outputAvailable': output_available,
+            'outputFile': os.path.basename(output_file) if output_available else '',
+            'status': reported_status,
+            'hasActiveJob': has_active_job,
+            'jobId': job_id,
+        })
+
+    @app.route('/tcsadmin/download-output')
+    @app.route('/download-output')
+    @login_required_api
+    def download_output():
+        state = get_scraper_session()
+        with state.lock:
+            output_file = state.output_file
+
+        if not output_file or not os.path.exists(output_file):
+            return Response('No output file found.', status=404, mimetype='text/plain')
+
+        return send_from_directory(BASE_DIR, os.path.basename(output_file), as_attachment=True)
