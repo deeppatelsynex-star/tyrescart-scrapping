@@ -32,7 +32,7 @@
 
       <!-- Action Buttons -->
       <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-        <a href="/tcsadmin" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm transition hover:shadow-md cursor-pointer">
+        <a href="/tcsadmin/docs/scraper" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm transition hover:shadow-md cursor-pointer">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           Back to Scrapers
         </a>
@@ -50,9 +50,9 @@
       <div class="pt-6 border-t border-slate-200/70">
         <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-3">Helpful Shortcuts</span>
         <div class="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-600">
-          <a href="/tcsadmin" class="hover:text-emerald-600 transition flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Scraper Management</a>
+          <a href="/tcsadmin/docs/scraper" class="hover:text-emerald-600 transition flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Scraper Management</a>
           <a href="/tcsadmin/reports" class="hover:text-indigo-600 transition flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>Execution Reports</a>
-          <a href="/tcsadmin/docs/scraper" class="hover:text-sky-600 transition flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>Scraper Guide</a>
+          <a href="/tcsadmin/docs/guide" class="hover:text-sky-600 transition flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>Scraper Guide</a>
           {% if session.get('role') in ['SuperAdmin', 'Admin'] %}
           <a href="/tcsadmin/Admin" class="hover:text-purple-600 transition flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>User Admin</a>
           <a href="/tcsadmin/trash" class="hover:text-rose-600 transition flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Trash Bin</a>

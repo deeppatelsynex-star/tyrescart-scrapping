@@ -201,13 +201,17 @@ def Scrap():
     return render_template("Scrap.html", page="scraping")
 
 
+@app.route('/tcsadmin/docs/scraper')
+@app.route('/tcsadmin/scraper')
+@app.route('/tcsadmin/files')
 @app.route('/tcsadmin')
 @login_required_page
 def files_page():
     return render_template('files.html', page='files')
 
 
-@app.route('/tcsadmin/docs/scraper')
+@app.route('/tcsadmin/docs/guide')
+@app.route('/tcsadmin/docs/scraper-guide')
 @login_required_page
 def scraper_guide_page():
     """Documentation only -- explains the existing scraper contract
@@ -221,7 +225,7 @@ def scraper_guide_page():
 @app.route('/login', methods=['GET'])
 def login_page():
     if 'user_id' in session:
-        return redirect('/tcsadmin')
+        return redirect('/tcsadmin/docs/scraper')
     return render_template('login.html')
 
 
@@ -297,7 +301,7 @@ def login_submit():
     session['role'] = user['Role']
     session['csrf_token'] = secrets.token_hex(16)
 
-    return jsonify({'redirect': '/tcsadmin'})
+    return jsonify({'redirect': '/tcsadmin/docs/scraper'})
 
 
 @app.route('/logout', methods=['POST'])
