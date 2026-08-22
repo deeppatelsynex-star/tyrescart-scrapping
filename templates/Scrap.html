@@ -22,15 +22,55 @@ Scraper Live Progress
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 0.75rem;
   }
-  @media (max-width: 1024px) {
+  
+  /* Mobile & Tablet Mode: Render as Compact Pill Badges */
+  @media (max-width: 1023px) {
     .stat-cards-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      display: flex !important;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem 0.5rem !important;
+      padding: 0.25rem 0;
     }
-  }
-  @media (max-width: 640px) {
-    .stat-cards-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.5rem;
+    .stat-cards-grid .stat-card {
+      display: inline-flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 0.35rem !important;
+      padding: 0.35rem 0.65rem !important;
+      border-radius: 9999px !important;
+      background: #ffffff !important;
+      border: 1px solid var(--border) !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+      margin: 0 !important;
+      min-width: 0 !important;
+    }
+    .stat-cards-grid .stat-card .flex {
+      margin-bottom: 0 !important;
+      gap: 0.25rem !important;
+    }
+    .stat-cards-grid .stat-value {
+      font-size: 0.8125rem !important;
+      line-height: 1rem !important;
+      font-weight: 700 !important;
+    }
+    .stat-cards-grid .stat-icon {
+      width: 1.25rem !important;
+      height: 1.25rem !important;
+      border-radius: 9999px !important;
+    }
+    .stat-cards-grid .stat-icon svg {
+      width: 11px !important;
+      height: 11px !important;
+    }
+    .stat-cards-grid .stat-label {
+      font-size: 10px !important;
+      letter-spacing: 0.02em !important;
+    }
+    .stat-cards-grid #stat-completed-pct,
+    .stat-cards-grid #stat-running-label {
+      font-size: 10px !important;
+      margin-left: 0.15rem !important;
     }
   }
 </style>
