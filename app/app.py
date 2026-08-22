@@ -196,6 +196,9 @@ def login_page():
 @app.route('/tcsadmin/docs/scraper')
 @app.route('/tcsadmin/scraper')
 @app.route('/tcsadmin/files')
+@app.route('/scrapers')
+@app.route('/scraper')
+@app.route('/files')
 @login_required_page
 def files_page():
     return render_template('files.html', page='files')
@@ -312,7 +315,7 @@ def login_submit():
     session['role'] = user['Role']
     session['csrf_token'] = secrets.token_hex(16)
 
-    return jsonify({'redirect': '/tcsadmin/scrapers'})
+    return jsonify({'redirect': '/tcsadmin/docs/scraper'})
 
 
 @app.route('/tcsadmin/logout', methods=['POST'])
