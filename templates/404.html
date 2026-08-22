@@ -6,70 +6,68 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/x-icon" />
   <title>404 - Page Not Found | TyresCart</title>
   <style>
     body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    .logo-font { font-family: 'Plus Jakarta Sans', sans-serif; }
   </style>
 </head>
-<body class="font-sans antialiased min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4 text-slate-900">
-  <div class="w-full max-w-lg text-center space-y-6 bg-white border border-slate-200/80 rounded-3xl p-8 sm:p-10 shadow-xl shadow-slate-200/60 animate-in fade-in zoom-in duration-200">
+<body class="font-sans antialiased min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4 text-slate-900 selection:bg-emerald-500 selection:text-white">
+  
+  <div class="w-full max-w-md text-center space-y-6 bg-white border border-slate-200/80 rounded-3xl p-8 sm:p-10 shadow-xl shadow-slate-200/50">
     
-    <!-- Brand Logo -->
-    <div class="flex flex-col items-center">
-      <a href="/tcsadmin/login" class="inline-flex items-center gap-2.5 mb-2 hover:opacity-90 transition">
-        <img src="/static/assets/images/favicon-color.webp" alt="TyresCart" class="w-12 h-12 rounded-2xl shadow-sm" />
+    <!-- Brand Logo (Clean TyresCart) -->
+    <div class="flex flex-col items-center justify-center">
+      <a href="/" class="inline-flex flex-col items-center gap-2 group transition-transform hover:scale-105">
+        <img src="/static/assets/images/favicon-color.webp" alt="TyresCart" class="w-14 h-14 shrink-0" />
+        <h2 class="logo-font text-2xl font-black tracking-tight text-slate-950">
+          Tyres<span class="text-emerald-600">Cart</span>
+        </h2>
       </a>
-      <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Tyres<span class="text-emerald-600">Cart</span></h2>
-      <span class="text-xs text-slate-400 font-medium">Scraping & Data Management</span>
     </div>
 
-    <!-- 404 Illustration Badge -->
-    <div class="relative inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-emerald-50 border border-emerald-100 text-emerald-600 shadow-inner">
-      <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"></circle>
-        <path d="M16 16s-1.5-2-4-2-4 2-4 2"></path>
-        <line x1="9" y1="9" x2="9.01" y2="9"></line>
-        <line x1="15" y1="9" x2="15.01" y2="9"></line>
-      </svg>
-      <span class="absolute -bottom-2 -right-2 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-500 text-white shadow-sm">404</span>
+    <!-- 404 Large Display -->
+    <div class="relative py-2">
+      <div class="text-7xl sm:text-8xl font-black tracking-tighter text-slate-100 select-none">
+        404
+      </div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200/80 shadow-xs">
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+          Error 404
+        </span>
+      </div>
     </div>
 
     <!-- Main Message -->
     <div class="space-y-2">
-      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/70 mb-1">
-        <svg class="w-3.5 h-3.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Page Not Found
-      </div>
-      <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Oops! Page Doesn't Exist</h1>
-      <p class="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">
-        The requested URL <code class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-rose-600 font-mono font-bold break-all">{{ requested_path or request.path }}</code> was not found on this server.
+      <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Page Not Found</h1>
+      <p class="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-xs mx-auto">
+        The page you are looking for doesn't exist, has been removed, or is temporarily unavailable.
       </p>
     </div>
 
     <!-- Action Buttons -->
-    <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-      {% if session.get('user_id') %}
-      <a href="/tcsadmin/docs/scraper" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs sm:text-sm font-bold shadow-sm hover:shadow-md transition cursor-pointer">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Back to Scrapers
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
+      <a href="/" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow-md transition">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span>Back to Home</span>
       </a>
-      {% else %}
-      <a href="/tcsadmin/login" class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs sm:text-sm font-bold shadow-sm hover:shadow-md transition cursor-pointer">
-        Sign In to Admin
+      <a href="/tcsadmin/login" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold transition">
+        <span>Admin Portal</span>
       </a>
-      {% endif %}
-      <button type="button" onclick="window.history.back()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold transition cursor-pointer">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-        Go Back
-      </button>
     </div>
 
     <!-- Footer -->
     <div class="pt-4 border-t border-slate-100 text-[11px] text-slate-400">
-      &copy; 2026 TyresCart Scraping Platform. All rights reserved.
+      &copy; 2026 TyresCart. All rights reserved.
     </div>
   </div>
+
 </body>
 </html>
