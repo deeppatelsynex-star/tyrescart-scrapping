@@ -204,7 +204,6 @@ def Scrap():
 @app.route('/tcsadmin/docs/scraper')
 @app.route('/tcsadmin/scraper')
 @app.route('/tcsadmin/files')
-@app.route('/tcsadmin')
 @login_required_page
 def files_page():
     return render_template('files.html', page='files')
@@ -222,6 +221,7 @@ def scraper_guide_page():
     return render_template('scraper_guide.html', page='docs')
 
 
+@app.route('/tcsadmin', methods=['GET'])
 @app.route('/login', methods=['GET'])
 def login_page():
     if 'user_id' in session:
@@ -265,6 +265,7 @@ def _clear_login_failures(email):
         _login_attempts.pop(email, None)
 
 
+@app.route('/tcsadmin', methods=['POST'])
 @app.route('/login', methods=['POST'])
 def login_submit():
     data = request.get_json(silent=True) or request.form
@@ -307,7 +308,7 @@ def login_submit():
 @app.route('/logout', methods=['POST'])
 def logout():
     session.clear()
-    return jsonify({'redirect': '/login'})
+    return jsonify({'redirect': '/tcsadmin'})
 
 
 @app.route('/forgot-password', methods=['GET', 'POST'])

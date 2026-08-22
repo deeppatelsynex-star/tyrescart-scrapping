@@ -315,6 +315,10 @@
     }
     try {
       const response = await fetch('/tcsadmin/api/files?perPage=100');
+      if (response.status === 401) {
+        window.location.href = '/tcsadmin';
+        return;
+      }
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = data.error || 'Unable to load scrapers.';
