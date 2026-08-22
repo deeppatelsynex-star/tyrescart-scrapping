@@ -53,7 +53,6 @@ from auth import (
 from db import get_connection
 from mailer import send_email
 from scraper_status_utils import build_status_summary, get_xlsx_info, parse_status_line
-import products_repo
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
@@ -184,21 +183,15 @@ def client_root_placeholder():
 
 @app.route('/tcsadmin/login', methods=['GET'])
 @app.route('/tcsadmin', methods=['GET'])
-def admin_login_page():
+@app.route('/login', methods=['GET'])
+def login_page():
     if 'user_id' in session:
-        return redirect('/tcsadmin/scrapers')
+        return redirect('/tcsadmin/docs/scraper')
     return render_template('login.html')
 
 
 @app.route('/tcsadmin/')
 @app.route('/tcsadmin/dashboard')
-@login_required_page
-def admin_dashboard_page():
-    stats = products_repo.get_stats()
-    brands = products_repo.get_brands()
-    return render_template('files.html', page='files', stats=stats, brands=brands)
-
-
 @app.route('/tcsadmin/scrapers')
 @app.route('/tcsadmin/docs/scraper')
 @app.route('/tcsadmin/scraper')
@@ -206,41 +199,6 @@ def admin_dashboard_page():
 @login_required_page
 def files_page():
     return render_template('files.html', page='files')
-
-
-@app.route('/tcsadmin/products')
-@login_required_page
-def admin_products_page():
-    query = request.args.get('q', '').strip() or None
-    brand = request.args.get('brand', '').strip() or None
-    try:
-        page = int(request.args.get('page', 1))
-    except ValueError:
-        page = 1
-
-    res = products_repo.query_products(query=query, brand=brand, page=page, per_page=50)
-    brands = products_repo.get_brands()
-    stats = products_repo.get_stats()
-    return render_template(
-        'admin_pages/products.html',
-        page='products',
-        products=res['products'],
-        total=res['total'],
-        page_num=res['page'],
-        total_pages=res['total_pages'],
-        query=query,
-        selected_brand=brand,
-        brands=brands,
-        stats=stats,
-    )
-
-
-@app.route('/tcsadmin/brands')
-@login_required_page
-def admin_brands_page():
-    brands = products_repo.get_brands()
-    stats = products_repo.get_stats()
-    return render_template('admin_pages/brands.html', page='admin_brands', brands=brands, stats=stats)
 
 
 @app.route('/tcsadmin/scraperpage')
@@ -564,7 +522,9 @@ def trash_page():
     return render_template('trash.html', page='trash')
 
 
+@app.route('/tcsadmin/scraper-runs')
 @app.route('/tcsadmin/reports')
+@app.route('/tcsadmin/logs')
 @login_required_page
 @role_required_page('SuperAdmin')
 def reports_page():
