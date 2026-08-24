@@ -4,7 +4,7 @@ import secrets
 from datetime import datetime, timedelta
 
 import bcrypt
-from flask import jsonify, redirect, request, session
+from flask import jsonify, redirect, render_template, request, session
 
 from db import get_connection
 
@@ -134,11 +134,21 @@ def has_superadmin():
 
 
 def login_required_page(view):
-    """Protects a page route: redirects unauthenticated visitors to /tcsadmin/login."""
+    """Protects a page route: renders 404 when unauthenticated."""
     @functools.wraps(view)
     def wrapped(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect('/tcsadmin/login')
+            return render_template(
+                '404.html',
+                page='404',
+                requested_path=request.path,
+                user_name=session.get('name'),
+                user_email=session.get('email'),
+                user_role=session.get('role'),
+                user_avatar=session.get('avatar'),
+                unread_notifications=0,
+                notifications=[]
+            ), 404
         return view(*args, **kwargs)
     return wrapped
 
