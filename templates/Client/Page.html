@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ locale or 'en' }}" dir="{{ 'rtl' if locale == 'ar' else 'ltr' }}" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
@@ -223,17 +223,17 @@
         </div>
       </div>
 
-      <!-- Pillar 3: Transparent Pricing -->
+      <!-- Pillar 3: Transparent Pricing in AED -->
       <div class="glass-pillar rounded-3xl p-6 flex flex-col justify-between space-y-4">
-        <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shadow-2xs">
-          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center justify-center shadow-2xs font-black text-sm tracking-wider">
+          <span>{{ 'د.إ' if locale == 'ar' else 'AED' }}</span>
         </div>
         <div class="space-y-1.5">
           <h3 class="text-base font-black text-slate-900 leading-snug">
-            {{ 'أسعار شفافة ومنافسة' if locale == 'ar' else 'All-Inclusive Pricing' }}
+            {{ 'أسعار شفافة بالدرهم (AED)' if locale == 'ar' else 'All-Inclusive Pricing (AED)' }}
           </h3>
           <p class="text-xs text-slate-500 leading-relaxed">
-            {{ 'سعر شامل للتركيب والترصيص وضريبة القيمة المضافة بدون أي رسوم خفية.' if locale == 'ar' else 'Zero hidden charges. Prices include fitting, 3D balancing, disposal and VAT.' }}
+            {{ 'سعر شامل للتركيب والترصيص وضريبة القيمة المضافة بالدرهم الإماراتي بدون أي رسوم خفية.' if locale == 'ar' else 'Zero hidden charges. All prices in AED include fitting, 3D balancing, disposal and VAT.' }}
           </p>
         </div>
       </div>
