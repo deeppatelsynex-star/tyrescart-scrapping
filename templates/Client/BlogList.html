@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ locale or 'en' }}" dir="{{ 'rtl' if locale == 'ar' else 'ltr' }}" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
@@ -326,6 +326,37 @@
 
     </div>
   </footer>
+  <!-- Antigravity Luminous Back to Top Button -->
+  <button 
+    type="button" 
+    id="btn-back-to-top" 
+    aria-label="Back to Top" 
+    title="{{ 'العودة إلى الأعلى' if locale == 'ar' else 'Back to Top' }}"
+    class="fixed bottom-6 right-6 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/95 backdrop-blur-xl border border-slate-200/90 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_0_0_1px_rgba(255,255,255,0.9)] flex items-center justify-center text-slate-700 hover:text-emerald-600 hover:border-emerald-300 hover:shadow-emerald-500/20 active:scale-90 transition-all duration-300 transform opacity-0 translate-y-6 pointer-events-none group cursor-pointer"
+  >
+    <svg class="w-5 h-5 group-hover:-translate-y-1 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="19" x2="12" y2="5"/>
+      <polyline points="5 12 12 5 19 12"/>
+    </svg>
+  </button>
 
+  <script>
+    // Smooth Back to Top Scroll Logic
+    const backToTopBtn = document.getElementById('btn-back-to-top');
+    if (backToTopBtn) {
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+          backToTopBtn.classList.remove('opacity-0', 'translate-y-6', 'pointer-events-none');
+          backToTopBtn.classList.add('opacity-100', 'translate-y-0', 'pointer-events-auto');
+        } else {
+          backToTopBtn.classList.remove('opacity-100', 'translate-y-0', 'pointer-events-auto');
+          backToTopBtn.classList.add('opacity-0', 'translate-y-6', 'pointer-events-none');
+        }
+      });
+      backToTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+  </script>
 </body>
 </html>
