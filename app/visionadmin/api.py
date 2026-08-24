@@ -1,9 +1,13 @@
 ﻿"""
 app/visionadmin/api.py - VisionAdmin CMS Controller & API Layer
-Handles Page Management CRUD routes and JSON endpoints for static pages.
+Handles Page Management CRUD routes, banner file uploads, and JSON endpoints.
 """
 
+import os
+import time
+import uuid
 from flask import Blueprint, jsonify, render_template, request, session
+from werkzeug.utils import secure_filename
 from models.page import Page
 
 
@@ -21,7 +25,39 @@ def register_visionadmin_routes(app):
         return render_template('visionadmin/pages.html', page='pages')
 
     # =========================================================================
-    # 2. JSON API ENDPOINTS (/visionadmin/api/pages)
+    # 2. BANNER IMAGE UPLOAD ENDPOINT
+    # =========================================================================
+
+    @app.route('/visionadmin/api/upload-banner', methods=['POST'])
+    def visionadmin_upload_banner():
+        file = request.files.get('file') or request.files.get('banner')
+        if not file or not file.filename:
+            return jsonify({'error': 'No image file provided.'}), 400
+
+        allowed_extensions = {'.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.avif'}
+        orig_filename = secure_filename(file.filename)
+        _, ext = os.path.splitext(orig_filename)
+        ext = ext.lower()
+        if ext not in allowed_extensions:
+            return jsonify({'error': f'Invalid image format "{ext}". Allowed formats: PNG, JPG, JPEG, WEBP, SVG, GIF, AVIF'}), 400
+
+        upload_folder = os.path.join(app.static_folder, 'uploads', 'pages')
+        os.makedirs(upload_folder, exist_ok=True)
+
+        unique_name = f"banner_{int(time.time())}_{uuid.uuid4().hex[:8]}{ext}"
+        save_path = os.path.join(upload_folder, unique_name)
+        file.save(save_path)
+
+        web_url = f"/static/uploads/pages/{unique_name}"
+        return jsonify({
+            'success': True,
+            'url': web_url,
+            'filename': unique_name,
+            'message': 'Banner image uploaded successfully.'
+        })
+
+    # =========================================================================
+    # 3. JSON API ENDPOINTS (/visionadmin/api/pages)
     # =========================================================================
 
     @app.route('/visionadmin/api/pages', methods=['GET'])
@@ -52,7 +88,6 @@ def register_visionadmin_routes(app):
                 or q_lower in (p.slug or '').lower()
             ]
 
-        # Calculate metrics
         all_active = [p for p in Page.all(include_deleted=False) if p.deleted_at is None]
         metrics = {
             'total': len(all_active),

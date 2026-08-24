@@ -1,9 +1,12 @@
-﻿// pages.js - VisionAdmin Pages & Policies CRUD Controller
+﻿// pages.js - VisionAdmin Pages & Policies CRUD Controller with CKEditor 5 & Banner Upload
 document.addEventListener('DOMContentLoaded', () => {
   let pagesData = [];
   let currentFilter = 'all';
   let currentSearch = '';
   let activeLocaleTab = 'en';
+
+  let editorEn = null;
+  let editorAr = null;
 
   const tableBody = document.getElementById('pages-table-body');
   const searchInput = document.getElementById('pages-search-input');
@@ -14,8 +17,118 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveBtn = document.getElementById('btn-save-page');
   const saveBtnText = document.getElementById('save-btn-text');
 
+  const bannerFileInput = document.getElementById('banner_file_input');
+  const bannerImageInput = document.getElementById('banner_image');
+  const bannerPreviewImg = document.getElementById('banner-preview-img');
+  const bannerPlaceholderIcon = document.getElementById('banner-placeholder-icon');
+  const bannerRemoveBtn = document.getElementById('btn-remove-banner');
+  const bannerStatusText = document.getElementById('banner-file-status');
+
   // ---------------------------------------------------------------------------
-  // 1. Fetch & Render Pages Table
+  // 1. Initialize CKEditor 5 SuperBuild with Code / Source Editing
+  // ---------------------------------------------------------------------------
+  const ckeditorConfig = {
+    toolbar: {
+      items: [
+        'sourceEditing', '|',
+        'heading', '|',
+        'bold', 'italic', 'underline', 'strikethrough', 'code', '|',
+        'link', 'bulletedList', 'numberedList', 'blockQuote', 'codeBlock', '|',
+        'alignment', '|',
+        'insertTable', 'horizontalLine', '|',
+        'undo', 'redo'
+      ],
+      shouldNotGroupWhenFull: true
+    },
+    removePlugins: [
+      'CKBox', 'CKFinder', 'EasyImage', 'RealTimeCollaborativeComments',
+      'RealTimeCollaborativeTrackChanges', 'RealTimeCollaborativeRevisionHistory',
+      'PresenceList', 'Comments', 'TrackChanges', 'TrackChangesData', 'RevisionHistory',
+      'Pagination', 'WProofreader', 'MathType', 'SlashCommand', 'Template', 'DocumentOutline',
+      'FormatPainter', 'TableOfContents', 'PasteFromOfficeEnhanced'
+    ]
+  };
+
+  async function initEditors() {
+    try {
+      if (window.CKEDITOR && CKEDITOR.ClassicEditor) {
+        // English Editor
+        if (document.getElementById('content_en') && !editorEn) {
+          editorEn = await CKEDITOR.ClassicEditor.create(
+            document.getElementById('content_en'),
+            { ...ckeditorConfig }
+          );
+        }
+
+        // Arabic Editor
+        if (document.getElementById('content_ar') && !editorAr) {
+          editorAr = await CKEDITOR.ClassicEditor.create(
+            document.getElementById('content_ar'),
+            {
+              ...ckeditorConfig,
+              language: { content: 'ar' }
+            }
+          );
+        }
+      }
+    } catch (err) {
+      console.warn('CKEditor initialization notice:', err);
+    }
+  }
+
+  initEditors();
+
+  // ---------------------------------------------------------------------------
+  // 2. Banner Image File Upload Handler
+  // ---------------------------------------------------------------------------
+  function setBannerPreview(url) {
+    if (url) {
+      bannerImageInput.value = url;
+      bannerPreviewImg.src = url;
+      bannerPreviewImg.classList.remove('hidden');
+      bannerPlaceholderIcon.classList.add('hidden');
+      bannerRemoveBtn.classList.remove('hidden');
+      bannerStatusText.textContent = url.split('/').pop();
+    } else {
+      bannerImageInput.value = '';
+      bannerPreviewImg.src = '';
+      bannerPreviewImg.classList.add('hidden');
+      bannerPlaceholderIcon.classList.remove('hidden');
+      bannerRemoveBtn.classList.add('hidden');
+      bannerFileInput.value = '';
+      bannerStatusText.textContent = 'PNG, JPG, WEBP, SVG or AVIF up to 10MB.';
+    }
+  }
+
+  bannerFileInput?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    bannerStatusText.textContent = `Uploading "${file.name}"…`;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/visionadmin/api/upload-banner', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Failed to upload banner');
+
+      setBannerPreview(data.url);
+      window.vaShowToast('Banner image uploaded successfully!');
+    } catch (err) {
+      alert(`Upload error: ${err.message}`);
+      setBannerPreview('');
+    }
+  });
+
+  bannerRemoveBtn?.addEventListener('click', () => setBannerPreview(''));
+
+  // ---------------------------------------------------------------------------
+  // 3. Fetch & Render Pages Table
   // ---------------------------------------------------------------------------
   async function loadPages() {
     try {
@@ -84,10 +197,10 @@ document.addEventListener('DOMContentLoaded', () => {
           </td>
           <td class="py-3.5 px-4">
             ${p.banner_image ? `
-              <a href="${escapeHtml(p.banner_image)}" target="_blank" class="inline-flex items-center gap-1 text-xs text-indigo-600 font-bold hover:underline">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <span>Image</span>
-              </a>
+              <div class="flex items-center gap-2">
+                <img src="${escapeHtml(p.banner_image)}" alt="Banner" class="w-9 h-6 object-cover rounded-md border border-slate-200 shadow-2xs shrink-0" />
+                <a href="${escapeHtml(p.banner_image)}" target="_blank" class="text-[11px] text-indigo-600 font-bold hover:underline truncate max-w-[120px]">View</a>
+              </div>
             ` : '<span class="text-xs text-slate-400">None</span>'}
           </td>
           <td class="py-3.5 px-4">
@@ -121,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ---------------------------------------------------------------------------
-  // 2. Filter Tabs & Search Handler
+  // 4. Filter Tabs & Search Handler
   // ---------------------------------------------------------------------------
   document.querySelectorAll('.tab-filter').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -146,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ---------------------------------------------------------------------------
-  // 3. Multi-Locale Tab Switcher
+  // 5. Multi-Locale Tab Switcher
   // ---------------------------------------------------------------------------
   document.querySelectorAll('.locale-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -168,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 4. Modal Open / Close & Auto Slugify
+  // 6. Modal Open / Close & Auto Slugify
   // ---------------------------------------------------------------------------
   function openModal(isEdit = false, page = null) {
     pageForm.reset();
@@ -176,23 +289,35 @@ document.addEventListener('DOMContentLoaded', () => {
     modalTitle.textContent = isEdit ? 'Edit Static Page' : 'Create New Static Page';
     saveBtnText.textContent = isEdit ? 'Save Changes' : 'Create Page';
 
-    // Reset locale tabs to English
     document.querySelector('.locale-tab[data-locale="en"]')?.click();
 
     if (isEdit && page) {
       document.getElementById('title_en').value = page.title?.en || (typeof page.title === 'string' ? page.title : '');
       document.getElementById('title_ar').value = page.title?.ar || '';
-      document.getElementById('content_en').value = page.content?.en || '';
-      document.getElementById('content_ar').value = page.content?.ar || '';
       document.getElementById('slug').value = page.slug || '';
-      document.getElementById('banner_image').value = page.banner_image || '';
       document.getElementById('is_active').checked = Boolean(page.is_active);
       document.getElementById('seo_title_en').value = page.seo_title?.en || '';
       document.getElementById('seo_title_ar').value = page.seo_title?.ar || '';
       document.getElementById('meta_description_en').value = page.meta_description?.en || '';
       document.getElementById('meta_description_ar').value = page.meta_description?.ar || '';
+
+      setBannerPreview(page.banner_image || '');
+
+      const contentEnVal = page.content?.en || (typeof page.content === 'string' ? page.content : '');
+      const contentArVal = page.content?.ar || '';
+
+      if (editorEn) editorEn.setData(contentEnVal);
+      else document.getElementById('content_en').value = contentEnVal;
+
+      if (editorAr) editorAr.setData(contentArVal);
+      else document.getElementById('content_ar').value = contentArVal;
+
     } else {
       document.getElementById('is_active').checked = true;
+      setBannerPreview('');
+
+      if (editorEn) editorEn.setData('');
+      if (editorAr) editorAr.setData('');
     }
 
     modal.classList.remove('hidden');
@@ -221,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 5. Submit Form (Create / Update)
+  // 7. Submit Form (Create / Update)
   // ---------------------------------------------------------------------------
   saveBtn?.addEventListener('click', async () => {
     const editId = editIdInput.value;
@@ -236,14 +361,14 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const content_en = editorEn ? editorEn.getData() : document.getElementById('content_en').value;
+    const content_ar = editorAr ? editorAr.getData() : document.getElementById('content_ar').value;
+
     const payload = {
       title: { en: title_en, ar: title_ar },
-      content: {
-        en: document.getElementById('content_en').value.trim(),
-        ar: document.getElementById('content_ar').value.trim()
-      },
+      content: { en: content_en, ar: content_ar },
       slug: slug,
-      banner_image: document.getElementById('banner_image').value.trim() || null,
+      banner_image: bannerImageInput.value.trim() || null,
       is_active: document.getElementById('is_active').checked,
       seo_title: {
         en: document.getElementById('seo_title_en').value.trim(),
@@ -285,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 6. Global Action Helpers
+  // 8. Global Action Helpers
   // ---------------------------------------------------------------------------
   window.editPage = async function(id) {
     try {
