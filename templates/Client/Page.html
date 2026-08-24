@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ page.get_meta_title(locale) }} - TyresCart.ae</title>
+  <title>{{ page.get_seo_title(locale) }} - TyresCart.ae</title>
   <meta name="description" content="{{ page.get_meta_desc(locale) }}" />
-  {% if page.canonical_url %}
-  <link rel="canonical" href="{{ page.canonical_url }}" />
-  {% endif %}
+  
+  <!-- Direct Favicon icons -->
+  <link rel="icon" type="image/webp" href="/static/assets/images/favicon-color.webp" />
+  <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/webp" />
+  <link rel="apple-touch-icon" href="/static/assets/images/favicon-color.webp" />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/x-icon" />
   <style>
     body { 
       font-family: {% if locale == 'ar' %}'Tajawal', 'Plus Jakarta Sans', system-ui, sans-serif{% else %}'Plus Jakarta Sans', system-ui, sans-serif{% endif %}; 
@@ -32,8 +34,8 @@
       
       <!-- Brand Logo -->
       <a href="/" class="flex items-center gap-2 group">
-        <div class="w-9 h-9 rounded-xl bg-slate-950 text-emerald-400 font-black text-sm flex items-center justify-center shadow-sm group-hover:scale-105 transition">
-          TC
+        <div class="w-9 h-9 rounded-xl bg-slate-950 p-1.5 flex items-center justify-center shadow-sm group-hover:scale-105 transition shrink-0">
+          <img src="/static/assets/images/favicon-color.webp" alt="TyresCart Logo" class="w-full h-full object-contain" />
         </div>
         <span class="text-lg font-black text-slate-950 tracking-tight">Tyres<span class="text-emerald-600">Cart</span>.ae</span>
       </a>
@@ -76,7 +78,7 @@
           </a>
         </div>
 
-        <a href="/tcsadmin/login" class="px-3 py-1.5 rounded-xl bg-slate-950 text-white hover:bg-slate-800 transition">{{ 'لوحة التحكم' if locale == 'ar' else 'Admin' }}</a>
+        <a href="/visionadmin/pages" class="px-3 py-1.5 rounded-xl bg-slate-950 text-white hover:bg-slate-800 transition">{{ 'لوحة التحكم' if locale == 'ar' else 'VisionAdmin' }}</a>
       </div>
     </div>
   </header>
@@ -94,12 +96,16 @@
     <!-- Page Card -->
     <article class="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200/80 shadow-sm space-y-6">
       
-      <!-- Title & Excerpt -->
-      <div class="border-b border-slate-100 pb-6 space-y-3">
+      <!-- Optional Banner Image -->
+      {% if page.banner_image %}
+      <div class="rounded-2xl overflow-hidden max-h-72 w-full mb-6 border border-slate-100 shadow-xs">
+        <img src="{{ page.banner_image }}" alt="{{ page.get_title(locale) }}" class="w-full h-full object-cover" />
+      </div>
+      {% endif %}
+
+      <!-- Title -->
+      <div class="border-b border-slate-100 pb-6">
         <h1 class="text-2xl sm:text-4xl font-black text-slate-950 tracking-tight">{{ page.get_title(locale) }}</h1>
-        {% if page.get_excerpt(locale) %}
-        <p class="text-sm sm:text-base text-slate-500 leading-relaxed font-medium">{{ page.get_excerpt(locale) }}</p>
-        {% endif %}
       </div>
 
       <!-- Rich Body Content -->

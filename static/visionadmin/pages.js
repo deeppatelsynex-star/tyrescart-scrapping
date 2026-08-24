@@ -14,8 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveBtn = document.getElementById('btn-save-page');
   const saveBtnText = document.getElementById('save-btn-text');
 
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-
   // ---------------------------------------------------------------------------
   // 1. Fetch & Render Pages Table
   // ---------------------------------------------------------------------------
@@ -32,22 +30,22 @@ document.addEventListener('DOMContentLoaded', () => {
       updateMetrics(data.metrics || {});
       renderTable(pagesData);
     } catch (err) {
-      tableBody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-rose-500 font-bold">Error loading pages: ${err.message}</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-rose-500 font-bold">Error loading pages: ${err.message}</td></tr>`;
     }
   }
 
   function updateMetrics(metrics) {
     document.getElementById('stat-total').textContent = metrics.total || 0;
-    document.getElementById('stat-published').textContent = metrics.published || 0;
-    document.getElementById('stat-draft').textContent = metrics.draft || 0;
-    document.getElementById('stat-navigation').textContent = (metrics.in_header || 0) + (metrics.in_footer || 0);
+    document.getElementById('stat-active').textContent = metrics.active || 0;
+    document.getElementById('stat-inactive').textContent = metrics.inactive || 0;
+    document.getElementById('stat-trash').textContent = metrics.trash || 0;
   }
 
   function renderTable(pages) {
     if (!pages.length) {
       tableBody.innerHTML = `
         <tr>
-          <td colspan="6" class="py-12 text-center text-slate-400">
+          <td colspan="5" class="py-12 text-center text-slate-400">
             <svg class="w-8 h-8 mx-auto text-slate-300 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             <p class="font-bold text-sm text-slate-600">No static pages found</p>
             <p class="text-xs text-slate-400 mt-0.5">${currentFilter === 'trash' ? 'Trash is empty.' : 'Click "+ Create New Page" to add one.'}</p>
@@ -61,13 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const enTitle = (typeof p.title === 'object' ? p.title?.en : p.title) || 'Untitled';
       const arTitle = (typeof p.title === 'object' ? p.title?.ar : '') || '';
 
-      const statusBadge = p.status === 'published' 
-        ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold va-badge-published">Published</span>'
-        : (p.status === 'draft'
-          ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold va-badge-draft">Draft</span>'
-          : '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold va-badge-archived">Archived</span>');
+      const statusBadge = p.is_active 
+        ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold va-badge-published">Active (Live)</span>'
+        : '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold va-badge-draft">Inactive</span>';
 
       const isTrash = currentFilter === 'trash';
+      const updatedDate = p.updated_at ? p.updated_at.split('T')[0] : (p.created_at ? p.created_at.split('T')[0] : '—');
 
       return `
         <tr class="hover:bg-slate-50/70 transition">
@@ -86,20 +83,18 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </td>
           <td class="py-3.5 px-4">
-            <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-xs font-mono font-medium">${p.template || 'default'}</span>
-          </td>
-          <td class="py-3.5 px-4">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              ${p.show_in_header ? '<span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-extrabold">Header</span>' : ''}
-              ${p.show_in_footer ? '<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-extrabold">Footer</span>' : ''}
-              ${!p.show_in_header && !p.show_in_footer ? '<span class="text-xs text-slate-400">—</span>' : ''}
-            </div>
+            ${p.banner_image ? `
+              <a href="${escapeHtml(p.banner_image)}" target="_blank" class="inline-flex items-center gap-1 text-xs text-indigo-600 font-bold hover:underline">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span>Image</span>
+              </a>
+            ` : '<span class="text-xs text-slate-400">None</span>'}
           </td>
           <td class="py-3.5 px-4">
             ${statusBadge}
           </td>
           <td class="py-3.5 px-4 font-mono text-xs text-slate-500">
-            ${p.sort_order || 0}
+            ${updatedDate}
           </td>
           <td class="py-3.5 px-4 sm:px-6 text-right space-x-2">
             ${!isTrash ? `
@@ -187,21 +182,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isEdit && page) {
       document.getElementById('title_en').value = page.title?.en || (typeof page.title === 'string' ? page.title : '');
       document.getElementById('title_ar').value = page.title?.ar || '';
-      document.getElementById('excerpt_en').value = page.excerpt?.en || '';
-      document.getElementById('excerpt_ar').value = page.excerpt?.ar || '';
       document.getElementById('content_en').value = page.content?.en || '';
       document.getElementById('content_ar').value = page.content?.ar || '';
       document.getElementById('slug').value = page.slug || '';
-      document.getElementById('template').value = page.template || 'default';
-      document.getElementById('status').value = page.status || 'published';
-      document.getElementById('show_in_header').checked = Boolean(page.show_in_header);
-      document.getElementById('show_in_footer').checked = Boolean(page.show_in_footer);
-      document.getElementById('sort_order').value = page.sort_order || 0;
-      document.getElementById('meta_title_en').value = page.meta_title?.en || '';
-      document.getElementById('meta_desc_en').value = page.meta_desc?.en || '';
+      document.getElementById('banner_image').value = page.banner_image || '';
+      document.getElementById('is_active').checked = Boolean(page.is_active);
+      document.getElementById('seo_title_en').value = page.seo_title?.en || '';
+      document.getElementById('seo_title_ar').value = page.seo_title?.ar || '';
+      document.getElementById('meta_description_en').value = page.meta_description?.en || '';
+      document.getElementById('meta_description_ar').value = page.meta_description?.ar || '';
     } else {
-      document.getElementById('status').value = 'published';
-      document.getElementById('show_in_footer').checked = true;
+      document.getElementById('is_active').checked = true;
     }
 
     modal.classList.remove('hidden');
@@ -220,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const titleEnInput = document.getElementById('title_en');
   const slugInput = document.getElementById('slug');
   titleEnInput?.addEventListener('input', () => {
-    if (!editIdInput.value) { // Only auto-slugify on Create mode
+    if (!editIdInput.value) {
       const slugified = titleEnInput.value.toLowerCase()
         .replace(/[^\w\s-]/g, '')
         .replace(/[\s_-]+/g, '-')
@@ -247,27 +238,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const payload = {
       title: { en: title_en, ar: title_ar },
-      excerpt: {
-        en: document.getElementById('excerpt_en').value.trim(),
-        ar: document.getElementById('excerpt_ar').value.trim()
-      },
       content: {
         en: document.getElementById('content_en').value.trim(),
         ar: document.getElementById('content_ar').value.trim()
       },
       slug: slug,
-      template: document.getElementById('template').value,
-      status: document.getElementById('status').value,
-      show_in_header: document.getElementById('show_in_header').checked,
-      show_in_footer: document.getElementById('show_in_footer').checked,
-      sort_order: parseInt(document.getElementById('sort_order').value, 10) || 0,
-      meta_title: {
-        en: document.getElementById('meta_title_en').value.trim(),
-        ar: ''
+      banner_image: document.getElementById('banner_image').value.trim() || null,
+      is_active: document.getElementById('is_active').checked,
+      seo_title: {
+        en: document.getElementById('seo_title_en').value.trim(),
+        ar: document.getElementById('seo_title_ar').value.trim()
       },
-      meta_desc: {
-        en: document.getElementById('meta_desc_en').value.trim(),
-        ar: ''
+      meta_description: {
+        en: document.getElementById('meta_description_en').value.trim(),
+        ar: document.getElementById('meta_description_ar').value.trim()
       }
     };
 
@@ -281,8 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(url, {
         method: method,
         headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       });
@@ -320,8 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const res = await fetch(`/visionadmin/api/pages/${id}`, {
-        method: 'DELETE',
-        headers: { 'X-CSRF-Token': csrfToken }
+        method: 'DELETE'
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to delete page');
@@ -336,8 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.restorePage = async function(id) {
     try {
       const res = await fetch(`/visionadmin/api/pages/${id}/restore`, {
-        method: 'POST',
-        headers: { 'X-CSRF-Token': csrfToken }
+        method: 'POST'
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to restore page');

@@ -1,6 +1,6 @@
 ﻿"""
 app/visionadmin/api.py - VisionAdmin CMS Controller & API Layer
-Open CMS Static Pages Management CRUD routes and JSON endpoints.
+Handles Page Management CRUD routes and JSON endpoints for static pages.
 """
 
 from flask import Blueprint, jsonify, render_template, request, session
@@ -8,7 +8,7 @@ from models.page import Page
 
 
 def register_visionadmin_routes(app):
-    """Registers all /visionadmin page and API endpoints (open access, no login required)."""
+    """Registers all /visionadmin page and API endpoints."""
 
     # =========================================================================
     # 1. PAGE ROUTES
@@ -38,8 +38,10 @@ def register_visionadmin_routes(app):
         else:
             pages = [p for p in pages if p.deleted_at is None]
 
-        if status_filter and status_filter != 'all':
-            pages = [p for p in pages if p.status == status_filter]
+        if status_filter == 'active':
+            pages = [p for p in pages if p.is_active]
+        elif status_filter == 'inactive':
+            pages = [p for p in pages if not p.is_active]
 
         if query:
             q_lower = query.lower()
@@ -54,10 +56,8 @@ def register_visionadmin_routes(app):
         all_active = [p for p in Page.all(include_deleted=False) if p.deleted_at is None]
         metrics = {
             'total': len(all_active),
-            'published': len([p for p in all_active if p.status == 'published']),
-            'draft': len([p for p in all_active if p.status == 'draft']),
-            'in_header': len([p for p in all_active if p.show_in_header]),
-            'in_footer': len([p for p in all_active if p.show_in_footer]),
+            'active': len([p for p in all_active if p.is_active]),
+            'inactive': len([p for p in all_active if not p.is_active]),
             'trash': len([p for p in Page.all(include_deleted=True) if p.deleted_at is not None])
         }
 
@@ -99,18 +99,12 @@ def register_visionadmin_routes(app):
                 title=title if isinstance(title, dict) else {"en": en_title, "ar": ""},
                 slug=slug,
                 content=data.get('content') or {"en": "", "ar": ""},
-                excerpt=data.get('excerpt') or {"en": "", "ar": ""},
-                template=data.get('template', 'default'),
-                featured_image=data.get('featured_image'),
-                status=data.get('status', 'draft'),
-                published_at=data.get('published_at'),
-                show_in_footer=bool(data.get('show_in_footer')),
-                show_in_header=bool(data.get('show_in_header')),
-                sort_order=int(data.get('sort_order') or 0),
-                meta_title=data.get('meta_title'),
-                meta_desc=data.get('meta_desc'),
-                canonical_url=data.get('canonical_url'),
-                created_by=session.get('user_id')
+                banner_image=data.get('banner_image'),
+                seo_title=data.get('seo_title'),
+                meta_description=data.get('meta_description'),
+                is_active=bool(data.get('is_active', True)),
+                created_by=session.get('user_id'),
+                updated_by=session.get('user_id')
             )
             return jsonify({
                 'success': True,
@@ -135,6 +129,8 @@ def register_visionadmin_routes(app):
             if not Page.is_slug_available(new_slug, exclude_id=page_id):
                 return jsonify({'error': f'The slug "{new_slug}" is already in use.'}), 409
             data['slug'] = new_slug
+
+        data['updated_by'] = session.get('user_id')
 
         try:
             page.update(**data)

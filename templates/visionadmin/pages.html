@@ -25,16 +25,16 @@
       <div id="stat-total" class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">--</div>
     </div>
     <div class="va-card p-4 sm:p-5">
-      <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Published</p>
-      <div id="stat-published" class="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">--</div>
+      <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Active (Live)</p>
+      <div id="stat-active" class="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">--</div>
     </div>
     <div class="va-card p-4 sm:p-5">
-      <p class="text-[11px] font-bold uppercase tracking-wider text-amber-600">Drafts</p>
-      <div id="stat-draft" class="text-2xl sm:text-3xl font-black text-amber-600 mt-1">--</div>
+      <p class="text-[11px] font-bold uppercase tracking-wider text-amber-600">Inactive</p>
+      <div id="stat-inactive" class="text-2xl sm:text-3xl font-black text-amber-600 mt-1">--</div>
     </div>
     <div class="va-card p-4 sm:p-5">
-      <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-600">In Navigation</p>
-      <div id="stat-navigation" class="text-2xl sm:text-3xl font-black text-indigo-600 mt-1">--</div>
+      <p class="text-[11px] font-bold uppercase tracking-wider text-rose-600">Trash</p>
+      <div id="stat-trash" class="text-2xl sm:text-3xl font-black text-rose-600 mt-1">--</div>
     </div>
   </div>
 
@@ -43,8 +43,8 @@
     <!-- Status Tabs -->
     <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full md:w-auto text-xs font-bold">
       <button type="button" class="tab-filter px-3 py-1.5 rounded-lg bg-white shadow-xs text-slate-900 transition" data-status="all">All Pages</button>
-      <button type="button" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition" data-status="published">Published</button>
-      <button type="button" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition" data-status="draft">Drafts</button>
+      <button type="button" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition" data-status="active">Active</button>
+      <button type="button" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition" data-status="inactive">Inactive</button>
       <button type="button" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition" data-status="trash">Trash</button>
     </div>
 
@@ -62,16 +62,15 @@
         <thead class="bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px] font-bold">
           <tr>
             <th class="py-3.5 px-4 sm:px-6">Page Title & Slug</th>
-            <th class="py-3.5 px-4">Template</th>
-            <th class="py-3.5 px-4">Navigation Placement</th>
+            <th class="py-3.5 px-4">Banner Image</th>
             <th class="py-3.5 px-4">Status</th>
-            <th class="py-3.5 px-4">Sort Order</th>
+            <th class="py-3.5 px-4">Last Updated</th>
             <th class="py-3.5 px-4 sm:px-6 text-right">Actions</th>
           </tr>
         </thead>
         <tbody id="pages-table-body" class="divide-y divide-slate-100 text-slate-700">
           <tr>
-            <td colspan="6" class="py-12 text-center text-slate-400">
+            <td colspan="5" class="py-12 text-center text-slate-400">
               <div class="inline-block animate-spin w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full mb-2"></div>
               <p>Loading pages…</p>
             </td>
@@ -96,7 +95,7 @@
       <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
         <div>
           <h2 id="modal-title" class="text-lg font-black text-slate-950">Create New Static Page</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Configure multilingual content, slug routing, template, and SEO.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Configure multilingual content, slug routing, banner image, and SEO.</p>
         </div>
         <button type="button" id="btn-close-modal" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition cursor-pointer">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -112,7 +111,7 @@
             <button type="button" class="locale-tab px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-xs transition" data-locale="en">🇬🇧 English</button>
             <button type="button" class="locale-tab px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition" data-locale="ar">🇦🇪 العربية</button>
           </div>
-          <span class="text-[11px] text-slate-400 font-mono">Multi-Locale JSON Payload</span>
+          <span class="text-[11px] text-slate-400 font-mono">Multilingual Schema</span>
         </div>
 
         <form id="page-form" class="space-y-6">
@@ -126,13 +125,19 @@
             </div>
 
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Short Excerpt (English)</label>
-              <textarea id="excerpt_en" rows="2" placeholder="Brief summary of the page for previews…" class="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
-            </div>
-
-            <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Page Body Content HTML (English)</label>
               <textarea id="content_en" rows="8" placeholder="<h2>About TyresCart</h2><p>Write your HTML or formatted content here...</p>" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">SEO Title (English)</label>
+                <input type="text" id="seo_title_en" placeholder="Defaults to page title..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Meta Description (English)</label>
+                <input type="text" id="meta_description_en" placeholder="Search engine description..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
             </div>
           </div>
 
@@ -144,18 +149,24 @@
             </div>
 
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">مقتطف مختصر (العربية)</label>
-              <textarea id="excerpt_ar" rows="2" placeholder="موجز محتوى الصفحة..." class="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
-            </div>
-
-            <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">محتوى الصفحة (العربية)</label>
               <textarea id="content_ar" rows="8" placeholder="<h2>عن تايبرز كارت</h2><p>اكتب المحتوى بتنسيق HTML هنا...</p>" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50/50"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">عنوان تحسين محركات البحث SEO (العربية)</label>
+                <input type="text" id="seo_title_ar" placeholder="العنوان لمحركات البحث..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">وصف الميتا (العربية)</label>
+                <input type="text" id="meta_description_ar" placeholder="الوصف لمحركات البحث..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
             </div>
           </div>
 
           <!-- Page Configuration Grid -->
-          <div class="pt-4 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="pt-4 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">URL Slug <span class="text-rose-500">*</span></label>
               <div class="relative">
@@ -165,56 +176,21 @@
             </div>
 
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Layout Template</label>
-              <select id="template" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
-                <option value="default">Default Page Layout</option>
-                <option value="full_width">Full Width Layout</option>
-                <option value="contact">Contact Layout</option>
-                <option value="builder">Page Builder Sectioned</option>
-              </select>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Banner Image URL</label>
+              <input type="text" id="banner_image" placeholder="https://example.com/banner.jpg" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" />
             </div>
+          </div>
 
+          <!-- Active Status Setting -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Publish Status</label>
-              <select id="status" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-bold">
-                <option value="published">Published (Live)</option>
-                <option value="draft">Draft (Hidden)</option>
-                <option value="archived">Archived</option>
-              </select>
+              <p class="text-xs font-bold text-slate-900">Page Visibility Status</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">When active, the page is published live and accessible on the storefront.</p>
             </div>
-          </div>
-
-          <!-- Navigation & Sort Order Settings -->
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
             <label class="flex items-center gap-2.5 text-xs font-bold text-slate-700 cursor-pointer">
-              <input type="checkbox" id="show_in_header" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300" />
-              <span>Show in Header Navigation</span>
+              <input type="checkbox" id="is_active" checked class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300" />
+              <span>Active (Live)</span>
             </label>
-
-            <label class="flex items-center gap-2.5 text-xs font-bold text-slate-700 cursor-pointer">
-              <input type="checkbox" id="show_in_footer" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300" />
-              <span>Show in Footer Navigation</span>
-            </label>
-
-            <div class="flex items-center gap-2">
-              <label class="text-xs font-bold text-slate-600 whitespace-nowrap">Sort Order:</label>
-              <input type="number" id="sort_order" value="0" min="0" class="w-20 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            </div>
-          </div>
-
-          <!-- SEO Meta Collapsible -->
-          <div class="space-y-3 pt-2">
-            <p class="text-xs font-bold uppercase tracking-wider text-slate-400">SEO & Metadata Settings</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Meta Title (English)</label>
-                <input type="text" id="meta_title_en" placeholder="Defaults to page title..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Meta Description (English)</label>
-                <input type="text" id="meta_desc_en" placeholder="Search engine description..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              </div>
-            </div>
           </div>
 
         </form>

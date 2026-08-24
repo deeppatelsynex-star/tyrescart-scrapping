@@ -1,7 +1,20 @@
 ﻿"""
-app/models/page.py - Page Model and Query Helpers
-Table: pages (static content pages e.g. About Us, Terms and Conditions, Privacy Policy, Shipping Policy)
-Mixins: SlugMixin, SoftDeleteMixin, SearchableMixin
+app/models/page.py - Page Model & ORM Helpers
+Table: pages
+Schema:
+  - id: bigint UNSIGNED PRIMARY KEY AUTO_INCREMENT
+  - title: json NOT NULL
+  - slug: varchar(255) NOT NULL UNIQUE
+  - content: json DEFAULT NULL
+  - banner_image: varchar(500) DEFAULT NULL
+  - seo_title: json DEFAULT NULL
+  - meta_description: json DEFAULT NULL
+  - is_active: tinyint(1) NOT NULL DEFAULT '1'
+  - created_by: bigint UNSIGNED DEFAULT NULL
+  - updated_by: bigint UNSIGNED DEFAULT NULL
+  - created_at: timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  - updated_at: timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  - deleted_at: timestamp NULL DEFAULT NULL
 """
 
 import json
@@ -45,7 +58,7 @@ class SlugMixin:
 
 
 class SoftDeleteMixin:
-    """Provides soft-delete capabilities and deleted-record filters."""
+    """Provides soft-delete capabilities and unique slug prefix management."""
 
     @classmethod
     def soft_delete(cls, page_id: int) -> bool:
@@ -58,7 +71,6 @@ class SoftDeleteMixin:
                 if not row:
                     return False
                 old_slug = row.get('slug') or ''
-                # Prepend __del_<id>_<timestamp>_ to free unique key constraint
                 ts = int(datetime.now(timezone.utc).timestamp())
                 new_slug = f"__del_{page_id}_{ts}_{old_slug}"[:250]
                 cursor.execute(
@@ -80,11 +92,9 @@ class SoftDeleteMixin:
                 if not row:
                     return False
                 cur_slug = row.get('slug') or ''
-                # Clean prefix
                 clean_slug = re.sub(r'^__del_\d+_\d+_', '', cur_slug)
                 target_slug = clean_slug
 
-                # Check if target slug is currently free
                 cursor.execute("SELECT id FROM pages WHERE slug = %s AND id != %s", (target_slug, page_id))
                 if cursor.fetchone() is not None:
                     target_slug = f"{clean_slug}-restored-{page_id}"
@@ -113,13 +123,12 @@ class SearchableMixin:
                 sql = """
                     SELECT * FROM pages 
                     WHERE deleted_at IS NULL 
-                      AND status = 'published'
-                      AND (published_at IS NULL OR published_at <= CURRENT_TIMESTAMP)
+                      AND is_active = 1
                       AND (
                         JSON_UNQUOTE(JSON_EXTRACT(title, %s)) LIKE %s
                         OR JSON_UNQUOTE(JSON_EXTRACT(content, %s)) LIKE %s
                       )
-                    ORDER BY sort_order ASC, id DESC
+                    ORDER BY id DESC
                     LIMIT %s
                 """
                 loc_key = f"$.{locale}"
@@ -137,15 +146,14 @@ class SearchableMixin:
 class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
     """
     Page model for managing static content pages (About Us, Terms, Privacy Policy, etc.).
-    Supports multi-locale JSON payloads for title, content, excerpt, and SEO meta tags.
+    Supports localized JSON payloads for title, content, seo_title, and meta_description.
     """
 
     TABLE = 'pages'
     COLUMNS = (
-        'id', 'title', 'slug', 'content', 'excerpt', 'template',
-        'featured_image', 'status', 'published_at', 'show_in_footer',
-        'show_in_header', 'sort_order', 'meta_title', 'meta_desc',
-        'canonical_url', 'created_by', 'created_at', 'updated_at', 'deleted_at'
+        'id', 'title', 'slug', 'content', 'banner_image', 'seo_title',
+        'meta_description', 'is_active', 'created_by', 'updated_by',
+        'created_at', 'updated_at', 'deleted_at'
     )
 
     def __init__(self, data: dict):
@@ -158,18 +166,12 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
         self.slug = re.sub(r'^__del_\d+_\d+_', '', raw_slug)
 
         self.content = self._parse_json(data.get('content'))
-        self.excerpt = self._parse_json(data.get('excerpt'))
-        self.template = data.get('template', 'default')
-        self.featured_image = data.get('featured_image')
-        self.status = data.get('status', 'draft')
-        self.published_at = data.get('published_at')
-        self.show_in_footer = bool(data.get('show_in_footer'))
-        self.show_in_header = bool(data.get('show_in_header'))
-        self.sort_order = int(data.get('sort_order') or 0)
-        self.meta_title = self._parse_json(data.get('meta_title'))
-        self.meta_desc = self._parse_json(data.get('meta_desc'))
-        self.canonical_url = data.get('canonical_url')
+        self.banner_image = data.get('banner_image')
+        self.seo_title = self._parse_json(data.get('seo_title'))
+        self.meta_description = self._parse_json(data.get('meta_description'))
+        self.is_active = bool(data.get('is_active', 1))
         self.created_by = data.get('created_by')
+        self.updated_by = data.get('updated_by')
         self.created_at = data.get('created_at')
         self.updated_at = data.get('updated_at')
         self.deleted_at = data.get('deleted_at')
@@ -208,56 +210,48 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
             return self.content.get(locale) or self.content.get('en') or next(iter(self.content.values()), "")
         return str(self.content or "")
 
-    def get_excerpt(self, locale: str = 'en') -> str:
-        """Returns the localized excerpt string."""
-        if isinstance(self.excerpt, dict):
-            return self.excerpt.get(locale) or self.excerpt.get('en') or ""
-        return str(self.excerpt or "")
+    def get_seo_title(self, locale: str = 'en') -> str:
+        """Returns the localized SEO title (defaults to title if not specified)."""
+        if isinstance(self.seo_title, dict) and self.seo_title.get(locale):
+            return self.seo_title.get(locale)
+        return self.get_title(locale)
 
     def get_meta_title(self, locale: str = 'en') -> str:
-        """Returns the localized meta title (defaults to title if not specified)."""
-        if isinstance(self.meta_title, dict) and self.meta_title.get(locale):
-            return self.meta_title.get(locale)
-        return self.get_title(locale)
+        """Alias for get_seo_title."""
+        return self.get_seo_title(locale)
 
     def get_meta_desc(self, locale: str = 'en') -> str:
         """Returns the localized meta description."""
-        if isinstance(self.meta_desc, dict):
-            return self.meta_desc.get(locale) or self.meta_desc.get('en') or ""
-        return str(self.meta_desc or "")
+        if isinstance(self.meta_description, dict):
+            return self.meta_description.get(locale) or self.meta_description.get('en') or ""
+        return str(self.meta_description or "")
 
     def to_dict(self, locale: str = None) -> dict:
         """Serializes page record for API responses or template context."""
         base = {
             'id': self.id,
             'slug': self.slug,
-            'template': self.template,
-            'featured_image': self.featured_image,
-            'status': self.status,
-            'published_at': self.published_at.isoformat() if self.published_at else None,
-            'show_in_footer': self.show_in_footer,
-            'show_in_header': self.show_in_header,
-            'sort_order': self.sort_order,
-            'canonical_url': self.canonical_url,
+            'banner_image': self.banner_image,
+            'is_active': self.is_active,
             'created_by': self.created_by,
+            'updated_by': self.updated_by,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None,
         }
         if locale:
             base.update({
                 'title': self.get_title(locale),
                 'content': self.get_content(locale),
-                'excerpt': self.get_excerpt(locale),
-                'meta_title': self.get_meta_title(locale),
-                'meta_desc': self.get_meta_desc(locale),
+                'seo_title': self.get_seo_title(locale),
+                'meta_description': self.get_meta_desc(locale),
             })
         else:
             base.update({
                 'title': self.title,
                 'content': self.content,
-                'excerpt': self.excerpt,
-                'meta_title': self.meta_title,
-                'meta_desc': self.meta_desc,
+                'seo_title': self.seo_title,
+                'meta_description': self.meta_description,
             })
         return base
 
@@ -266,14 +260,14 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
     # -------------------------------------------------------------------------
     @classmethod
     def all(cls, include_deleted: bool = False):
-        """Returns all pages ordered by sort_order and id."""
+        """Returns all pages ordered by id ASC."""
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 sql = "SELECT * FROM pages"
                 if not include_deleted:
                     sql += " WHERE deleted_at IS NULL"
-                sql += " ORDER BY sort_order ASC, id DESC"
+                sql += " ORDER BY id ASC"
                 cursor.execute(sql)
                 return [cls(r) for r in cursor.fetchall()]
         finally:
@@ -281,77 +275,26 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
 
     @classmethod
     def published(cls):
-        """Returns all live, published, non-deleted pages ordered by sort_order."""
+        """Returns all active, non-deleted pages."""
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                sql = """
-                    SELECT * FROM pages 
-                    WHERE deleted_at IS NULL 
-                      AND status = 'published'
-                      AND (published_at IS NULL OR published_at <= CURRENT_TIMESTAMP)
-                    ORDER BY sort_order ASC, id ASC
-                """
+                sql = "SELECT * FROM pages WHERE deleted_at IS NULL AND is_active = 1 ORDER BY id ASC"
                 cursor.execute(sql)
                 return [cls(r) for r in cursor.fetchall()]
         finally:
             conn.close()
 
     @classmethod
-    def in_footer(cls):
-        """Returns all published pages configured to display in footer navigation."""
-        conn = get_connection()
-        try:
-            with conn.cursor() as cursor:
-                sql = """
-                    SELECT * FROM pages 
-                    WHERE deleted_at IS NULL 
-                      AND status = 'published'
-                      AND show_in_footer = 1
-                      AND (published_at IS NULL OR published_at <= CURRENT_TIMESTAMP)
-                    ORDER BY sort_order ASC, id ASC
-                """
-                cursor.execute(sql)
-                return [cls(r) for r in cursor.fetchall()]
-        finally:
-            conn.close()
-
-    @classmethod
-    def in_header(cls):
-        """Returns all published pages configured to display in header navigation."""
-        conn = get_connection()
-        try:
-            with conn.cursor() as cursor:
-                sql = """
-                    SELECT * FROM pages 
-                    WHERE deleted_at IS NULL 
-                      AND status = 'published'
-                      AND show_in_header = 1
-                      AND (published_at IS NULL OR published_at <= CURRENT_TIMESTAMP)
-                    ORDER BY sort_order ASC, id ASC
-                """
-                cursor.execute(sql)
-                return [cls(r) for r in cursor.fetchall()]
-        finally:
-            conn.close()
-
-    @classmethod
-    def find_by_slug(cls, slug: str, include_drafts: bool = False):
+    def find_by_slug(cls, slug: str, include_inactive: bool = False):
         """Finds an active page by unique slug string."""
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                if include_drafts:
+                if include_inactive:
                     sql = "SELECT * FROM pages WHERE slug = %s AND deleted_at IS NULL LIMIT 1"
                 else:
-                    sql = """
-                        SELECT * FROM pages 
-                        WHERE slug = %s 
-                          AND deleted_at IS NULL 
-                          AND status = 'published'
-                          AND (published_at IS NULL OR published_at <= CURRENT_TIMESTAMP)
-                        LIMIT 1
-                    """
+                    sql = "SELECT * FROM pages WHERE slug = %s AND deleted_at IS NULL AND is_active = 1 LIMIT 1"
                 cursor.execute(sql, (slug,))
                 row = cursor.fetchone()
                 return cls(row) if row else None
@@ -380,24 +323,22 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
             slug = cls.slugify(raw_title)
 
         title_json = cls._dump_json(kwargs.get('title', {"en": ""}))
-        content_json = cls._dump_json(kwargs.get('content', {"en": ""}))
-        excerpt_json = cls._dump_json(kwargs.get('excerpt'))
-        meta_title_json = cls._dump_json(kwargs.get('meta_title'))
-        meta_desc_json = cls._dump_json(kwargs.get('meta_desc'))
+        content_json = cls._dump_json(kwargs.get('content'))
+        seo_title_json = cls._dump_json(kwargs.get('seo_title'))
+        meta_desc_json = cls._dump_json(kwargs.get('meta_description'))
+        is_active = 1 if kwargs.get('is_active', True) else 0
 
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 sql = """
                     INSERT INTO pages (
-                        title, slug, content, excerpt, template,
-                        featured_image, status, published_at, show_in_footer,
-                        show_in_header, sort_order, meta_title, meta_desc,
-                        canonical_url, created_by
+                        title, slug, content, banner_image,
+                        seo_title, meta_description, is_active,
+                        created_by, updated_by
                     ) VALUES (
-                        %s, %s, %s, %s, %s,
                         %s, %s, %s, %s,
-                        %s, %s, %s, %s,
+                        %s, %s, %s,
                         %s, %s
                     )
                 """
@@ -405,18 +346,12 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     title_json,
                     slug,
                     content_json,
-                    excerpt_json,
-                    kwargs.get('template', 'default'),
-                    kwargs.get('featured_image'),
-                    kwargs.get('status', 'draft'),
-                    kwargs.get('published_at'),
-                    1 if kwargs.get('show_in_footer') else 0,
-                    1 if kwargs.get('show_in_header') else 0,
-                    kwargs.get('sort_order', 0),
-                    meta_title_json,
+                    kwargs.get('banner_image'),
+                    seo_title_json,
                     meta_desc_json,
-                    kwargs.get('canonical_url'),
-                    kwargs.get('created_by')
+                    is_active,
+                    kwargs.get('created_by'),
+                    kwargs.get('updated_by')
                 ))
                 page_id = cursor.lastrowid
                 return cls.find_by_id(page_id)
@@ -437,39 +372,21 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
         if 'content' in kwargs:
             updates.append("content = %s")
             params.append(self._dump_json(kwargs['content']))
-        if 'excerpt' in kwargs:
-            updates.append("excerpt = %s")
-            params.append(self._dump_json(kwargs['excerpt']))
-        if 'template' in kwargs:
-            updates.append("template = %s")
-            params.append(kwargs['template'])
-        if 'featured_image' in kwargs:
-            updates.append("featured_image = %s")
-            params.append(kwargs['featured_image'])
-        if 'status' in kwargs:
-            updates.append("status = %s")
-            params.append(kwargs['status'])
-        if 'published_at' in kwargs:
-            updates.append("published_at = %s")
-            params.append(kwargs['published_at'])
-        if 'show_in_footer' in kwargs:
-            updates.append("show_in_footer = %s")
-            params.append(1 if kwargs['show_in_footer'] else 0)
-        if 'show_in_header' in kwargs:
-            updates.append("show_in_header = %s")
-            params.append(1 if kwargs['show_in_header'] else 0)
-        if 'sort_order' in kwargs:
-            updates.append("sort_order = %s")
-            params.append(kwargs['sort_order'])
-        if 'meta_title' in kwargs:
-            updates.append("meta_title = %s")
-            params.append(self._dump_json(kwargs['meta_title']))
-        if 'meta_desc' in kwargs:
-            updates.append("meta_desc = %s")
-            params.append(self._dump_json(kwargs['meta_desc']))
-        if 'canonical_url' in kwargs:
-            updates.append("canonical_url = %s")
-            params.append(kwargs['canonical_url'])
+        if 'banner_image' in kwargs:
+            updates.append("banner_image = %s")
+            params.append(kwargs['banner_image'])
+        if 'seo_title' in kwargs:
+            updates.append("seo_title = %s")
+            params.append(self._dump_json(kwargs['seo_title']))
+        if 'meta_description' in kwargs:
+            updates.append("meta_description = %s")
+            params.append(self._dump_json(kwargs['meta_description']))
+        if 'is_active' in kwargs:
+            updates.append("is_active = %s")
+            params.append(1 if kwargs['is_active'] else 0)
+        if 'updated_by' in kwargs:
+            updates.append("updated_by = %s")
+            params.append(kwargs['updated_by'])
 
         if not updates:
             return False

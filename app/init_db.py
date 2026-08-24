@@ -102,33 +102,23 @@ NEW_LOG_COLUMNS = {
 }
 
 CREATE_PAGES_TBL = """
-CREATE TABLE IF NOT EXISTS pages (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title JSON NOT NULL,
-    slug VARCHAR(255) NOT NULL UNIQUE,
-    content JSON NOT NULL,
-    excerpt JSON NULL,
-    template VARCHAR(100) NOT NULL DEFAULT 'default',
-    featured_image VARCHAR(500) NULL,
-    status ENUM('draft', 'published', 'archived') NOT NULL DEFAULT 'draft',
-    published_at DATETIME NULL,
-    show_in_footer BOOLEAN NOT NULL DEFAULT 0,
-    show_in_header BOOLEAN NOT NULL DEFAULT 0,
-    sort_order INT NOT NULL DEFAULT 0,
-    meta_title JSON NULL,
-    meta_desc JSON NULL,
-    canonical_url VARCHAR(500) NULL,
-    created_by INT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at DATETIME NULL,
-    INDEX idx_page_slug (slug),
-    INDEX idx_page_status (status),
-    INDEX idx_page_published_at (published_at),
-    INDEX idx_page_show_footer (show_in_footer),
-    INDEX idx_page_show_header (show_in_header),
-    INDEX idx_page_deleted_at (deleted_at),
-    FOREIGN KEY (created_by) REFERENCES userTbl(userid) ON DELETE SET NULL
+CREATE TABLE IF NOT EXISTS `pages` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `title` json NOT NULL,
+  `slug` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` json DEFAULT NULL,
+  `banner_image` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `seo_title` json DEFAULT NULL,
+  `meta_description` json DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` bigint UNSIGNED DEFAULT NULL,
+  `updated_by` bigint UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  UNIQUE KEY `uq_pages_slug` (`slug`),
+  KEY `idx_pages_is_active` (`is_active`),
+  KEY `idx_pages_deleted_at` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
 
