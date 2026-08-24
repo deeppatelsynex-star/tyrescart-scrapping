@@ -96,7 +96,10 @@ def client_home():
     return render_template('Client/Home.html')
 
 
+@app.route('/blog')
+@app.route('/blog/')
 @app.route('/blogs')
+@app.route('/blogs/')
 def client_blogs():
     """Client storefront blog article catalog."""
     req_locale = request.args.get('locale')
@@ -111,8 +114,9 @@ def client_blogs():
 
 
 @app.route('/blog/<slug>')
+@app.route('/blogs/<slug>')
 def client_blog_detail(slug):
-    """Client storefront individual blog article reader."""
+    """Client storefront individual blog article reader (with fallback to static page)."""
     req_locale = request.args.get('locale')
     if req_locale in ('en', 'ar'):
         session['site_locale'] = req_locale
@@ -120,18 +124,24 @@ def client_blog_detail(slug):
     else:
         locale = session.get('site_locale', 'en')
 
+    # 1. Check if it's a published blog post
     blog = Blog.find_by_slug(slug)
-    if not blog:
-        abort(404)
+    if blog:
+        return render_template('Client/BlogDetail.html', blog=blog, locale=locale)
 
-    return render_template('Client/BlogDetail.html', blog=blog, locale=locale)
+    # 2. Check if it's a static page
+    page = Page.find_by_slug(slug)
+    if page:
+        return render_template('Client/Page.html', page=page, locale=locale)
+
+    abort(404)
 
 
 @app.route('/page/<slug>')
 @app.route('/<slug>')
 def client_page(slug):
-    """Dynamic CMS static content page renderer (About Us, Terms, Privacy Policy, etc.)."""
-    if slug in ('tcsadmin', 'visionadmin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico', 'blogs', 'blog'):
+    """Dynamic CMS static content page and article renderer."""
+    if slug in ('tcsadmin', 'visionadmin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico'):
         abort(404)
 
     req_locale = request.args.get('locale')
@@ -141,11 +151,17 @@ def client_page(slug):
     else:
         locale = session.get('site_locale', 'en')
 
+    # 1. Check static pages
     page = Page.find_by_slug(slug)
-    if not page:
-        abort(404)
+    if page:
+        return render_template('Client/Page.html', page=page, locale=locale)
 
-    return render_template('Client/Page.html', page=page, locale=locale)
+    # 2. Check published blogs
+    blog = Blog.find_by_slug(slug)
+    if blog:
+        return render_template('Client/BlogDetail.html', blog=blog, locale=locale)
+
+    abort(404)
 
 
 # ============================================================================
