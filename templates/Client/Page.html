@@ -21,98 +21,147 @@
     body { 
       font-family: {% if locale == 'ar' %}'Tajawal', 'Plus Jakarta Sans', system-ui, sans-serif{% else %}'Plus Jakarta Sans', system-ui, sans-serif{% endif %}; 
     }
+
+    /* ==========================================================================
+       AUTHENTIC LIQUID GEL GLASS (Apple VisionOS / iOS 18 Spatial Glass Engine)
+       ========================================================================== */
     
-    /* Liquid Glassmorphism Core Engine */
+    /* Dynamic Liquid Fluid Mesh Background with Vibrant Sky/Aqua/Prismatic Orbs */
     .liquid-mesh {
       position: fixed;
       inset: 0;
       pointer-events: none;
       z-index: -1;
       background: 
-        radial-gradient(circle at 18% 18%, rgba(16, 185, 129, 0.15) 0%, transparent 45%),
-        radial-gradient(circle at 82% 22%, rgba(6, 182, 212, 0.12) 0%, transparent 45%),
-        radial-gradient(circle at 45% 70%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 85% 85%, rgba(245, 158, 11, 0.07) 0%, transparent 42%);
-      filter: blur(45px);
-      animation: liquidMeshFlow 16s ease-in-out infinite alternate;
+        radial-gradient(circle at 20% 15%, rgba(56, 189, 248, 0.28) 0%, transparent 42%),
+        radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.22) 0%, transparent 45%),
+        radial-gradient(circle at 45% 65%, rgba(147, 51, 234, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 85% 85%, rgba(244, 63, 94, 0.14) 0%, transparent 40%),
+        radial-gradient(circle at 15% 85%, rgba(14, 165, 233, 0.20) 0%, transparent 45%);
+      filter: blur(55px);
+      animation: liquidMeshPulse 14s ease-in-out infinite alternate;
     }
 
-    @keyframes liquidMeshFlow {
+    @keyframes liquidMeshPulse {
       0% { transform: scale(1) translate(0, 0); }
-      50% { transform: scale(1.08) translate(-15px, 20px) rotate(1deg); }
-      100% { transform: scale(1) translate(15px, -15px); }
+      50% { transform: scale(1.08) translate(-18px, 22px) rotate(1.5deg); }
+      100% { transform: scale(1.02) translate(18px, -18px); }
     }
 
-    .liquid-nav {
-      background: rgba(255, 255, 255, 0.82);
-      backdrop-filter: blur(28px) saturate(190%);
-      -webkit-backdrop-filter: blur(28px) saturate(190%);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.95);
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03), inset 0 -1px 0 rgba(226, 232, 240, 0.6);
-    }
-
-    .liquid-card {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.72) 100%);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.95);
+    /* Spatial Gel Glass Capsule (Matching User's Reference) */
+    .gel-glass-capsule {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.28) 45%, rgba(255, 255, 255, 0.45) 100%);
+      backdrop-filter: blur(32px) saturate(220%) brightness(108%);
+      -webkit-backdrop-filter: blur(32px) saturate(220%) brightness(108%);
+      border-radius: 9999px;
+      border: 1.5px solid rgba(255, 255, 255, 0.75);
       box-shadow: 
-        inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.95), 
-        inset 0 -1px 2px 0 rgba(0, 0, 0, 0.02),
-        0 25px 50px -12px rgba(15, 23, 42, 0.06), 
-        0 0 0 1px rgba(226, 232, 240, 0.6);
+        inset 0 2.5px 3px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -2.5px 4px 0 rgba(0, 0, 0, 0.08),
+        inset 2.5px 0 3px rgba(255, 255, 255, 0.4),
+        inset -2.5px 0 3px rgba(255, 255, 255, 0.4),
+        0 20px 40px -10px rgba(14, 165, 233, 0.18),
+        0 10px 20px -5px rgba(0, 0, 0, 0.06),
+        0 0 0 1px rgba(255, 255, 255, 0.6);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gel-glass-capsule:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 
+        inset 0 3px 4px 0 rgba(255, 255, 255, 1),
+        inset 0 -2px 4px 0 rgba(0, 0, 0, 0.05),
+        0 25px 50px -10px rgba(16, 185, 129, 0.28),
+        0 0 0 1.5px rgba(255, 255, 255, 0.9);
+    }
+
+    /* Spatial Gel Glass Marble Circles (Round Controls from Image) */
+    .gel-glass-circle {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.25) 50%, rgba(255, 255, 255, 0.5) 100%);
+      backdrop-filter: blur(28px) saturate(220%) brightness(108%);
+      -webkit-backdrop-filter: blur(28px) saturate(220%) brightness(108%);
+      border-radius: 9999px;
+      border: 1.5px solid rgba(255, 255, 255, 0.75);
+      box-shadow: 
+        inset 0 2.5px 3px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -2.5px 4px 0 rgba(0, 0, 0, 0.1),
+        0 18px 36px -10px rgba(14, 165, 233, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.6);
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gel-glass-circle:hover {
+      transform: translateY(-4px) scale(1.08);
+      border-color: rgba(255, 255, 255, 0.95);
+      box-shadow: 
+        inset 0 3px 4px 0 rgba(255, 255, 255, 1),
+        0 25px 45px -8px rgba(16, 185, 129, 0.3),
+        0 0 0 2px rgba(255, 255, 255, 0.9);
+    }
+
+    /* Spatial Gel Glass Main Cards & Viewport Panels */
+    .gel-glass-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.52) 50%, rgba(255, 255, 255, 0.72) 100%);
+      backdrop-filter: blur(36px) saturate(200%) brightness(106%);
+      -webkit-backdrop-filter: blur(36px) saturate(200%) brightness(106%);
+      border-radius: 2rem;
+      border: 1.5px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 
+        inset 0 2px 3px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -2px 3px 0 rgba(0, 0, 0, 0.03),
+        0 30px 60px -15px rgba(15, 23, 42, 0.08),
+        0 0 0 1px rgba(255, 255, 255, 0.7);
       position: relative;
       overflow: hidden;
       transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .liquid-card::before {
+    .gel-glass-card::before {
       content: '';
       position: absolute;
       top: 0;
-      left: -120%;
-      width: 220%;
+      left: -150%;
+      width: 250%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-      transform: skewX(-20deg);
-      transition: 0.8s ease;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+      transform: skewX(-22deg);
+      transition: 0.85s ease;
       pointer-events: none;
     }
 
-    .liquid-card:hover::before {
-      left: 120%;
+    .gel-glass-card:hover::before {
+      left: 150%;
     }
 
-    .liquid-pillar {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.75) 100%);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.95);
+    .gel-glass-pillar {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.58) 100%);
+      backdrop-filter: blur(24px) saturate(200%);
+      -webkit-backdrop-filter: blur(24px) saturate(200%);
+      border-radius: 1.75rem;
+      border: 1.5px solid rgba(255, 255, 255, 0.88);
       box-shadow: 
-        inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.95),
-        0 15px 35px -10px rgba(0, 0, 0, 0.04),
-        0 0 0 1px rgba(226, 232, 240, 0.6);
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        inset 0 2px 2.5px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.03),
+        0 20px 40px -12px rgba(14, 165, 233, 0.12),
+        0 0 0 1px rgba(255, 255, 255, 0.7);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    .liquid-pillar:hover {
-      transform: translateY(-8px) scale(1.01);
-      border-color: rgba(16, 185, 129, 0.45);
+    .gel-glass-pillar:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: rgba(16, 185, 129, 0.5);
       box-shadow: 
-        inset 0 2px 2px 0 rgba(255, 255, 255, 1),
-        0 30px 60px -15px rgba(16, 185, 129, 0.18),
-        0 0 0 1.5px rgba(16, 185, 129, 0.3);
+        inset 0 2.5px 3px 0 rgba(255, 255, 255, 1),
+        0 35px 70px -15px rgba(16, 185, 129, 0.25),
+        0 0 0 1.5px rgba(16, 185, 129, 0.35);
     }
 
-    .liquid-pill {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.95);
-      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.95), 0 8px 20px -6px rgba(0, 0, 0, 0.04);
-    }
-
-    /* Executive Typography */
+    /* Executive Typography with High Contrast */
     .prose h2 { font-size: 1.85rem; font-weight: 900; color: #0f172a; margin-top: 2.25rem; margin-bottom: 1rem; letter-spacing: -0.025em; line-height: 1.25; }
     .prose h3 { font-size: 1.4rem; font-weight: 800; color: #1e293b; margin-top: 1.75rem; margin-bottom: 0.75rem; }
     .prose p { color: #334155; line-height: 2.0; margin-bottom: 1.4rem; font-size: 1.05rem; }
@@ -122,13 +171,13 @@
     .prose blockquote { 
       border-left: 4px solid #10b981; 
       padding: 1.25rem 1.75rem; 
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(255, 255, 255, 0.9) 100%); 
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(255, 255, 255, 0.85) 100%); 
       border-radius: 0 1.25rem 1.25rem 0; 
-      color: #1e293b; 
+      color: #0f172a; 
       font-style: italic; 
       font-weight: 600;
       margin: 1.75rem 0; 
-      box-shadow: inset 0 1px 1px rgba(255,255,255,0.9), 0 4px 15px rgba(0,0,0,0.02);
+      box-shadow: inset 0 1.5px 2px rgba(255,255,255,0.95), 0 8px 25px rgba(0,0,0,0.03);
     }
     [dir="rtl"] .prose blockquote {
       border-left: none;
@@ -137,18 +186,18 @@
     }
   </style>
 </head>
-<body class="bg-gradient-to-b from-slate-50/80 via-white to-slate-50/80 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white relative overflow-x-hidden">
+<body class="bg-gradient-to-b from-sky-50/40 via-white to-slate-50/60 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white relative overflow-x-hidden">
 
   <!-- Ambient Liquid Mesh Gradient Flow -->
   <div class="liquid-mesh"></div>
 
-  <!-- Liquid Glass Header Navigation -->
-  <header class="sticky top-0 z-40 liquid-nav">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+  <!-- Header Navigation (Gel Glass Island Nav) -->
+  <header class="sticky top-4 z-40 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full transition-all duration-300">
+    <div class="gel-glass-capsule px-5 sm:px-8 h-20 flex items-center justify-between">
       
-      <!-- Brand Logo -->
-      <a href="/" class="flex items-center gap-3 group">
-        <div class="w-10 h-10 rounded-2xl liquid-pill p-2 flex items-center justify-center group-hover:scale-105 group-hover:shadow-emerald-500/20 transition shrink-0">
+      <!-- Brand Logo with Liquid Bubble Indicator -->
+      <a href="/" class="flex items-center gap-3.5 group">
+        <div class="w-11 h-11 gel-glass-circle p-2 group-hover:scale-105 transition shrink-0 shadow-sm">
           <img src="/static/assets/images/favicon-color.webp" alt="TyresCart Logo" class="w-full h-full object-contain" />
         </div>
         <div class="flex flex-col">
@@ -157,18 +206,19 @@
         </div>
       </a>
 
-      <!-- Navigation & Language Switcher -->
-      <div class="flex items-center gap-3 sm:gap-6 text-xs font-bold text-slate-600">
-        
-        <nav class="hidden md:flex items-center gap-5">
-          <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}" class="hover:text-emerald-600 transition">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a>
-          <a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}" class="hover:text-emerald-600 transition">{{ 'المدونة' if locale == 'ar' else 'Blog Hub' }}</a>
-          <a href="/about-us{{ '?locale=' + locale if locale == 'ar' else '' }}" class="text-emerald-600 font-black hover:text-emerald-700 transition">{{ 'من نحن' if locale == 'ar' else 'About Us' }}</a>
-        </nav>
+      <!-- Center Navigation Gel Pill -->
+      <nav class="hidden md:flex items-center gap-2 p-1.5 gel-glass-capsule border-white/60">
+        <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}" class="px-4 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-slate-950 hover:bg-white/70 transition">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a>
+        <a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}" class="px-4 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-slate-950 hover:bg-white/70 transition">{{ 'المدونة' if locale == 'ar' else 'Blog Hub' }}</a>
+        <a href="/about-us{{ '?locale=' + locale if locale == 'ar' else '' }}" class="px-4 py-1.5 rounded-full text-xs font-black text-emerald-800 bg-white shadow-xs transition">{{ 'من نحن' if locale == 'ar' else 'About Us' }}</a>
+      </nav>
 
-        <!-- EN / AR Language Switcher with Flags -->
-        <div class="flex items-center liquid-pill p-1 rounded-2xl">
-          <a href="?locale=en" title="English" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition {% if locale != 'ar' %}bg-slate-950 text-white shadow-sm{% else %}text-slate-600 hover:text-slate-950{% endif %}">
+      <!-- Right Controls & Flags -->
+      <div class="flex items-center gap-3">
+        
+        <!-- Language Switcher Gel Pill (EN / AR) -->
+        <div class="flex items-center gel-glass-capsule p-1 border-white/60">
+          <a href="?locale=en" title="English" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition {% if locale != 'ar' %}bg-slate-950 text-white shadow-sm{% else %}text-slate-600 hover:text-slate-950{% endif %}">
             <svg class="w-4 h-3 rounded-[2px] overflow-hidden shrink-0 shadow-2xs" viewBox="0 0 640 480">
               <path fill="#012169" d="M0 0h640v480H0z"/>
               <path fill="#FFF" d="m75 0 244 181L562 0h78v62L400 241l240 178v61h-80L320 301 81 480H0v-60l239-179L0 64V0h75z"/>
@@ -179,7 +229,7 @@
             <span>EN</span>
           </a>
 
-          <a href="?locale=ar" title="العربية" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition {% if locale == 'ar' %}bg-slate-950 text-white shadow-sm{% else %}text-slate-600 hover:text-slate-950{% endif %}">
+          <a href="?locale=ar" title="العربية" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition {% if locale == 'ar' %}bg-slate-950 text-white shadow-sm{% else %}text-slate-600 hover:text-slate-950{% endif %}">
             <svg class="w-4 h-3 rounded-[2px] overflow-hidden shrink-0 shadow-2xs" viewBox="0 0 640 480">
               <path fill="#00732f" d="M0 0h640v160H0z"/>
               <path fill="#fff" d="M0 160h640v160H0z"/>
@@ -190,23 +240,65 @@
           </a>
         </div>
 
-        <a href="/visionadmin/pages" class="px-3.5 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white shadow-xs transition">{{ 'لوحة التحكم' if locale == 'ar' else 'Admin CMS' }}</a>
+        <a href="/visionadmin/pages" class="px-4 py-2 rounded-full bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition hidden sm:inline-flex">
+          {{ 'لوحة التحكم' if locale == 'ar' else 'Admin CMS' }}
+        </a>
       </div>
     </div>
   </header>
 
-  <!-- Main Viewport -->
+  <!-- Interactive Control Island Showcase (Matching Reference Image) -->
+  <div class="max-w-xl mx-auto px-4 mt-10">
+    <div class="gel-glass-card p-6 flex flex-col items-center gap-4 text-center">
+      
+      <!-- Top Row Action Bubbles -->
+      <div class="flex items-center justify-center gap-6">
+        <!-- Orientation / Lock Action -->
+        <button type="button" class="w-16 h-16 gel-glass-circle text-sky-600 cursor-pointer shadow-sm">
+          <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/><rect x="8" y="11" width="8" height="6" rx="1.5" stroke-width="2"/><path d="M10 11V9a2 2 0 0 1 4 0v2"/></svg>
+        </button>
+        <!-- Screen Mirroring Action -->
+        <button type="button" class="w-16 h-16 gel-glass-circle text-sky-600 cursor-pointer shadow-sm">
+          <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="16" height="12" rx="2"/><rect x="6" y="9" width="16" height="12" rx="2"/></svg>
+        </button>
+      </div>
+
+      <!-- Center Hero Focus Gel Capsule -->
+      <div class="w-full max-w-sm gel-glass-capsule py-2.5 px-4 flex items-center justify-between shadow-md cursor-pointer group">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 gel-glass-circle bg-white/70 text-slate-800 shadow-xs">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </div>
+          <span class="text-sm font-black text-slate-900 tracking-tight">TyresCart UAE Focus</span>
+        </div>
+        <svg class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <!-- Bottom Row Bubbles (Notification Bell & Grid) -->
+      <div class="flex items-center justify-center gap-6">
+        <button type="button" class="w-16 h-16 gel-glass-circle text-amber-500 cursor-pointer shadow-sm">
+          <svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <button type="button" class="w-16 h-16 gel-glass-circle text-sky-600 cursor-pointer shadow-sm">
+          <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Main Viewport Content -->
   <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-12">
     
     <!-- Top Breadcrumbs & Floating Badge -->
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <nav class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl liquid-pill text-xs font-semibold text-slate-500">
+      <nav class="inline-flex items-center gap-2 px-4 py-2 gel-glass-capsule text-xs font-semibold text-slate-500">
         <a href="/" class="hover:text-emerald-600 transition">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a>
         <span>/</span>
         <span class="text-slate-900 font-bold line-clamp-1">{{ page.get_title(locale) }}</span>
       </nav>
 
-      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full liquid-pill text-emerald-800 border-emerald-200/80 text-[11px] font-extrabold tracking-wide">
+      <div class="inline-flex items-center gap-2 px-4 py-2 gel-glass-capsule text-emerald-800 text-[11px] font-extrabold tracking-wide">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
         <span>{{ 'الوجهة الأولى للإطارات في الإمارات' if locale == 'ar' else 'UAE Premier Tyre & Fitting Destination' }}</span>
       </div>
@@ -224,12 +316,12 @@
 
     <!-- Hero Banner Image Showcase Card (If Uploaded) -->
     {% if page.banner_image %}
-    <div class="relative rounded-3xl overflow-hidden liquid-card group">
+    <div class="relative rounded-3xl overflow-hidden gel-glass-card group">
       <div class="max-h-[460px] w-full overflow-hidden bg-slate-100 relative">
         <img src="{{ page.banner_image }}" alt="{{ page.get_title(locale) }}" class="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700 ease-out" />
         
         <!-- Floating Liquid Glass Badge -->
-        <div class="absolute bottom-4 {{ 'left-4' if locale != 'ar' else 'right-4' }} px-4 py-2.5 rounded-2xl liquid-pill flex items-center gap-2.5">
+        <div class="absolute bottom-4 {{ 'left-4' if locale != 'ar' else 'right-4' }} px-4 py-2.5 gel-glass-capsule flex items-center gap-2.5">
           <div class="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></div>
           <span class="text-xs font-black text-slate-900">{{ 'ضمان الجودة وتركيب معتمد 100%' if locale == 'ar' else '100% Genuine Tyres & Dot Guarantee' }}</span>
         </div>
@@ -241,9 +333,9 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
       
       <!-- Pillar 1: Genuine Tyres -->
-      <div class="liquid-pillar rounded-3xl p-6 flex flex-col justify-between space-y-4">
-        <div class="w-12 h-12 rounded-2xl liquid-pill text-emerald-600 flex items-center justify-center">
-          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+      <div class="gel-glass-pillar p-6 flex flex-col justify-between space-y-4">
+        <div class="w-14 h-14 gel-glass-circle text-emerald-600">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
         </div>
         <div class="space-y-1.5">
           <h3 class="text-base font-black text-slate-900 leading-snug">
@@ -256,9 +348,9 @@
       </div>
 
       <!-- Pillar 2: Doorstep Mobile Fitting -->
-      <div class="liquid-pillar rounded-3xl p-6 flex flex-col justify-between space-y-4">
-        <div class="w-12 h-12 rounded-2xl liquid-pill text-cyan-600 flex items-center justify-center">
-          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      <div class="gel-glass-pillar p-6 flex flex-col justify-between space-y-4">
+        <div class="w-14 h-14 gel-glass-circle text-sky-600">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
         </div>
         <div class="space-y-1.5">
           <h3 class="text-base font-black text-slate-900 leading-snug">
@@ -271,8 +363,8 @@
       </div>
 
       <!-- Pillar 3: Transparent Pricing in AED -->
-      <div class="liquid-pillar rounded-3xl p-6 flex flex-col justify-between space-y-4">
-        <div class="w-12 h-12 rounded-2xl liquid-pill text-indigo-700 flex items-center justify-center font-black text-sm tracking-wider">
+      <div class="gel-glass-pillar p-6 flex flex-col justify-between space-y-4">
+        <div class="w-14 h-14 gel-glass-circle text-indigo-700 font-black text-sm tracking-wider">
           <span>{{ 'د.إ' if locale == 'ar' else 'AED' }}</span>
         </div>
         <div class="space-y-1.5">
@@ -286,9 +378,9 @@
       </div>
 
       <!-- Pillar 4: Expert Advisors -->
-      <div class="liquid-pillar rounded-3xl p-6 flex flex-col justify-between space-y-4">
-        <div class="w-12 h-12 rounded-2xl liquid-pill text-amber-600 flex items-center justify-center">
-          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <div class="gel-glass-pillar p-6 flex flex-col justify-between space-y-4">
+        <div class="w-14 h-14 gel-glass-circle text-amber-600">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
         </div>
         <div class="space-y-1.5">
           <h3 class="text-base font-black text-slate-900 leading-snug">
@@ -303,8 +395,8 @@
     </div>
 
     <!-- Impact Numbers Strip (Liquid Glass Ribbon) -->
-    <div class="liquid-card rounded-3xl p-6 sm:p-8">
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x {{ 'sm:divide-x-reverse' if locale == 'ar' else '' }} divide-slate-100/80">
+    <div class="gel-glass-card p-6 sm:p-8">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x {{ 'sm:divide-x-reverse' if locale == 'ar' else '' }} divide-slate-200/60">
         <div class="space-y-1 pt-3 sm:pt-0">
           <div class="text-2xl sm:text-3xl font-black text-slate-950">50,000+</div>
           <div class="text-xs font-bold text-slate-500">{{ 'سائق يثق بنا في الإمارات' if locale == 'ar' else 'Satisfied UAE Drivers' }}</div>
@@ -325,12 +417,12 @@
     </div>
 
     <!-- Dynamic Rich CMS Body Content Container -->
-    <article class="liquid-card rounded-3xl p-6 sm:p-12 space-y-6">
-      <div class="border-b border-slate-100 pb-6 flex items-center justify-between">
+    <article class="gel-glass-card p-6 sm:p-12 space-y-6">
+      <div class="border-b border-slate-200/60 pb-6 flex items-center justify-between">
         <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
           {{ 'تفاصيل ورؤية الشركة' if locale == 'ar' else 'Overview & Mission Statement' }}
         </h2>
-        <span class="text-xs font-bold text-emerald-700 liquid-pill px-3.5 py-1 rounded-xl">
+        <span class="text-xs font-bold text-emerald-700 gel-glass-capsule px-4 py-1">
           TyresCart.ae
         </span>
       </div>
@@ -340,13 +432,13 @@
       </div>
 
       <!-- Action Navigation Links -->
-      <div class="pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="pt-8 border-t border-slate-200/60 flex flex-col sm:flex-row items-center justify-between gap-4">
         <a href="/" class="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-emerald-700 transition">
           <svg class="w-4 h-4 {{ 'rotate-180' if locale != 'ar' else '' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           <span>{{ 'العودة للرئيسية' if locale == 'ar' else 'Back to Home' }}</span>
         </a>
 
-        <a href="/" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition transform active:scale-95">
+        <a href="/" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition transform active:scale-95">
           <span>{{ 'تسوق تشكيلة الإطارات' if locale == 'ar' else 'Browse Tyre Catalog' }}</span>
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
@@ -354,9 +446,9 @@
     </article>
 
     <!-- Bottom Specialist Support & WhatsApp Banner (Liquid Glass) -->
-    <div class="liquid-card rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden">
+    <div class="gel-glass-card p-8 sm:p-12 text-center relative overflow-hidden">
       <div class="max-w-2xl mx-auto space-y-4">
-        <span class="px-3.5 py-1.5 rounded-full liquid-pill text-emerald-800 text-[11px] font-extrabold uppercase tracking-wider inline-block">
+        <span class="px-4 py-1.5 rounded-full gel-glass-capsule text-emerald-800 text-[11px] font-extrabold uppercase tracking-wider inline-block">
           {{ 'استشارة مجانية مع خبير الإطارات' if locale == 'ar' else 'Free Technical Tyre Advice' }}
         </span>
         <h3 class="text-2xl sm:text-4xl font-black text-slate-950 tracking-tight">
@@ -366,10 +458,10 @@
           {{ 'فريقنا متاح لمساعدتك فوراً في مقارنة الأسعار واختيار الأنسب لسيارتك وظروف القيادة في الإمارات.' if locale == 'ar' else 'Our certified automotive experts are available 7 days a week to recommend optimal tyres for UAE climate and road safety.' }}
         </p>
         <div class="pt-2 flex flex-wrap items-center justify-center gap-3">
-          <a href="/" class="px-6 py-3 rounded-2xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition transform active:scale-95">
+          <a href="/" class="px-6 py-3 rounded-full bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition transform active:scale-95">
             {{ 'ابحث عن مقاس إطاراتك' if locale == 'ar' else 'Find Your Tyre Size' }}
           </a>
-          <a href="https://wa.me/971500000000" target="_blank" class="px-6 py-3 rounded-2xl liquid-pill hover:bg-white text-slate-800 text-xs font-bold transition inline-flex items-center gap-2 transform active:scale-95">
+          <a href="https://wa.me/971500000000" target="_blank" class="px-6 py-3 rounded-full gel-glass-capsule hover:bg-white text-slate-800 text-xs font-bold transition inline-flex items-center gap-2 transform active:scale-95">
             <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.941-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.182-.076.355.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.679.116-.173.231-.145.39-.087s1.011.477 1.184.564c.173.087.289.13.332.202.043.073.043.419-.101.824z"/></svg>
             <span>{{ 'تواصل عبر واتساب' if locale == 'ar' else 'Chat On WhatsApp' }}</span>
           </a>
@@ -380,7 +472,7 @@
   </main>
 
   <!-- Clean Luminous Footer -->
-  <footer class="border-t border-slate-200/80 liquid-nav py-10 mt-auto">
+  <footer class="border-t border-slate-200/80 gel-glass-card py-10 mt-auto rounded-none border-x-0 border-b-0">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-500">
       <div class="flex items-center gap-3">
         <img src="/static/assets/images/favicon-color.webp" alt="TyresCart" class="w-5 h-5 object-contain" />
@@ -394,15 +486,15 @@
     </div>
   </footer>
 
-  <!-- Liquid Glass Back to Top Button -->
+  <!-- Spatial Gel Glass Back to Top Button -->
   <button 
     type="button" 
     id="btn-back-to-top" 
     aria-label="Back to Top" 
     title="{{ 'العودة إلى الأعلى' if locale == 'ar' else 'Back to Top' }}"
-    class="fixed bottom-6 right-6 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl liquid-pill flex items-center justify-center text-slate-700 hover:text-emerald-600 hover:border-emerald-300 hover:shadow-emerald-500/20 active:scale-90 transition-all duration-300 transform opacity-0 translate-y-6 pointer-events-none group cursor-pointer"
+    class="fixed bottom-6 right-6 z-40 w-13 h-13 gel-glass-circle flex items-center justify-center text-slate-700 hover:text-emerald-600 active:scale-90 transition-all duration-300 transform opacity-0 translate-y-6 pointer-events-none group cursor-pointer shadow-lg"
   >
-    <svg class="w-5 h-5 group-hover:-translate-y-1 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <svg class="w-6 h-6 group-hover:-translate-y-1 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <line x1="12" y1="19" x2="12" y2="5"/>
       <polyline points="5 12 12 5 19 12"/>
     </svg>
