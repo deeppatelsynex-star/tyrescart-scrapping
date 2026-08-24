@@ -454,6 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       if (saveBtn) saveBtn.disabled = false;
       if (saveBtnText) saveBtnText.textContent = editId ? 'Save Changes' : 'Publish Article';
+    }
   });
 
   // ---------------------------------------------------------------------------
