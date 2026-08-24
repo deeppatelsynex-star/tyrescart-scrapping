@@ -1,6 +1,6 @@
 ﻿"""
 app/visionadmin/api.py - VisionAdmin CMS Controller & API Layer
-Handles Page Management CRUD routes, banner file uploads, and JSON endpoints.
+Handles Page & Blog Management CRUD routes, file uploads, and JSON endpoints.
 """
 
 import os
@@ -9,13 +9,14 @@ import uuid
 from flask import Blueprint, jsonify, render_template, request, session
 from werkzeug.utils import secure_filename
 from models.page import Page
+from models.blog import Blog
 
 
 def register_visionadmin_routes(app):
-    """Registers all /visionadmin page and API endpoints."""
+    """Registers all /visionadmin page, blog, and upload API endpoints."""
 
     # =========================================================================
-    # 1. PAGE ROUTES
+    # 1. ADMIN UI ROUTES
     # =========================================================================
 
     @app.route('/visionadmin', methods=['GET'])
@@ -24,8 +25,12 @@ def register_visionadmin_routes(app):
     def visionadmin_pages():
         return render_template('visionadmin/pages.html', page='pages')
 
+    @app.route('/visionadmin/blogs', methods=['GET'])
+    def visionadmin_blogs():
+        return render_template('visionadmin/blogs.html', page='blogs')
+
     # =========================================================================
-    # 2. BANNER IMAGE UPLOAD ENDPOINT
+    # 2. FILE UPLOAD ENDPOINTS
     # =========================================================================
 
     @app.route('/visionadmin/api/upload-banner', methods=['POST'])
@@ -56,8 +61,36 @@ def register_visionadmin_routes(app):
             'message': 'Banner image uploaded successfully.'
         })
 
+    @app.route('/visionadmin/api/upload-blog-image', methods=['POST'])
+    def visionadmin_upload_blog_image():
+        file = request.files.get('file') or request.files.get('image')
+        if not file or not file.filename:
+            return jsonify({'error': 'No image file provided.'}), 400
+
+        allowed_extensions = {'.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.avif'}
+        orig_filename = secure_filename(file.filename)
+        _, ext = os.path.splitext(orig_filename)
+        ext = ext.lower()
+        if ext not in allowed_extensions:
+            return jsonify({'error': f'Invalid image format "{ext}". Allowed formats: PNG, JPG, JPEG, WEBP, SVG, GIF, AVIF'}), 400
+
+        upload_folder = os.path.join(app.static_folder, 'uploads', 'blogs')
+        os.makedirs(upload_folder, exist_ok=True)
+
+        unique_name = f"blog_{int(time.time())}_{uuid.uuid4().hex[:8]}{ext}"
+        save_path = os.path.join(upload_folder, unique_name)
+        file.save(save_path)
+
+        web_url = f"/static/uploads/blogs/{unique_name}"
+        return jsonify({
+            'success': True,
+            'url': web_url,
+            'filename': unique_name,
+            'message': 'Featured blog image uploaded successfully.'
+        })
+
     # =========================================================================
-    # 3. JSON API ENDPOINTS (/visionadmin/api/pages)
+    # 3. PAGES JSON API ENDPOINTS (/visionadmin/api/pages)
     # =========================================================================
 
     @app.route('/visionadmin/api/pages', methods=['GET'])
@@ -127,7 +160,7 @@ def register_visionadmin_routes(app):
             slug = Page.slugify(slug)
 
         if not Page.is_slug_available(slug):
-            return jsonify({'error': f'The slug "{slug}" is already in use by another page. Please choose a different slug.'}), 409
+            return jsonify({'error': f'The slug "{slug}" is already in use. Please choose a different slug.'}), 409
 
         try:
             page = Page.create(
@@ -198,4 +231,151 @@ def register_visionadmin_routes(app):
         return jsonify({
             'success': True,
             'message': 'Page restored successfully.'
+        })
+
+    # =========================================================================
+    # 4. BLOGS JSON API ENDPOINTS (/visionadmin/api/blogs)
+    # =========================================================================
+
+    @app.route('/visionadmin/api/blogs', methods=['GET'])
+    def visionadmin_get_blogs():
+        locale = request.args.get('locale')
+        include_deleted = request.args.get('trash') == '1'
+        status_filter = request.args.get('status')
+        query = (request.args.get('q') or '').strip()
+
+        blogs = Blog.all(include_deleted=include_deleted)
+
+        if include_deleted:
+            blogs = [b for b in blogs if b.deleted_at is not None]
+        else:
+            blogs = [b for b in blogs if b.deleted_at is None]
+
+        if status_filter in ('published', 'draft', 'archived'):
+            blogs = [b for b in blogs if b.status == status_filter]
+
+        if query:
+            q_lower = query.lower()
+            blogs = [
+                b for b in blogs 
+                if q_lower in b.get_title('en').lower() 
+                or q_lower in b.get_title('ar').lower() 
+                or q_lower in (b.slug or '').lower()
+                or q_lower in b.get_short_desc('en').lower()
+            ]
+
+        all_active = [b for b in Blog.all(include_deleted=False) if b.deleted_at is None]
+        metrics = {
+            'total': len(all_active),
+            'published': len([b for b in all_active if b.status == 'published']),
+            'draft': len([b for b in all_active if b.status == 'draft']),
+            'archived': len([b for b in all_active if b.status == 'archived']),
+            'trash': len([b for b in Blog.all(include_deleted=True) if b.deleted_at is not None])
+        }
+
+        return jsonify({
+            'success': True,
+            'blogs': [b.to_dict(locale=locale) for b in blogs],
+            'metrics': metrics,
+            'count': len(blogs)
+        })
+
+    @app.route('/visionadmin/api/blogs/<int:blog_id>', methods=['GET'])
+    def visionadmin_get_blog(blog_id):
+        blog = Blog.find_by_id(blog_id)
+        if not blog:
+            return jsonify({'error': 'Blog article not found.'}), 404
+        return jsonify({'success': True, 'blog': blog.to_dict()})
+
+    @app.route('/visionadmin/api/blogs', methods=['POST'])
+    def visionadmin_create_blog():
+        data = request.get_json(silent=True) or {}
+
+        title = data.get('title') or {}
+        en_title = (title.get('en') if isinstance(title, dict) else str(title)).strip()
+        if not en_title:
+            return jsonify({'error': 'English Blog Title is required.'}), 400
+
+        slug = (data.get('slug') or '').strip()
+        if not slug:
+            slug = Blog.slugify(en_title)
+        else:
+            slug = Blog.slugify(slug)
+
+        if not Blog.is_slug_available(slug):
+            return jsonify({'error': f'The slug "{slug}" is already in use. Please choose a unique slug.'}), 409
+
+        try:
+            blog = Blog.create(
+                title=title if isinstance(title, dict) else {"en": en_title, "ar": ""},
+                slug=slug,
+                content=data.get('content') or {"en": "", "ar": ""},
+                short_description=data.get('short_description') or {"en": "", "ar": ""},
+                image=data.get('image'),
+                blog_category_id=data.get('blog_category_id'),
+                author_id=data.get('author_id') or session.get('user_id') or 1,
+                status=data.get('status') or 'draft',
+                published_at=data.get('published_at'),
+                meta_title=data.get('meta_title'),
+                meta_desc=data.get('meta_desc'),
+                created_by=session.get('user_id'),
+                updated_by=session.get('user_id')
+            )
+            return jsonify({
+                'success': True,
+                'blog': blog.to_dict(),
+                'message': f'Blog "{blog.get_title()}" created successfully.'
+            }), 201
+        except Exception as e:
+            if 'Duplicate entry' in str(e) or 'IntegrityError' in type(e).__name__:
+                return jsonify({'error': f'The slug "{slug}" is already in use.'}), 409
+            return jsonify({'error': f'Failed to create blog: {str(e)}'}), 500
+
+    @app.route('/visionadmin/api/blogs/<int:blog_id>', methods=['PUT'])
+    def visionadmin_update_blog(blog_id):
+        blog = Blog.find_by_id(blog_id)
+        if not blog:
+            return jsonify({'error': 'Blog article not found.'}), 404
+
+        data = request.get_json(silent=True) or {}
+
+        if 'slug' in data and data['slug']:
+            new_slug = Blog.slugify(data['slug'])
+            if not Blog.is_slug_available(new_slug, exclude_id=blog_id):
+                return jsonify({'error': f'The slug "{new_slug}" is already in use.'}), 409
+            data['slug'] = new_slug
+
+        data['updated_by'] = session.get('user_id')
+
+        try:
+            blog.update(**data)
+            refreshed = Blog.find_by_id(blog_id)
+            return jsonify({
+                'success': True,
+                'blog': refreshed.to_dict(),
+                'message': f'Blog "{refreshed.get_title()}" updated successfully.'
+            })
+        except Exception as e:
+            if 'Duplicate entry' in str(e) or 'IntegrityError' in type(e).__name__:
+                return jsonify({'error': 'The specified slug is already in use.'}), 409
+            return jsonify({'error': f'Failed to update blog: {str(e)}'}), 500
+
+    @app.route('/visionadmin/api/blogs/<int:blog_id>', methods=['DELETE'])
+    def visionadmin_delete_blog(blog_id):
+        blog = Blog.find_by_id(blog_id)
+        if not blog:
+            return jsonify({'error': 'Blog article not found.'}), 404
+
+        Blog.soft_delete(blog_id)
+        return jsonify({
+            'success': True,
+            'message': f'Blog "{blog.get_title()}" moved to trash.'
+        })
+
+    @app.route('/visionadmin/api/blogs/<int:blog_id>/restore', methods=['POST'])
+    def visionadmin_restore_blog(blog_id):
+        Blog.restore(blog_id)
+        return jsonify({
+            'success': True,
+            'message': 'Blog article restored successfully.'
         })

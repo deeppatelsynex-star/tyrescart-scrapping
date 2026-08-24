@@ -122,6 +122,35 @@ CREATE TABLE IF NOT EXISTS `pages` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
 
+CREATE_BLOGS_TBL = """
+CREATE TABLE IF NOT EXISTS `blogs` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `title` json NOT NULL,
+  `slug` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content` json NOT NULL,
+  `short_description` json DEFAULT NULL,
+  `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `blog_category_id` bigint UNSIGNED DEFAULT NULL,
+  `author_id` bigint UNSIGNED DEFAULT NULL,
+  `status` enum('draft','published','archived') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+  `published_at` timestamp NULL DEFAULT NULL,
+  `meta_title` json DEFAULT NULL,
+  `meta_desc` json DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_by` bigint UNSIGNED DEFAULT NULL,
+  `updated_by` bigint UNSIGNED DEFAULT NULL,
+  UNIQUE KEY `blogs_slug_unique` (`slug`),
+  KEY `blogs_status_index` (`status`),
+  KEY `blogs_published_at_index` (`published_at`),
+  KEY `blogs_blog_category_id_index` (`blog_category_id`),
+  KEY `blogs_created_by_foreign` (`created_by`),
+  KEY `blogs_updated_by_foreign` (`updated_by`),
+  KEY `idx_blogs_deleted_at` (`deleted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+"""
+
 PERFORMANCE_INDEXES = [
     ("logTbl", "idx_log_file_id_id", "(file_id, id)"),
     ("logTbl", "idx_log_status_id", "(status, id)"),
@@ -221,11 +250,12 @@ def main():
             cursor.execute(CREATE_FILE_TBL)
             cursor.execute(CREATE_LOG_TBL)
             cursor.execute(CREATE_PAGES_TBL)
+            cursor.execute(CREATE_BLOGS_TBL)
             add_missing_columns(cursor)
             cleanup_deprecated_tables(cursor)
             add_missing_indexes(cursor)
             update_legacy_stopped_logs(cursor)
-        print("Schema verified: userTbl, fileTbl, logTbl, pages are ready. Deprecated tables cleaned up.")
+        print("Schema verified: userTbl, fileTbl, logTbl, pages, blogs are ready.")
     finally:
         conn.close()
 

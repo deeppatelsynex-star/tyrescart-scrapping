@@ -1,0 +1,162 @@
+﻿<!DOCTYPE html>
+<html lang="{{ locale or 'en' }}" dir="{{ 'rtl' if locale == 'ar' else 'ltr' }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ 'المدونة والمقالات' if locale == 'ar' else 'Blogs & Tyre Advice' }} - TyresCart.ae</title>
+  <meta name="description" content="{{ 'اكتشف أحدث مقالات ونصائح وإرشادات الإطارات في الإمارات.' if locale == 'ar' else 'Discover the latest tyre guides, maintenance tips, and automotive articles in UAE.' }}" />
+  
+  <!-- Direct Favicon icons -->
+  <link rel="icon" type="image/webp" href="/static/assets/images/favicon-color.webp" />
+  <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/webp" />
+  <link rel="apple-touch-icon" href="/static/assets/images/favicon-color.webp" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    body { 
+      font-family: {% if locale == 'ar' %}'Tajawal', 'Plus Jakarta Sans', system-ui, sans-serif{% else %}'Plus Jakarta Sans', system-ui, sans-serif{% endif %}; 
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <a href="/" class="flex items-center gap-2 group">
+        <div class="w-9 h-9 rounded-xl bg-slate-950 p-1.5 flex items-center justify-center shadow-sm group-hover:scale-105 transition shrink-0">
+          <img src="/static/assets/images/favicon-color.webp" alt="TyresCart Logo" class="w-full h-full object-contain" />
+        </div>
+        <span class="text-lg font-black text-slate-950 tracking-tight">Tyres<span class="text-emerald-600">Cart</span>.ae</span>
+      </a>
+
+      <!-- Navigation & Language Switcher -->
+      <div class="flex items-center gap-3 sm:gap-5 text-xs font-bold text-slate-600">
+        
+        <nav class="hidden md:flex items-center gap-4">
+          <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}" class="hover:text-emerald-600 transition">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a>
+          <a href="/about-us{{ '?locale=' + locale if locale == 'ar' else '' }}" class="hover:text-emerald-600 transition">{{ 'من نحن' if locale == 'ar' else 'About Us' }}</a>
+          <a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}" class="hover:text-emerald-600 transition text-emerald-600">{{ 'المدونة' if locale == 'ar' else 'Blog' }}</a>
+        </nav>
+
+        <!-- EN / AR Language Switcher with Flag Icons -->
+        <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-2xs">
+          
+          <!-- English Option (UK Flag) -->
+          <a href="?locale=en" title="English" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition {% if locale != 'ar' %}bg-white text-slate-950 shadow-xs border border-slate-200/60{% else %}text-slate-500 hover:text-slate-900{% endif %}">
+            <svg class="w-4 h-3 rounded-[2px] overflow-hidden shadow-2xs shrink-0" viewBox="0 0 640 480">
+              <path fill="#012169" d="M0 0h640v480H0z"/>
+              <path fill="#FFF" d="m75 0 244 181L562 0h78v62L400 241l240 178v61h-80L320 301 81 480H0v-60l239-179L0 64V0h75z"/>
+              <path fill="#C8102E" d="m424 288 216 159v33h-44L380 300zm-208 0-216 159v33h44l216-160zM0 33l216 160h44L44 33zm640 0L424 193h-44l216-160z"/>
+              <path fill="#FFF" d="M240 0h160v480H240zM0 160h640v160H0z"/>
+              <path fill="#C8102E" d="M280 0h80v480h-80zM0 200h640v80H0z"/>
+            </svg>
+            <span>EN</span>
+          </a>
+
+          <!-- Arabic Option (UAE Flag) -->
+          <a href="?locale=ar" title="العربية" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition {% if locale == 'ar' %}bg-white text-slate-950 shadow-xs border border-slate-200/60{% else %}text-slate-500 hover:text-slate-900{% endif %}">
+            <svg class="w-4 h-3 rounded-[2px] overflow-hidden shadow-2xs shrink-0" viewBox="0 0 640 480">
+              <path fill="#00732f" d="M0 0h640v160H0z"/>
+              <path fill="#fff" d="M0 160h640v160H0z"/>
+              <path fill="#000" d="M0 320h640v160H0z"/>
+              <path fill="#f00" d="M0 0h160v480H0z"/>
+            </svg>
+            <span>AR</span>
+          </a>
+        </div>
+
+        <a href="/visionadmin/blogs" class="px-3 py-1.5 rounded-xl bg-slate-950 text-white hover:bg-slate-800 transition">{{ 'لوحة المقالات' if locale == 'ar' else 'Admin' }}</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="bg-white border-b border-slate-200 py-12 sm:py-16">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
+      <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-block uppercase tracking-wider">
+        {{ 'دليل الإطارات والسيارات' if locale == 'ar' else 'Tyre & Automotive Guides' }}
+      </span>
+      <h1 class="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight">
+        {{ 'أحدث المقالات والإرشادات' if locale == 'ar' else 'Latest Articles & Tips' }}
+      </h1>
+      <p class="text-sm sm:text-base text-slate-500 max-w-2xl mx-auto">
+        {{ 'كل ما تحتاج لمعرفته حول اختيار الإطارات وصيانتها ونصائح القيادة الآمنة في الإمارات.' if locale == 'ar' else 'Everything you need to know about choosing the right tyres, maintenance, and driving safely across the UAE.' }}
+      </p>
+    </div>
+  </section>
+
+  <!-- Blog Grid -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+    
+    {% if not blogs %}
+    <div class="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8">
+      <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <h3 class="text-lg font-bold text-slate-800">{{ 'لا توجد مقالات منشورة بعد' if locale == 'ar' else 'No articles published yet' }}</h3>
+      <p class="text-xs text-slate-400 mt-1">{{ 'تحقق مرة أخرى قريباً لقراءة أحدث النصائح والإرشادات.' if locale == 'ar' else 'Check back soon for our latest tyre tips and automotive articles.' }}</p>
+    </div>
+    {% else %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      {% for blog in blogs %}
+      <article class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs hover:shadow-lg transition group flex flex-col">
+        
+        <!-- Featured Image -->
+        <a href="/blog/{{ blog.slug }}{{ '?locale=' + locale if locale == 'ar' else '' }}" class="block aspect-video bg-slate-100 overflow-hidden relative">
+          {% if blog.image %}
+          <img src="{{ blog.image }}" alt="{{ blog.get_title(locale) }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+          {% else %}
+          <div class="w-full h-full flex items-center justify-center text-slate-300 bg-slate-100">
+            <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          {% endif %}
+        </a>
+
+        <!-- Content -->
+        <div class="p-6 flex-1 flex flex-col justify-between space-y-4">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+              <span>{{ blog.published_at.strftime('%b %d, %Y') if blog.published_at else (blog.created_at.strftime('%b %d, %Y') if blog.created_at else '') }}</span>
+              <span class="text-emerald-600 font-bold uppercase tracking-wider text-[10px]">Article</span>
+            </div>
+            <h2 class="text-lg font-black text-slate-950 group-hover:text-emerald-600 transition leading-snug">
+              <a href="/blog/{{ blog.slug }}{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ blog.get_title(locale) }}</a>
+            </h2>
+            <p class="text-xs text-slate-500 line-clamp-3 leading-relaxed">
+              {{ blog.get_short_desc(locale) }}
+            </p>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+            <a href="/blog/{{ blog.slug }}{{ '?locale=' + locale if locale == 'ar' else '' }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition">
+              <span>{{ 'اقرأ المقال' if locale == 'ar' else 'Read Article' }}</span>
+              <svg class="w-3.5 h-3.5 {{ 'rotate-180' if locale == 'ar' else '' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+          </div>
+        </div>
+
+      </article>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 bg-white py-8 mt-auto">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <p>&copy; 2026 TyresCart.ae. {{ 'جميع الحقوق محفوظة.' if locale == 'ar' else 'All rights reserved.' }}</p>
+      <div class="flex items-center gap-4">
+        <a href="/about-us{{ '?locale=' + locale if locale == 'ar' else '' }}" class="hover:underline">{{ 'من نحن' if locale == 'ar' else 'About Us' }}</a>
+        <a href="/terms-and-conditions{{ '?locale=' + locale if locale == 'ar' else '' }}" class="hover:underline">{{ 'الشروط والأحكام' if locale == 'ar' else 'Terms & Conditions' }}</a>
+        <a href="/privacy-policy{{ '?locale=' + locale if locale == 'ar' else '' }}" class="hover:underline">{{ 'سياسة الخصوصية' if locale == 'ar' else 'Privacy Policy' }}</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

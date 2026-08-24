@@ -25,6 +25,7 @@ from scraperapp.api import register_api_routes
 from scraperapp import job_manager
 from visionadmin import register_visionadmin_routes
 from models.page import Page
+from models.blog import Blog
 from auth import (
     bit_to_bool,
     create_password_reset_token,
@@ -95,11 +96,42 @@ def client_home():
     return render_template('Client/Home.html')
 
 
+@app.route('/blogs')
+def client_blogs():
+    """Client storefront blog article catalog."""
+    req_locale = request.args.get('locale')
+    if req_locale in ('en', 'ar'):
+        session['site_locale'] = req_locale
+        locale = req_locale
+    else:
+        locale = session.get('site_locale', 'en')
+
+    published_blogs = Blog.published()
+    return render_template('Client/BlogList.html', blogs=published_blogs, locale=locale)
+
+
+@app.route('/blog/<slug>')
+def client_blog_detail(slug):
+    """Client storefront individual blog article reader."""
+    req_locale = request.args.get('locale')
+    if req_locale in ('en', 'ar'):
+        session['site_locale'] = req_locale
+        locale = req_locale
+    else:
+        locale = session.get('site_locale', 'en')
+
+    blog = Blog.find_by_slug(slug)
+    if not blog:
+        abort(404)
+
+    return render_template('Client/BlogDetail.html', blog=blog, locale=locale)
+
+
 @app.route('/page/<slug>')
 @app.route('/<slug>')
 def client_page(slug):
     """Dynamic CMS static content page renderer (About Us, Terms, Privacy Policy, etc.)."""
-    if slug in ('tcsadmin', 'visionadmin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico'):
+    if slug in ('tcsadmin', 'visionadmin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico', 'blogs', 'blog'):
         abort(404)
 
     req_locale = request.args.get('locale')
