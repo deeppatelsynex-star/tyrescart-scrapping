@@ -95,12 +95,42 @@ NEW_LOG_COLUMNS = {
     "progress_percent": "ALTER TABLE logTbl ADD COLUMN progress_percent FLOAT NOT NULL DEFAULT 0.0",
     "total_products": "ALTER TABLE logTbl ADD COLUMN total_products INT NOT NULL DEFAULT 0",
     "pending_urls": "ALTER TABLE logTbl ADD COLUMN pending_urls INT NOT NULL DEFAULT 0",
-    "running_urls": "ALTER TABLE logTbl ADD COLUMN running_urls INT NOT NULL DEFAULT 0",
     "completed_urls": "ALTER TABLE logTbl ADD COLUMN completed_urls INT NOT NULL DEFAULT 0",
     "blocked_urls": "ALTER TABLE logTbl ADD COLUMN blocked_urls INT NOT NULL DEFAULT 0",
     "main_url_done": "ALTER TABLE logTbl ADD COLUMN main_url_done INT NOT NULL DEFAULT 0",
     "product_url_done": "ALTER TABLE logTbl ADD COLUMN product_url_done INT NOT NULL DEFAULT 0",
 }
+
+CREATE_PAGES_TBL = """
+CREATE TABLE IF NOT EXISTS pages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title JSON NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    content JSON NOT NULL,
+    excerpt JSON NULL,
+    template VARCHAR(100) NOT NULL DEFAULT 'default',
+    featured_image VARCHAR(500) NULL,
+    status ENUM('draft', 'published', 'archived') NOT NULL DEFAULT 'draft',
+    published_at DATETIME NULL,
+    show_in_footer BOOLEAN NOT NULL DEFAULT 0,
+    show_in_header BOOLEAN NOT NULL DEFAULT 0,
+    sort_order INT NOT NULL DEFAULT 0,
+    meta_title JSON NULL,
+    meta_desc JSON NULL,
+    canonical_url VARCHAR(500) NULL,
+    created_by INT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL,
+    INDEX idx_page_slug (slug),
+    INDEX idx_page_status (status),
+    INDEX idx_page_published_at (published_at),
+    INDEX idx_page_show_footer (show_in_footer),
+    INDEX idx_page_show_header (show_in_header),
+    INDEX idx_page_deleted_at (deleted_at),
+    FOREIGN KEY (created_by) REFERENCES userTbl(userid) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+"""
 
 PERFORMANCE_INDEXES = [
     ("logTbl", "idx_log_file_id_id", "(file_id, id)"),
@@ -200,11 +230,12 @@ def main():
             cursor.execute(CREATE_USER_TBL)
             cursor.execute(CREATE_FILE_TBL)
             cursor.execute(CREATE_LOG_TBL)
+            cursor.execute(CREATE_PAGES_TBL)
             add_missing_columns(cursor)
             cleanup_deprecated_tables(cursor)
             add_missing_indexes(cursor)
             update_legacy_stopped_logs(cursor)
-        print("Schema verified: userTbl, fileTbl, logTbl are ready. Deprecated tables cleaned up.")
+        print("Schema verified: userTbl, fileTbl, logTbl, pages are ready. Deprecated tables cleaned up.")
     finally:
         conn.close()
 

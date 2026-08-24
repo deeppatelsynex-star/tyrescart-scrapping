@@ -1,0 +1,40 @@
+﻿/* visionadmin.css - VisionAdmin CMS Styles */
+:root {
+  --va-primary: #10b981;
+  --va-primary-dark: #059669;
+  --va-ink: #0f172a;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+.va-badge-published {
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.va-badge-draft {
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.va-badge-archived {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.va-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.va-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04);
+}

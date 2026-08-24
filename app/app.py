@@ -5,8 +5,10 @@ import sys
 _app_dir = os.path.dirname(os.path.abspath(__file__))
 _root_dir = os.path.dirname(_app_dir)
 _scraperapp_dir = os.path.join(_app_dir, 'scraperapp')
+_visionadmin_dir = os.path.join(_app_dir, 'visionadmin')
+_models_dir = os.path.join(_app_dir, 'models')
 _scrapers_dir = os.path.join(_root_dir, 'scrapers')
-for _p in [_app_dir, _root_dir, _scraperapp_dir, _scrapers_dir]:
+for _p in [_app_dir, _root_dir, _scraperapp_dir, _visionadmin_dir, _models_dir, _scrapers_dir]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
@@ -21,6 +23,8 @@ import re
 
 from scraperapp.api import register_api_routes
 from scraperapp import job_manager
+from visionadmin import register_visionadmin_routes
+from models.page import Page
 from auth import (
     bit_to_bool,
     create_password_reset_token,
@@ -80,6 +84,21 @@ def add_performance_headers(response):
 def client_home():
     """Client storefront home landing page."""
     return render_template('Client/Home.html')
+
+
+@app.route('/page/<slug>')
+@app.route('/<slug>')
+def client_page(slug):
+    """Dynamic CMS static content page renderer (About Us, Terms, Privacy Policy, etc.)."""
+    if slug in ('tcsadmin', 'visionadmin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico'):
+        abort(404)
+
+    locale = request.args.get('locale', 'en')
+    page = Page.find_by_slug(slug)
+    if not page:
+        abort(404)
+
+    return render_template('Client/Page.html', page=page, locale=locale)
 
 
 # ============================================================================
@@ -331,10 +350,11 @@ def reset_password_page():
 
 
 # ============================================================================
-# 3. REGISTER CENTRALIZED API LAYER
+# 3. REGISTER CENTRALIZED API LAYERS
 # ============================================================================
 
 register_api_routes(app)
+register_visionadmin_routes(app)
 
 
 # ============================================================================
