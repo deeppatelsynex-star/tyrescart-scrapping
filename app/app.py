@@ -17,7 +17,7 @@ import threading
 import time
 from datetime import timedelta
 
-from flask import Flask, abort, jsonify, redirect, render_template, request, session
+from flask import Flask, abort, jsonify, redirect, render_template, request, send_from_directory, session
 
 import re
 
@@ -58,6 +58,15 @@ try:
     app.config['COMPRESS_MIN_SIZE'] = 500
 except ImportError:
     pass
+
+# Flask-CKEditor Integration (Rich Text & Code Snippet / Source Editing)
+from flask_ckeditor import CKEditor
+app.config['CKEDITOR_PKG_TYPE'] = 'full-all'
+app.config['CKEDITOR_SERVE_LOCAL'] = False
+app.config['CKEDITOR_HEIGHT'] = 260
+app.config['CKEDITOR_ENABLE_CODESNIPPET'] = True
+app.config['CKEDITOR_CODE_THEME'] = 'monokai_sublime'
+ckeditor = CKEditor(app)
 
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-only-insecure-key-set-FLASK_SECRET_KEY-in-production')
 app.permanent_session_lifetime = timedelta(days=7)

@@ -1,12 +1,9 @@
-﻿// pages.js - VisionAdmin Pages & Policies CRUD Controller with CKEditor 5 & Banner Upload
+﻿// pages.js - VisionAdmin Pages & Policies CRUD Controller with Flask-CKEditor
 document.addEventListener('DOMContentLoaded', () => {
   let pagesData = [];
   let currentFilter = 'all';
   let currentSearch = '';
   let activeLocaleTab = 'en';
-
-  let editorEn = null;
-  let editorAr = null;
 
   const tableBody = document.getElementById('pages-table-body');
   const searchInput = document.getElementById('pages-search-input');
@@ -25,58 +22,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const bannerStatusText = document.getElementById('banner-file-status');
 
   // ---------------------------------------------------------------------------
-  // 1. Initialize CKEditor 5 SuperBuild with Code / Source Editing
+  // 1. Flask-CKEditor Data Helpers
   // ---------------------------------------------------------------------------
-  const ckeditorConfig = {
-    toolbar: {
-      items: [
-        'sourceEditing', '|',
-        'heading', '|',
-        'bold', 'italic', 'underline', 'strikethrough', 'code', '|',
-        'link', 'bulletedList', 'numberedList', 'blockQuote', 'codeBlock', '|',
-        'alignment', '|',
-        'insertTable', 'horizontalLine', '|',
-        'undo', 'redo'
-      ],
-      shouldNotGroupWhenFull: true
-    },
-    removePlugins: [
-      'CKBox', 'CKFinder', 'EasyImage', 'RealTimeCollaborativeComments',
-      'RealTimeCollaborativeTrackChanges', 'RealTimeCollaborativeRevisionHistory',
-      'PresenceList', 'Comments', 'TrackChanges', 'TrackChangesData', 'RevisionHistory',
-      'Pagination', 'WProofreader', 'MathType', 'SlashCommand', 'Template', 'DocumentOutline',
-      'FormatPainter', 'TableOfContents', 'PasteFromOfficeEnhanced'
-    ]
-  };
-
-  async function initEditors() {
-    try {
-      if (window.CKEDITOR && CKEDITOR.ClassicEditor) {
-        // English Editor
-        if (document.getElementById('content_en') && !editorEn) {
-          editorEn = await CKEDITOR.ClassicEditor.create(
-            document.getElementById('content_en'),
-            { ...ckeditorConfig }
-          );
-        }
-
-        // Arabic Editor
-        if (document.getElementById('content_ar') && !editorAr) {
-          editorAr = await CKEDITOR.ClassicEditor.create(
-            document.getElementById('content_ar'),
-            {
-              ...ckeditorConfig,
-              language: { content: 'ar' }
-            }
-          );
-        }
-      }
-    } catch (err) {
-      console.warn('CKEditor initialization notice:', err);
+  function getEditorContent(name) {
+    if (window.CKEDITOR && CKEDITOR.instances && CKEDITOR.instances[name]) {
+      return CKEDITOR.instances[name].getData();
     }
+    return document.getElementById(name)?.value || '';
   }
 
-  initEditors();
+  function setEditorContent(name, val) {
+    if (window.CKEDITOR && CKEDITOR.instances && CKEDITOR.instances[name]) {
+      CKEDITOR.instances[name].setData(val || '');
+    } else {
+      const el = document.getElementById(name);
+      if (el) el.value = val || '';
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // 2. Banner Image File Upload Handler
@@ -306,18 +268,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const contentEnVal = page.content?.en || (typeof page.content === 'string' ? page.content : '');
       const contentArVal = page.content?.ar || '';
 
-      if (editorEn) editorEn.setData(contentEnVal);
-      else document.getElementById('content_en').value = contentEnVal;
-
-      if (editorAr) editorAr.setData(contentArVal);
-      else document.getElementById('content_ar').value = contentArVal;
+      setEditorContent('content_en', contentEnVal);
+      setEditorContent('content_ar', contentArVal);
 
     } else {
       document.getElementById('is_active').checked = true;
       setBannerPreview('');
 
-      if (editorEn) editorEn.setData('');
-      if (editorAr) editorAr.setData('');
+      setEditorContent('content_en', '');
+      setEditorContent('content_ar', '');
     }
 
     modal.classList.remove('hidden');
@@ -361,8 +320,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const content_en = editorEn ? editorEn.getData() : document.getElementById('content_en').value;
-    const content_ar = editorAr ? editorAr.getData() : document.getElementById('content_ar').value;
+    const content_en = getEditorContent('content_en');
+    const content_ar = getEditorContent('content_ar');
 
     const payload = {
       title: { en: title_en, ar: title_ar },

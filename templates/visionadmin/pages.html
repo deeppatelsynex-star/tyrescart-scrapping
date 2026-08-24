@@ -1,4 +1,4 @@
-﻿{% extends "visionadmin/base.html" %}
+{% extends "visionadmin/base.html" %}
 {% block title %}Pages & Policies - VisionAdmin CMS{% endblock %}
 
 {% block content %}
@@ -250,7 +250,9 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- CKEditor 5 SuperBuild with Source Code Editing -->
-<script src="https://cdn.ckeditor.com/ckeditor5/41.3.1/super-build/ckeditor.js"></script>
+<!-- Flask-CKEditor Integration with Source Code and CodeSnippet support -->
+{{ ckeditor.load() }}
+{{ ckeditor.config(name='content_en', custom_config="extraPlugins: 'codesnippet,sourcearea', codeSnippet_theme: 'monokai_sublime'") }}
+{{ ckeditor.config(name='content_ar', custom_config="extraPlugins: 'codesnippet,sourcearea', contentsLangDirection: 'rtl', codeSnippet_theme: 'monokai_sublime'") }}
 <script src="/static/visionadmin/pages.js"></script>
 {% endblock %}
