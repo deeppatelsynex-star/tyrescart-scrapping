@@ -22,22 +22,57 @@ document.addEventListener('DOMContentLoaded', () => {
   const bannerStatusText = document.getElementById('banner-file-status');
 
   // ---------------------------------------------------------------------------
-  // 1. Flask-CKEditor Data Helpers
+  // 1. Flask-CKEditor Helper Functions
   // ---------------------------------------------------------------------------
   function getEditorContent(name) {
     if (window.CKEDITOR && CKEDITOR.instances && CKEDITOR.instances[name]) {
-      return CKEDITOR.instances[name].getData();
+      try {
+        CKEDITOR.instances[name].updateElement();
+        return CKEDITOR.instances[name].getData() || '';
+      } catch (err) {
+        console.warn(`Error getting data from CKEditor "${name}":`, err);
+      }
     }
-    return document.getElementById(name)?.value || '';
+    const el = document.getElementById(name);
+    return el ? el.value : '';
   }
 
   function setEditorContent(name, val) {
+    val = val || '';
+    const el = document.getElementById(name);
+    if (el) el.value = val;
+
     if (window.CKEDITOR && CKEDITOR.instances && CKEDITOR.instances[name]) {
-      CKEDITOR.instances[name].setData(val || '');
-    } else {
-      const el = document.getElementById(name);
-      if (el) el.value = val || '';
+      try {
+        const inst = CKEDITOR.instances[name];
+        if (inst.status === 'ready' || inst.instanceReady) {
+          inst.setData(val);
+        } else {
+          inst.on('instanceReady', function() {
+            this.setData(val);
+          });
+        }
+      } catch (err) {
+        console.warn(`Error setting data in CKEditor "${name}":`, err);
+      }
     }
+  }
+
+  // Hook change events to automatically sync to textarea
+  if (window.CKEDITOR) {
+    CKEDITOR.on('instanceReady', function(evt) {
+      evt.editor.on('change', function() {
+        this.updateElement();
+      });
+      evt.editor.on('mode', function() {
+        if (this.mode === 'source') {
+          const editable = this.editable();
+          editable.attachListener(editable, 'input', () => {
+            this.updateElement();
+          });
+        }
+      });
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -239,6 +274,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('locale-block-en').classList.add('hidden');
         document.getElementById('locale-block-ar').classList.remove('hidden');
       }
+
+      // Refresh/resize CKEditor on tab switch
+      setTimeout(() => {
+        if (window.CKEDITOR && CKEDITOR.instances) {
+          if (loc === 'ar' && CKEDITOR.instances.content_ar) {
+            CKEDITOR.instances.content_ar.resize();
+          } else if (loc === 'en' && CKEDITOR.instances.content_en) {
+            CKEDITOR.instances.content_en.resize();
+          }
+        }
+      }, 50);
     });
   });
 
@@ -254,19 +300,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.locale-tab[data-locale="en"]')?.click();
 
     if (isEdit && page) {
-      document.getElementById('title_en').value = page.title?.en || (typeof page.title === 'string' ? page.title : '');
-      document.getElementById('title_ar').value = page.title?.ar || '';
+      document.getElementById('title_en').value = (typeof page.title === 'object' ? page.title?.en : page.title) || '';
+      document.getElementById('title_ar').value = (typeof page.title === 'object' ? page.title?.ar : '') || '';
       document.getElementById('slug').value = page.slug || '';
       document.getElementById('is_active').checked = Boolean(page.is_active);
-      document.getElementById('seo_title_en').value = page.seo_title?.en || '';
-      document.getElementById('seo_title_ar').value = page.seo_title?.ar || '';
-      document.getElementById('meta_description_en').value = page.meta_description?.en || '';
-      document.getElementById('meta_description_ar').value = page.meta_description?.ar || '';
+      document.getElementById('seo_title_en').value = (typeof page.seo_title === 'object' ? page.seo_title?.en : '') || '';
+      document.getElementById('seo_title_ar').value = (typeof page.seo_title === 'object' ? page.seo_title?.ar : '') || '';
+      document.getElementById('meta_description_en').value = (typeof page.meta_description === 'object' ? page.meta_description?.en : '') || '';
+      document.getElementById('meta_description_ar').value = (typeof page.meta_description === 'object' ? page.meta_description?.ar : '') || '';
 
       setBannerPreview(page.banner_image || '');
 
-      const contentEnVal = page.content?.en || (typeof page.content === 'string' ? page.content : '');
-      const contentArVal = page.content?.ar || '';
+      const contentEnVal = (typeof page.content === 'object' ? page.content?.en : page.content) || '';
+      const contentArVal = (typeof page.content === 'object' ? page.content?.ar : '') || '';
 
       setEditorContent('content_en', contentEnVal);
       setEditorContent('content_ar', contentArVal);
@@ -280,6 +326,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     modal.classList.remove('hidden');
+
+    // Resize active editor after modal animation
+    setTimeout(() => {
+      if (window.CKEDITOR && CKEDITOR.instances) {
+        if (CKEDITOR.instances.content_en) CKEDITOR.instances.content_en.resize();
+        if (CKEDITOR.instances.content_ar) CKEDITOR.instances.content_ar.resize();
+      }
+    }, 100);
   }
 
   function closeModal() {
@@ -318,6 +372,15 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelector('.locale-tab[data-locale="en"]')?.click();
       document.getElementById('title_en').focus();
       return;
+    }
+
+    // Force update from all CKEditor instances
+    if (window.CKEDITOR && CKEDITOR.instances) {
+      for (const instName in CKEDITOR.instances) {
+        try {
+          CKEDITOR.instances[instName].updateElement();
+        } catch (e) {}
+      }
     }
 
     const content_en = getEditorContent('content_en');

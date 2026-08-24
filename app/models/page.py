@@ -182,17 +182,32 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
             return {}
         if isinstance(val, (dict, list)):
             return val
-        try:
-            return json.loads(val)
-        except Exception:
-            return {"en": str(val)}
+        if isinstance(val, str):
+            val_str = val.strip()
+            if val_str.startswith('{') or val_str.startswith('['):
+                try:
+                    res = json.loads(val_str)
+                    return res if isinstance(res, (dict, list)) else {'en': str(res)}
+                except Exception:
+                    pass
+            return {'en': val}
+        return {'en': str(val)}
 
     @staticmethod
     def _dump_json(val):
         if val is None:
             return None
+        if isinstance(val, (dict, list)):
+            return json.dumps(val, ensure_ascii=False)
         if isinstance(val, str):
-            return val
+            val_strip = val.strip()
+            if val_strip.startswith('{') or val_strip.startswith('['):
+                try:
+                    json.loads(val_strip)
+                    return val_strip
+                except Exception:
+                    pass
+            return json.dumps({'en': val}, ensure_ascii=False)
         return json.dumps(val, ensure_ascii=False)
 
     # -------------------------------------------------------------------------
@@ -323,7 +338,7 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
             slug = cls.slugify(raw_title)
 
         title_json = cls._dump_json(kwargs.get('title', {"en": ""}))
-        content_json = cls._dump_json(kwargs.get('content'))
+        content_json = cls._dump_json(kwargs.get('content', {"en": "", "ar": ""}))
         seo_title_json = cls._dump_json(kwargs.get('seo_title'))
         meta_desc_json = cls._dump_json(kwargs.get('meta_description'))
         is_active = 1 if kwargs.get('is_active', True) else 0
