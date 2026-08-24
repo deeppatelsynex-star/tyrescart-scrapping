@@ -213,20 +213,24 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="py-3.5 px-4 font-mono text-xs text-slate-500">
             ${pubDate}
           </td>
-          <td class="py-3.5 px-4 sm:px-6 text-right space-x-2">
+          <td class="py-3.5 px-4 sm:px-6 text-right space-x-1.5 whitespace-nowrap">
             ${!isTrash ? `
-              <button type="button" onclick="window.editBlog(${b.id})" class="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer">
-                Edit
+              <button type="button" onclick="window.editBlog(${b.id})" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 text-xs font-bold shadow-2xs hover:shadow-xs transition cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 group-hover:-rotate-12 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                <span>Edit</span>
               </button>
-              <button type="button" onclick="window.deleteBlog(${b.id}, '${escapeHtml(enTitle)}', false)" class="px-3 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition cursor-pointer">
-                Trash
+              <button type="button" onclick="window.deleteBlog(${b.id}, '${escapeHtml(enTitle)}', false)" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50/80 hover:bg-rose-100/90 border border-rose-200/70 text-rose-700 text-xs font-bold transition cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-rose-500 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                <span>Trash</span>
               </button>
             ` : `
-              <button type="button" onclick="window.restoreBlog(${b.id})" class="px-3 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition cursor-pointer">
-                Restore
+              <button type="button" onclick="window.restoreBlog(${b.id})" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 text-emerald-700 text-xs font-bold transition cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-emerald-600 group-hover:rotate-180 transition-transform duration-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                <span>Restore</span>
               </button>
-              <button type="button" onclick="window.deleteBlog(${b.id}, '${escapeHtml(enTitle)}', true)" class="px-3 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition cursor-pointer shadow-xs">
-                Delete Permanently
+              <button type="button" onclick="window.deleteBlog(${b.id}, '${escapeHtml(enTitle)}', true)" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-extrabold shadow-sm hover:shadow-md transition cursor-pointer">
+                <svg class="w-3.5 h-3.5 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <span>Delete Permanently</span>
               </button>
             `}
           </td>

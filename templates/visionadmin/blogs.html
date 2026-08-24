@@ -1,83 +1,126 @@
-{% extends "visionadmin/base.html" %}
+﻿{% extends "visionadmin/base.html" %}
 {% block title %}Blogs & Articles - VisionAdmin CMS{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
 
-  <!-- Header & Primary Action -->
+  <!-- Header & Primary Action with Animated Button -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight">Blogs & Articles</h1>
-      <p class="text-xs sm:text-sm text-slate-500 mt-1">Publish tyre guides, maintenance tips, news, and multilingual articles.</p>
+    <div class="space-y-1">
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">CMS Editorial Studio</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">Blogs &amp; Articles</h1>
+      <p class="text-xs sm:text-sm text-slate-500 font-medium">Publish tyre guides, seasonal maintenance tips, news, and multilingual articles.</p>
     </div>
-    <div class="flex items-center gap-2">
-      <button type="button" id="btn-create-blog" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 active:bg-black text-white text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer">
-        <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <div class="flex items-center gap-2 shrink-0">
+      <button type="button" id="btn-create-blog" class="group inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-slate-950 hover:bg-slate-800 active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer">
+        <div class="w-5 h-5 rounded-lg bg-white/15 flex items-center justify-center group-hover:rotate-90 transition-transform duration-300">
+          <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
         <span>Create New Article</span>
       </button>
     </div>
   </div>
 
-  <!-- Metric Overview Cards -->
+  <!-- Metric Overview Cards with Animated Icons on Hover -->
   <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
-    <div class="va-card p-4 sm:p-5">
-      <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Posts</p>
-      <div id="stat-total" class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">--</div>
+    
+    <!-- Total Posts Card -->
+    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Total Posts</p>
+        <div class="w-9 h-9 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-slate-950 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-2xs">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+      </div>
+      <div id="stat-total" class="text-3xl font-black text-slate-950 tracking-tight mt-2">--</div>
     </div>
-    <div class="va-card p-4 sm:p-5">
-      <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Published</p>
-      <div id="stat-published" class="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">--</div>
+
+    <!-- Published Card -->
+    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <p class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-600">Published</p>
+        <div class="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-2xs">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+      </div>
+      <div id="stat-published" class="text-3xl font-black text-emerald-600 tracking-tight mt-2">--</div>
     </div>
-    <div class="va-card p-4 sm:p-5">
-      <p class="text-[11px] font-bold uppercase tracking-wider text-amber-600">Drafts</p>
-      <div id="stat-draft" class="text-2xl sm:text-3xl font-black text-amber-600 mt-1">--</div>
+
+    <!-- Drafts Card -->
+    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <p class="text-[11px] font-extrabold uppercase tracking-wider text-amber-600">Drafts</p>
+        <div class="w-9 h-9 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100 group-hover:bg-amber-500 group-hover:text-white group-hover:scale-110 group-hover:-rotate-6 transition-all duration-300 shadow-2xs">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+      </div>
+      <div id="stat-draft" class="text-3xl font-black text-amber-600 tracking-tight mt-2">--</div>
     </div>
-    <div class="va-card p-4 sm:p-5">
-      <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-600">Archived</p>
-      <div id="stat-archived" class="text-2xl sm:text-3xl font-black text-indigo-600 mt-1">--</div>
+
+    <!-- Archived Card -->
+    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <p class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600">Archived</p>
+        <div class="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-2xs">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+        </div>
+      </div>
+      <div id="stat-archived" class="text-3xl font-black text-indigo-600 tracking-tight mt-2">--</div>
     </div>
-    <div class="va-card p-4 sm:p-5">
-      <p class="text-[11px] font-bold uppercase tracking-wider text-rose-600">Trash</p>
-      <div id="stat-trash" class="text-2xl sm:text-3xl font-black text-rose-600 mt-1">--</div>
+
+    <!-- Trash Card -->
+    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <p class="text-[11px] font-extrabold uppercase tracking-wider text-rose-600">Trash</p>
+        <div class="w-9 h-9 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 group-hover:bg-rose-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-2xs">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+      </div>
+      <div id="stat-trash" class="text-3xl font-black text-rose-600 tracking-tight mt-2">--</div>
     </div>
+
   </div>
 
-  <!-- Filter & Search Bar -->
-  <div class="va-card p-4 flex flex-col md:flex-row items-center justify-between gap-3">
+  <!-- Filter & Search Bar in Luminous White -->
+  <div class="bg-white rounded-3xl p-3 sm:p-4 border border-slate-200/80 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3">
+    
     <!-- Status Tabs -->
-    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full md:w-auto text-xs font-bold">
-      <button type="button" class="tab-filter px-3 py-1.5 rounded-lg bg-white shadow-xs text-slate-900 transition" data-status="all">All</button>
-      <button type="button" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition" data-status="published">Published</button>
-      <button type="button" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition" data-status="draft">Drafts</button>
-      <button type="button" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition" data-status="archived">Archived</button>
-      <button type="button" class="tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition" data-status="trash">Trash</button>
+    <div class="flex items-center gap-1 bg-slate-100/90 p-1.5 rounded-2xl w-full md:w-auto text-xs font-extrabold">
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl bg-white shadow-xs text-slate-950 transition" data-status="all">All</button>
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-white/60 transition" data-status="published">Published</button>
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-white/60 transition" data-status="draft">Drafts</button>
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-white/60 transition" data-status="archived">Archived</button>
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-white/60 transition" data-status="trash">Trash</button>
     </div>
 
     <!-- Search Input -->
-    <div class="relative w-full md:w-72">
-      <input type="text" id="blogs-search-input" placeholder="Search title, excerpt or slug…" class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" />
-      <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <div class="relative w-full md:w-80">
+      <input type="text" id="blogs-search-input" placeholder="Search title, excerpt or slug…" class="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50/50 hover:bg-white focus:bg-white transition placeholder:text-slate-400 shadow-inner" />
+      <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     </div>
+
   </div>
 
-  <!-- Blogs Table -->
-  <div class="va-card overflow-hidden">
+  <!-- Blogs Table Card in Pure White -->
+  <div class="bg-white rounded-3xl border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs sm:text-sm">
-        <thead class="bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px] font-bold">
+        <thead class="bg-slate-50/70 border-b border-slate-200 text-slate-400 uppercase tracking-widest text-[10px] font-black">
           <tr>
-            <th class="py-3.5 px-4 sm:px-6">Article & Slug</th>
-            <th class="py-3.5 px-4">Image</th>
-            <th class="py-3.5 px-4">Status</th>
-            <th class="py-3.5 px-4">Published Date</th>
-            <th class="py-3.5 px-4 sm:px-6 text-right">Actions</th>
+            <th class="py-4 px-4 sm:px-6">Article &amp; Route</th>
+            <th class="py-4 px-4">Hero Thumbnail</th>
+            <th class="py-4 px-4">Live Status</th>
+            <th class="py-4 px-4">Publish Date</th>
+            <th class="py-4 px-4 sm:px-6 text-right">Quick Actions</th>
           </tr>
         </thead>
         <tbody id="blogs-table-body" class="divide-y divide-slate-100 text-slate-700">
           <tr>
-            <td colspan="5" class="py-12 text-center text-slate-400">
-              <div class="inline-block animate-spin w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full mb-2"></div>
-              <p>Loading blog articles…</p>
+            <td colspan="5" class="py-14 text-center text-slate-400">
+              <div class="inline-block animate-spin w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full mb-3"></div>
+              <p class="font-bold text-xs">Loading blog articles…</p>
             </td>
           </tr>
         </tbody>
@@ -91,30 +134,30 @@
 <!-- SLIDE-OVER / MODAL BLOG POST EDITOR FORM -->
 <!-- ========================================================================= -->
 <div id="blog-modal" class="fixed inset-0 z-50 overflow-y-auto hidden">
-  <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" id="blog-modal-backdrop"></div>
+  <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" id="blog-modal-backdrop"></div>
 
   <div class="min-h-full flex items-center justify-center p-4 sm:p-6">
     <div class="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
       
       <!-- Modal Header -->
-      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+      <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
         <div>
-          <h2 id="blog-modal-title" class="text-lg font-black text-slate-950">Create New Article</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Author multilingual articles with CKEditor, featured image upload, and SEO settings.</p>
+          <h2 id="blog-modal-title" class="text-xl font-black text-slate-950 tracking-tight">Create New Blog Article</h2>
+          <p class="text-xs text-slate-500 font-medium mt-0.5">Craft rich multilingual articles with full CKEditor support (Rich Text &amp; Code view), featured media, and SEO parameters.</p>
         </div>
-        <button type="button" id="btn-close-blog-modal" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition cursor-pointer">
+        <button type="button" id="btn-close-blog-modal" class="p-2 rounded-2xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
       <!-- Modal Body (Scrollable) -->
-      <div class="p-6 overflow-y-auto space-y-6 flex-1">
+      <div class="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1">
         
         <!-- Locale Switcher Tabs -->
         <div class="flex items-center justify-between border-b border-slate-200 pb-3">
           <div class="flex items-center gap-2">
-            <button type="button" class="locale-tab px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-xs transition" data-locale="en">🇬🇧 English</button>
-            <button type="button" class="locale-tab px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition" data-locale="ar">🇦🇪 Arabic</button>
+            <button type="button" class="blog-locale-tab px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-xs transition" data-locale="en">🇬🇧 English</button>
+            <button type="button" class="blog-locale-tab px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition" data-locale="ar">🇦🇪 Arabic</button>
           </div>
           <span class="text-[11px] text-slate-400 font-mono">Flask-CKEditor &amp; Code View</span>
         </div>
@@ -123,154 +166,162 @@
           <input type="hidden" id="edit-blog-id" value="" />
 
           <!-- Title, Excerpt & Content: English -->
-          <div id="locale-block-en" class="space-y-4">
+          <div id="blog-locale-block-en" class="space-y-4">
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Article Title (English) <span class="text-rose-500">*</span></label>
-              <input type="text" id="title_en" required placeholder="e.g. Best Summer Tyres for Dubai Drivers" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold" />
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Article Title (English) <span class="text-rose-500">*</span></label>
+              <input type="text" id="blog_title_en" required placeholder="e.g. 5 Summer Tyre Care Tips in UAE Heat" class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold shadow-inner" />
             </div>
 
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Short Summary / Excerpt (English)</label>
-              <textarea id="short_description_en" rows="2" placeholder="Brief summary displayed on article cards..." class="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Short Summary / Excerpt (English)</label>
+              <textarea id="blog_short_desc_en" rows="2" placeholder="Brief 1-2 sentence overview for blog catalog and social share preview..." class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"></textarea>
             </div>
 
             <div>
               <div class="flex items-center justify-between mb-1.5">
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Article Content (English - Rich Text &amp; Code)</label>
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700">Article Body Content (English - Rich Text &amp; Code)</label>
                 <span class="text-[11px] text-slate-400 font-medium">Use toolbar &lt;/&gt; button for HTML source code</span>
               </div>
-              <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                <textarea id="blog_content_en" placeholder="Write article content here..."></textarea>
+              <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                <textarea id="blog_content_en" placeholder="Write rich text article body..."></textarea>
               </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">SEO Meta Title (English)</label>
-                <input type="text" id="meta_title_en" placeholder="Defaults to article title..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                <label class="block text-[11px] font-extrabold text-slate-600 mb-1">SEO Meta Title (English)</label>
+                <input type="text" id="blog_seo_title_en" placeholder="Defaults to article title..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" />
               </div>
               <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">SEO Meta Description (English)</label>
-                <input type="text" id="meta_desc_en" placeholder="Search engine description..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                <label class="block text-[11px] font-extrabold text-slate-600 mb-1">Meta Description (English)</label>
+                <input type="text" id="blog_meta_description_en" placeholder="Search engine description..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" />
               </div>
             </div>
           </div>
 
-          <!-- Title, Excerpt & Content: Arabic (English Labels, Arabic User Inputs) -->
-          <div id="locale-block-ar" class="space-y-4 hidden">
+          <!-- Title, Excerpt & Content: Arabic -->
+          <div id="blog-locale-block-ar" class="space-y-4 hidden">
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Article Title (Arabic)</label>
-              <input type="text" id="title_ar" dir="rtl" placeholder="Enter Arabic article title (e.g. أفضل إطارات صيفية لسائقي دبي)..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold" />
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Article Title (Arabic)</label>
+              <input type="text" id="blog_title_ar" dir="rtl" placeholder="Enter Arabic title here (e.g. 5 نصائح للعناية بالإطارات في صيف الإمارات)..." class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold shadow-inner" />
             </div>
 
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Short Summary / Excerpt (Arabic)</label>
-              <textarea id="short_description_ar" dir="rtl" rows="2" placeholder="Brief Arabic summary displayed on article cards..." class="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Short Summary / Excerpt (Arabic)</label>
+              <textarea id="blog_short_desc_ar" rows="2" dir="rtl" placeholder="Enter Arabic short summary / excerpt here..." class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"></textarea>
             </div>
 
             <div>
               <div class="flex items-center justify-between mb-1.5">
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Article Content (Arabic - Rich Text &amp; Code)</label>
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700">Article Body Content (Arabic - Rich Text &amp; Code)</label>
                 <span class="text-[11px] text-slate-400 font-medium">Use toolbar &lt;/&gt; button for HTML source code</span>
               </div>
-              <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                <textarea id="blog_content_ar" placeholder="Enter Arabic article content here..."></textarea>
+              <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                <textarea id="blog_content_ar" placeholder="Enter Arabic rich text content here..."></textarea>
               </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">SEO Meta Title (Arabic)</label>
-                <input type="text" id="meta_title_ar" dir="rtl" placeholder="SEO title in Arabic..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                <label class="block text-[11px] font-extrabold text-slate-600 mb-1">SEO Meta Title (Arabic)</label>
+                <input type="text" id="blog_seo_title_ar" dir="rtl" placeholder="SEO title in Arabic..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" />
               </div>
               <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">SEO Meta Description (Arabic)</label>
-                <input type="text" id="meta_desc_ar" dir="rtl" placeholder="Meta description in Arabic..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                <label class="block text-[11px] font-extrabold text-slate-600 mb-1">Meta Description (Arabic)</label>
+                <input type="text" id="blog_meta_description_ar" dir="rtl" placeholder="Meta description in Arabic..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" />
               </div>
             </div>
           </div>
 
-          <!-- URL Slug, Featured Image & Publishing Status -->
-          <div class="pt-4 border-t border-slate-200 space-y-4">
-            
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <!-- Slug -->
-              <div class="sm:col-span-2">
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">URL Slug <span class="text-rose-500">*</span></label>
+          <!-- URL Slug, Status & Featured Image -->
+          <div class="pt-6 border-t border-slate-100 space-y-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">URL Slug <span class="text-rose-500">*</span></label>
                 <div class="relative">
-                  <span class="absolute left-3 top-2.5 text-xs text-slate-400 font-mono">/blog/</span>
-                  <input type="text" id="slug" required placeholder="best-summer-tyres-dubai" class="w-full pl-16 pr-4 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                  <span class="absolute left-3.5 top-3 text-xs text-slate-400 font-mono font-bold">/blog/</span>
+                  <input type="text" id="blog_slug" required placeholder="summer-tyre-care-tips" class="w-full pl-16 pr-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" />
                 </div>
               </div>
 
-              <!-- Status Dropdown -->
               <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Publish Status</label>
-                <select id="status" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Publication Status</label>
+                <select id="blog_status" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-inner">
                   <option value="draft">Draft (Private)</option>
                   <option value="published">Published (Live)</option>
-                  <option value="archived">Archived</option>
+                  <option value="archived">Archived (Hidden)</option>
                 </select>
               </div>
             </div>
 
             <!-- Featured Image Upload -->
             <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Featured Blog Image</label>
-              <input type="hidden" id="blog_image" value="" />
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Featured Hero Image (Thumbnail &amp; Banner)</label>
               
-              <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                
-                <!-- Image Preview Box -->
-                <div id="blog-preview-box" class="w-24 h-16 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
-                  <span id="blog-placeholder-icon" class="text-slate-300">
-                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  </span>
-                  <img id="blog-preview-img" src="" alt="Blog Preview" class="w-full h-full object-cover hidden" />
+              <div class="flex items-center gap-3">
+                <div class="relative flex-1">
+                  <input type="text" id="blog_image" placeholder="Upload an image or paste direct image URL…" class="w-full pl-4 pr-10 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" />
                 </div>
+                <label class="px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs hover:shadow-xs text-slate-700 text-xs font-bold transition cursor-pointer flex items-center gap-2">
+                  <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span>Upload File</span>
+                  <input type="file" id="blog-file-input" accept="image/*" class="hidden" />
+                </label>
+              </div>
 
-                <!-- Upload Controls -->
-                <div class="space-y-1.5 flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <label for="blog_file_input" class="px-3.5 py-1.5 rounded-xl bg-white border border-slate-300 hover:border-emerald-500 hover:text-emerald-700 text-slate-700 text-xs font-bold cursor-pointer shadow-2xs transition inline-flex items-center gap-1.5">
-                      <svg class="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                      <span>Upload Featured Image</span>
-                    </label>
-                    <button type="button" id="btn-remove-blog-img" class="px-3 py-1.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-bold transition hidden">
-                      Remove
-                    </button>
-                    <input type="file" id="blog_file_input" accept="image/*" class="hidden" />
-                  </div>
-                  <p id="blog-file-status" class="text-[11px] text-slate-400 truncate">PNG, JPG, WEBP, SVG or AVIF up to 10MB.</p>
+              <!-- Image Preview Box -->
+              <div id="blog-preview-box" class="mt-3 hidden">
+                <div class="relative w-full max-w-sm rounded-2xl overflow-hidden border border-slate-200 shadow-xs">
+                  <img id="blog-preview-img" src="" alt="Blog Preview" class="w-full h-36 object-cover" />
+                  <button type="button" id="btn-remove-blog-image" class="absolute top-2 right-2 bg-rose-600 hover:bg-rose-700 text-white rounded-full p-1.5 shadow-md transition cursor-pointer">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
                 </div>
-
               </div>
             </div>
+          </div>
 
+          <!-- Modal Footer Actions -->
+          <div class="pt-6 border-t border-slate-100 flex items-center justify-end gap-3">
+            <button type="button" id="btn-cancel-blog-modal" class="px-5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 transition cursor-pointer shadow-2xs">
+              Cancel
+            </button>
+            <button type="submit" id="btn-save-blog" class="px-6 py-2.5 rounded-2xl text-xs font-extrabold text-white bg-slate-950 hover:bg-slate-800 shadow-md hover:shadow-lg transition transform active:scale-95 cursor-pointer flex items-center gap-2">
+              <span id="save-blog-btn-text">Save Article</span>
+            </button>
           </div>
 
         </form>
-      </div>
 
-      <!-- Modal Footer -->
-      <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-        <button type="button" id="btn-cancel-blog-modal" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
-          Cancel
-        </button>
-        <button type="button" id="btn-save-blog" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold shadow-md transition cursor-pointer">
-          <span id="save-blog-btn-text">Save Article</span>
-        </button>
       </div>
-
     </div>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<!-- Flask-CKEditor Integration with Source Code and CodeSnippet support -->
+<!-- Flask-CKEditor JS -->
 {{ ckeditor.load() }}
-{{ ckeditor.config(name='blog_content_en', custom_config="extraPlugins: 'codesnippet,sourcearea', codeSnippet_theme: 'monokai_sublime'") }}
-{{ ckeditor.config(name='blog_content_ar', custom_config="extraPlugins: 'codesnippet,sourcearea', contentsLangDirection: 'rtl', codeSnippet_theme: 'monokai_sublime'") }}
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    if (window.CKEDITOR) {
+      CKEDITOR.replace('blog_content_en', {
+        height: 300,
+        extraPlugins: 'codesnippet,sourcearea',
+        codeSnippet_theme: 'monokai_sublime',
+        removeButtons: 'About',
+        versionCheck: false
+      });
+      CKEDITOR.replace('blog_content_ar', {
+        height: 300,
+        extraPlugins: 'codesnippet,sourcearea',
+        codeSnippet_theme: 'monokai_sublime',
+        contentsLangDirection: 'rtl',
+        removeButtons: 'About',
+        versionCheck: false
+      });
+    }
+  });
+</script>
 <script src="/static/visionadmin/blogs.js"></script>
 {% endblock %}
