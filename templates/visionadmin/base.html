@@ -163,6 +163,74 @@
     </footer>
   </div>
 
+  <!-- Antigravity Glassmorphism Hard Delete Confirmation Modal -->
+  <div id="va-hard-delete-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 opacity-0 pointer-events-none transition-all duration-300 ease-out" aria-hidden="true" role="dialog" aria-modal="true">
+    <!-- Ultra-Frosted Backdrop Blur -->
+    <div id="va-hard-delete-backdrop" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity duration-300"></div>
+
+    <!-- Glassmorphic 3D Floating Modal Card -->
+    <div id="va-hard-delete-card" class="relative w-full max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 border border-white/50 dark:border-slate-700/60 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.3)] transform scale-95 transition-all duration-300 ease-out space-y-6 overflow-hidden">
+      
+      <!-- Ambient Radial Glow Accent -->
+      <div class="absolute -top-24 -right-24 w-48 h-48 bg-rose-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Header & Danger Pulsing Icon -->
+      <div class="flex items-start gap-4">
+        <div class="relative shrink-0">
+          <!-- Pulsing Danger Glow -->
+          <div class="absolute -inset-1 bg-rose-500/30 rounded-2xl blur-xs animate-pulse"></div>
+          <div class="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 via-rose-600 to-red-700 text-white flex items-center justify-center shadow-lg shadow-rose-500/40 border border-rose-400/40">
+            <svg class="w-6 h-6 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="space-y-1 flex-1">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 inline-block shadow-2xs">
+            Irreversible Action
+          </span>
+          <h3 id="va-hard-delete-title" class="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+            Permanent Deletion
+          </h3>
+        </div>
+
+        <!-- Close Button -->
+        <button type="button" id="va-hard-delete-close-btn" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Description & Item Preview Box -->
+      <div class="space-y-3">
+        <p id="va-hard-delete-msg" class="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+          Are you sure you want to permanently delete this record? It will be purged from the database immediately.
+        </p>
+
+        <!-- Glassmorphic Item Preview Badge -->
+        <div id="va-hard-delete-item-pill" class="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-200/80 shadow-inner">
+          <div class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0 ring-4 ring-rose-100"></div>
+          <span id="va-hard-delete-item-name" class="text-xs font-bold font-mono text-slate-800 truncate">
+            item-slug-or-title
+          </span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button type="button" id="va-hard-delete-cancel-btn" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+          Cancel
+        </button>
+        <button type="button" id="va-hard-delete-confirm-btn" class="px-5 py-2.5 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-rose-600 via-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-lg shadow-rose-600/30 hover:shadow-rose-600/50 border border-rose-400/30 active:scale-95 transition transform cursor-pointer flex items-center gap-2">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <span id="va-hard-delete-confirm-text">Delete Permanently</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <script>
     const sidebar = document.getElementById('va-sidebar');
     const backdrop = document.getElementById('va-sidebar-backdrop');
@@ -199,6 +267,74 @@
       setTimeout(() => {
         toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
       }, 3500);
+    };
+
+    // Antigravity Glassmorphism Hard Delete Confirmation Modal System
+    window.vaConfirmHardDelete = function(options = {}) {
+      const {
+        title = 'Permanent Deletion',
+        message = 'Are you sure you want to permanently delete this record? This action cannot be undone and will purge all data from the database.',
+        itemName = 'Item',
+        confirmText = 'Delete Permanently',
+        onConfirm = null
+      } = options;
+
+      const modal = document.getElementById('va-hard-delete-modal');
+      const card = document.getElementById('va-hard-delete-card');
+      const titleEl = document.getElementById('va-hard-delete-title');
+      const msgEl = document.getElementById('va-hard-delete-msg');
+      const itemNameEl = document.getElementById('va-hard-delete-item-name');
+      const confirmBtn = document.getElementById('va-hard-delete-confirm-btn');
+      const confirmTextEl = document.getElementById('va-hard-delete-confirm-text');
+      const cancelBtn = document.getElementById('va-hard-delete-cancel-btn');
+      const closeBtn = document.getElementById('va-hard-delete-close-btn');
+      const backdrop = document.getElementById('va-hard-delete-backdrop');
+
+      if (!modal || !card) return;
+
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+      itemNameEl.textContent = itemName;
+      confirmTextEl.textContent = confirmText;
+
+      function closeModal() {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        card.classList.remove('scale-100');
+        card.classList.add('scale-95');
+        cleanup();
+      }
+
+      function handleConfirm() {
+        closeModal();
+        if (typeof onConfirm === 'function') {
+          onConfirm();
+        }
+      }
+
+      function handleKeydown(e) {
+        if (e.key === 'Escape') closeModal();
+      }
+
+      function cleanup() {
+        cancelBtn.removeEventListener('click', closeModal);
+        closeBtn.removeEventListener('click', closeModal);
+        backdrop.removeEventListener('click', closeModal);
+        confirmBtn.removeEventListener('click', handleConfirm);
+        document.removeEventListener('keydown', handleKeydown);
+      }
+
+      cancelBtn.addEventListener('click', closeModal);
+      closeBtn.addEventListener('click', closeModal);
+      backdrop.addEventListener('click', closeModal);
+      confirmBtn.addEventListener('click', handleConfirm);
+      document.addEventListener('keydown', handleKeydown);
+
+      // Smooth Antigravity floating entrance
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        card.classList.remove('scale-95');
+        card.classList.add('scale-100');
+      }, 15);
     };
   </script>
 

@@ -449,24 +449,34 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.deletePage = async function(id, title, isHard = false) {
-    const confirmMsg = isHard
-      ? `Are you sure you want to PERMANENTLY delete page "${title}"?\n\nThis will remove the record completely from the database and cannot be undone.`
-      : `Are you sure you want to move page "${title}" to Trash?`;
+    const executeDelete = async () => {
+      try {
+        const url = isHard ? `/visionadmin/api/pages/${id}?hard=1` : `/visionadmin/api/pages/${id}`;
+        const res = await fetch(url, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to delete page');
 
-    if (!confirm(confirmMsg)) return;
+        window.vaShowToast(data.message || (isHard ? 'Page deleted permanently.' : 'Page moved to Trash.'));
+        loadPages();
+      } catch (err) {
+        window.vaShowToast(`Error: ${err.message}`, 'error');
+      }
+    };
 
-    try {
-      const url = isHard ? `/visionadmin/api/pages/${id}?hard=1` : `/visionadmin/api/pages/${id}`;
-      const res = await fetch(url, {
-        method: 'DELETE'
+    if (isHard) {
+      // Trigger Antigravity Glassmorphism Hard Delete Modal
+      window.vaConfirmHardDelete({
+        title: 'Delete Page Permanently',
+        message: `Are you sure you want to permanently purge page "${title}"? All translations, metadata, and database records will be erased forever.`,
+        itemName: title || `Page #${id}`,
+        confirmText: 'Purge Page',
+        onConfirm: executeDelete
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to delete page');
-
-      window.vaShowToast(data.message || (isHard ? 'Page deleted permanently.' : 'Page moved to Trash.'));
-      loadPages();
-    } catch (err) {
-      alert(`Error: ${err.message}`);
+    } else {
+      if (!confirm(`Are you sure you want to move page "${title}" to Trash?`)) return;
+      executeDelete();
     }
   };
 

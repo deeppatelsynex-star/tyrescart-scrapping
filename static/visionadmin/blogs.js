@@ -462,24 +462,34 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.deleteBlog = async function(id, title, isHard = false) {
-    const confirmMsg = isHard
-      ? `Are you sure you want to PERMANENTLY delete article "${title}"?\n\nThis will remove the record completely from the database and cannot be undone.`
-      : `Are you sure you want to move article "${title}" to Trash?`;
+    const executeDelete = async () => {
+      try {
+        const url = isHard ? `/visionadmin/api/blogs/${id}?hard=1` : `/visionadmin/api/blogs/${id}`;
+        const res = await fetch(url, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to delete article');
 
-    if (!confirm(confirmMsg)) return;
+        window.vaShowToast(data.message || (isHard ? 'Article deleted permanently.' : 'Article moved to Trash.'));
+        loadBlogs();
+      } catch (err) {
+        window.vaShowToast(`Error: ${err.message}`, 'error');
+      }
+    };
 
-    try {
-      const url = isHard ? `/visionadmin/api/blogs/${id}?hard=1` : `/visionadmin/api/blogs/${id}`;
-      const res = await fetch(url, {
-        method: 'DELETE'
+    if (isHard) {
+      // Trigger Antigravity Glassmorphism Hard Delete Modal
+      window.vaConfirmHardDelete({
+        title: 'Delete Article Permanently',
+        message: `Are you sure you want to permanently purge article "${title}"? All multilingual translations, media links, and database records will be erased forever.`,
+        itemName: title || `Blog Article #${id}`,
+        confirmText: 'Purge Article',
+        onConfirm: executeDelete
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to delete article');
-
-      window.vaShowToast(data.message || (isHard ? 'Article deleted permanently.' : 'Article moved to Trash.'));
-      loadBlogs();
-    } catch (err) {
-      alert(`Error: ${err.message}`);
+    } else {
+      if (!confirm(`Are you sure you want to move article "${title}" to Trash?`)) return;
+      executeDelete();
     }
   };
 
