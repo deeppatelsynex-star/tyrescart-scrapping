@@ -298,23 +298,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------------------------------------------------------------------------
   // 6. Modal Open / Close & Auto Slugify
   // ---------------------------------------------------------------------------
+  function setVal(id, v) {
+    const el = document.getElementById(id);
+    if (el) el.value = v !== undefined && v !== null ? v : '';
+  }
+  function getVal(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+
   function openModal(isEdit = false, page = null) {
-    pageForm.reset();
-    editIdInput.value = isEdit && page ? page.id : '';
-    modalTitle.textContent = isEdit ? 'Edit Static Page' : 'Create New Static Page';
-    saveBtnText.textContent = isEdit ? 'Save Changes' : 'Create Page';
+    if (pageForm) pageForm.reset();
+    if (editIdInput) editIdInput.value = isEdit && page ? page.id : '';
+    if (modalTitle) modalTitle.textContent = isEdit ? 'Edit Static Page' : 'Create New Static Page';
+    if (saveBtnText) saveBtnText.textContent = isEdit ? 'Save Changes' : 'Create Page';
 
     document.querySelector('.locale-tab[data-locale="en"]')?.click();
 
     if (isEdit && page) {
-      document.getElementById('title_en').value = (typeof page.title === 'object' ? page.title?.en : page.title) || '';
-      document.getElementById('title_ar').value = (typeof page.title === 'object' ? page.title?.ar : '') || '';
-      document.getElementById('slug').value = page.slug || '';
-      document.getElementById('is_active').checked = Boolean(page.is_active);
-      document.getElementById('seo_title_en').value = (typeof page.seo_title === 'object' ? page.seo_title?.en : '') || '';
-      document.getElementById('seo_title_ar').value = (typeof page.seo_title === 'object' ? page.seo_title?.ar : '') || '';
-      document.getElementById('meta_description_en').value = (typeof page.meta_description === 'object' ? page.meta_description?.en : '') || '';
-      document.getElementById('meta_description_ar').value = (typeof page.meta_description === 'object' ? page.meta_description?.ar : '') || '';
+      setVal('title_en', (typeof page.title === 'object' ? page.title?.en : page.title) || '');
+      setVal('title_ar', (typeof page.title === 'object' ? page.title?.ar : '') || '');
+      setVal('slug', page.slug || '');
+      if (document.getElementById('is_active')) {
+        document.getElementById('is_active').checked = Boolean(page.is_active);
+      }
+      setVal('seo_title_en', (typeof page.seo_title === 'object' ? page.seo_title?.en : '') || '');
+      setVal('seo_title_ar', (typeof page.seo_title === 'object' ? page.seo_title?.ar : '') || '');
+      setVal('meta_description_en', (typeof page.meta_description === 'object' ? page.meta_description?.en : '') || '');
+      setVal('meta_description_ar', (typeof page.meta_description === 'object' ? page.meta_description?.ar : '') || '');
 
       setBannerPreview(page.banner_image || '');
 
@@ -325,14 +336,16 @@ document.addEventListener('DOMContentLoaded', () => {
       setEditorContent('content_ar', contentArVal);
 
     } else {
-      document.getElementById('is_active').checked = true;
+      if (document.getElementById('is_active')) {
+        document.getElementById('is_active').checked = true;
+      }
       setBannerPreview('');
 
       setEditorContent('content_en', '');
       setEditorContent('content_ar', '');
     }
 
-    modal.classList.remove('hidden');
+    if (modal) modal.classList.remove('hidden');
 
     // Resize active editor after modal animation
     setTimeout(() => {
@@ -344,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeModal() {
-    modal.classList.add('hidden');
+    if (modal) modal.classList.add('hidden');
   }
 
   document.getElementById('btn-create-page')?.addEventListener('click', () => openModal(false));
@@ -356,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const titleEnInput = document.getElementById('title_en');
   const slugInput = document.getElementById('slug');
   titleEnInput?.addEventListener('input', () => {
-    if (!editIdInput.value) {
+    if (!editIdInput?.value && slugInput) {
       const slugified = titleEnInput.value.toLowerCase()
         .replace(/[^\w\s-]/g, '')
         .replace(/[\s_-]+/g, '-')
@@ -369,15 +382,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // 7. Submit Form (Create / Update)
   // ---------------------------------------------------------------------------
   saveBtn?.addEventListener('click', async () => {
-    const editId = editIdInput.value;
-    const title_en = document.getElementById('title_en').value.trim();
-    const title_ar = document.getElementById('title_ar').value.trim();
-    const slug = document.getElementById('slug').value.trim();
+    const editId = editIdInput?.value || '';
+    const title_en = getVal('title_en');
+    const title_ar = getVal('title_ar');
+    const slug = getVal('slug');
 
     if (!title_en) {
       alert('Please provide an English page title.');
       document.querySelector('.locale-tab[data-locale="en"]')?.click();
-      document.getElementById('title_en').focus();
+      document.getElementById('title_en')?.focus();
       return;
     }
 
@@ -397,20 +410,20 @@ document.addEventListener('DOMContentLoaded', () => {
       title: { en: title_en, ar: title_ar },
       content: { en: content_en, ar: content_ar },
       slug: slug,
-      banner_image: bannerImageInput.value.trim() || null,
-      is_active: document.getElementById('is_active').checked,
+      banner_image: bannerImageInput ? bannerImageInput.value.trim() || null : null,
+      is_active: document.getElementById('is_active') ? document.getElementById('is_active').checked : true,
       seo_title: {
-        en: document.getElementById('seo_title_en').value.trim(),
-        ar: document.getElementById('seo_title_ar').value.trim()
+        en: getVal('seo_title_en'),
+        ar: getVal('seo_title_ar')
       },
       meta_description: {
-        en: document.getElementById('meta_description_en').value.trim(),
-        ar: document.getElementById('meta_description_ar').value.trim()
+        en: getVal('meta_description_en'),
+        ar: getVal('meta_description_ar')
       }
     };
 
-    saveBtn.disabled = true;
-    saveBtnText.textContent = 'Saving…';
+    if (saveBtn) saveBtn.disabled = true;
+    if (saveBtnText) saveBtnText.textContent = 'Saving…';
 
     try {
       const url = editId ? `/visionadmin/api/pages/${editId}` : '/visionadmin/api/pages';
@@ -433,8 +446,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       alert(`Error: ${err.message}`);
     } finally {
-      saveBtn.disabled = false;
-      saveBtnText.textContent = editId ? 'Save Changes' : 'Create Page';
+      if (saveBtn) saveBtn.disabled = false;
+      if (saveBtnText) saveBtnText.textContent = editId ? 'Save Changes' : 'Create Page';
     }
   });
 

@@ -305,25 +305,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------------------------------------------------------------------------
   // 6. Modal Open / Close & Auto Slugify
   // ---------------------------------------------------------------------------
+  function setVal(id, v) {
+    const el = document.getElementById(id);
+    if (el) el.value = v !== undefined && v !== null ? v : '';
+  }
+  function getVal(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+
   function openModal(isEdit = false, blog = null) {
-    blogForm.reset();
-    editIdInput.value = isEdit && blog ? blog.id : '';
-    modalTitle.textContent = isEdit ? 'Edit Blog Article' : 'Create New Blog Article';
-    saveBtnText.textContent = isEdit ? 'Save Changes' : 'Publish Article';
+    if (blogForm) blogForm.reset();
+    if (editIdInput) editIdInput.value = isEdit && blog ? blog.id : '';
+    if (modalTitle) modalTitle.textContent = isEdit ? 'Edit Blog Article' : 'Create New Blog Article';
+    if (saveBtnText) saveBtnText.textContent = isEdit ? 'Save Changes' : 'Publish Article';
 
     document.querySelector('.locale-tab[data-locale="en"]')?.click();
 
     if (isEdit && blog) {
-      document.getElementById('title_en').value = (typeof blog.title === 'object' ? blog.title?.en : blog.title) || '';
-      document.getElementById('title_ar').value = (typeof blog.title === 'object' ? blog.title?.ar : '') || '';
-      document.getElementById('slug').value = blog.slug || '';
-      document.getElementById('status').value = blog.status || 'draft';
-      document.getElementById('short_description_en').value = (typeof blog.short_description === 'object' ? blog.short_description?.en : blog.short_description) || '';
-      document.getElementById('short_description_ar').value = (typeof blog.short_description === 'object' ? blog.short_description?.ar : '') || '';
-      document.getElementById('meta_title_en').value = (typeof blog.meta_title === 'object' ? blog.meta_title?.en : '') || '';
-      document.getElementById('meta_title_ar').value = (typeof blog.meta_title === 'object' ? blog.meta_title?.ar : '') || '';
-      document.getElementById('meta_desc_en').value = (typeof blog.meta_desc === 'object' ? blog.meta_desc?.en : '') || '';
-      document.getElementById('meta_desc_ar').value = (typeof blog.meta_desc === 'object' ? blog.meta_desc?.ar : '') || '';
+      setVal('title_en', (typeof blog.title === 'object' ? blog.title?.en : blog.title) || '');
+      setVal('title_ar', (typeof blog.title === 'object' ? blog.title?.ar : '') || '');
+      setVal('slug', blog.slug || '');
+      setVal('status', blog.status || 'draft');
+      setVal('short_description_en', (typeof blog.short_description === 'object' ? blog.short_description?.en : blog.short_description) || '');
+      setVal('short_description_ar', (typeof blog.short_description === 'object' ? blog.short_description?.ar : '') || '');
+      setVal('meta_title_en', (typeof blog.meta_title === 'object' ? blog.meta_title?.en : '') || '');
+      setVal('meta_title_ar', (typeof blog.meta_title === 'object' ? blog.meta_title?.ar : '') || '');
+      setVal('meta_desc_en', (typeof blog.meta_desc === 'object' ? blog.meta_desc?.en : '') || '');
+      setVal('meta_desc_ar', (typeof blog.meta_desc === 'object' ? blog.meta_desc?.ar : '') || '');
 
       setImagePreview(blog.image || '');
 
@@ -334,14 +343,14 @@ document.addEventListener('DOMContentLoaded', () => {
       setEditorContent('blog_content_ar', contentArVal);
 
     } else {
-      document.getElementById('status').value = 'published';
+      setVal('status', 'published');
       setImagePreview('');
 
       setEditorContent('blog_content_en', '');
       setEditorContent('blog_content_ar', '');
     }
 
-    modal.classList.remove('hidden');
+    if (modal) modal.classList.remove('hidden');
 
     // Resize active editor after modal animation
     setTimeout(() => {
@@ -353,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeModal() {
-    modal.classList.add('hidden');
+    if (modal) modal.classList.add('hidden');
   }
 
   document.getElementById('btn-create-blog')?.addEventListener('click', () => openModal(false));
@@ -365,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const titleEnInput = document.getElementById('title_en');
   const slugInput = document.getElementById('slug');
   titleEnInput?.addEventListener('input', () => {
-    if (!editIdInput.value) {
+    if (!editIdInput?.value && slugInput) {
       const slugified = titleEnInput.value.toLowerCase()
         .replace(/[^\w\s-]/g, '')
         .replace(/[\s_-]+/g, '-')
@@ -378,15 +387,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // 7. Submit Form (Create / Update)
   // ---------------------------------------------------------------------------
   saveBtn?.addEventListener('click', async () => {
-    const editId = editIdInput.value;
-    const title_en = document.getElementById('title_en').value.trim();
-    const title_ar = document.getElementById('title_ar').value.trim();
-    const slug = document.getElementById('slug').value.trim();
+    const editId = editIdInput?.value || '';
+    const title_en = getVal('title_en');
+    const title_ar = getVal('title_ar');
+    const slug = getVal('slug');
 
     if (!title_en) {
       alert('Please provide an English article title.');
       document.querySelector('.locale-tab[data-locale="en"]')?.click();
-      document.getElementById('title_en').focus();
+      document.getElementById('title_en')?.focus();
       return;
     }
 
@@ -406,24 +415,24 @@ document.addEventListener('DOMContentLoaded', () => {
       title: { en: title_en, ar: title_ar },
       content: { en: content_en, ar: content_ar },
       short_description: {
-        en: document.getElementById('short_description_en').value.trim(),
-        ar: document.getElementById('short_description_ar').value.trim()
+        en: getVal('short_description_en'),
+        ar: getVal('short_description_ar')
       },
       slug: slug,
-      image: imageInput.value.trim() || null,
-      status: document.getElementById('status').value,
+      image: imageInput ? imageInput.value.trim() || null : null,
+      status: getVal('status') || 'draft',
       meta_title: {
-        en: document.getElementById('meta_title_en').value.trim(),
-        ar: document.getElementById('meta_title_ar').value.trim()
+        en: getVal('meta_title_en'),
+        ar: getVal('meta_title_ar')
       },
       meta_desc: {
-        en: document.getElementById('meta_desc_en').value.trim(),
-        ar: document.getElementById('meta_desc_ar').value.trim()
+        en: getVal('meta_desc_en'),
+        ar: getVal('meta_desc_ar')
       }
     };
 
-    saveBtn.disabled = true;
-    saveBtnText.textContent = 'Saving…';
+    if (saveBtn) saveBtn.disabled = true;
+    if (saveBtnText) saveBtnText.textContent = 'Saving…';
 
     try {
       const url = editId ? `/visionadmin/api/blogs/${editId}` : '/visionadmin/api/blogs';
@@ -446,9 +455,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       alert(`Error: ${err.message}`);
     } finally {
-      saveBtn.disabled = false;
-      saveBtnText.textContent = editId ? 'Save Changes' : 'Publish Article';
-    }
+      if (saveBtn) saveBtn.disabled = false;
+      if (saveBtnText) saveBtnText.textContent = editId ? 'Save Changes' : 'Publish Article';
   });
 
   // ---------------------------------------------------------------------------
