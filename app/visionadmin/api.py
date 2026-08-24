@@ -98,30 +98,35 @@ def register_visionadmin_routes(app):
             slug = Page.slugify(slug)
 
         if not Page.is_slug_available(slug):
-            return jsonify({'error': f'The slug "{slug}" is already in use.'}), 409
+            return jsonify({'error': f'The slug "{slug}" is already in use by another page. Please choose a different slug.'}), 409
 
-        page = Page.create(
-            title=title if isinstance(title, dict) else {"en": en_title, "ar": ""},
-            slug=slug,
-            content=data.get('content') or {"en": "", "ar": ""},
-            excerpt=data.get('excerpt') or {"en": "", "ar": ""},
-            template=data.get('template', 'default'),
-            featured_image=data.get('featured_image'),
-            status=data.get('status', 'draft'),
-            published_at=data.get('published_at'),
-            show_in_footer=bool(data.get('show_in_footer')),
-            show_in_header=bool(data.get('show_in_header')),
-            sort_order=int(data.get('sort_order') or 0),
-            meta_title=data.get('meta_title'),
-            meta_desc=data.get('meta_desc'),
-            canonical_url=data.get('canonical_url'),
-            created_by=session.get('user_id')
-        )
-        return jsonify({
-            'success': True,
-            'page': page.to_dict(),
-            'message': f'Page "{page.get_title()}" created successfully.'
-        }), 201
+        try:
+            page = Page.create(
+                title=title if isinstance(title, dict) else {"en": en_title, "ar": ""},
+                slug=slug,
+                content=data.get('content') or {"en": "", "ar": ""},
+                excerpt=data.get('excerpt') or {"en": "", "ar": ""},
+                template=data.get('template', 'default'),
+                featured_image=data.get('featured_image'),
+                status=data.get('status', 'draft'),
+                published_at=data.get('published_at'),
+                show_in_footer=bool(data.get('show_in_footer')),
+                show_in_header=bool(data.get('show_in_header')),
+                sort_order=int(data.get('sort_order') or 0),
+                meta_title=data.get('meta_title'),
+                meta_desc=data.get('meta_desc'),
+                canonical_url=data.get('canonical_url'),
+                created_by=session.get('user_id')
+            )
+            return jsonify({
+                'success': True,
+                'page': page.to_dict(),
+                'message': f'Page "{page.get_title()}" created successfully.'
+            }), 201
+        except Exception as e:
+            if 'Duplicate entry' in str(e) or 'IntegrityError' in type(e).__name__:
+                return jsonify({'error': f'The slug "{slug}" is already in use. Please enter a different slug.'}), 409
+            return jsonify({'error': f'Failed to create page: {str(e)}'}), 500
 
     @app.route('/visionadmin/api/pages/<int:page_id>', methods=['PUT'])
     @login_required_api
@@ -139,13 +144,18 @@ def register_visionadmin_routes(app):
                 return jsonify({'error': f'The slug "{new_slug}" is already in use.'}), 409
             data['slug'] = new_slug
 
-        page.update(**data)
-        refreshed = Page.find_by_id(page_id)
-        return jsonify({
-            'success': True,
-            'page': refreshed.to_dict(),
-            'message': f'Page "{refreshed.get_title()}" updated successfully.'
-        })
+        try:
+            page.update(**data)
+            refreshed = Page.find_by_id(page_id)
+            return jsonify({
+                'success': True,
+                'page': refreshed.to_dict(),
+                'message': f'Page "{refreshed.get_title()}" updated successfully.'
+            })
+        except Exception as e:
+            if 'Duplicate entry' in str(e) or 'IntegrityError' in type(e).__name__:
+                return jsonify({'error': 'The specified slug is already in use.'}), 409
+            return jsonify({'error': f'Failed to update page: {str(e)}'}), 500
 
     @app.route('/visionadmin/api/pages/<int:page_id>', methods=['DELETE'])
     @login_required_api

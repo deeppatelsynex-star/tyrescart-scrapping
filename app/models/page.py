@@ -33,7 +33,7 @@ class SlugMixin:
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                sql = "SELECT id FROM pages WHERE slug = %s AND deleted_at IS NULL"
+                sql = "SELECT id FROM pages WHERE slug = %s"
                 params = [slug]
                 if exclude_id:
                     sql += " AND id != %s"
@@ -49,13 +49,21 @@ class SoftDeleteMixin:
 
     @classmethod
     def soft_delete(cls, page_id: int) -> bool:
-        """Marks a page as deleted without removing its row from disk."""
+        """Marks a page as deleted and frees its slug for new pages."""
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                cursor.execute("SELECT slug FROM pages WHERE id = %s AND deleted_at IS NULL", (page_id,))
+                row = cursor.fetchone()
+                if not row:
+                    return False
+                old_slug = row.get('slug') or ''
+                # Prepend __del_<id>_<timestamp>_ to free unique key constraint
+                ts = int(datetime.now(timezone.utc).timestamp())
+                new_slug = f"__del_{page_id}_{ts}_{old_slug}"[:250]
                 cursor.execute(
-                    "UPDATE pages SET deleted_at = CURRENT_TIMESTAMP WHERE id = %s AND deleted_at IS NULL",
-                    (page_id,)
+                    "UPDATE pages SET deleted_at = CURRENT_TIMESTAMP, slug = %s WHERE id = %s",
+                    (new_slug, page_id)
                 )
                 return cursor.rowcount > 0
         finally:
@@ -63,13 +71,27 @@ class SoftDeleteMixin:
 
     @classmethod
     def restore(cls, page_id: int) -> bool:
-        """Restores a soft-deleted page."""
+        """Restores a soft-deleted page, restoring original slug if available."""
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                cursor.execute("SELECT slug FROM pages WHERE id = %s AND deleted_at IS NOT NULL", (page_id,))
+                row = cursor.fetchone()
+                if not row:
+                    return False
+                cur_slug = row.get('slug') or ''
+                # Clean prefix
+                clean_slug = re.sub(r'^__del_\d+_\d+_', '', cur_slug)
+                target_slug = clean_slug
+
+                # Check if target slug is currently free
+                cursor.execute("SELECT id FROM pages WHERE slug = %s AND id != %s", (target_slug, page_id))
+                if cursor.fetchone() is not None:
+                    target_slug = f"{clean_slug}-restored-{page_id}"
+
                 cursor.execute(
-                    "UPDATE pages SET deleted_at = NULL WHERE id = %s AND deleted_at IS NOT NULL",
-                    (page_id,)
+                    "UPDATE pages SET deleted_at = NULL, slug = %s WHERE id = %s",
+                    (target_slug, page_id)
                 )
                 return cursor.rowcount > 0
         finally:
@@ -129,7 +151,12 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
     def __init__(self, data: dict):
         self.id = data.get('id')
         self.title = self._parse_json(data.get('title'))
-        self.slug = data.get('slug')
+        
+        # Display clean slug for soft-deleted items
+        raw_slug = data.get('slug') or ''
+        self.raw_slug = raw_slug
+        self.slug = re.sub(r'^__del_\d+_\d+_', '', raw_slug)
+
         self.content = self._parse_json(data.get('content'))
         self.excerpt = self._parse_json(data.get('excerpt'))
         self.template = data.get('template', 'default')
@@ -337,7 +364,7 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                cursor.execute("SELECT * FROM pages WHERE id = %s AND deleted_at IS NULL LIMIT 1", (page_id,))
+                cursor.execute("SELECT * FROM pages WHERE id = %s LIMIT 1", (page_id,))
                 row = cursor.fetchone()
                 return cls(row) if row else None
         finally:
