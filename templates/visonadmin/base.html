@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}TyresVision CMS{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/visonadmin/visonadmin.css" />
+  <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/x-icon" />
+  <style>
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased">
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Mode Switcher -->
+      <div class="flex items-center gap-6">
+        <a href="/visonadmin/dashboard" class="flex items-center gap-2.5 group">
+          <div class="w-9 h-9 rounded-xl bg-slate-950 text-emerald-400 flex items-center justify-center font-black text-sm shadow-sm group-hover:scale-105 transition">
+            TV
+          </div>
+          <div>
+            <span class="text-base font-extrabold text-slate-950 tracking-tight">Tyres<span class="text-emerald-600">Vision</span></span>
+            <span class="ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">CMS</span>
+          </div>
+        </a>
+
+        <!-- Desktop Nav Links -->
+        <nav class="hidden md:flex items-center gap-1 pl-4 border-l border-slate-200 text-sm font-semibold text-slate-600">
+          <a href="/visonadmin/dashboard" class="px-3.5 py-2 rounded-xl transition {% if page == 'dashboard' %}bg-slate-900 text-white{% else %}hover:bg-slate-100 text-slate-700{% endif %}">
+            Dashboard
+          </a>
+          <a href="/visonadmin/pages" class="px-3.5 py-2 rounded-xl transition {% if page == 'pages' %}bg-slate-900 text-white{% else %}hover:bg-slate-100 text-slate-700{% endif %}">
+            Pages & Sections
+          </a>
+          <a href="/visonadmin/media" class="px-3.5 py-2 rounded-xl transition {% if page == 'media' %}bg-slate-900 text-white{% else %}hover:bg-slate-100 text-slate-700{% endif %}">
+            Media Library
+          </a>
+          <a href="/visonadmin/settings" class="px-3.5 py-2 rounded-xl transition {% if page == 'settings' %}bg-slate-900 text-white{% else %}hover:bg-slate-100 text-slate-700{% endif %}">
+            Site Settings
+          </a>
+        </nav>
+      </div>
+
+      <!-- Right Utility Actions -->
+      <div class="flex items-center gap-3">
+        <!-- Live Storefront Link -->
+        <a href="/" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-emerald-500 bg-white text-xs font-bold text-slate-700 hover:text-emerald-700 transition">
+          <svg class="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          <span>View Storefront</span>
+        </a>
+
+        <!-- Switch to Scraper Admin -->
+        <a href="/tcsadmin/docs/scraper" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition">
+          <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Scraper Admin</span>
+        </a>
+
+        <!-- Logout -->
+        <a href="/tcsadmin/logout" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition">
+          Sign Out
+        </a>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Tab Strip -->
+    <div class="md:hidden flex items-center justify-around border-t border-slate-100 bg-slate-50/70 px-2 py-1.5 text-xs font-bold text-slate-600">
+      <a href="/visonadmin/dashboard" class="px-2.5 py-1.5 rounded-lg {% if page == 'dashboard' %}bg-slate-900 text-white{% endif %}">Dashboard</a>
+      <a href="/visonadmin/pages" class="px-2.5 py-1.5 rounded-lg {% if page == 'pages' %}bg-slate-900 text-white{% endif %}">Pages</a>
+      <a href="/visonadmin/media" class="px-2.5 py-1.5 rounded-lg {% if page == 'media' %}bg-slate-900 text-white{% endif %}">Media</a>
+      <a href="/visonadmin/settings" class="px-2.5 py-1.5 rounded-lg {% if page == 'settings' %}bg-slate-900 text-white{% endif %}">Settings</a>
+    </div>
+  </header>
+
+  <!-- Main Viewport Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 bg-white py-6 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <p>&copy; 2026 TyresVision CMS. Storefront Content Management Platform.</p>
+      <div class="flex items-center gap-4">
+        <a href="/" target="_blank" class="hover:underline">Storefront</a>
+        <a href="/tcsadmin/docs/scraper" class="hover:underline">Scraper Dashboard</a>
+      </div>
+    </div>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

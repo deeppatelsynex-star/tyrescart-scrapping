@@ -1,0 +1,25 @@
+﻿{% extends "visonadmin/base.html" %}
+{% block title %}Media Library - TyresVision CMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-950 tracking-tight">Media Library</h1>
+      <p class="text-sm text-slate-500 mt-1">Manage images, vehicle badges, and banner assets.</p>
+    </div>
+    <button type="button" onclick="alert('Upload file dialog')" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition cursor-pointer">
+      Upload Media
+    </button>
+  </div>
+
+  <!-- Dynamic Media Grid Container -->
+  <div id="cms-media-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+    <!-- Populated by media.js -->
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/visonadmin/media.js"></script>
+{% endblock %}

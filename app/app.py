@@ -18,6 +18,7 @@ from flask import Flask, abort, jsonify, redirect, render_template, request, ses
 import re
 
 from api import register_api_routes
+from vison_api import register_vison_api_routes
 from auth import (
     bit_to_bool,
     create_password_reset_token,
@@ -329,10 +330,49 @@ def reset_password_page():
 
 
 # ============================================================================
-# 4. REGISTER CENTRALIZED API LAYER
+# 3. TYRESVISION CMS PAGE ROUTES (/visonadmin/*)
+# Base URL: https://tyrescart-scrapping.klever.ae/visonadmin/
+# ============================================================================
+
+@app.route('/visonadmin/login', methods=['GET'])
+@app.route('/visonadmin', methods=['GET'])
+@app.route('/visonadmin/', methods=['GET'])
+def vison_login_page():
+    if 'user_id' in session:
+        return redirect('/visonadmin/dashboard')
+    return render_template('visonadmin/login.html')
+
+
+@app.route('/visonadmin/dashboard')
+@login_required_page
+def vison_dashboard_page():
+    return render_template('visonadmin/dashboard.html', page='dashboard')
+
+
+@app.route('/visonadmin/pages')
+@login_required_page
+def vison_pages_page():
+    return render_template('visonadmin/pages.html', page='pages')
+
+
+@app.route('/visonadmin/media')
+@login_required_page
+def vison_media_page():
+    return render_template('visonadmin/media.html', page='media')
+
+
+@app.route('/visonadmin/settings')
+@login_required_page
+def vison_settings_page():
+    return render_template('visonadmin/settings.html', page='settings')
+
+
+# ============================================================================
+# 4. REGISTER CENTRALIZED API LAYERS
 # ============================================================================
 
 register_api_routes(app)
+register_vison_api_routes(app)
 
 
 # ============================================================================

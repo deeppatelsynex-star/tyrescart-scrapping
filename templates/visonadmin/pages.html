@@ -1,0 +1,25 @@
+﻿{% extends "visonadmin/base.html" %}
+{% block title %}Pages & Sections - TyresVision CMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-950 tracking-tight">Storefront Pages & Sections</h1>
+      <p class="text-sm text-slate-500 mt-1">Edit live content blocks, headings, testimonials, and FAQs.</p>
+    </div>
+    <button type="button" onclick="alert('Add page modal')" class="px-4 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold shadow-sm transition cursor-pointer">
+      + New Page
+    </button>
+  </div>
+
+  <!-- Dynamic Pages List Container -->
+  <div id="cms-pages-list" class="space-y-3">
+    <!-- Populated by pages.js -->
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/visonadmin/pages.js"></script>
+{% endblock %}
