@@ -256,6 +256,7 @@ def logout():
 
 
 @app.route('/tcsadmin/forgot-password', methods=['GET', 'POST'])
+@app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password_page():
     if request.method == 'GET':
         return render_template('forgot_password.html')
@@ -290,6 +291,7 @@ def forgot_password_page():
 
 
 @app.route('/tcsadmin/reset-password', methods=['GET', 'POST'])
+@app.route('/reset-password', methods=['GET', 'POST'])
 def reset_password_page():
     if request.method == 'GET':
         return render_template('reset_password.html')
