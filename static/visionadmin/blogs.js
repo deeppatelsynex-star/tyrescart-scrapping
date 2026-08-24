@@ -79,21 +79,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. Featured Image Upload Handler
   // ---------------------------------------------------------------------------
   function setImagePreview(url) {
+    const previewBox = document.getElementById('blog-preview-box');
     if (url) {
-      imageInput.value = url;
-      previewImg.src = url;
-      previewImg.classList.remove('hidden');
-      placeholderIcon.classList.add('hidden');
-      removeBtn.classList.remove('hidden');
-      fileStatusText.textContent = url.split('/').pop();
+      if (imageInput) imageInput.value = url;
+      if (previewImg) previewImg.src = url;
+      if (previewBox) previewBox.classList.remove('hidden');
+      if (fileStatusText) fileStatusText.textContent = url.split('/').pop();
     } else {
-      imageInput.value = '';
-      previewImg.src = '';
-      previewImg.classList.add('hidden');
-      placeholderIcon.classList.remove('hidden');
-      removeBtn.classList.add('hidden');
-      fileInput.value = '';
-      fileStatusText.textContent = 'PNG, JPG, WEBP, SVG or AVIF up to 10MB.';
+      if (imageInput) imageInput.value = '';
+      if (previewImg) previewImg.src = '';
+      if (previewBox) previewBox.classList.add('hidden');
+      if (fileInput) fileInput.value = '';
+      if (fileStatusText) fileStatusText.textContent = 'PNG, JPG, WEBP, SVG or AVIF up to 10MB.';
     }
   }
 

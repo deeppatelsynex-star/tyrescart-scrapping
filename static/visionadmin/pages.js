@@ -79,21 +79,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. Banner Image File Upload Handler
   // ---------------------------------------------------------------------------
   function setBannerPreview(url) {
+    const bannerBox = document.getElementById('banner-preview-box');
     if (url) {
-      bannerImageInput.value = url;
-      bannerPreviewImg.src = url;
-      bannerPreviewImg.classList.remove('hidden');
-      bannerPlaceholderIcon.classList.add('hidden');
-      bannerRemoveBtn.classList.remove('hidden');
-      bannerStatusText.textContent = url.split('/').pop();
+      if (bannerImageInput) bannerImageInput.value = url;
+      if (bannerPreviewImg) bannerPreviewImg.src = url;
+      if (bannerBox) bannerBox.classList.remove('hidden');
+      if (bannerStatusText) bannerStatusText.textContent = url.split('/').pop();
     } else {
-      bannerImageInput.value = '';
-      bannerPreviewImg.src = '';
-      bannerPreviewImg.classList.add('hidden');
-      bannerPlaceholderIcon.classList.remove('hidden');
-      bannerRemoveBtn.classList.add('hidden');
-      bannerFileInput.value = '';
-      bannerStatusText.textContent = 'PNG, JPG, WEBP, SVG or AVIF up to 10MB.';
+      if (bannerImageInput) bannerImageInput.value = '';
+      if (bannerPreviewImg) bannerPreviewImg.src = '';
+      if (bannerBox) bannerBox.classList.add('hidden');
+      if (bannerFileInput) bannerFileInput.value = '';
+      if (bannerStatusText) bannerStatusText.textContent = 'PNG, JPG, WEBP, SVG or AVIF up to 10MB.';
     }
   }
 
