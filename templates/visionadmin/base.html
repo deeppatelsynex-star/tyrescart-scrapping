@@ -5,12 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="{{ session.get('csrf_token', '') }}" />
   <title>{% block title %}VisionAdmin CMS{% endblock %}</title>
+
+  <!-- Favicon direct icons -->
+  <link rel="icon" type="image/webp" href="/static/assets/images/favicon-color.webp" />
+  <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/webp" />
+  <link rel="apple-touch-icon" href="/static/assets/images/favicon-color.webp" />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/visionadmin/visionadmin.css" />
-  <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/x-icon" />
   <style>
     body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
     .va-nav-active {
@@ -34,11 +39,11 @@
     <!-- Top Brand & Navigation -->
     <div class="p-5 space-y-6 overflow-y-auto">
       
-      <!-- Brand Logo Header -->
+      <!-- Brand Logo Header with Direct Favicon Image -->
       <div class="flex items-center justify-between pb-4 border-b border-slate-100">
         <a href="/visionadmin/pages" class="flex items-center gap-2.5 group">
-          <div class="w-10 h-10 rounded-2xl bg-slate-950 text-emerald-400 font-black text-base flex items-center justify-center shadow-md group-hover:scale-105 transition">
-            VA
+          <div class="w-10 h-10 rounded-2xl bg-slate-950 p-2 flex items-center justify-center shadow-md group-hover:scale-105 transition shrink-0">
+            <img src="/static/assets/images/favicon-color.webp" alt="VisionAdmin Icon" class="w-full h-full object-contain" />
           </div>
           <div>
             <div class="flex items-center gap-1.5">
@@ -91,16 +96,16 @@
     <!-- Bottom User Profile & Sign Out Bar -->
     <div class="p-4 border-t border-slate-200 bg-slate-50/70 flex items-center justify-between gap-3">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0">
-          {{ (session.get('name') or 'Admin')[0]|upper }}
+        <div class="w-9 h-9 rounded-xl bg-slate-950 p-1.5 flex items-center justify-center shrink-0">
+          <img src="/static/assets/images/favicon-color.webp" alt="Favicon" class="w-full h-full object-contain" />
         </div>
         <div class="min-w-0">
-          <p class="text-xs font-bold text-slate-900 truncate">{{ session.get('name') or 'Administrator' }}</p>
-          <p class="text-[10px] text-slate-400 truncate">{{ session.get('email') or 'admin@tyrescart.ae' }}</p>
+          <p class="text-xs font-bold text-slate-900 truncate">{{ session.get('name') or 'VisionAdmin User' }}</p>
+          <p class="text-[10px] text-slate-400 truncate">{{ session.get('email') or 'Open CMS Mode' }}</p>
         </div>
       </div>
-      <a href="/tcsadmin/logout" title="Sign Out" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition shrink-0 cursor-pointer">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <a href="/" title="Back to Website" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-xl transition shrink-0 cursor-pointer">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       </a>
     </div>
   </aside>
@@ -118,6 +123,7 @@
 
         <!-- Current Breadcrumb Title -->
         <div class="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700">
+          <img src="/static/assets/images/favicon-color.webp" alt="Favicon" class="w-4 h-4 object-contain inline-block" />
           <span class="text-slate-400">VisionAdmin</span>
           <span class="text-slate-300">/</span>
           <span class="text-slate-900 capitalize">{{ page or 'Pages' }}</span>
@@ -130,9 +136,6 @@
           <svg class="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           <span class="hidden sm:inline">View Storefront</span>
         </a>
-        <a href="/tcsadmin/logout" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-700 text-xs font-bold transition">
-          Sign Out
-        </a>
       </div>
     </header>
 
@@ -143,7 +146,10 @@
 
     <!-- Footer -->
     <footer class="border-t border-slate-200 bg-white py-4 px-4 sm:px-6 lg:px-8 text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2 mt-auto">
-      <p>&copy; 2026 TyresCart.ae VisionAdmin CMS. Static Pages & Policies Management.</p>
+      <div class="flex items-center gap-2">
+        <img src="/static/assets/images/favicon-color.webp" alt="Favicon" class="w-3.5 h-3.5 object-contain" />
+        <p>&copy; 2026 TyresCart.ae VisionAdmin CMS. Static Pages & Policies Management.</p>
+      </div>
       <div class="flex items-center gap-4">
         <a href="/" target="_blank" class="hover:underline text-slate-500">Live Website</a>
         <a href="/tcsadmin/docs/scraper" class="hover:underline text-slate-500">Scraper Ops</a>
