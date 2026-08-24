@@ -93,7 +93,13 @@ def client_page(slug):
     if slug in ('tcsadmin', 'visionadmin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico'):
         abort(404)
 
-    locale = request.args.get('locale', 'en')
+    req_locale = request.args.get('locale')
+    if req_locale in ('en', 'ar'):
+        session['site_locale'] = req_locale
+        locale = req_locale
+    else:
+        locale = session.get('site_locale', 'en')
+
     page = Page.find_by_slug(slug)
     if not page:
         abort(404)
