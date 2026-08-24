@@ -1,15 +1,14 @@
 ﻿"""
 app/visionadmin/api.py - VisionAdmin CMS Controller & API Layer
-Handles Page Management CRUD routes and JSON endpoints for static pages.
+Open CMS Static Pages Management CRUD routes and JSON endpoints.
 """
 
 from flask import Blueprint, jsonify, render_template, request, session
-from auth import login_required_api, login_required_page, require_csrf
 from models.page import Page
 
 
 def register_visionadmin_routes(app):
-    """Registers all /visionadmin page and API endpoints."""
+    """Registers all /visionadmin page and API endpoints (open access, no login required)."""
 
     # =========================================================================
     # 1. PAGE ROUTES
@@ -18,7 +17,6 @@ def register_visionadmin_routes(app):
     @app.route('/visionadmin', methods=['GET'])
     @app.route('/visionadmin/', methods=['GET'])
     @app.route('/visionadmin/pages', methods=['GET'])
-    @login_required_page
     def visionadmin_pages():
         return render_template('visionadmin/pages.html', page='pages')
 
@@ -27,7 +25,6 @@ def register_visionadmin_routes(app):
     # =========================================================================
 
     @app.route('/visionadmin/api/pages', methods=['GET'])
-    @login_required_api
     def visionadmin_get_pages():
         locale = request.args.get('locale')
         include_deleted = request.args.get('trash') == '1'
@@ -72,7 +69,6 @@ def register_visionadmin_routes(app):
         })
 
     @app.route('/visionadmin/api/pages/<int:page_id>', methods=['GET'])
-    @login_required_api
     def visionadmin_get_page(page_id):
         page = Page.find_by_id(page_id)
         if not page:
@@ -80,8 +76,6 @@ def register_visionadmin_routes(app):
         return jsonify({'success': True, 'page': page.to_dict()})
 
     @app.route('/visionadmin/api/pages', methods=['POST'])
-    @login_required_api
-    @require_csrf
     def visionadmin_create_page():
         data = request.get_json(silent=True) or {}
         
@@ -129,8 +123,6 @@ def register_visionadmin_routes(app):
             return jsonify({'error': f'Failed to create page: {str(e)}'}), 500
 
     @app.route('/visionadmin/api/pages/<int:page_id>', methods=['PUT'])
-    @login_required_api
-    @require_csrf
     def visionadmin_update_page(page_id):
         page = Page.find_by_id(page_id)
         if not page:
@@ -158,8 +150,6 @@ def register_visionadmin_routes(app):
             return jsonify({'error': f'Failed to update page: {str(e)}'}), 500
 
     @app.route('/visionadmin/api/pages/<int:page_id>', methods=['DELETE'])
-    @login_required_api
-    @require_csrf
     def visionadmin_delete_page(page_id):
         page = Page.find_by_id(page_id)
         if not page:
@@ -172,8 +162,6 @@ def register_visionadmin_routes(app):
         })
 
     @app.route('/visionadmin/api/pages/<int:page_id>/restore', methods=['POST'])
-    @login_required_api
-    @require_csrf
     def visionadmin_restore_page(page_id):
         Page.restore(page_id)
         return jsonify({
