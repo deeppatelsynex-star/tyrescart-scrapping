@@ -1,10 +1,13 @@
 import os
 import sys
 
-# Ensure app directory and project root are always in sys.path for direct imports
+# Ensure app directory, submodules, and project root are always in sys.path
 _app_dir = os.path.dirname(os.path.abspath(__file__))
 _root_dir = os.path.dirname(_app_dir)
-for _p in [_app_dir, _root_dir]:
+_scraperapp_dir = os.path.join(_app_dir, 'scraperapp')
+_visonapp_dir = os.path.join(_app_dir, 'visonapp')
+_scrapers_dir = os.path.join(_root_dir, 'scrapers')
+for _p in [_app_dir, _root_dir, _scraperapp_dir, _visonapp_dir, _scrapers_dir]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
@@ -17,8 +20,9 @@ from flask import Flask, abort, jsonify, redirect, render_template, request, ses
 
 import re
 
-from api import register_api_routes
-from vison_api import register_vison_api_routes
+from scraperapp.api import register_api_routes
+from visonapp.api import register_vison_api_routes
+from scraperapp import job_manager
 from auth import (
     bit_to_bool,
     create_password_reset_token,
@@ -33,7 +37,6 @@ from auth import (
 from db import get_connection
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-import job_manager
 from mailer import send_email
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
