@@ -80,14 +80,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------------------------------------------------------------------------
   function setImagePreview(url) {
     const previewBox = document.getElementById('blog-preview-box');
+    const previewImageEl = document.getElementById('blog-preview-img');
     if (url) {
       if (imageInput) imageInput.value = url;
-      if (previewImg) previewImg.src = url;
+      if (previewImageEl) previewImageEl.src = url;
       if (previewBox) previewBox.classList.remove('hidden');
       if (fileStatusText) fileStatusText.textContent = url.split('/').pop();
     } else {
       if (imageInput) imageInput.value = '';
-      if (previewImg) previewImg.src = '';
+      if (previewImageEl) previewImageEl.src = '';
       if (previewBox) previewBox.classList.add('hidden');
       if (fileInput) fileInput.value = '';
       if (fileStatusText) fileStatusText.textContent = 'PNG, JPG, WEBP, SVG or AVIF up to 10MB.';
@@ -98,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    fileStatusText.textContent = `Uploading "${file.name}"…`;
+    if (fileStatusText) fileStatusText.textContent = `Uploading "${file.name}"…`;
     const formData = new FormData();
     formData.append('file', file);
 
@@ -116,6 +117,19 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       alert(`Upload error: ${err.message}`);
       setImagePreview('');
+    }
+  });
+
+  imageInput?.addEventListener('input', () => {
+    const val = imageInput.value.trim();
+    if (val) {
+      const previewImageEl = document.getElementById('blog-preview-img');
+      const previewBox = document.getElementById('blog-preview-box');
+      if (previewImageEl) previewImageEl.src = val;
+      if (previewBox) previewBox.classList.remove('hidden');
+    } else {
+      const previewBox = document.getElementById('blog-preview-box');
+      if (previewBox) previewBox.classList.add('hidden');
     }
   });
 

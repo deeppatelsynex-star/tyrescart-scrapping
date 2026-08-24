@@ -80,14 +80,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------------------------------------------------------------------------
   function setBannerPreview(url) {
     const bannerBox = document.getElementById('banner-preview-box');
+    const previewImg = document.getElementById('banner-preview-img');
     if (url) {
       if (bannerImageInput) bannerImageInput.value = url;
-      if (bannerPreviewImg) bannerPreviewImg.src = url;
+      if (previewImg) previewImg.src = url;
       if (bannerBox) bannerBox.classList.remove('hidden');
       if (bannerStatusText) bannerStatusText.textContent = url.split('/').pop();
     } else {
       if (bannerImageInput) bannerImageInput.value = '';
-      if (bannerPreviewImg) bannerPreviewImg.src = '';
+      if (previewImg) previewImg.src = '';
       if (bannerBox) bannerBox.classList.add('hidden');
       if (bannerFileInput) bannerFileInput.value = '';
       if (bannerStatusText) bannerStatusText.textContent = 'PNG, JPG, WEBP, SVG or AVIF up to 10MB.';
@@ -98,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    bannerStatusText.textContent = `Uploading "${file.name}"…`;
+    if (bannerStatusText) bannerStatusText.textContent = `Uploading "${file.name}"…`;
     const formData = new FormData();
     formData.append('file', file);
 
@@ -116,6 +117,19 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       alert(`Upload error: ${err.message}`);
       setBannerPreview('');
+    }
+  });
+
+  bannerImageInput?.addEventListener('input', () => {
+    const val = bannerImageInput.value.trim();
+    if (val) {
+      const previewImg = document.getElementById('banner-preview-img');
+      const bannerBox = document.getElementById('banner-preview-box');
+      if (previewImg) previewImg.src = val;
+      if (bannerBox) bannerBox.classList.remove('hidden');
+    } else {
+      const bannerBox = document.getElementById('banner-preview-box');
+      if (bannerBox) bannerBox.classList.add('hidden');
     }
   });
 
