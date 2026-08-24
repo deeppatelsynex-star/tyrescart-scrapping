@@ -1,4 +1,4 @@
-﻿"""
+"""
 app/visionadmin/api.py - VisionAdmin CMS Controller & API Layer
 Handles Page & Blog Management CRUD routes, file uploads, and JSON endpoints.
 """
@@ -219,11 +219,20 @@ def register_visionadmin_routes(app):
         if not page:
             return jsonify({'error': 'Page not found.'}), 404
 
-        Page.soft_delete(page_id)
-        return jsonify({
-            'success': True,
-            'message': f'Page "{page.get_title()}" moved to trash.'
-        })
+        is_hard = request.args.get('hard') == '1' or request.args.get('permanent') == '1' or page.deleted_at is not None
+
+        if is_hard:
+            Page.hard_delete(page_id)
+            return jsonify({
+                'success': True,
+                'message': f'Page "{page.get_title()}" permanently deleted from database.'
+            })
+        else:
+            Page.soft_delete(page_id)
+            return jsonify({
+                'success': True,
+                'message': f'Page "{page.get_title()}" moved to trash.'
+            })
 
     @app.route('/visionadmin/api/pages/<int:page_id>/restore', methods=['POST'])
     def visionadmin_restore_page(page_id):
@@ -366,11 +375,20 @@ def register_visionadmin_routes(app):
         if not blog:
             return jsonify({'error': 'Blog article not found.'}), 404
 
-        Blog.soft_delete(blog_id)
-        return jsonify({
-            'success': True,
-            'message': f'Blog "{blog.get_title()}" moved to trash.'
-        })
+        is_hard = request.args.get('hard') == '1' or request.args.get('permanent') == '1' or blog.deleted_at is not None
+
+        if is_hard:
+            Blog.hard_delete(blog_id)
+            return jsonify({
+                'success': True,
+                'message': f'Article "{blog.get_title()}" permanently deleted from database.'
+            })
+        else:
+            Blog.soft_delete(blog_id)
+            return jsonify({
+                'success': True,
+                'message': f'Article "{blog.get_title()}" moved to trash.'
+            })
 
     @app.route('/visionadmin/api/blogs/<int:blog_id>/restore', methods=['POST'])
     def visionadmin_restore_blog(blog_id):

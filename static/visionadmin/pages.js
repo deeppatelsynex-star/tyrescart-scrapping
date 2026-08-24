@@ -1,4 +1,4 @@
-﻿// pages.js - VisionAdmin Pages & Policies CRUD Controller with Flask-CKEditor
+// pages.js - VisionAdmin Pages & Policies CRUD Controller with Flask-CKEditor
 document.addEventListener('DOMContentLoaded', () => {
   let pagesData = [];
   let currentFilter = 'all';
@@ -211,12 +211,15 @@ document.addEventListener('DOMContentLoaded', () => {
               <button type="button" onclick="window.editPage(${p.id})" class="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer">
                 Edit
               </button>
-              <button type="button" onclick="window.deletePage(${p.id}, '${escapeHtml(enTitle)}')" class="px-3 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition cursor-pointer">
+              <button type="button" onclick="window.deletePage(${p.id}, '${escapeHtml(enTitle)}', false)" class="px-3 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition cursor-pointer">
                 Trash
               </button>
             ` : `
               <button type="button" onclick="window.restorePage(${p.id})" class="px-3 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition cursor-pointer">
                 Restore
+              </button>
+              <button type="button" onclick="window.deletePage(${p.id}, '${escapeHtml(enTitle)}', true)" class="px-3 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition cursor-pointer shadow-xs">
+                Delete Permanently
               </button>
             `}
           </td>
@@ -445,17 +448,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  window.deletePage = async function(id, title) {
-    if (!confirm(`Are you sure you want to move page "${title}" to Trash?`)) return;
+  window.deletePage = async function(id, title, isHard = false) {
+    const confirmMsg = isHard
+      ? `Are you sure you want to PERMANENTLY delete page "${title}"?\n\nThis will remove the record completely from the database and cannot be undone.`
+      : `Are you sure you want to move page "${title}" to Trash?`;
+
+    if (!confirm(confirmMsg)) return;
 
     try {
-      const res = await fetch(`/visionadmin/api/pages/${id}`, {
+      const url = isHard ? `/visionadmin/api/pages/${id}?hard=1` : `/visionadmin/api/pages/${id}`;
+      const res = await fetch(url, {
         method: 'DELETE'
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to delete page');
 
-      window.vaShowToast(data.message || 'Page moved to Trash.');
+      window.vaShowToast(data.message || (isHard ? 'Page deleted permanently.' : 'Page moved to Trash.'));
       loadPages();
     } catch (err) {
       alert(`Error: ${err.message}`);

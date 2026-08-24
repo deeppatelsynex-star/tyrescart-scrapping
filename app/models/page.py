@@ -1,4 +1,4 @@
-﻿"""
+"""
 app/models/page.py - Page Model & ORM Helpers
 Table: pages
 Schema:
@@ -103,6 +103,17 @@ class SoftDeleteMixin:
                     "UPDATE pages SET deleted_at = NULL, slug = %s WHERE id = %s",
                     (target_slug, page_id)
                 )
+                return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    @classmethod
+    def hard_delete(cls, page_id: int) -> bool:
+        """Permanently deletes a page record from the MySQL database."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM pages WHERE id = %s", (page_id,))
                 return cursor.rowcount > 0
         finally:
             conn.close()
