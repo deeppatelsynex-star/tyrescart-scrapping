@@ -18,104 +18,126 @@
     <span class="current">{{ blog.get_title(locale) }}</span>
   </nav>
 
-  <!-- ================= ARTICLE MAIN CONTENT (READING MEASURE) ================= -->
-  <div class="article-main-body">
-    <!-- ================= ARTICLE HEADER SECTION ================= -->
-    <section class="article-header">
-      <h1 class="article-title">{{ blog.get_title(locale) }}</h1>
-      <div class="article-title-accent"></div>
+  <!-- ================= 2-COLUMN ARTICLE & SIDEBAR LAYOUT ================= -->
+  <div class="blog-detail-grid">
+    
+    <!-- ================= LEFT COLUMN: MAIN ARTICLE BODY ================= -->
+    <article class="blog-detail-main">
+      
+      <!-- ================= ARTICLE HEADER SECTION ================= -->
+      <section class="article-header" style="padding:0; margin-bottom:24px;">
+        <h1 class="article-title">{{ blog.get_title(locale) }}</h1>
+        <div class="article-title-accent"></div>
 
-      <div class="article-meta-bar">
-        <div class="article-meta-left">
-          <span class="article-date-pill">
-            {{ blog.published_at.strftime('%d %b %Y') if blog.published_at else (blog.created_at.strftime('%d %b %Y') if blog.created_at else '2026') }}
-          </span>
-          <span>&bull;</span>
-          <span>TyresVision UAE Editorial Team</span>
+        <div class="article-meta-bar">
+          <div class="article-meta-left">
+            <span class="article-date-pill">
+              {{ blog.published_at.strftime('%d %b %Y') if blog.published_at else (blog.created_at.strftime('%d %b %Y') if blog.created_at else '2026') }}
+            </span>
+            <span>&bull;</span>
+            <span>TyresVision UAE Editorial Team</span>
+          </div>
+
+          <div class="share-buttons">
+            <button type="button" onclick="copyArticleUrl()" id="shareBtn" class="share-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <span id="shareBtnText">{{ 'نسخ الرابط' if locale == 'ar' else 'Copy Link' }}</span>
+            </button>
+            <a href="https://wa.me/?text={{ (blog.get_title(locale) + ' ' + request.url) | urlencode }}" target="_blank" rel="noopener" class="share-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+              <span>WhatsApp</span>
+            </a>
+          </div>
         </div>
+      </section>
 
-        <div class="share-buttons">
-          <button type="button" onclick="copyArticleUrl()" id="shareBtn" class="share-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            <span id="shareBtnText">{{ 'نسخ الرابط' if locale == 'ar' else 'Copy Link' }}</span>
-          </button>
-          <a href="https://wa.me/?text={{ (blog.get_title(locale) + ' ' + request.url) | urlencode }}" target="_blank" rel="noopener" class="share-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-            <span>WhatsApp</span>
+      <!-- ================= FEATURED MEDIA ================= -->
+      {% if blog.image %}
+      <div class="article-featured-media" style="margin-top:0;">
+        <img src="{{ blog.image }}" alt="{{ blog.get_title(locale) }}" />
+      </div>
+      {% endif %}
+
+      <!-- ================= LEAD EXCERPT ================= -->
+      {% if blog.get_short_desc(locale) %}
+      <div class="article-lead-box">
+        {{ blog.get_short_desc(locale) }}
+      </div>
+      {% endif %}
+
+      <!-- ================= RICH ARTICLE PROSE BODY ================= -->
+      <div class="article-prose">
+        {{ blog.get_content(locale) | safe }}
+      </div>
+
+      <!-- ================= IN-ARTICLE QUOTE CTA ================= -->
+      <div class="article-cta-box">
+        <span class="eyebrow">{{ 'خدمة فورية' if locale == 'ar' else 'Need Tyres?' }}</span>
+        <h3>{{ 'هل تبحث عن إطارات جديدة لسيارتك؟' if locale == 'ar' else 'Looking for the best tyre prices in UAE?' }}</h3>
+        <p>{{ 'أرسل لنا مقاس إطارك أو نوع سيارتك عبر واتساب وسنقوم بالرد عليك فوراً بأفضل الخيارات والأسعار مع خدمة التركيب المتنقل.' if locale == 'ar' else 'Send us your tyre size on WhatsApp for transparent AED pricing, 100% genuine guaranteed stock, and doorstep mobile fitting.' }}</p>
+        <div class="cta-row center">
+          <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20read%20your%20article%20and%20need%20a%20tyre%20quote." target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+            WhatsApp for a quote
+          </a>
+          <a class="btn btn-call" href="tel:+971505069575">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+            +971 50 506 9575
           </a>
         </div>
       </div>
-    </section>
+    </article>
 
-    <!-- ================= FEATURED MEDIA ================= -->
-    {% if blog.image %}
-    <div class="article-featured-media">
-      <img src="{{ blog.image }}" alt="{{ blog.get_title(locale) }}" />
-    </div>
-    {% endif %}
+    <!-- ================= RIGHT COLUMN: RELATED POSTS & SIDEBAR ================= -->
+    <aside class="blog-detail-sidebar">
+      
+      <!-- Related Posts Widget -->
+      {% if recent_blogs and recent_blogs | length > 0 %}
+      <div class="sidebar-widget">
+        <h3 class="sidebar-widget-title">{{ 'مقالات ذات صلة' if locale == 'ar' else 'Related Articles' }}</h3>
+        <div class="sidebar-widget-accent"></div>
 
-    <!-- ================= LEAD EXCERPT ================= -->
-    {% if blog.get_short_desc(locale) %}
-    <div class="article-lead-box">
-      {{ blog.get_short_desc(locale) }}
-    </div>
-    {% endif %}
+        <div class="sidebar-posts-list">
+          {% for rel in recent_blogs %}
+          <a href="/blog/{{ rel.slug }}{{ '?locale=' + locale if locale == 'ar' else '' }}" class="sidebar-post-item">
+            <div class="sidebar-post-thumb">
+              {% if rel.image %}
+              <img src="{{ rel.image }}" alt="{{ rel.get_title(locale) }}" loading="lazy" />
+              {% else %}
+              <div class="sidebar-post-noimg">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              {% endif %}
+            </div>
 
-    <!-- ================= RICH ARTICLE PROSE BODY ================= -->
-    <div class="article-prose">
-      {{ blog.get_content(locale) | safe }}
-    </div>
+            <div class="sidebar-post-info">
+              <span class="sidebar-post-date">
+                {{ rel.published_at.strftime('%d %b %Y') if rel.published_at else (rel.created_at.strftime('%d %b %Y') if rel.created_at else '2026') }}
+              </span>
+              <h4 class="sidebar-post-title">{{ rel.get_title(locale) }}</h4>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
 
-    <!-- ================= IN-ARTICLE QUOTE CTA ================= -->
-    <div class="article-cta-box">
-      <span class="eyebrow">{{ 'خدمة فورية' if locale == 'ar' else 'Need Tyres?' }}</span>
-      <h3>{{ 'هل تبحث عن إطارات جديدة لسيارتك؟' if locale == 'ar' else 'Looking for the best tyre prices in UAE?' }}</h3>
-      <p>{{ 'أرسل لنا مقاس إطارك أو نوع سيارتك عبر واتساب وسنقوم بالرد عليك فوراً بأفضل الخيارات والأسعار مع خدمة التركيب المتنقل.' if locale == 'ar' else 'Send us your tyre size on WhatsApp for transparent AED pricing, 100% genuine guaranteed stock, and doorstep mobile fitting.' }}</p>
-      <div class="cta-row center">
-        <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20read%20your%20article%20and%20need%20a%20tyre%20quote." target="_blank" rel="noopener">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-          WhatsApp for a quote
-        </a>
-        <a class="btn btn-call" href="tel:+971505069575">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-          +971 50 506 9575
+      <!-- Quick WhatsApp & Assistance Widget -->
+      <div class="sidebar-cta-widget">
+        <div class="sidebar-cta-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </div>
+        <h4>{{ 'استشارة إطارات مجانية' if locale == 'ar' else 'Need Tyre Advice?' }}</h4>
+        <p>{{ 'تواصل مع فريقنا الفني على واتساب للحصول على المقاس المناسب وأفضل سعر شامل التركيب.' if locale == 'ar' else 'Chat with our UAE tyre experts on WhatsApp for size confirmation, genuine stock, and mobile fitting.' }}</p>
+        <a class="btn btn-wa btn-sm" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20need%20help%20choosing%20tyres." target="_blank" rel="noopener" style="width:100%;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+          WhatsApp Us
         </a>
       </div>
-    </div>
+
+    </aside>
+
   </div>
-
-  <!-- ================= RELATED ARTICLES ================= -->
-  {% if recent_blogs and recent_blogs | length > 0 %}
-  <section class="related-articles-section">
-    <h2 class="related-title">{{ 'مقالات ذات صلة' if locale == 'ar' else 'Related Tyre Guides & Articles' }}</h2>
-    <div class="related-title-accent"></div>
-
-    <div class="related-grid">
-      {% for rel in recent_blogs %}
-      <a href="/blog/{{ rel.slug }}{{ '?locale=' + locale if locale == 'ar' else '' }}" class="related-card">
-        <div class="related-card-media">
-          <span class="related-date-badge">
-            {{ rel.published_at.strftime('%d %b %Y') if rel.published_at else (rel.created_at.strftime('%d %b %Y') if rel.created_at else '2026') }}
-          </span>
-          {% if rel.image %}
-          <img src="{{ rel.image }}" alt="{{ rel.get_title(locale) }}" loading="lazy" />
-          {% else %}
-          <div style="width: 100%; height: 100%; display: grid; place-items: center; color: var(--slate);">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          </div>
-          {% endif %}
-        </div>
-
-        <div class="related-card-body">
-          <h3 class="related-card-title">{{ rel.get_title(locale) }}</h3>
-          <div class="related-accent-line"></div>
-          <p class="related-card-desc">{{ rel.get_short_desc(locale) }}</p>
-        </div>
-      </a>
-      {% endfor %}
-    </div>
-  </section>
-  {% endif %}
 
 </div>
 {% endblock %}
