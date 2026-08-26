@@ -97,11 +97,12 @@ def client_home():
 
 
 @app.route('/blog')
+@app.route('/blog')
 @app.route('/blog/')
 @app.route('/blogs')
 @app.route('/blogs/')
 def client_blogs():
-    """Client storefront blog article catalog."""
+    """Client storefront blog article catalog with pagination."""
     req_locale = request.args.get('locale')
     if req_locale in ('en', 'ar'):
         session['site_locale'] = req_locale
@@ -110,7 +111,43 @@ def client_blogs():
         locale = session.get('site_locale', 'en')
 
     published_blogs = Blog.published()
-    return render_template('Client/BlogList.html', blogs=published_blogs, locale=locale)
+    total_count = len(published_blogs)
+
+    try:
+        page_num = max(1, int(request.args.get('page', 1)))
+    except (ValueError, TypeError):
+        page_num = 1
+
+    try:
+        per_page = int(request.args.get('limit', request.args.get('per_page', 12)))
+        if per_page not in (12, 24, 36, 48):
+            per_page = 12
+    except (ValueError, TypeError):
+        per_page = 12
+
+    total_pages = max(1, (total_count + per_page - 1) // per_page)
+    if page_num > total_pages:
+        page_num = total_pages
+
+    start_idx = (page_num - 1) * per_page
+    end_idx = min(start_idx + per_page, total_count)
+    page_blogs = published_blogs[start_idx:end_idx]
+
+    start_item = start_idx + 1 if total_count > 0 else 0
+    end_item = end_idx
+
+    return render_template(
+        'Client/BlogList.html',
+        blogs=page_blogs,
+        all_blogs=published_blogs,
+        total_count=total_count,
+        page=page_num,
+        total_pages=total_pages,
+        per_page=per_page,
+        start_item=start_item,
+        end_item=end_item,
+        locale=locale
+    )
 
 
 @app.route('/blog/<slug>')
@@ -127,7 +164,9 @@ def client_blog_detail(slug):
     # 1. Check if it's a published blog post
     blog = Blog.find_by_slug(slug)
     if blog:
-        return render_template('Client/BlogDetail.html', blog=blog, locale=locale)
+        all_published = Blog.published()
+        recent_blogs = [b for b in all_published if b.slug != slug][:4]
+        return render_template('Client/BlogDetail.html', blog=blog, recent_blogs=recent_blogs, locale=locale)
 
     # 2. Check if it's a static page
     page = Page.find_by_slug(slug)
