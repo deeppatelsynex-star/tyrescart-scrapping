@@ -1,4 +1,5 @@
 # app/siteapp/routes.py - TyresVision Customer Storefront Blueprint ('site')
+import json
 import math
 from flask import Blueprint, render_template, request, session, jsonify, abort, redirect, url_for, make_response
 from models.blog import Blog
@@ -352,12 +353,176 @@ def _render_blog_detail(slug, locale):
 
 
 # --- ABOUT US & CMS PAGES ---
+def _build_about_us_context(page, locale='en'):
+    """
+    Constructs a complete dynamic data dictionary for every section of the About Us page,
+    supporting localized overrides from the database (Page model / content JSON)
+    with robust defaults matching the design specification.
+    """
+    page_title = page.get_title(locale) if page else None
+    page_meta = page.get_meta_desc(locale) if page else None
+    page_banner = page.banner_image if (page and page.banner_image) else None
+    page_content = page.get_content(locale) if page else None
+
+    parsed_json = {}
+    if page and isinstance(page.content, dict):
+        loc_content = page.content.get(locale) or page.content
+        if isinstance(loc_content, dict):
+            parsed_json = loc_content
+        elif isinstance(loc_content, str) and loc_content.strip().startswith('{'):
+            try:
+                parsed_json = json.loads(loc_content)
+            except Exception:
+                pass
+
+    is_ar = (locale == 'ar')
+
+    # HERO SECTION
+    hero = {
+        'breadcrumb_home': 'الرئيسية' if is_ar else 'Home',
+        'breadcrumb_current': 'من نحن' if is_ar else 'About Us',
+        'eyebrow': parsed_json.get('hero_eyebrow') or ('من نحن — تايرز فيجن' if is_ar else 'About Us'),
+        'title': page_title or parsed_json.get('hero_title') or ('إطارات أصلية، خدمة موثوقة — مصممة لسائقي الإمارات' if is_ar else 'Genuine Tyres, Honest Service — Built for UAE Drivers'),
+        'lead': page_meta or parsed_json.get('hero_lead') or (
+            'نحن ملتزمون بتقديم إطارات سيارات أصلية معتمدة، وأسعار شفافة وشاملة، وخدمة تركيب متنقلة عند باب منزلك أو في أكثر من ٣٥٠ مركزاً معتمداً في كافة أنحاء الإمارات.'
+            if is_ar else
+            'We are committed to providing genuine certified tyres, transparent upfront pricing, and effortless mobile doorstep fitting or workshop installation across the UAE.'
+        ),
+        'cta_text': parsed_json.get('hero_cta_text') or ('استكشف قصتنا ومسيرتنا' if is_ar else 'Our Journey & Story'),
+        'cta_link': parsed_json.get('hero_cta_link') or '#our-story',
+        'image': page_banner or parsed_json.get('hero_image') or '/static/assets/online-tyres-shop-dubai.png'
+    }
+
+    # STORY SECTION
+    story = {
+        'eyebrow': parsed_json.get('story_eyebrow') or ('قصتنا' if is_ar else 'Our Story'),
+        'title': parsed_json.get('story_title') or ('مدفوعون بالشفافية وسلامة الطريق' if is_ar else 'Driven by Transparency & Road Safety'),
+        'badge_title': parsed_json.get('story_badge_title') or ('إطارات أصلية ١٠٠٪' if is_ar else '100% Genuine Tyres'),
+        'badge_sub': parsed_json.get('story_badge_sub') or ('ضمان الوكيل وتواريخ حديثة' if is_ar else 'Official Warranty & GCC Spec'),
+        'image': parsed_json.get('story_image') or '/static/assets/online-tyres-shop-dubai.png',
+        'content_html': page_content if (page_content and len(page_content) > 60) else None,
+        'p1': parsed_json.get('story_p1') or (
+            'بدأت رحلتنا بإيمان بسيط: يجب أن يكون شراء وتركيب إطارات السيارات في دولة الإمارات تجربة شفافة ومريحة وموثوقة دون الحاجة لزيارة المناطق الصناعية ومقارنة الأسعار لساعات.'
+            if is_ar else
+            'Our journey began with a simple belief — buying and replacing tyres in the UAE should be transparent, effortless, and dependable, without the hassle of driving to industrial areas or comparing confusing quotes in person.'
+        ),
+        'p2': parsed_json.get('story_p2') or (
+            'ما بدأ كمنصة متخصصة سرعان ما نما ليصبح شبكة متكاملة تضم أكثر من ٦٠ علامة تجارية عالمية، وأسطول فانات تركيب متنقلة تصلك إلى منزلك، وشراكة مع أكثر من ٣٥٠ مركز خدمة معتمد في جميع أنحاء الدولة.'
+            if is_ar else
+            'What started as a digital tyre platform has quickly expanded into a nationwide network connecting motorists directly with over 60 global manufacturers, mobile van fitting at your door, and 350+ certified garage partners across all 7 Emirates.'
+        ),
+        'cta_text': parsed_json.get('story_cta_text') or ('تعرف أكثر على مميزاتنا' if is_ar else 'Learn More About Us'),
+        'cta_link': parsed_json.get('story_cta_link') or (f'/{locale}#why' if locale in ('en', 'ar') else '/#why')
+    }
+
+    # VALUES SECTION (5 Cards)
+    default_values = [
+        {
+            'icon': 'shield',
+            'title': 'إطارات أصلية ١٠٠٪' if is_ar else '100% Genuine',
+            'desc': 'توريد مباشر من الوكلاء المعتمدين بتواريخ إنتاج حديثة ومواصفات خليجية.' if is_ar else 'Directly sourced with fresh production dates and official GCC warranty.'
+        },
+        {
+            'icon': 'van',
+            'title': 'تركيب متنقل عند الباب' if is_ar else 'Mobile Doorstep Van',
+            'desc': 'فانات مجهزة بالكامل لفك وتركيب وترصيص الإطارات في موقعك مجاناً.' if is_ar else 'Fully equipped vans fitting and balancing tyres at your home or workplace.'
+        },
+        {
+            'icon': 'heart',
+            'title': 'التركيز على العميل' if is_ar else 'Customer First',
+            'desc': 'نصائح صادقة واختيار المقاس والماركة الأنسب لاحتياجك وميزانيتك.' if is_ar else 'Honest recommendations focused on your safety, budget, and driving habits.'
+        },
+        {
+            'icon': 'tag',
+            'title': 'شفافية تامة بالأسعار' if is_ar else 'Full Transparency',
+            'desc': 'أسعار شاملة التوصيل، والتركيب، والترصيص، وضريبة القيمة المضافة.' if is_ar else 'All-inclusive pricing with zero hidden fees — delivery, fitting, and VAT included.'
+        },
+        {
+            'icon': 'network',
+            'title': 'شبكة ٣٥٠+ مركز' if is_ar else '350+ Garage Network',
+            'desc': 'شراكات مع مراكز صيانة معتمدة في كافة مدن وإمارات الدولة.' if is_ar else 'Partner fitting garages across Dubai, Abu Dhabi, Sharjah, and Northern Emirates.'
+        }
+    ]
+    values = {
+        'eyebrow': parsed_json.get('values_eyebrow') or ('قيمنا ومبادئنا' if is_ar else 'Our Values'),
+        'title': parsed_json.get('values_title') or ('ما الذي يدفعنا للتميز' if is_ar else 'What Drives Us'),
+        'cards': parsed_json.get('values_cards') or parsed_json.get('values_items') or default_values
+    }
+
+    # STATS SECTION (4 Metrics)
+    default_stats = [
+        {
+            'icon': 'brand',
+            'num': '60+',
+            'label': 'علامة تجارية عالمية' if is_ar else 'Global Tyre Brands',
+            'sub': 'ميشلان، بريدجستون، بيريللي، والمزيد' if is_ar else 'Michelin, Continental, Bridgestone & more'
+        },
+        {
+            'icon': 'garage',
+            'num': '350+',
+            'label': 'مركز تركيب معتمد' if is_ar else 'Partner Fitting Centres',
+            'sub': 'تغطية شاملة لجميع الإمارات السبع' if is_ar else 'Across all 7 UAE Emirates'
+        },
+        {
+            'icon': 'drivers',
+            'num': '10,000+',
+            'label': 'سائق في الإمارات' if is_ar else 'Satisfied Motorists',
+            'sub': 'خدمة سريعة وتقييمات موثوقة' if is_ar else 'Trusted roadside & home installation'
+        },
+        {
+            'icon': 'shield',
+            'num': '100%',
+            'label': 'ضمان وجودة معتمدة' if is_ar else 'Certified Genuine Quality',
+            'sub': 'ضمان الوكيل وتواريخ حديثة' if is_ar else 'Official manufacturer warranty'
+        }
+    ]
+    stats = {
+        'metrics': parsed_json.get('stats_metrics') or parsed_json.get('stats_items') or default_stats
+    }
+
+    # TEAM SECTION
+    team = {
+        'eyebrow': parsed_json.get('team_eyebrow') or ('فريقنا وخبرائنا' if is_ar else 'Our Team'),
+        'title': parsed_json.get('team_title') or ('فريق شغوف، وخدمة احترافية مخصصة' if is_ar else 'Passionate Specialists, Purposeful Work'),
+        'desc': parsed_json.get('team_desc') or (
+            'يتكون فريقنا من فنيين محترفين، وخبراء فك وتركيب معتمدين، ومستشاري خدمة عملاء متاحين دائماً لمساعدتك في اختيار الإطار الأنسب لسيارتك وتنسيق موعد التركيب في الوقت والمكان الذي يناسبك تماماً.'
+            if is_ar else
+            'Our team is made up of certified automotive technicians, master fitters, logistics coordinators, and tyre specialists dedicated to delivering seamless tyre replacement right to your doorstep.'
+        ),
+        'cta_text': parsed_json.get('team_cta_text') or ('تواصل مع فريقنا' if is_ar else 'Meet Our Team'),
+        'cta_link': parsed_json.get('team_cta_link') or 'https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20would%20like%20to%20connect%20with%20your%20team.',
+        'image': parsed_json.get('team_image') or '/static/assets/online-tyres-shop-dubai.png'
+    }
+
+    # ACTION CALLOUT BANNER
+    cta_banner = {
+        'title': parsed_json.get('banner_title') or ('هل أنت مستعد لقيادة أكثر أماناً وراحة؟' if is_ar else 'Let\'s Drive a Safer Tomorrow Together'),
+        'desc': parsed_json.get('banner_desc') or (
+            'تواصل مع خبرائنا عبر واتساب للحصول على عروض أسعار فورية وحجز موعد التركيب المتنقل.'
+            if is_ar else
+            'Message our specialists on WhatsApp for instant sizing assistance and price quotes across 60+ brands.'
+        ),
+        'cta_text': parsed_json.get('banner_cta_text') or ('تواصل معنا عبر واتساب ←' if is_ar else 'Get In Touch →'),
+        'cta_link': parsed_json.get('banner_cta_link') or 'https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20would%20like%20a%20tyre%20quote.'
+    }
+
+    return {
+        'hero': hero,
+        'story': story,
+        'values': values,
+        'stats': stats,
+        'team': team,
+        'cta_banner': cta_banner
+    }
+
+
 @site_bp.route('/about-us')
 @site_bp.route('/en/about-us')
 def about_us():
     locale = 'en' if request.path.startswith('/en') else _get_locale()
     page = Page.find_by_slug('about-us')
-    resp = make_response(render_template('Client/AboutUs.html', page=page, locale=locale))
+    about_data = _build_about_us_context(page, locale)
+    resp = make_response(render_template('Client/AboutUs.html', page=page, about=about_data, locale=locale))
     resp.set_cookie('site_locale', locale, max_age=31536000, path='/')
     return resp
 
@@ -365,7 +530,8 @@ def about_us():
 @site_bp.route('/ar/about-us')
 def about_us_ar():
     page = Page.find_by_slug('about-us')
-    resp = make_response(render_template('Client/AboutUs.html', page=page, locale='ar'))
+    about_data = _build_about_us_context(page, 'ar')
+    resp = make_response(render_template('Client/AboutUs.html', page=page, about=about_data, locale='ar'))
     resp.set_cookie('site_locale', 'ar', max_age=31536000, path='/')
     return resp
 
@@ -378,8 +544,10 @@ def page_detail_en(slug):
         abort(404)
     page = Page.find_by_slug(slug)
     if page:
-        tpl = 'Client/AboutUs.html' if slug == 'about-us' else 'Client/Page.html'
-        return render_template(tpl, page=page, locale='en')
+        if slug == 'about-us':
+            about_data = _build_about_us_context(page, 'en')
+            return render_template('Client/AboutUs.html', page=page, about=about_data, locale='en')
+        return render_template('Client/Page.html', page=page, locale='en')
     blog = Blog.find_by_slug(slug)
     if blog:
         return redirect(f'/en/blog/{slug}')
@@ -394,8 +562,10 @@ def page_detail_ar(slug):
         abort(404)
     page = Page.find_by_slug(slug)
     if page:
-        tpl = 'Client/AboutUs.html' if slug == 'about-us' else 'Client/Page.html'
-        return render_template(tpl, page=page, locale='ar')
+        if slug == 'about-us':
+            about_data = _build_about_us_context(page, 'ar')
+            return render_template('Client/AboutUs.html', page=page, about=about_data, locale='ar')
+        return render_template('Client/Page.html', page=page, locale='ar')
     blog = Blog.find_by_slug(slug)
     if blog:
         return redirect(f'/ar/blog/{slug}')
@@ -412,8 +582,10 @@ def page_detail(slug):
     locale = _get_locale()
     page = Page.find_by_slug(slug)
     if page:
-        tpl = 'Client/AboutUs.html' if slug == 'about-us' else 'Client/Page.html'
-        return render_template(tpl, page=page, locale=locale)
+        if slug == 'about-us':
+            about_data = _build_about_us_context(page, locale)
+            return render_template('Client/AboutUs.html', page=page, about=about_data, locale=locale)
+        return render_template('Client/Page.html', page=page, locale=locale)
 
     blog = Blog.find_by_slug(slug)
     if blog:
