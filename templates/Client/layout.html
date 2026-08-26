@@ -158,7 +158,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <header>
   <nav class="nav" aria-label="Main">
-    <a class="logo" href="/" aria-label="TyresVision home">
+    <a class="logo" href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar{% else %}/{% endif %}" aria-label="TyresVision home">
       <svg class="swoosh" width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true">
         <path d="M5 14.5C9.2 7.6 16.2 3.6 24 4.2c5.2.4 9.6 2.7 12.4 6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
         <path d="M9.5 18.6c3.4-5.3 9-8.4 15.1-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
@@ -168,11 +168,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
     </a>
     <div class="nav-links">
-      <a href="#why">Why us</a>
-      <a href="#services">Services</a>
-      <a href="#how">How it works</a>
-      <a href="#brands">Brands</a>
-      <a href="#faq">FAQ</a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#why{% else %}/#why{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}لماذا نحن{% else %}Why us{% endif %}</a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#services{% else %}/#services{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}خدماتنا{% else %}Services{% endif %}</a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#how{% else %}/#how{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}كيف نعمل{% else %}How it works{% endif %}</a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#brands{% else %}/#brands{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}الماركات{% else %}Brands{% endif %}</a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar/blog{% else %}/en/blog{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}المدونة{% else %}Blog{% endif %}</a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#faq{% else %}/#faq{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}الأسئلة الشائعة{% else %}FAQ{% endif %}</a>
     </div>
     <div class="nav-cta">
       <!-- Language / RTL Toggle Button -->
@@ -316,24 +317,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script>
 function toggleSiteLanguage() {
   const path = window.location.pathname;
+  const search = window.location.search;
   let target = '';
+  let newLang = 'en';
 
   if (path.startsWith('/ar/')) {
     target = path.replace(/^\/ar\//, '/en/');
+    newLang = 'en';
   } else if (path.startsWith('/en/')) {
     target = path.replace(/^\/en\//, '/ar/');
+    newLang = 'ar';
   } else if (path === '/ar' || path === '/ar/') {
-    target = '/en/blog';
+    target = '/en';
+    newLang = 'en';
   } else if (path === '/en' || path === '/en/') {
-    target = '/ar/blog';
-  } else if (path.startsWith('/blog')) {
-    target = '/ar' + path;
+    target = '/ar';
+    newLang = 'ar';
+  } else if (path === '' || path === '/' || path === '/home') {
+    const isAr = document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
+    target = isAr ? '/en' : '/ar';
+    newLang = isAr ? 'en' : 'ar';
   } else {
     const isAr = document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
-    target = isAr ? '/en/blog' : '/ar/blog';
+    const prefix = isAr ? '/en' : '/ar';
+    newLang = isAr ? 'en' : 'ar';
+    target = prefix + (path.startsWith('/') ? path : '/' + path);
   }
 
-  window.location.href = target;
+  document.cookie = "site_locale=" + newLang + "; path=/; max-age=31536000; SameSite=Lax";
+  window.location.href = target + search;
 }
 </script>
 {% block extra_scripts %}{% endblock %}

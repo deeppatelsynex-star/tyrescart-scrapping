@@ -1,6 +1,6 @@
 # app/siteapp/routes.py - TyresVision Customer Storefront Blueprint ('site')
 import math
-from flask import Blueprint, render_template, request, session, jsonify, abort, redirect, url_for
+from flask import Blueprint, render_template, request, session, jsonify, abort, redirect, url_for, make_response
 from models.blog import Blog
 from models.page import Page
 
@@ -12,7 +12,13 @@ def _get_locale():
     if req_locale in ('en', 'ar'):
         session['site_locale'] = req_locale
         return req_locale
-    return session.get('site_locale', 'en')
+    if 'site_locale' in session and session['site_locale'] in ('en', 'ar'):
+        return session['site_locale']
+    cookie_locale = request.cookies.get('site_locale')
+    if cookie_locale in ('en', 'ar'):
+        session['site_locale'] = cookie_locale
+        return cookie_locale
+    return 'en'
 
 
 # ============================================================================
@@ -153,18 +159,41 @@ def api_get_blog_detail(slug):
 
 
 # ============================================================================
-# 2. CLIENT STOREFRONT BLOG & STATIC PAGES
+# 2. CLIENT STOREFRONT (HOME, BLOG, STATIC CMS PAGES WITH FULL LOCALE SUPPORT)
 # ============================================================================
 
+# --- HOME ROUTES ---
 @site_bp.route('/')
 @site_bp.route('/home')
 def home():
-    """Client storefront home landing page."""
+    """Client storefront home landing page (default/session locale)."""
     locale = _get_locale()
     return render_template('Client/Home.html', locale=locale)
 
 
-# --- BLOG LISTING ROUTES (ENGLISH & ARABIC & DEFAULT) ---
+@site_bp.route('/en')
+@site_bp.route('/en/')
+@site_bp.route('/en/home')
+def home_en():
+    """Client storefront home landing page in English."""
+    session['site_locale'] = 'en'
+    resp = make_response(render_template('Client/Home.html', locale='en'))
+    resp.set_cookie('site_locale', 'en', max_age=31536000, path='/')
+    return resp
+
+
+@site_bp.route('/ar')
+@site_bp.route('/ar/')
+@site_bp.route('/ar/home')
+def home_ar():
+    """Client storefront home landing page in Arabic."""
+    session['site_locale'] = 'ar'
+    resp = make_response(render_template('Client/Home.html', locale='ar'))
+    resp.set_cookie('site_locale', 'ar', max_age=31536000, path='/')
+    return resp
+
+
+# --- BLOG LISTING ROUTES ---
 @site_bp.route('/en/blog')
 @site_bp.route('/en/blog/')
 @site_bp.route('/en/blogs')
@@ -172,7 +201,9 @@ def home():
 def blog_en():
     """English blog listing route: /en/blog."""
     session['site_locale'] = 'en'
-    return render_template('Client/Blog.html', locale='en')
+    resp = make_response(render_template('Client/Blog.html', locale='en'))
+    resp.set_cookie('site_locale', 'en', max_age=31536000, path='/')
+    return resp
 
 
 @site_bp.route('/ar/blog')
@@ -182,7 +213,9 @@ def blog_en():
 def blog_ar():
     """Arabic blog listing route: /ar/blog."""
     session['site_locale'] = 'ar'
-    return render_template('Client/Blog.html', locale='ar')
+    resp = make_response(render_template('Client/Blog.html', locale='ar'))
+    resp.set_cookie('site_locale', 'ar', max_age=31536000, path='/')
+    return resp
 
 
 @site_bp.route('/blog')
@@ -190,12 +223,12 @@ def blog_ar():
 @site_bp.route('/blogs')
 @site_bp.route('/blogs/')
 def blog_default():
-    """Default blog catalog route (uses session locale)."""
+    """Default blog catalog route."""
     locale = _get_locale()
     return render_template('Client/Blog.html', locale=locale)
 
 
-# --- BLOG DETAIL ROUTES (ENGLISH & ARABIC & DEFAULT) ---
+# --- BLOG DETAIL ROUTES ---
 @site_bp.route('/en/blog/<slug>')
 @site_bp.route('/en/blogs/<slug>')
 def blog_detail_en(slug):
@@ -300,7 +333,7 @@ def _render_blog_detail(slug, locale):
         }
     }
 
-    return render_template(
+    resp = make_response(render_template(
         'Client/BlogDetail.html',
         post=blog_data,
         related_posts=related_posts,
@@ -308,16 +341,58 @@ def _render_blog_detail(slug, locale):
         prev_post=prev_post,
         next_post=next_post,
         locale=locale
-    )
+    ))
+    resp.set_cookie('site_locale', locale, max_age=31536000, path='/')
+    return resp
 
 
+# --- ABOUT US & CMS PAGES ---
 @site_bp.route('/about-us')
+@site_bp.route('/en/about-us')
 def about_us():
-    locale = _get_locale()
+    locale = 'en' if request.path.startswith('/en') else _get_locale()
     page = Page.find_by_slug('about-us')
     if page:
         return render_template('Client/Page.html', page=page, locale=locale)
     return redirect(url_for('site.home', locale=locale))
+
+
+@site_bp.route('/ar/about-us')
+def about_us_ar():
+    page = Page.find_by_slug('about-us')
+    if page:
+        return render_template('Client/Page.html', page=page, locale='ar')
+    return redirect('/ar')
+
+
+@site_bp.route('/en/page/<slug>')
+@site_bp.route('/en/<slug>')
+def page_detail_en(slug):
+    """Generic English CMS page reader."""
+    if slug in ('tcsadmin', 'visionadmin', 'visonadmin', 'admin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico', 'en', 'ar', 'blog', 'blogs'):
+        abort(404)
+    page = Page.find_by_slug(slug)
+    if page:
+        return render_template('Client/Page.html', page=page, locale='en')
+    blog = Blog.find_by_slug(slug)
+    if blog:
+        return redirect(f'/en/blog/{slug}')
+    abort(404)
+
+
+@site_bp.route('/ar/page/<slug>')
+@site_bp.route('/ar/<slug>')
+def page_detail_ar(slug):
+    """Generic Arabic CMS page reader."""
+    if slug in ('tcsadmin', 'visionadmin', 'visonadmin', 'admin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico', 'en', 'ar', 'blog', 'blogs'):
+        abort(404)
+    page = Page.find_by_slug(slug)
+    if page:
+        return render_template('Client/Page.html', page=page, locale='ar')
+    blog = Blog.find_by_slug(slug)
+    if blog:
+        return redirect(f'/ar/blog/{slug}')
+    abort(404)
 
 
 @site_bp.route('/page/<slug>')

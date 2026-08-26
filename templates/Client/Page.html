@@ -1,0 +1,58 @@
+{% extends 'Client/layout.html' %}
+
+{% block title %}
+  {{ page.title if page else 'About Us' }} | {% if locale == 'ar' %}تايرز فيجن{% else %}TyresVision{% endif %}
+{% endblock %}
+
+{% block meta_description %}{{ page.meta_description if page else 'TyresVision Dubai — professional tyre replacement, balancing, and mobile fitting.' }}{% endblock %}
+
+{% block content %}
+<span id="top"></span>
+
+<section style="padding-top:36px; padding-bottom:64px;">
+  <div class="wrap">
+    <div style="max-width:840px; margin:0 auto;">
+      
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+        <a href="{% if locale == 'ar' %}/ar{% else %}/{% endif %}">{% if locale == 'ar' %}الرئيسية{% else %}Home{% endif %}</a>
+        <span class="sep">&rsaquo;</span>
+        <span class="current">{{ page.title if page else 'About Us' }}</span>
+      </nav>
+
+      <div style="margin-top:20px; margin-bottom:32px;">
+        <span class="eyebrow">
+          {% if locale == 'ar' %}تايرز فيجن الإمارات{% else %}TyresVision UAE{% endif %}
+        </span>
+        <h1 style="font-size:clamp(2rem, 3.8vw, 2.8rem); font-weight:800; line-height:1.2; color:var(--ink); margin-top:8px;">
+          {{ page.title if page else 'About TyresVision' }}
+        </h1>
+      </div>
+
+      <div class="article-prose" style="font-size:1.06rem; line-height:1.8; color:var(--ink);">
+        {% if page and page.content %}
+          {{ page.content | safe }}
+        {% else %}
+          <p>
+            {% if locale == 'ar' %}
+              تايرز فيجن هي منصتك الرائدة في الإمارات لشراء وتركيب إطارات السيارات عبر الإنترنت. نوفر أكثر من 60 علامة تجارية عالمية بأسعار منافسة مع خدمة تركيب متنقلة مجانية عند باب بيتك أو في مراكزنا المعتمدة.
+            {% else %}
+              TyresVision is the UAE's premier tyre fitting and ecommerce platform, providing access to 60+ global tyre brands with transparent pricing and free doorstep mobile fitting across Dubai, Abu Dhabi, and Sharjah.
+            {% endif %}
+          </p>
+        {% endif %}
+      </div>
+
+      <div style="margin-top:40px; padding-top:24px; border-top:1px solid var(--line); display:flex; gap:16px; flex-wrap:wrap;">
+        <a href="{% if locale == 'ar' %}/ar/blog{% else %}/en/blog{% endif %}" class="btn btn-white">
+          {% if locale == 'ar' %}&rarr; تصفح المدونة{% else %}&larr; Browse Tyre Blog{% endif %}
+        </a>
+        <a href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20have%20an%20inquiry." target="_blank" rel="noopener" class="btn btn-wa">
+          {% if locale == 'ar' %}تواصل عبر واتساب{% else %}WhatsApp Us{% endif %}
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}
