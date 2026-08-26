@@ -2402,6 +2402,428 @@ footer .tagline {
   }
 }
 
+/* ============================================================
+   ABOUT US PAGE — CORPORATE LANDING REDESIGN
+   Exact match to reference layout & brand tokens
+   ============================================================ */
+
+/* 1. Hero Section */
+.about-hero-section {
+  padding: clamp(28px, 4.5vw, 56px) 0 clamp(44px, 5.5vw, 72px);
+  position: relative;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.about-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 36px;
+  align-items: center;
+}
+
+@media(min-width: 960px) {
+  .about-hero-grid {
+    grid-template-columns: 1.15fr 1fr;
+    gap: 56px;
+  }
+}
+
+.about-hero-text {
+  min-width: 0;
+}
+
+.about-hero-title {
+  font-size: clamp(2.2rem, 4.4vw, 3.3rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -.025em;
+  color: var(--ink);
+  margin: 12px 0 18px;
+}
+
+.about-hero-lead {
+  font-size: clamp(1.02rem, 1.5vw, 1.18rem);
+  color: var(--slate);
+  line-height: 1.65;
+  margin-bottom: 28px;
+  max-width: 54ch;
+}
+
+.about-hero-media {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(14, 17, 8, .08);
+  border: 1px solid var(--line);
+  aspect-ratio: 4 / 3;
+  background: var(--bg-soft);
+}
+
+.about-hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 2. Story Section (2-Col Image with badge + Text) */
+.about-story-section {
+  padding: clamp(52px, 7vw, 84px) 0;
+  background: #ffffff;
+}
+
+.about-story-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+@media(min-width: 960px) {
+  .about-story-grid {
+    grid-template-columns: 1fr 1.1fr;
+    gap: 64px;
+  }
+}
+
+.about-story-img-wrap {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 32px rgba(14, 17, 8, .06);
+  aspect-ratio: 4 / 3;
+  background: var(--bg-soft);
+}
+
+.about-story-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.about-badge-floating {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(14, 17, 8, .12);
+  z-index: 2;
+}
+
+[dir="rtl"] .about-badge-floating {
+  left: auto;
+  right: 18px;
+}
+
+.about-badge-floating .badge-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--green-tint);
+  color: var(--green-deep);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.about-badge-floating .badge-title {
+  font-size: .88rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.about-badge-floating .badge-sub {
+  font-size: .74rem;
+  color: var(--slate);
+  font-weight: 600;
+}
+
+.about-story-content h2 {
+  font-size: clamp(1.8rem, 3.2vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  color: var(--ink);
+  margin: 10px 0 18px;
+}
+
+.about-story-content p {
+  color: var(--slate);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+/* 3. Values Section ("What Drives Us" 5-Card Grid) */
+.about-values-section {
+  padding: clamp(52px, 7vw, 88px) 0;
+  background: var(--bg-soft);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.about-values-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  margin-top: 36px;
+}
+
+@media(min-width: 520px) {
+  .about-values-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media(min-width: 820px) {
+  .about-values-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media(min-width: 1100px) {
+  .about-values-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+  }
+}
+
+.value-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 28px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 16px rgba(14, 17, 8, .03);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+.value-card:hover {
+  transform: translateY(-4px);
+  border-color: #CBD6C0;
+  box-shadow: 0 12px 30px rgba(14, 17, 8, .07);
+}
+
+.value-card-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--green-tint);
+  color: var(--green-deep);
+  display: grid;
+  place-items: center;
+  margin-bottom: 18px;
+  transition: transform .25s ease, background .25s ease;
+}
+
+.value-card:hover .value-card-icon {
+  transform: scale(1.08);
+  background: #E2F4D3;
+}
+
+.value-card-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 10px;
+  line-height: 1.25;
+}
+
+.value-card-desc {
+  font-size: .86rem;
+  color: var(--slate);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* 4. Statistics Band (Dark Green Gradient with 4 Metrics) */
+.about-stats-band {
+  background:
+    radial-gradient(980px 440px at 86% -10%, rgba(88,179,27,.3), transparent 62%),
+    linear-gradient(168deg, var(--ink) 0%, var(--ink-2) 45%, #1C380F 100%);
+  color: #ffffff;
+  padding: clamp(48px, 6vw, 72px) 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.about-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px 20px;
+}
+
+@media(min-width: 860px) {
+  .about-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+  .about-stat-item:not(:last-child) {
+    border-right: 1px solid rgba(255, 255, 255, .12);
+  }
+  [dir="rtl"] .about-stat-item:not(:last-child) {
+    border-right: none;
+    border-left: 1px solid rgba(255, 255, 255, .12);
+  }
+}
+
+.about-stat-item {
+  text-align: center;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.about-stat-icon {
+  color: var(--green-bright);
+  margin-bottom: 10px;
+  display: block;
+}
+
+.about-stat-num {
+  font-size: clamp(2rem, 3.8vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -.03em;
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+.about-stat-label {
+  font-size: .94rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.about-stat-sub {
+  font-size: .8rem;
+  color: rgba(255, 255, 255, .65);
+}
+
+/* 5. Team & Specialist Section (2-Col Text + Image) */
+.about-team-section {
+  padding: clamp(52px, 7vw, 88px) 0;
+  background: #ffffff;
+}
+
+.about-team-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+@media(min-width: 960px) {
+  .about-team-grid {
+    grid-template-columns: 1.1fr 1fr;
+    gap: 64px;
+  }
+}
+
+.about-team-content h2 {
+  font-size: clamp(1.8rem, 3.2vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  color: var(--ink);
+  margin: 10px 0 18px;
+}
+
+.about-team-content p {
+  color: var(--slate);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.about-team-media {
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 32px rgba(14, 17, 8, .06);
+  aspect-ratio: 4 / 3;
+  background: var(--bg-soft);
+}
+
+.about-team-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 6. Bottom Banner ("Let's Grow a Better Tomorrow Together") */
+.about-action-card {
+  background: #F1F7EE;
+  border: 1px solid #DFEAD8;
+  border-radius: 20px;
+  padding: 28px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  box-shadow: 0 4px 16px rgba(14, 17, 8, .03);
+}
+
+@media(min-width: 760px) {
+  .about-action-card {
+    flex-direction: row;
+    padding: 32px 42px;
+  }
+}
+
+.about-action-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.about-action-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #DFEAD8;
+  color: var(--green-deep);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.about-action-title {
+  font-size: 1.22rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 4px;
+  line-height: 1.25;
+}
+
+.about-action-desc {
+  font-size: .88rem;
+  color: var(--slate);
+  margin: 0;
+  line-height: 1.5;
+}
+
+
 
 
 /* ---------------- ABOUT US ---------------- */
