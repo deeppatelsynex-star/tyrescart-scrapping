@@ -6,9 +6,10 @@ _app_dir = os.path.dirname(os.path.abspath(__file__))
 _root_dir = os.path.dirname(_app_dir)
 _scraperapp_dir = os.path.join(_app_dir, 'scraperapp')
 _visionadmin_dir = os.path.join(_app_dir, 'visionadmin')
+_siteapp_dir = os.path.join(_app_dir, 'siteapp')
 _models_dir = os.path.join(_app_dir, 'models')
 _scrapers_dir = os.path.join(_root_dir, 'scrapers')
-for _p in [_app_dir, _root_dir, _scraperapp_dir, _visionadmin_dir, _models_dir, _scrapers_dir]:
+for _p in [_app_dir, _root_dir, _scraperapp_dir, _visionadmin_dir, _siteapp_dir, _models_dir, _scrapers_dir]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
@@ -24,6 +25,7 @@ import re
 from scraperapp.api import register_api_routes
 from scraperapp import job_manager
 from visionadmin import register_visionadmin_routes
+from siteapp import site_bp
 from models.page import Page
 from models.blog import Blog
 from auth import (
@@ -347,6 +349,7 @@ def reset_password_page():
 
 register_api_routes(app)
 register_visionadmin_routes(app)
+app.register_blueprint(site_bp)
 
 
 # ============================================================================
