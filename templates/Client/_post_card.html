@@ -1,0 +1,39 @@
+{# templates/Client/_post_card.html - Reusable Blog Card Component #}
+<a href="{{ url_for('site.blog_detail', slug=post.slug) }}" class="post-card" aria-label="{{ post.title }}">
+  <div class="post-card-thumb">
+    <!-- Date Badge: Opaque white pill overlaid on image -->
+    <span class="post-date-pill">
+      {% if post.published_at is string %}
+        {{ post.published_at }}
+      {% elif post.published_at %}
+        {{ post.published_at.strftime('%d %b %Y') }}
+      {% else %}
+        24 Aug 2026
+      {% endif %}
+    </span>
+
+    <!-- Optional Badges (e.g. Air, Continental, Ranger and Raptor) -->
+    {% if post.badges and post.badges | length > 0 %}
+      {% for badge in post.badges %}
+      <span class="post-badge-chip">
+        {{ badge.label if badge.label is defined else badge }}
+      </span>
+      {% endfor %}
+    {% endif %}
+
+    {% if post.cover_image_url and post.cover_image_url != '/static/assets/online-tyres-shop-dubai.png' %}
+    <img src="{{ post.cover_image_url }}" alt="{{ post.title }}" loading="lazy">
+    {% else %}
+    <div class="post-card-thumb-placeholder">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5-7l-3 3.72L9 13l-3 4h12l-4-5z"/></svg>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="post-card-body">
+    <h3 class="post-card-title">{{ post.title }}</h3>
+    <!-- Short Green Accent Line (matching .tagline::before treatment) -->
+    <div class="post-divider" aria-hidden="true"></div>
+    <p class="post-card-desc">{{ post.excerpt or (post.title ~ ' — complete tyre guide and maintenance advice for UAE drivers.') }}</p>
+  </div>
+</a>

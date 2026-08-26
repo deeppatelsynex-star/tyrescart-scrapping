@@ -79,6 +79,37 @@ app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7 days browser cache for static files
 
 
+@app.context_processor
+def inject_i18n():
+    """Provides Flask-Babel style translation helper _() for EN and AR locales."""
+    def _(text):
+        locale = session.get('site_locale', request.args.get('locale', 'en'))
+        if locale == 'ar':
+            translations = {
+                'Home': 'الرئيسية',
+                'Blog': 'المدونة',
+                'Breadcrumb': 'مسار التنقل',
+                'Pagination': 'صفحات المقالات',
+                'Explore Our Blog — Tyre Advice & Car Maintenance Tips': 'استكشف مدونتنا — نصائح الإطارات وصيانة السيارات',
+                'Items': 'عناصر',
+                'to': 'إلى',
+                'of': 'من',
+                'total': 'إجمالي',
+                'Show': 'عرض',
+                'Previous': 'السابق',
+                'Next': 'التالي',
+                'Read Guide': 'اقرأ الدليل',
+                'Featured': 'مميز',
+                'No Results': 'لا توجد نتائج',
+                'No articles found matching your criteria': 'لم يتم العثور على مقالات مطابقة لبحثك',
+                'Try browsing all categories or searching with different keywords.': 'جرّب تصفح جميع الفئات أو البحث بكلمات أخرى.',
+                'View All Articles': 'عرض جميع المقالات'
+            }
+            return translations.get(text, text)
+        return text
+    return dict(_=_)
+
+
 @app.after_request
 def add_performance_headers(response):
     """Adds caching headers for static assets and enables keep-alive."""
