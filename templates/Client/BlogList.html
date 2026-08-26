@@ -1,822 +1,376 @@
-<!DOCTYPE html>
-<html lang="{{ locale or 'en' }}" dir="{{ 'rtl' if locale == 'ar' else 'ltr' }}">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ 'مدونة وإرشادات الإطارات' if locale == 'ar' else 'Tyres Blog & UAE Driving Guides' }} — TyresVision</title>
-  <meta name="description" content="{{ 'اكتشف أحدث مقالات ونصائح وإرشادات الإطارات وصيانتها في دولة الإمارات من خبراء تايرز فيجن.' if locale == 'ar' else 'Discover expert tyre guides, summer maintenance advice, safety tips, and automotive articles for UAE drivers from TyresVision specialists.' }}" />
-  
-  <!-- Favicon -->
-  <link rel="icon" type="image/webp" href="/static/assets/images/favicon-color.webp" />
-  <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/webp" />
-  <link rel="apple-touch-icon" href="/static/assets/images/favicon-color.webp" />
+{% extends 'Client/layout.html' %}
 
-  <!-- Google Fonts: Inter & Tajawal (Arabic) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+{% block title %}{{ 'مدونة تايرز فيجن | نصائح وإرشادات الإطارات في الإمارات' if locale == 'ar' else 'Tyre Guides, Insights & Driving Advice UAE | TyresVision Blog' }}{% endblock %}
 
-  <style>
-    /* ============================================================
-       BRAND TOKENS — TyresVision (DESIGN-SYSTEM.md)
-       ============================================================ */
-    :root {
-      --green: #58B31B;          /* Logo green */
-      --green-bright: #68C927;   /* Hover / highlights */
-      --green-deep: #35760F;     /* Accessible green for text on white */
-      --green-tint: #EFF9E6;     /* Icon wells / badges */
-      --ink: #0E1108;            /* Logo black */
-      --ink-2: #191F12;          /* Secondary dark shade */
-      --slate: #4C5548;          /* Secondary/muted text */
-      --line: #E3E7DE;           /* Borders, dividers */
-      --bg: #FFFFFF;             /* Page background */
-      --bg-soft: #F6F8F3;        /* Section background */
-      --radius: 14px;            /* Default corner radius */
-      --shadow: 0 1px 2px rgba(14,17,8,.06), 0 8px 24px rgba(14,17,8,.09);
-      --maxw: 1280px;
-      --font: {% if locale == 'ar' %}'Tajawal', 'Inter', "Segoe UI", system-ui, -apple-system, sans-serif{% else %}'Inter', "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif{% endif %};
-    }
+{% block meta_description %}{{ 'دليل شامل لاختيار وصيانة وشراء الإطارات في الإمارات. إرشادات فنية، مقارنات أسعار، ونصائح للحرارة العالية من خبراء تايرز فيجن.' if locale == 'ar' else 'Expert automotive tyre guides, Dubai summer maintenance tips, tyre size comparisons, and buying advice from TyresVision specialists.' }}{% endblock %}
 
-    *, *::before, *::after { box-sizing: border-box; }
-    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-    body {
-      margin: 0;
-      font-family: var(--font);
-      color: var(--ink);
-      background: var(--bg);
-      font-size: 17px;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      padding-bottom: 76px;
-      overflow-x: hidden;
-    }
-    @media(min-width: 820px) { body { padding-bottom: 0; } }
+{% block extra_head %}
+<style>
+  /* ---------------- HERO (DARK WITH TREAD PATTERN) ---------------- */
+  .hero-blog {
+    background:
+      radial-gradient(980px 440px at 86% -10%, rgba(88,179,27,.30), transparent 62%),
+      linear-gradient(168deg, var(--ink) 0%, var(--ink-2) 100%);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    padding: clamp(48px, 6vw, 76px) 0 clamp(48px, 6vw, 68px);
+  }
+  .hero-blog::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 5px;
+    background: repeating-linear-gradient(90deg, var(--green) 0 26px, #fff 26px 52px);
+    opacity: .9;
+  }
+  .hero-blog .eyebrow { color: #96E05C; }
+  .hero-blog h1 { color: #fff; max-width: 28ch; margin-bottom: 16px; }
+  .hero-blog .lead { color: rgba(255,255,255,.82); max-width: 58ch; }
 
-    img { max-width: 100%; display: block; }
-    a { color: inherit; }
-    h1, h2, h3, h4 { line-height: 1.15; letter-spacing: -.02em; margin: 0 0 .5em; }
-    h1 { font-size: clamp(2.1rem, 5.2vw, 3.5rem); font-weight: 800; }
-    h2 { font-size: clamp(1.6rem, 3.4vw, 2.35rem); font-weight: 800; }
-    h3 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; }
-    p { margin: 0 0 1rem; }
-    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
-    section { padding: clamp(52px, 7vw, 88px) 0; }
+  /* ---------------- FEATURED LEAD ARTICLE CARD ---------------- */
+  .featured-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    display: grid;
+    gap: 0;
+    margin-bottom: 48px;
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    text-decoration: none;
+    color: inherit;
+  }
+  .featured-card:hover {
+    transform: translateY(-3px);
+    border-color: #CBD6C0;
+    box-shadow: 0 4px 12px rgba(14,17,8,.08), 0 16px 36px rgba(14,17,8,.12);
+  }
+  .featured-media {
+    position: relative;
+    background: var(--bg-soft);
+    min-height: 280px;
+    overflow: hidden;
+  }
+  .featured-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .4s ease;
+  }
+  .featured-card:hover .featured-media img {
+    transform: scale(1.03);
+  }
+  .featured-body {
+    padding: clamp(24px, 4vw, 36px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .featured-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: .83rem;
+    font-weight: 600;
+    color: var(--slate);
+    margin-bottom: 12px;
+  }
+  .featured-body h2 {
+    font-size: clamp(1.4rem, 2.5vw, 1.95rem);
+    margin-bottom: 12px;
+    color: var(--ink);
+    transition: color .15s ease;
+  }
+  .featured-card:hover .featured-body h2 {
+    color: var(--green-deep);
+  }
+  .featured-body p {
+    color: var(--slate);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .featured-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+  .author-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .author-info .avatar {
+    width: 38px;
+    height: 38px;
+    font-size: .82rem;
+  }
+  .author-info b { font-size: .9rem; display: block; }
+  .author-info span { font-size: .76rem; color: var(--slate); }
 
-    .eyebrow {
-      display: inline-block;
-      font-size: .75rem;
-      font-weight: 700;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--green-deep);
-      margin-bottom: 14px;
-    }
-    .lead {
-      font-size: clamp(1.02rem, 1.5vw, 1.18rem);
-      color: var(--slate);
-      max-width: 62ch;
-    }
-    .center { text-align: center; }
-    .center .lead { margin-inline: auto; }
+  .read-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: .92rem;
+    color: var(--green-deep);
+  }
 
-    /* ---------------- LOGO ---------------- */
-    .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
-    .logo .swoosh { flex: 0 0 auto; color: var(--green); }
-    .logo .word {
-      font-size: 1.24rem;
-      font-weight: 900;
-      font-style: italic;
-      letter-spacing: -.02em;
-      display: inline-flex;
-      align-items: baseline;
-      line-height: 1;
-      white-space: nowrap;
-    }
-    .logo .t1 { font-family: Georgia, "Times New Roman", serif; color: var(--ink); }
-    .logo .t2 { color: var(--green); letter-spacing: -.03em; }
-    .logo .oring {
-      display: inline-block;
-      width: .72em;
-      height: .72em;
-      border-radius: 50%;
-      border: .13em solid var(--green);
-      position: relative;
-      margin: 0 .02em;
-      transform: translateY(-.02em);
-    }
-    .logo .oring::after {
-      content: "";
-      position: absolute;
-      inset: .14em;
-      border-radius: 50%;
-      background: var(--green);
-    }
-    .logo.on-dark .t1 { color: #fff; }
-    .logo.lg .word { font-size: 1.8rem; }
-    .tagline {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 9px;
-      font-size: .78rem;
-      font-weight: 700;
-      font-style: italic;
-      letter-spacing: .01em;
-    }
-    .tagline::before, .tagline::after { content: ""; height: 2px; flex: 1; background: var(--green); max-width: 46px; }
-
-    /* ---------------- BUTTONS ---------------- */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      padding: 15px 26px;
-      border-radius: 100px;
-      font-weight: 700;
-      font-size: 1rem;
-      text-decoration: none;
-      border: 2px solid transparent;
-      cursor: pointer;
-      transition: transform .12s ease, box-shadow .12s ease, background .15s ease, border-color .15s ease;
-      white-space: nowrap;
-    }
-    .btn:hover { transform: translateY(-2px); }
-    .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
-    .btn svg { flex: 0 0 auto; }
-    .btn-wa { background: var(--green); color: #0B1505; }
-    .btn-wa:hover { background: var(--green-bright); }
-    .btn-call { background: var(--ink); color: #fff; }
-    .btn-call:hover { background: #000; }
-    .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
-    .btn-ghost:hover { border-color: var(--ink); }
-    .btn-ghost-light { background: transparent; color: #fff; border-color: rgba(255,255,255,.42); }
-    .btn-ghost-light:hover { border-color: #fff; background: rgba(255,255,255,.09); }
-    .btn-white { background: #fff; color: var(--ink); }
-    .btn-white:hover { background: #F1F4EC; }
-    .btn-sm { padding: 10px 18px; font-size: .92rem; }
-    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
-    .center .cta-row { justify-content: center; }
-
-    /* ---------------- HEADER ---------------- */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 60;
-      background: rgba(255,255,255,.95);
-      backdrop-filter: saturate(180%) blur(12px);
-      -webkit-backdrop-filter: saturate(180%) blur(12px);
-      border-bottom: 1px solid var(--line);
-    }
-    .nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-      padding: 14px 20px;
-      max-width: var(--maxw);
-      margin: 0 auto;
-    }
-    .nav-links { display: none; gap: 28px; font-size: .94rem; font-weight: 600; align-items: center; }
-    .nav-links a { text-decoration: none; color: var(--slate); transition: color .15s ease; }
-    .nav-links a:hover, .nav-links a.active { color: var(--green-deep); }
-    .nav-cta { display: flex; gap: 9px; align-items: center; }
-    .nav-cta .btn-wa { display: none; }
-    @media(min-width: 980px) { .nav-links { display: flex; } }
-    @media(min-width: 820px) { .nav-cta .btn-wa { display: inline-flex; } }
-
-    /* Language Switcher Pill */
-    .lang-switcher {
-      display: inline-flex;
-      align-items: center;
-      background: var(--bg-soft);
-      border: 1px solid var(--line);
-      border-radius: 100px;
-      padding: 3px;
-      gap: 2px;
-      font-size: .8rem;
-      font-weight: 700;
-    }
-    .lang-switcher a {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 5px 10px;
-      border-radius: 100px;
-      text-decoration: none;
-      color: var(--slate);
-      transition: background .15s, color .15s;
-    }
-    .lang-switcher a.active {
-      background: var(--ink);
-      color: #fff;
-    }
-
-    /* ---------------- HERO (DARK WITH TREAD PATTERN) ---------------- */
-    .hero-blog {
-      background:
-        radial-gradient(980px 440px at 86% -10%, rgba(88,179,27,.30), transparent 62%),
-        linear-gradient(168deg, var(--ink) 0%, var(--ink-2) 100%);
-      color: #fff;
-      position: relative;
-      overflow: hidden;
-      padding: clamp(48px, 6vw, 76px) 0 clamp(48px, 6vw, 68px);
-    }
-    .hero-blog::after {
-      content: "";
-      position: absolute;
-      inset: auto 0 0 0;
-      height: 5px;
-      background: repeating-linear-gradient(90deg, var(--green) 0 26px, #fff 26px 52px);
-      opacity: .9;
-    }
-    .hero-blog .eyebrow { color: #96E05C; }
-    .hero-blog h1 { color: #fff; max-width: 28ch; margin-bottom: 16px; }
-    .hero-blog .lead { color: rgba(255,255,255,.82); max-width: 58ch; }
-
-    /* ---------------- PILLS & BADGES ---------------- */
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      font-size: .83rem;
-      font-weight: 600;
-      padding: 8px 14px;
-      border-radius: 100px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.19);
-      color: rgba(255,255,255,.93);
-    }
-    .pill svg { color: var(--green-bright); }
-    .badge-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: .75rem;
-      font-weight: 700;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      padding: 4px 12px;
-      border-radius: 100px;
-      background: var(--green-tint);
-      color: var(--green-deep);
-      border: 1px solid rgba(88,179,27,.25);
-    }
-
-    /* ---------------- FEATURED LEAD ARTICLE CARD ---------------- */
+  @media(min-width: 860px) {
     .featured-card {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 0;
-      margin-bottom: 48px;
-      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
-      text-decoration: none;
-      color: inherit;
+      grid-template-columns: 1.15fr 0.85fr;
     }
-    .featured-card:hover {
-      transform: translateY(-3px);
-      border-color: #CBD6C0;
-      box-shadow: 0 4px 12px rgba(14,17,8,.08), 0 16px 36px rgba(14,17,8,.12);
-    }
-    .featured-media {
-      position: relative;
-      background: var(--bg-soft);
-      min-height: 280px;
-      overflow: hidden;
-    }
-    .featured-media img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform .4s ease;
-    }
-    .featured-card:hover .featured-media img {
-      transform: scale(1.03);
-    }
-    .featured-body {
-      padding: clamp(24px, 4vw, 36px);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .featured-meta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: .83rem;
-      font-weight: 600;
-      color: var(--slate);
-      margin-bottom: 12px;
-    }
-    .featured-body h2 {
-      font-size: clamp(1.4rem, 2.5vw, 1.95rem);
-      margin-bottom: 12px;
-      color: var(--ink);
-      transition: color .15s ease;
-    }
-    .featured-card:hover .featured-body h2 {
-      color: var(--green-deep);
-    }
-    .featured-body p {
-      color: var(--slate);
-      font-size: 1rem;
-      line-height: 1.65;
-      margin-bottom: 24px;
-    }
-    .featured-foot {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-top: 18px;
-      border-top: 1px solid var(--line);
-    }
-    .author-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: var(--green-tint);
-      color: var(--green-deep);
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      font-size: .85rem;
-    }
-    .author-info b { display: block; font-size: .9rem; color: var(--ink); }
-    .author-info span { font-size: .78rem; color: var(--slate); }
-    .read-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 700;
-      font-size: .92rem;
-      color: var(--green-deep);
-    }
+  }
 
-    @media(min-width: 860px) {
-      .featured-card {
-        grid-template-columns: 1.15fr .85fr;
-      }
-    }
+  /* ---------------- 3-COLUMN ARTICLE GRID ---------------- */
+  .article-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    text-decoration: none;
+    color: inherit;
+  }
+  .article-card:hover {
+    transform: translateY(-3px);
+    border-color: #CBD6C0;
+    box-shadow: var(--shadow);
+  }
+  .article-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: var(--bg-soft);
+    position: relative;
+    overflow: hidden;
+  }
+  .article-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .4s ease;
+  }
+  .article-card:hover .article-thumb img {
+    transform: scale(1.04);
+  }
+  .article-content {
+    padding: 22px 20px 18px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-between;
+  }
+  .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .78rem;
+    color: var(--slate);
+    margin-bottom: 10px;
+  }
+  .article-content h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--ink);
+    transition: color .15s ease;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .article-card:hover .article-content h3 {
+    color: var(--green-deep);
+  }
+  .article-content p {
+    color: var(--slate);
+    font-size: .92rem;
+    line-height: 1.58;
+    margin-bottom: 20px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .article-foot {
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .85rem;
+  }
 
-    /* ---------------- ARTICLE GRID ---------------- */
-    .grid { display: grid; gap: 20px; }
-    .g3 { grid-template-columns: 1fr; }
-    @media(min-width: 600px) { .g3 { grid-template-columns: repeat(2, 1fr); } }
-    @media(min-width: 960px) { .g3 { grid-template-columns: repeat(3, 1fr); } }
+  /* ---------------- FINAL CTA SECTION ---------------- */
+  .final {
+    background: linear-gradient(162deg, var(--ink) 0%, #23300F 55%, #2F5A12 100%);
+    color: #fff;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .final::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 5px;
+    background: repeating-linear-gradient(90deg, var(--green) 0 26px, #fff 26px 52px);
+    opacity: .9;
+  }
+  .final h2 { color: #fff; }
+  .final p { color: rgba(255,255,255,.9); max-width: 56ch; margin: 0 auto; }
+  .final .hours {
+    margin-top: 22px;
+    font-size: .9rem;
+    color: rgba(255,255,255,.8);
+    font-weight: 600;
+    max-width: none;
+  }
+</style>
+{% endblock %}
 
-    .article-card {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
-      text-decoration: none;
-      color: inherit;
-    }
-    .article-card:hover {
-      box-shadow: var(--shadow);
-      border-color: #CBD6C0;
-      transform: translateY(-2px);
-    }
-    .article-thumb {
-      aspect-ratio: 16 / 10;
-      background: var(--bg-soft);
-      position: relative;
-      overflow: hidden;
-    }
-    .article-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform .35s ease;
-    }
-    .article-card:hover .article-thumb img {
-      transform: scale(1.04);
-    }
-    .article-content {
-      padding: 24px 22px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .article-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: .8rem;
-      font-weight: 600;
-      color: var(--slate);
-      margin-bottom: 10px;
-    }
-    .article-content h3 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-      color: var(--ink);
-      transition: color .15s ease;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .article-card:hover .article-content h3 {
-      color: var(--green-deep);
-    }
-    .article-content p {
-      color: var(--slate);
-      font-size: .92rem;
-      line-height: 1.58;
-      margin-bottom: 20px;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .article-foot {
-      padding-top: 14px;
-      border-top: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: .85rem;
-    }
-
-    /* ---------------- FINAL CTA SECTION ---------------- */
-    .final {
-      background: linear-gradient(162deg, var(--ink) 0%, #23300F 55%, #2F5A12 100%);
-      color: #fff;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .final::before {
-      content: "";
-      position: absolute;
-      inset: 0 0 auto 0;
-      height: 5px;
-      background: repeating-linear-gradient(90deg, var(--green) 0 26px, #fff 26px 52px);
-      opacity: .9;
-    }
-    .final h2 { color: #fff; }
-    .final p { color: rgba(255,255,255,.9); max-width: 56ch; margin: 0 auto; }
-    .final .hours {
-      margin-top: 22px;
-      font-size: .9rem;
-      color: rgba(255,255,255,.8);
-      font-weight: 600;
-      max-width: none;
-    }
-
-    /* ---------------- FOOTER ---------------- */
-    footer { background: var(--ink); color: rgba(255,255,255,.66); font-size: .9rem; }
-    .f-notice {
-      font-size: .79rem;
-      line-height: 1.6;
-      color: rgba(255,255,255,.5);
-      border-top: 1px solid rgba(255,255,255,.13);
-      padding-top: 20px;
-      margin-bottom: 20px;
-      max-width: 78ch;
-    }
-    .f-notice a { color: rgba(255,255,255,.72); text-decoration: underline; }
-    footer .wrap { padding-top: 48px; padding-bottom: 40px; }
-    .f-grid { display: grid; gap: 30px; margin-bottom: 34px; }
-    @media(min-width: 760px) { .f-grid { grid-template-columns: 1.4fr 1fr 1fr; } }
-    footer h4 { color: #fff; font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; margin: 0 0 14px; }
-    footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
-    footer a { text-decoration: none; }
-    footer a:hover { color: var(--green-bright); text-decoration: underline; }
-    footer .tagline { color: rgba(255,255,255,.85); }
-    .f-bottom {
-      border-top: 1px solid rgba(255,255,255,.13);
-      padding-top: 22px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: space-between;
-      font-size: .83rem;
-    }
-
-    /* ---------------- STICKY MOBILE CTA & DESKTOP FLOAT ---------------- */
-    .mobile-cta {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 80;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      padding: 12px 14px;
-      background: rgba(255,255,255,.97);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-top: 1px solid var(--line);
-      box-shadow: 0 -6px 24px rgba(14,17,8,.11);
-    }
-    .mobile-cta .btn { width: 100%; padding: 14px 10px; font-size: .97rem; }
-    @media(min-width: 820px) { .mobile-cta { display: none; } }
-
-    .float-wa {
-      display: none;
-      position: fixed;
-      right: 24px;
-      bottom: 24px;
-      z-index: 70;
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
-      background: var(--green);
-      color: #0B1505;
-      place-items: center;
-      box-shadow: 0 10px 30px rgba(88,179,27,.5);
-      transition: transform .15s ease;
-      text-decoration: none;
-    }
-    .float-wa:hover { transform: scale(1.07); background: var(--green-bright); }
-    @media(min-width: 820px) { .float-wa { display: grid; } }
-
-    .skip { position: absolute; left: -9999px; top: 0; background: #fff; color: var(--ink); padding: 12px 18px; z-index: 200; font-weight: 700; }
-    .skip:focus { left: 12px; top: 12px; }
-    @media(prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
-  </style>
-</head>
-<body>
-  <a class="skip" href="#main">Skip to content</a>
-
-  <!-- ================= HEADER ================= -->
-  <header>
-    <nav class="nav" aria-label="Main Navigation">
-      <!-- TyresVision Brand Logo -->
-      <a class="logo" href="/{{ '?locale=' + locale if locale == 'ar' else '' }}" aria-label="TyresVision Home">
-        <svg class="swoosh" width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-          <path d="M5 14.5C9.2 7.6 16.2 3.6 24 4.2c5.2.4 9.6 2.7 12.4 6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
-          <path d="M9.5 18.6c3.4-5.3 9-8.4 15.1-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
-          <path d="M35 25.5C30.8 32.4 23.8 36.4 16 35.8c-5.2-.4-9.6-2.7-12.4-6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
-          <path d="M30.5 21.4c-3.4 5.3-9 8.4-15.1 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
-        </svg>
-        <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
-      </a>
-
-      <!-- Center Navigation Links -->
-      <div class="nav-links">
-        <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a>
-        <a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}" class="active">{{ 'المدونة' if locale == 'ar' else 'Blog' }}</a>
-        <a href="/about-us{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'من نحن' if locale == 'ar' else 'About us' }}</a>
-        <a href="/#services">{{ 'الخدمات' if locale == 'ar' else 'Services' }}</a>
-        <a href="/#how">{{ 'طريقة العمل' if locale == 'ar' else 'How it works' }}</a>
-        <a href="/#brands">{{ 'الماركات' if locale == 'ar' else 'Brands' }}</a>
-        <a href="/#faq">{{ 'الأسئلة الشائعة' if locale == 'ar' else 'FAQ' }}</a>
-      </div>
-
-      <!-- Right CTA & Language Toggle -->
-      <div class="nav-cta">
-        <!-- Language Switcher (EN / AR) -->
-        <div class="lang-switcher">
-          <a href="?locale=en" class="{{ 'active' if locale != 'ar' else '' }}">EN</a>
-          <a href="?locale=ar" class="{{ 'active' if locale == 'ar' else '' }}">العربية</a>
-        </div>
-
-        <a class="btn btn-wa btn-sm" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-          WhatsApp
-        </a>
-        <a class="btn btn-call btn-sm" href="tel:+971505069575">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-          {{ 'اتصل الآن' if locale == 'ar' else 'Call now' }}
-        </a>
-      </div>
-    </nav>
-  </header>
-
-  <main id="main">
-    
-    <!-- ================= HERO ================= -->
-    <section class="hero-blog">
-      <div class="wrap">
-        <span class="eyebrow">{{ 'مدونة تايرز فيجن' if locale == 'ar' else 'TyresVision Knowledge & Guides' }}</span>
-        <h1>{{ 'إرشادات ونصائح الإطارات في الإمارات' if locale == 'ar' else 'Tyre Insights & UAE Driving Guides' }}</h1>
-        <p class="lead">{{ 'مقالات متخصصة، مقارنات أداء، نصائح صيانة صيفية، ودليل شامل لاختيار الإطار الأنسب لمركبتك في كافة إمارات الدولة.' if locale == 'ar' else 'Expert automotive articles, heat endurance tips, tyre size comparisons, and maintenance advice from certified UAE tyre specialists.' }}</p>
-      </div>
-    </section>
-
-    <!-- ================= BLOG ARTICLES SECTION ================= -->
-    <section style="background: var(--bg-soft); padding: 56px 0 80px;">
-      <div class="wrap">
-        
-        {% if not blogs or blogs | length == 0 %}
-        <!-- Empty State -->
-        <div style="background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 56px 24px; text-align: center; max-width: 540px; margin: 0 auto;">
-          <div style="width: 56px; height: 56px; border-radius: 12px; background: var(--green-tint); color: var(--green-deep); display: grid; place-items: center; margin: 0 auto 18px;">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          </div>
-          <h3 style="font-size: 1.3rem; margin-bottom: 8px;">{{ 'لا توجد مقالات منشورة حالياً' if locale == 'ar' else 'No Articles Published Yet' }}</h3>
-          <p style="color: var(--slate); font-size: .95rem; margin-bottom: 24px;">{{ 'نعمل على تجهيز إرشادات ومقالات فنية جديدة. تابعونا قريباً!' if locale == 'ar' else 'We are currently preparing in-depth guides and articles. Please check back soon!' }}</p>
-          <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}" class="btn btn-call btn-sm">{{ 'العودة للرئيسية' if locale == 'ar' else 'Back to Home' }}</a>
-        </div>
-        {% else %}
-
-        <!-- Featured / Lead Story (First Article) -->
-        {% set hero_blog = blogs[0] %}
-        <a href="/blog/{{ hero_blog.slug }}{{ '?locale=' + locale if locale == 'ar' else '' }}" class="featured-card">
-          <div class="featured-media">
-            {% if hero_blog.image %}
-            <img src="{{ hero_blog.image }}" alt="{{ hero_blog.get_title(locale) }}" loading="lazy" />
-            {% else %}
-            <div style="width: 100%; height: 100%; display: grid; place-items: center; color: var(--slate); background: var(--bg-soft);">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            </div>
-            {% endif %}
-            <div style="position: absolute; top: 16px; {{ 'right: 16px;' if locale != 'ar' else 'left: 16px;' }}">
-              <span class="badge-tag" style="background: #fff; color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow);">
-                {{ 'مقال مميز' if locale == 'ar' else 'Featured Guide' }}
-              </span>
-            </div>
-          </div>
-
-          <div class="featured-body">
-            <div>
-              <div class="featured-meta">
-                <span class="badge-tag">{{ 'دليل الإطارات' if locale == 'ar' else 'Tyre Guide' }}</span>
-                <span>&bull;</span>
-                <span>{{ hero_blog.published_at.strftime('%B %d, %Y') if hero_blog.published_at else (hero_blog.created_at.strftime('%B %d, %Y') if hero_blog.created_at else '') }}</span>
-              </div>
-              <h2>{{ hero_blog.get_title(locale) }}</h2>
-              <p>{{ hero_blog.get_short_desc(locale) }}</p>
-            </div>
-
-            <div class="featured-foot">
-              <div class="author-info">
-                <div class="avatar">TV</div>
-                <div>
-                  <b>TyresVision Editorial</b>
-                  <span>UAE Technical Team</span>
-                </div>
-              </div>
-              <span class="read-link">
-                {{ 'اقرأ المقال' if locale == 'ar' else 'Read article' }} &rarr;
-              </span>
-            </div>
-          </div>
-        </a>
-
-        <!-- Remaining Articles Grid (3 Columns) -->
-        <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
-          <span class="eyebrow" style="margin: 0;">{{ 'جميع المقالات' if locale == 'ar' else 'All Articles' }}</span>
-          <span style="font-size: .85rem; color: var(--slate); font-weight: 600;">{{ blogs | length }} {{ 'مقال' if locale == 'ar' else 'articles' }}</span>
-        </div>
-
-        <div class="grid g3">
-          {% for blog in blogs %}
-          {% if loop.index > 1 %}
-          <a href="/blog/{{ blog.slug }}{{ '?locale=' + locale if locale == 'ar' else '' }}" class="article-card">
-            <div class="article-thumb">
-              {% if blog.image %}
-              <img src="{{ blog.image }}" alt="{{ blog.get_title(locale) }}" loading="lazy" />
-              {% else %}
-              <div style="width: 100%; height: 100%; display: grid; place-items: center; color: var(--slate);">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              </div>
-              {% endif %}
-            </div>
-
-            <div class="article-content">
-              <div>
-                <div class="article-meta">
-                  <span style="color: var(--green-deep); font-weight: 700;">{{ blog.published_at.strftime('%b %d, %Y') if blog.published_at else (blog.created_at.strftime('%b %d, %Y') if blog.created_at else '') }}</span>
-                  <span>&bull;</span>
-                  <span>{{ 'دليل' if locale == 'ar' else 'Guide' }}</span>
-                </div>
-                <h3>{{ blog.get_title(locale) }}</h3>
-                <p>{{ blog.get_short_desc(locale) }}</p>
-              </div>
-
-              <div class="article-foot">
-                <span style="color: var(--slate); font-size: .82rem;">TyresVision UAE</span>
-                <span class="read-link" style="font-size: .86rem;">
-                  {{ 'قراءة' if locale == 'ar' else 'Read' }} &rarr;
-                </span>
-              </div>
-            </div>
-          </a>
-          {% endif %}
-          {% endfor %}
-        </div>
-
-        {% endif %}
-
-      </div>
-    </section>
-
-    <!-- ================= FINAL CTA ================= -->
-    <section class="final">
-      <div class="wrap">
-        <span class="eyebrow" style="color: #96E05C;">{{ 'استشارة فورية' if locale == 'ar' else 'Need Advice?' }}</span>
-        <h2>{{ 'هل تحتاج مساعدة في اختيار المقاس المناسب؟' if locale == 'ar' else 'Need help choosing the right tyres?' }}</h2>
-        <p>{{ 'أرسل لنا مقاس إطارك أو نوع سيارتك وسيقوم خبراؤنا بالرد عليك عبر واتساب بأفضل الخيارات والأسعار.' if locale == 'ar' else 'WhatsApp us your tyre size or car model — our specialists reply with in-stock options, transparent AED prices, and fitting bookings.' }}</p>
-        <div class="cta-row center">
-          <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-            WhatsApp for a quote
-          </a>
-          <a class="btn btn-ghost-light" href="tel:+971505069575">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-            +971 50 506 9575
-          </a>
-        </div>
-        <p class="hours">{{ 'متاحون يومياً من 8 صباحاً حتى 10 مساءً في كافة أنحاء الإمارات' if locale == 'ar' else 'Open 7 days a week, 8:00 AM &ndash; 10:00 PM across the UAE.' }}</p>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ================= FOOTER ================= -->
-  <footer>
-    <div class="wrap">
-      <div class="f-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px;">
-        <div>
-          <a class="logo on-dark" href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">
-            <svg class="swoosh" width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-              <path d="M5 14.5C9.2 7.6 16.2 3.6 24 4.2c5.2.4 9.6 2.7 12.4 6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
-              <path d="M9.5 18.6c3.4-5.3 9-8.4 15.1-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
-              <path d="M35 25.5C30.8 32.4 23.8 36.4 16 35.8c-5.2-.4-9.6-2.7-12.4-6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
-              <path d="M30.5 21.4c-3.4 5.3-9 8.4-15.1 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
-            </svg>
-            <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
-          </a>
-          <div class="tagline">Online Tyre Shop UAE</div>
-          <p style="margin-top: 16px; font-size: .88rem; max-width: 40ch;">{{ 'متجرك الإلكتروني المعتمد لشراء وتركيب الإطارات الأصلية في دبي، أبوظبي، الشارقة وكافة أنحاء الإمارات.' if locale == 'ar' else 'Buy tyres online, fitted locally across the UAE. 60+ brands, genuine date-fresh stock, fitting centres and mobile vans.' }}</p>
-        </div>
-
-        <div>
-          <h4>{{ 'الصفحات والروابط' if locale == 'ar' else 'Navigation' }}</h4>
-          <ul>
-            <li><a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a></li>
-            <li><a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'المدونة ومقالات الإطارات' if locale == 'ar' else 'Blog & Tyre Guides' }}</a></li>
-            <li><a href="/about-us{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'من نحن' if locale == 'ar' else 'About Us' }}</a></li>
-            <li><a href="/#services">{{ 'خدمات التركيب المتنقل' if locale == 'ar' else 'Mobile Fitting Services' }}</a></li>
-            <li><a href="/#how">{{ 'طريقة العمل والطلب' if locale == 'ar' else 'How It Works' }}</a></li>
-            <li><a href="/#brands">{{ 'ماركات الإطارات' if locale == 'ar' else 'Tyre Brands' }}</a></li>
-            <li><a href="/#faq">{{ 'الأسئلة الشائعة' if locale == 'ar' else 'Frequently Asked Questions' }}</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4>{{ 'الشروط والضمان' if locale == 'ar' else 'Legal & Trust' }}</h4>
-          <ul>
-            <li><a href="/terms-and-conditions{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الشروط والأحكام' if locale == 'ar' else 'Terms & Conditions' }}</a></li>
-            <li><a href="/privacy-policy{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'سياسة الخصوصية' if locale == 'ar' else 'Privacy Policy' }}</a></li>
-            <li><a href="/#notice">{{ 'إشعار الملكية' if locale == 'ar' else 'Ownership Notice' }}</a></li>
-            <li><a href="/#why">{{ 'ضمان الجودة وDOT' if locale == 'ar' else 'Genuine DOT Guarantee' }}</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4>{{ 'التواصل والتغطية' if locale == 'ar' else 'Contact & Coverage' }}</h4>
-          <ul>
-            <li><strong>Phone:</strong> <a href="tel:+971505069575">+971 50 506 9575</a></li>
-            <li><strong>WhatsApp:</strong> <a href="https://wa.me/971505069575" target="_blank" rel="noopener">+971 50 506 9575</a></li>
-            <li><strong>{{ 'أوقات العمل:' if locale == 'ar' else 'Hours:' }}</strong> {{ 'يومياً 8 ص &ndash; 10 م' if locale == 'ar' else 'Daily 8:00 AM &ndash; 10:00 PM' }}</li>
-            <li><strong>{{ 'التغطية:' if locale == 'ar' else 'Coverage:' }}</strong> {{ 'دبي، أبوظبي، الشارقة، عجمان والإمارات الشمالية' if locale == 'ar' else 'Dubai, Abu Dhabi, Sharjah, Ajman & Northern Emirates' }}</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="f-bottom">
-        <span>&copy; 2026 TyresVision &mdash; operated by DSP Trade Hub FZ-LLC. {{ 'جميع الحقوق محفوظة.' if locale == 'ar' else 'All rights reserved.' }}</span>
-        <span>United Arab Emirates</span>
-      </div>
-    </div>
-  </footer>
-
-  <!-- ================= STICKY MOBILE CTA BAR ================= -->
-  <div class="mobile-cta">
-    <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-      WhatsApp
-    </a>
-    <a class="btn btn-call" href="tel:+971505069575">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-      {{ 'اتصال' if locale == 'ar' else 'Call' }}
-    </a>
+{% block content %}
+<!-- ================= HERO ================= -->
+<section class="hero-blog">
+  <div class="wrap">
+    <span class="eyebrow">{{ 'مدونة تايرز فيجن' if locale == 'ar' else 'TyresVision Knowledge & Guides' }}</span>
+    <h1>{{ 'إرشادات ونصائح الإطارات في الإمارات' if locale == 'ar' else 'Tyre Insights & UAE Driving Guides' }}</h1>
+    <p class="lead">{{ 'مقالات متخصصة، مقارنات أداء، نصائح صيانة صيفية، ودليل شامل لاختيار الإطار الأنسب لمركبتك في كافة إمارات الدولة.' if locale == 'ar' else 'Expert automotive articles, heat endurance tips, tyre size comparisons, and maintenance advice from certified UAE tyre specialists.' }}</p>
   </div>
+</section>
 
-  <!-- ================= FLOATING DESKTOP WHATSAPP ================= -->
-  <a class="float-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener" aria-label="Chat with TyresVision on WhatsApp">
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-  </a>
+<!-- ================= BLOG ARTICLES SECTION ================= -->
+<section style="background: var(--bg-soft); padding: 56px 0 80px;">
+  <div class="wrap">
+    
+    {% if not blogs or blogs | length == 0 %}
+    <!-- Empty State -->
+    <div style="background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 56px 24px; text-align: center; max-width: 540px; margin: 0 auto;">
+      <div style="width: 56px; height: 56px; border-radius: 12px; background: var(--green-tint); color: var(--green-deep); display: grid; place-items: center; margin: 0 auto 18px;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <h3 style="font-size: 1.3rem; margin-bottom: 8px;">{{ 'لا توجد مقالات منشورة حالياً' if locale == 'ar' else 'No Articles Published Yet' }}</h3>
+      <p style="color: var(--slate); font-size: .95rem; margin-bottom: 24px;">{{ 'نعمل على تجهيز إرشادات ومقالات فنية جديدة. تابعونا قريباً!' if locale == 'ar' else 'We are currently preparing in-depth guides and articles. Please check back soon!' }}</p>
+      <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}" class="btn btn-call btn-sm">{{ 'العودة للرئيسية' if locale == 'ar' else 'Back to Home' }}</a>
+    </div>
+    {% else %}
 
-</body>
-</html>
+    <!-- Featured / Lead Story (First Article) -->
+    {% set hero_blog = blogs[0] %}
+    <a href="/blog/{{ hero_blog.slug }}{{ '?locale=' + locale if locale == 'ar' else '' }}" class="featured-card">
+      <div class="featured-media">
+        {% if hero_blog.image %}
+        <img src="{{ hero_blog.image }}" alt="{{ hero_blog.get_title(locale) }}" loading="lazy" />
+        {% else %}
+        <div style="width: 100%; height: 100%; display: grid; place-items: center; color: var(--slate); background: var(--bg-soft);">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        {% endif %}
+        <div style="position: absolute; top: 16px; {{ 'right: 16px;' if locale != 'ar' else 'left: 16px;' }}">
+          <span class="badge-tag" style="background: #fff; color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow);">
+            {{ 'مقال مميز' if locale == 'ar' else 'Featured Guide' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="featured-body">
+        <div>
+          <div class="featured-meta">
+            <span class="badge-tag">{{ 'دليل الإطارات' if locale == 'ar' else 'Tyre Guide' }}</span>
+            <span>&bull;</span>
+            <span>{{ hero_blog.published_at.strftime('%B %d, %Y') if hero_blog.published_at else (hero_blog.created_at.strftime('%B %d, %Y') if hero_blog.created_at else '') }}</span>
+          </div>
+          <h2>{{ hero_blog.get_title(locale) }}</h2>
+          <p>{{ hero_blog.get_short_desc(locale) }}</p>
+        </div>
+
+        <div class="featured-foot">
+          <div class="author-info">
+            <div class="avatar">TV</div>
+            <div>
+              <b>TyresVision Editorial</b>
+              <span>UAE Technical Team</span>
+            </div>
+          </div>
+          <span class="read-link">
+            {{ 'اقرأ المقال' if locale == 'ar' else 'Read article' }} &rarr;
+          </span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Remaining Articles Grid (3 Columns) -->
+    <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+      <span class="eyebrow" style="margin: 0;">{{ 'جميع المقالات' if locale == 'ar' else 'All Articles' }}</span>
+      <span style="font-size: .85rem; color: var(--slate); font-weight: 600;">{{ blogs | length }} {{ 'مقال' if locale == 'ar' else 'articles' }}</span>
+    </div>
+
+    <div class="grid g3">
+      {% for blog in blogs %}
+      {% if loop.index > 1 %}
+      <a href="/blog/{{ blog.slug }}{{ '?locale=' + locale if locale == 'ar' else '' }}" class="article-card">
+        <div class="article-thumb">
+          {% if blog.image %}
+          <img src="{{ blog.image }}" alt="{{ blog.get_title(locale) }}" loading="lazy" />
+          {% else %}
+          <div style="width: 100%; height: 100%; display: grid; place-items: center; color: var(--slate);">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="article-content">
+          <div>
+            <div class="article-meta">
+              <span style="color: var(--green-deep); font-weight: 700;">{{ blog.published_at.strftime('%b %d, %Y') if blog.published_at else (blog.created_at.strftime('%b %d, %Y') if blog.created_at else '') }}</span>
+              <span>&bull;</span>
+              <span>{{ 'دليل' if locale == 'ar' else 'Guide' }}</span>
+            </div>
+            <h3>{{ blog.get_title(locale) }}</h3>
+            <p>{{ blog.get_short_desc(locale) }}</p>
+          </div>
+
+          <div class="article-foot">
+            <span style="color: var(--slate); font-size: .82rem;">TyresVision UAE</span>
+            <span class="read-link" style="font-size: .86rem;">
+              {{ 'قراءة' if locale == 'ar' else 'Read' }} &rarr;
+            </span>
+          </div>
+        </div>
+      </a>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    {% endif %}
+
+  </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<section class="final">
+  <div class="wrap">
+    <span class="eyebrow" style="color: #96E05C;">{{ 'استشارة فورية' if locale == 'ar' else 'Need Advice?' }}</span>
+    <h2>{{ 'هل تحتاج مساعدة في اختيار المقاس المناسب؟' if locale == 'ar' else 'Need help choosing the right tyres?' }}</h2>
+    <p>{{ 'أرسل لنا مقاس إطارك أو نوع سيارتك وسيقوم خبراؤنا بالرد عليك عبر واتساب بأفضل الخيارات والأسعار.' if locale == 'ar' else 'WhatsApp us your tyre size or car model — our specialists reply with in-stock options, transparent AED prices, and fitting bookings.' }}</p>
+    <div class="cta-row center">
+      <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+        WhatsApp for a quote
+      </a>
+      <a class="btn btn-ghost-light" href="tel:+971505069575">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+        +971 50 506 9575
+      </a>
+    </div>
+    <p class="hours">{{ 'متاحون يومياً من 8 صباحاً حتى 10 مساءً في كافة أنحاء الإمارات' if locale == 'ar' else 'Open 7 days a week, 8:00 AM &ndash; 10:00 PM across the UAE.' }}</p>
+  </div>
+</section>
+{% endblock %}

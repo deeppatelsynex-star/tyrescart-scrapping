@@ -1,816 +1,409 @@
-<!DOCTYPE html>
-<html lang="{{ locale or 'en' }}" dir="{{ 'rtl' if locale == 'ar' else 'ltr' }}">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ blog.get_meta_title(locale) or blog.get_title(locale) }} — TyresVision</title>
-  <meta name="description" content="{{ blog.get_meta_desc(locale) or blog.get_short_desc(locale) }}" />
+{% extends 'Client/layout.html' %}
+
+{% block title %}{{ blog.get_meta_title(locale) or blog.get_title(locale) }} — TyresVision{% endblock %}
+
+{% block meta_description %}{{ blog.get_meta_desc(locale) or blog.get_short_desc(locale) }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ---------------- READING PROGRESS BAR ---------------- */
+  #reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 4px;
+    width: 0%;
+    background: var(--green);
+    z-index: 100;
+    transition: width .1s ease;
+  }
+  [dir="rtl"] #reading-progress {
+    left: auto;
+    right: 0;
+  }
+
+  /* ---------------- BREADCRUMBS ---------------- */
+  .breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .83rem;
+    font-weight: 600;
+    color: var(--slate);
+    margin: 28px 0 20px;
+  }
+  .breadcrumbs a {
+    text-decoration: none;
+    color: var(--slate);
+    transition: color .15s ease;
+  }
+  .breadcrumbs a:hover {
+    color: var(--green-deep);
+  }
+  .breadcrumbs .current {
+    color: var(--ink);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 32ch;
+  }
+
+  /* ---------------- ARTICLE HEADER ---------------- */
+  .wrap-article {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  .article-header {
+    margin-bottom: 32px;
+  }
+  .article-header .badge-tag {
+    margin-bottom: 14px;
+  }
+  .article-header h1 {
+    margin-bottom: 18px;
+    color: var(--ink);
+  }
+  .lead-box {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .lead-box p {
+    margin: 0;
+    font-size: 1.08rem;
+    line-height: 1.68;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .byline-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .author-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--green-tint);
+    color: var(--green-deep);
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: .95rem;
+  }
+  .author-block b { display: block; font-size: .95rem; color: var(--ink); }
+  .author-block span { font-size: .82rem; color: var(--slate); }
+
+  .share-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ---------------- ARTICLE FEATURED IMAGE ---------------- */
+  .article-hero-media {
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 40px;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    background: var(--bg-soft);
+  }
+  .article-hero-media img {
+    width: 100%;
+    height: auto;
+    max-height: 520px;
+    object-fit: cover;
+  }
+
+  /* ---------------- RICH PROSE TYPOGRAPHY ---------------- */
+  .article-prose {
+    font-size: 1.08rem;
+    line-height: 1.78;
+    color: #262E22;
+  }
+  .article-prose h2 {
+    font-size: clamp(1.45rem, 2.8vw, 1.95rem);
+    font-weight: 800;
+    color: var(--ink);
+    margin-top: 2.2em;
+    margin-bottom: .6em;
+    letter-spacing: -.02em;
+  }
+  .article-prose h3 {
+    font-size: 1.28rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-top: 1.8em;
+    margin-bottom: .5em;
+  }
+  .article-prose p {
+    margin-bottom: 1.4em;
+  }
+  .article-prose strong, .article-prose b {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .article-prose ul, .article-prose ol {
+    margin: 0 0 1.4em 1.5em;
+    padding: 0;
+  }
+  [dir="rtl"] .article-prose ul, [dir="rtl"] .article-prose ol {
+    margin: 0 1.5em 1.4em 0;
+  }
+  .article-prose li {
+    margin-bottom: .5em;
+    line-height: 1.65;
+  }
+  .article-prose blockquote {
+    margin: 1.8em 0;
+    padding: 18px 24px;
+    background: var(--green-tint);
+    border-left: 4px solid var(--green);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    color: var(--green-deep);
+    font-size: 1.05rem;
+    font-style: italic;
+    font-weight: 500;
+  }
+  [dir="rtl"] .article-prose blockquote {
+    border-left: none;
+    border-right: 4px solid var(--green);
+    border-radius: var(--radius) 0 0 var(--radius);
+  }
+  .article-prose img {
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    margin: 2em auto;
+    box-shadow: var(--shadow);
+  }
+  .article-prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2em 0;
+    font-size: .95rem;
+  }
+  .article-prose th, .article-prose td {
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    text-align: left;
+  }
+  [dir="rtl"] .article-prose th, [dir="rtl"] .article-prose td {
+    text-align: right;
+  }
+  .article-prose th {
+    background: var(--bg-soft);
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .article-prose a {
+    color: var(--green-deep);
+    text-decoration: underline;
+    font-weight: 600;
+  }
+
+  /* ---------------- IN-ARTICLE CTA BOX ---------------- */
+  .article-cta-box {
+    background: linear-gradient(135deg, var(--bg-soft) 0%, #E9F4DC 100%);
+    border: 1.5px solid #CBDDC0;
+    border-radius: var(--radius);
+    padding: clamp(28px, 4vw, 36px);
+    margin: 48px 0;
+    text-align: center;
+  }
+  .article-cta-box h3 {
+    font-size: 1.35rem;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .article-cta-box p {
+    color: var(--slate);
+    font-size: .96rem;
+    max-width: 52ch;
+    margin: 0 auto 20px;
+  }
+
+  /* ---------------- ARTICLE FOOTER NAVIGATION ---------------- */
+  .article-nav-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+  }
+
+  /* ---------------- FINAL CTA SECTION ---------------- */
+  .final {
+    background: linear-gradient(162deg, var(--ink) 0%, #23300F 55%, #2F5A12 100%);
+    color: #fff;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .final::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 5px;
+    background: repeating-linear-gradient(90deg, var(--green) 0 26px, #fff 26px 52px);
+    opacity: .9;
+  }
+  .final h2 { color: #fff; }
+  .final p { color: rgba(255,255,255,.9); max-width: 56ch; margin: 0 auto; }
+  .final .hours {
+    margin-top: 22px;
+    font-size: .9rem;
+    color: rgba(255,255,255,.8);
+    font-weight: 600;
+    max-width: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="reading-progress"></div>
+
+<div class="wrap-article">
   
-  <!-- Favicon -->
-  <link rel="icon" type="image/webp" href="/static/assets/images/favicon-color.webp" />
-  <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/webp" />
-  <link rel="apple-touch-icon" href="/static/assets/images/favicon-color.webp" />
+  <!-- ================= BREADCRUMBS ================= -->
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a>
+    <span>/</span>
+    <a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'المدونة' if locale == 'ar' else 'Blog' }}</a>
+    <span>/</span>
+    <span class="current">{{ blog.get_title(locale) }}</span>
+  </nav>
 
-  <!-- Google Fonts: Inter & Tajawal (Arabic) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+  <!-- ================= ARTICLE HEADER ================= -->
+  <article>
+    <header class="article-header">
+      <span class="badge-tag">{{ 'إرشادات الإطارات' if locale == 'ar' else 'Tyre Guide' }}</span>
+      <h1>{{ blog.get_title(locale) }}</h1>
 
-  <style>
-    /* ============================================================
-       BRAND TOKENS — TyresVision (DESIGN-SYSTEM.md)
-       ============================================================ */
-    :root {
-      --green: #58B31B;          /* Logo green */
-      --green-bright: #68C927;   /* Hover / highlights */
-      --green-deep: #35760F;     /* Accessible green for text on white */
-      --green-tint: #EFF9E6;     /* Icon wells / badges */
-      --ink: #0E1108;            /* Logo black */
-      --ink-2: #191F12;          /* Secondary dark shade */
-      --slate: #4C5548;          /* Secondary/muted text */
-      --line: #E3E7DE;           /* Borders, dividers */
-      --bg: #FFFFFF;             /* Page background */
-      --bg-soft: #F6F8F3;        /* Section background */
-      --radius: 14px;            /* Default corner radius */
-      --shadow: 0 1px 2px rgba(14,17,8,.06), 0 8px 24px rgba(14,17,8,.09);
-      --maxw: 1280px;
-      --font: {% if locale == 'ar' %}'Tajawal', 'Inter', "Segoe UI", system-ui, -apple-system, sans-serif{% else %}'Inter', "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif{% endif %};
-    }
+      {% if blog.get_short_desc(locale) %}
+      <div class="lead-box">
+        <p>{{ blog.get_short_desc(locale) }}</p>
+      </div>
+      {% endif %}
 
-    *, *::before, *::after { box-sizing: border-box; }
-    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-    body {
-      margin: 0;
-      font-family: var(--font);
-      color: var(--ink);
-      background: var(--bg);
-      font-size: 17px;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      padding-bottom: 76px;
-      overflow-x: hidden;
-    }
-    @media(min-width: 820px) { body { padding-bottom: 0; } }
+      <div class="byline-bar">
+        <div class="author-block">
+          <div class="avatar">TV</div>
+          <div>
+            <b>TyresVision Editorial Desk</b>
+            <span>{{ blog.published_at.strftime('%B %d, %Y') if blog.published_at else (blog.created_at.strftime('%B %d, %Y') if blog.created_at else '') }} &bull; UAE Automotive Team</span>
+          </div>
+        </div>
 
-    img { max-width: 100%; display: block; }
-    a { color: inherit; }
-    h1, h2, h3, h4 { line-height: 1.15; letter-spacing: -.02em; margin: 0 0 .5em; }
-    h1 { font-size: clamp(1.95rem, 4.4vw, 3.1rem); font-weight: 800; }
-    h2 { font-size: clamp(1.5rem, 3vw, 2.15rem); font-weight: 800; }
-    h3 { font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em; }
-    p { margin: 0 0 1rem; }
-    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
-    .wrap-article { max-width: 860px; margin: 0 auto; padding: 0 20px; }
+        <div class="share-actions">
+          <button type="button" onclick="copyArticleUrl()" id="shareBtn" class="btn btn-ghost btn-sm" style="padding: 7px 14px; font-size: .84rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span id="shareBtnText">{{ 'نسخ الرابط' if locale == 'ar' else 'Share' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
 
-    .eyebrow {
-      display: inline-block;
-      font-size: .75rem;
-      font-weight: 700;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--green-deep);
-      margin-bottom: 14px;
-    }
-    .lead {
-      font-size: clamp(1.05rem, 1.5vw, 1.2rem);
-      color: var(--slate);
-      line-height: 1.65;
-    }
+    <!-- Featured Media Banner -->
+    {% if blog.image %}
+    <div class="article-hero-media">
+      <img src="{{ blog.image }}" alt="{{ blog.get_title(locale) }}" />
+    </div>
+    {% endif %}
 
-    /* ---------------- LOGO ---------------- */
-    .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
-    .logo .swoosh { flex: 0 0 auto; color: var(--green); }
-    .logo .word {
-      font-size: 1.24rem;
-      font-weight: 900;
-      font-style: italic;
-      letter-spacing: -.02em;
-      display: inline-flex;
-      align-items: baseline;
-      line-height: 1;
-      white-space: nowrap;
-    }
-    .logo .t1 { font-family: Georgia, "Times New Roman", serif; color: var(--ink); }
-    .logo .t2 { color: var(--green); letter-spacing: -.03em; }
-    .logo .oring {
-      display: inline-block;
-      width: .72em;
-      height: .72em;
-      border-radius: 50%;
-      border: .13em solid var(--green);
-      position: relative;
-      margin: 0 .02em;
-      transform: translateY(-.02em);
-    }
-    .logo .oring::after {
-      content: "";
-      position: absolute;
-      inset: .14em;
-      border-radius: 50%;
-      background: var(--green);
-    }
-    .logo.on-dark .t1 { color: #fff; }
-    .tagline {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 9px;
-      font-size: .78rem;
-      font-weight: 700;
-      font-style: italic;
-      letter-spacing: .01em;
-    }
-    .tagline::before, .tagline::after { content: ""; height: 2px; flex: 1; background: var(--green); max-width: 46px; }
+    <!-- Rich Article Body -->
+    <div class="article-prose">
+      {{ blog.get_content(locale) | safe }}
+    </div>
 
-    /* ---------------- BUTTONS ---------------- */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      padding: 15px 26px;
-      border-radius: 100px;
-      font-weight: 700;
-      font-size: 1rem;
-      text-decoration: none;
-      border: 2px solid transparent;
-      cursor: pointer;
-      transition: transform .12s ease, box-shadow .12s ease, background .15s ease, border-color .15s ease;
-      white-space: nowrap;
-    }
-    .btn:hover { transform: translateY(-2px); }
-    .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
-    .btn svg { flex: 0 0 auto; }
-    .btn-wa { background: var(--green); color: #0B1505; }
-    .btn-wa:hover { background: var(--green-bright); }
-    .btn-call { background: var(--ink); color: #fff; }
-    .btn-call:hover { background: #000; }
-    .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
-    .btn-ghost:hover { border-color: var(--ink); }
-    .btn-ghost-light { background: transparent; color: #fff; border-color: rgba(255,255,255,.42); }
-    .btn-ghost-light:hover { border-color: #fff; background: rgba(255,255,255,.09); }
-    .btn-sm { padding: 10px 18px; font-size: .92rem; }
-    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    <!-- ================= IN-ARTICLE QUOTE CTA ================= -->
+    <div class="article-cta-box">
+      <span class="eyebrow">{{ 'خدمة فورية' if locale == 'ar' else 'Fast Response' }}</span>
+      <h3>{{ 'هل تبحث عن إطارات جديدة لسيارتك؟' if locale == 'ar' else 'Looking for new tyres for your vehicle?' }}</h3>
+      <p>{{ 'تواصل معنا مباشرة عبر واتساب للحصول على عروض أسعار منافسة بالدرهم الإماراتي مع خدمة التركيب المتنقل عند باب بيتك.' if locale == 'ar' else 'Send us your tyre size or car model on WhatsApp for transparent AED pricing, genuine fresh-date stock, and doorstep mobile fitting.' }}</p>
+      <div class="cta-row center">
+        <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20read%20your%20article%20and%20need%20a%20tyre%20quote." target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+          WhatsApp for a quote
+        </a>
+        <a class="btn btn-call" href="tel:+971505069575">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+          +971 50 506 9575
+        </a>
+      </div>
+    </div>
 
-    /* ---------------- HEADER ---------------- */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 60;
-      background: rgba(255,255,255,.95);
-      backdrop-filter: saturate(180%) blur(12px);
-      -webkit-backdrop-filter: saturate(180%) blur(12px);
-      border-bottom: 1px solid var(--line);
-    }
-    .nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-      padding: 14px 20px;
-      max-width: var(--maxw);
-      margin: 0 auto;
-    }
-    .nav-links { display: none; gap: 28px; font-size: .94rem; font-weight: 600; align-items: center; }
-    .nav-links a { text-decoration: none; color: var(--slate); transition: color .15s ease; }
-    .nav-links a:hover, .nav-links a.active { color: var(--green-deep); }
-    .nav-cta { display: flex; gap: 9px; align-items: center; }
-    .nav-cta .btn-wa { display: none; }
-    @media(min-width: 980px) { .nav-links { display: flex; } }
-    @media(min-width: 820px) { .nav-cta .btn-wa { display: inline-flex; } }
-
-    /* Language Switcher Pill */
-    .lang-switcher {
-      display: inline-flex;
-      align-items: center;
-      background: var(--bg-soft);
-      border: 1px solid var(--line);
-      border-radius: 100px;
-      padding: 3px;
-      gap: 2px;
-      font-size: .8rem;
-      font-weight: 700;
-    }
-    .lang-switcher a {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 5px 10px;
-      border-radius: 100px;
-      text-decoration: none;
-      color: var(--slate);
-      transition: background .15s, color .15s;
-    }
-    .lang-switcher a.active {
-      background: var(--ink);
-      color: #fff;
-    }
-
-    /* Reading Progress Bar */
-    #reading-progress {
-      position: fixed;
-      top: 0;
-      left: 0;
-      height: 3px;
-      background: var(--green);
-      z-index: 100;
-      width: 0%;
-      transition: width .05s linear;
-    }
-
-    /* ---------------- BREADCRUMBS ---------------- */
-    .breadcrumbs {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: .84rem;
-      font-weight: 600;
-      color: var(--slate);
-      padding: 22px 0 10px;
-    }
-    .breadcrumbs a {
-      text-decoration: none;
-      color: var(--slate);
-      transition: color .15s ease;
-    }
-    .breadcrumbs a:hover {
-      color: var(--green-deep);
-    }
-    .breadcrumbs span.current {
-      color: var(--ink);
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 320px;
-    }
-
-    /* ---------------- ARTICLE HEADER & HERO ---------------- */
-    .article-header {
-      padding: 20px 0 32px;
-      border-bottom: 1px solid var(--line);
-      margin-bottom: 32px;
-    }
-    .article-header .badge-tag {
-      margin-bottom: 16px;
-    }
-    .badge-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: .75rem;
-      font-weight: 700;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      padding: 4px 12px;
-      border-radius: 100px;
-      background: var(--green-tint);
-      color: var(--green-deep);
-      border: 1px solid rgba(88,179,27,.25);
-    }
-    .article-header h1 {
-      margin-bottom: 18px;
-      color: var(--ink);
-    }
-    .lead-box {
-      background: var(--bg-soft);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 20px 24px;
-      margin-bottom: 24px;
-    }
-    .lead-box p {
-      margin: 0;
-      font-size: 1.08rem;
-      line-height: 1.68;
-      color: var(--ink);
-      font-weight: 500;
-    }
-    .byline-bar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-    .author-block {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: var(--green-tint);
-      color: var(--green-deep);
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      font-size: .95rem;
-    }
-    .author-block b { display: block; font-size: .95rem; color: var(--ink); }
-    .author-block span { font-size: .82rem; color: var(--slate); }
-
-    .share-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* ---------------- FEATURED MEDIA ---------------- */
-    .article-hero-media {
-      margin: 0 0 36px;
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid var(--line);
-      background: var(--bg-soft);
-      box-shadow: var(--shadow);
-    }
-    .article-hero-media img {
-      width: 100%;
-      height: auto;
-      max-height: 520px;
-      object-fit: cover;
-    }
-
-    /* ---------------- PROSE CONTENT (DESIGN SYSTEM COMPLIANT) ---------------- */
-    .article-prose {
-      font-size: 1.06rem;
-      line-height: 1.75;
-      color: #2D3728;
-    }
-    .article-prose h2 {
-      font-size: clamp(1.45rem, 2.6vw, 1.85rem);
-      font-weight: 800;
-      color: var(--ink);
-      margin-top: 2.2em;
-      margin-bottom: .6em;
-      letter-spacing: -.02em;
-    }
-    .article-prose h3 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--ink);
-      margin-top: 1.8em;
-      margin-bottom: .5em;
-    }
-    .article-prose p {
-      margin-bottom: 1.4em;
-    }
-    .article-prose strong, .article-prose b {
-      color: var(--ink);
-      font-weight: 700;
-    }
-    .article-prose ul, .article-prose ol {
-      margin: 0 0 1.4em 1.5em;
-      padding: 0;
-    }
-    [dir="rtl"] .article-prose ul, [dir="rtl"] .article-prose ol {
-      margin: 0 1.5em 1.4em 0;
-    }
-    .article-prose li {
-      margin-bottom: .5em;
-      line-height: 1.65;
-    }
-    .article-prose blockquote {
-      margin: 1.8em 0;
-      padding: 16px 24px;
-      background: var(--green-tint);
-      border-left: 4px solid var(--green);
-      border-radius: 0 var(--radius) var(--radius) 0;
-      color: var(--green-deep);
-      font-size: 1.05rem;
-      font-style: italic;
-      font-weight: 500;
-    }
-    [dir="rtl"] .article-prose blockquote {
-      border-left: none;
-      border-right: 4px solid var(--green);
-      border-radius: var(--radius) 0 0 var(--radius);
-    }
-    .article-prose img {
-      border-radius: var(--radius);
-      border: 1px solid var(--line);
-      margin: 2em auto;
-      box-shadow: var(--shadow);
-    }
-    .article-prose a {
-      color: var(--green-deep);
-      text-decoration: underline;
-      font-weight: 600;
-    }
-    .article-prose a:hover {
-      color: var(--green-bright);
-    }
-    .article-prose table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1.8em 0;
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid var(--line);
-      font-size: .95rem;
-    }
-    .article-prose th {
-      background: var(--bg-soft);
-      padding: 12px 16px;
-      font-weight: 700;
-      text-align: left;
-      border-bottom: 1px solid var(--line);
-    }
-    [dir="rtl"] .article-prose th { text-align: right; }
-    .article-prose td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    /* ---------------- IN-ARTICLE TYRE CTA CARD ---------------- */
-    .article-cta-box {
-      background: #fff;
-      border: 2px solid var(--line);
-      border-radius: var(--radius);
-      padding: 32px 28px;
-      margin: 48px 0;
-      box-shadow: var(--shadow);
-      text-align: center;
-    }
-    .article-cta-box h3 {
-      font-size: 1.4rem;
-      margin-bottom: 8px;
-    }
-    .article-cta-box p {
-      color: var(--slate);
-      font-size: 1rem;
-      max-width: 52ch;
-      margin: 0 auto 20px;
-    }
-
-    /* ---------------- ARTICLE FOOTER ACTIONS ---------------- */
-    .article-nav-foot {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      padding: 28px 0;
-      border-top: 1px solid var(--line);
-      margin-top: 48px;
-    }
-
-    /* ---------------- FINAL CTA SECTION ---------------- */
-    .final {
-      background: linear-gradient(162deg, var(--ink) 0%, #23300F 55%, #2F5A12 100%);
-      color: #fff;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .final::before {
-      content: "";
-      position: absolute;
-      inset: 0 0 auto 0;
-      height: 5px;
-      background: repeating-linear-gradient(90deg, var(--green) 0 26px, #fff 26px 52px);
-      opacity: .9;
-    }
-    .final h2 { color: #fff; }
-    .final p { color: rgba(255,255,255,.9); max-width: 56ch; margin: 0 auto; }
-    .final .hours {
-      margin-top: 22px;
-      font-size: .9rem;
-      color: rgba(255,255,255,.8);
-      font-weight: 600;
-      max-width: none;
-    }
-
-    /* ---------------- FOOTER ---------------- */
-    footer { background: var(--ink); color: rgba(255,255,255,.66); font-size: .9rem; }
-    .f-notice {
-      font-size: .79rem;
-      line-height: 1.6;
-      color: rgba(255,255,255,.5);
-      border-top: 1px solid rgba(255,255,255,.13);
-      padding-top: 20px;
-      margin-bottom: 20px;
-      max-width: 78ch;
-    }
-    .f-notice a { color: rgba(255,255,255,.72); text-decoration: underline; }
-    footer .wrap { padding-top: 48px; padding-bottom: 40px; }
-    .f-grid { display: grid; gap: 30px; margin-bottom: 34px; }
-    @media(min-width: 760px) { .f-grid { grid-template-columns: 1.4fr 1fr 1fr; } }
-    footer h4 { color: #fff; font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; margin: 0 0 14px; }
-    footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
-    footer a { text-decoration: none; }
-    footer a:hover { color: var(--green-bright); text-decoration: underline; }
-    footer .tagline { color: rgba(255,255,255,.85); }
-    .f-bottom {
-      border-top: 1px solid rgba(255,255,255,.13);
-      padding-top: 22px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: space-between;
-      font-size: .83rem;
-    }
-
-    /* ---------------- STICKY MOBILE CTA & DESKTOP FLOAT ---------------- */
-    .mobile-cta {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 80;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      padding: 12px 14px;
-      background: rgba(255,255,255,.97);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-top: 1px solid var(--line);
-      box-shadow: 0 -6px 24px rgba(14,17,8,.11);
-    }
-    .mobile-cta .btn { width: 100%; padding: 14px 10px; font-size: .97rem; }
-    @media(min-width: 820px) { .mobile-cta { display: none; } }
-
-    .float-wa {
-      display: none;
-      position: fixed;
-      right: 24px;
-      bottom: 24px;
-      z-index: 70;
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
-      background: var(--green);
-      color: #0B1505;
-      place-items: center;
-      box-shadow: 0 10px 30px rgba(88,179,27,.5);
-      transition: transform .15s ease;
-      text-decoration: none;
-    }
-    .float-wa:hover { transform: scale(1.07); background: var(--green-bright); }
-    @media(min-width: 820px) { .float-wa { display: grid; } }
-
-    .skip { position: absolute; left: -9999px; top: 0; background: #fff; color: var(--ink); padding: 12px 18px; z-index: 200; font-weight: 700; }
-    .skip:focus { left: 12px; top: 12px; }
-    @media(prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
-  </style>
-</head>
-<body>
-  <div id="reading-progress"></div>
-  <a class="skip" href="#main">Skip to content</a>
-
-  <!-- ================= HEADER ================= -->
-  <header>
-    <nav class="nav" aria-label="Main Navigation">
-      <!-- TyresVision Brand Logo -->
-      <a class="logo" href="/{{ '?locale=' + locale if locale == 'ar' else '' }}" aria-label="TyresVision Home">
-        <svg class="swoosh" width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-          <path d="M5 14.5C9.2 7.6 16.2 3.6 24 4.2c5.2.4 9.6 2.7 12.4 6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
-          <path d="M9.5 18.6c3.4-5.3 9-8.4 15.1-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
-          <path d="M35 25.5C30.8 32.4 23.8 36.4 16 35.8c-5.2-.4-9.6-2.7-12.4-6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
-          <path d="M30.5 21.4c-3.4 5.3-9 8.4-15.1 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
-        </svg>
-        <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
+    <!-- ================= ARTICLE FOOTER NAV ================= -->
+    <div class="article-nav-foot">
+      <a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}" class="btn btn-ghost btn-sm">
+        &larr; {{ 'العودة لجميع المقالات' if locale == 'ar' else 'Back to all articles' }}
       </a>
-
-      <!-- Center Navigation Links -->
-      <div class="nav-links">
-        <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a>
-        <a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}" class="active">{{ 'المدونة' if locale == 'ar' else 'Blog' }}</a>
-        <a href="/about-us{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'من نحن' if locale == 'ar' else 'About us' }}</a>
-        <a href="/#services">{{ 'الخدمات' if locale == 'ar' else 'Services' }}</a>
-        <a href="/#how">{{ 'طريقة العمل' if locale == 'ar' else 'How it works' }}</a>
-        <a href="/#brands">{{ 'الماركات' if locale == 'ar' else 'Brands' }}</a>
-        <a href="/#faq">{{ 'الأسئلة الشائعة' if locale == 'ar' else 'FAQ' }}</a>
-      </div>
-
-      <!-- Right CTA & Language Toggle -->
-      <div class="nav-cta">
-        <!-- Language Switcher (EN / AR) -->
-        <div class="lang-switcher">
-          <a href="?locale=en" class="{{ 'active' if locale != 'ar' else '' }}">EN</a>
-          <a href="?locale=ar" class="{{ 'active' if locale == 'ar' else '' }}">العربية</a>
-        </div>
-
-        <a class="btn btn-wa btn-sm" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-          WhatsApp
-        </a>
-        <a class="btn btn-call btn-sm" href="tel:+971505069575">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-          {{ 'اتصل الآن' if locale == 'ar' else 'Call now' }}
-        </a>
-      </div>
-    </nav>
-  </header>
-
-  <main id="main">
-    <div class="wrap-article">
-      
-      <!-- ================= BREADCRUMBS ================= -->
-      <nav class="breadcrumbs" aria-label="Breadcrumb">
-        <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a>
-        <span>/</span>
-        <a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'المدونة' if locale == 'ar' else 'Blog' }}</a>
-        <span>/</span>
-        <span class="current">{{ blog.get_title(locale) }}</span>
-      </nav>
-
-      <!-- ================= ARTICLE HEADER ================= -->
-      <article>
-        <header class="article-header">
-          <span class="badge-tag">{{ 'إرشادات الإطارات' if locale == 'ar' else 'Tyre Guide' }}</span>
-          <h1>{{ blog.get_title(locale) }}</h1>
-
-          {% if blog.get_short_desc(locale) %}
-          <div class="lead-box">
-            <p>{{ blog.get_short_desc(locale) }}</p>
-          </div>
-          {% endif %}
-
-          <div class="byline-bar">
-            <div class="author-block">
-              <div class="avatar">TV</div>
-              <div>
-                <b>TyresVision Editorial Desk</b>
-                <span>{{ blog.published_at.strftime('%B %d, %Y') if blog.published_at else (blog.created_at.strftime('%B %d, %Y') if blog.created_at else '') }} &bull; UAE Automotive Team</span>
-              </div>
-            </div>
-
-            <div class="share-actions">
-              <button type="button" onclick="copyArticleUrl()" id="shareBtn" class="btn btn-ghost btn-sm" style="padding: 7px 14px; font-size: .84rem;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                <span id="shareBtnText">{{ 'نسخ الرابط' if locale == 'ar' else 'Share' }}</span>
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <!-- Featured Media Banner -->
-        {% if blog.image %}
-        <div class="article-hero-media">
-          <img src="{{ blog.image }}" alt="{{ blog.get_title(locale) }}" />
-        </div>
-        {% endif %}
-
-        <!-- Rich Article Body -->
-        <div class="article-prose">
-          {{ blog.get_content(locale) | safe }}
-        </div>
-
-        <!-- ================= IN-ARTICLE QUOTE CTA ================= -->
-        <div class="article-cta-box">
-          <span class="eyebrow">{{ 'خدمة فورية' if locale == 'ar' else 'Fast Response' }}</span>
-          <h3>{{ 'هل تبحث عن إطارات جديدة لسيارتك؟' if locale == 'ar' else 'Looking for new tyres for your vehicle?' }}</h3>
-          <p>{{ 'تواصل معنا مباشرة عبر واتساب للحصول على عروض أسعار منافسة بالدرهم الإماراتي مع خدمة التركيب المتنقل عند باب بيتك.' if locale == 'ar' else 'Send us your tyre size or car model on WhatsApp for transparent AED pricing, genuine fresh-date stock, and doorstep mobile fitting.' }}</p>
-          <div class="cta-row center">
-            <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20read%20your%20article%20and%20need%20a%20tyre%20quote." target="_blank" rel="noopener">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-              WhatsApp for a quote
-            </a>
-            <a class="btn btn-call" href="tel:+971505069575">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-              +971 50 506 9575
-            </a>
-          </div>
-        </div>
-
-        <!-- ================= ARTICLE FOOTER NAV ================= -->
-        <div class="article-nav-foot">
-          <a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}" class="btn btn-ghost btn-sm">
-            &larr; {{ 'العودة لجميع المقالات' if locale == 'ar' else 'Back to all articles' }}
-          </a>
-          <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}" class="btn btn-call btn-sm">
-            {{ 'الرئيسية' if locale == 'ar' else 'Visit TyresVision Home' }} &rarr;
-          </a>
-        </div>
-      </article>
-
+      <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}" class="btn btn-call btn-sm">
+        {{ 'الرئيسية' if locale == 'ar' else 'Visit TyresVision Home' }} &rarr;
+      </a>
     </div>
+  </article>
 
-    <!-- ================= FINAL CTA ================= -->
-    <section class="final">
-      <div class="wrap">
-        <span class="eyebrow" style="color: #96E05C;">{{ 'دعم مستمر' if locale == 'ar' else 'Need Advice?' }}</span>
-        <h2>{{ 'جاهز لطلب إطاراتك الجديدة؟' if locale == 'ar' else 'Ready to order your tyres?' }}</h2>
-        <p>{{ 'إطارات أصلية 100% مع ضمان رسمي وتوصيل مجاني لمركز التركيب أو تركيب متنقل.' if locale == 'ar' else '100% genuine tyres with full manufacturer warranty and doorstep fitting across the UAE.' }}</p>
-        <div class="cta-row center">
-          <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-            WhatsApp for a quote
-          </a>
-          <a class="btn btn-ghost-light" href="tel:+971505069575">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-            +971 50 506 9575
-          </a>
-        </div>
-        <p class="hours">{{ 'متاحون يومياً من 8 صباحاً حتى 10 مساءً في كافة أنحاء الإمارات' if locale == 'ar' else 'Open 7 days a week, 8:00 AM &ndash; 10:00 PM across the UAE.' }}</p>
-      </div>
-    </section>
-  </main>
+</div>
 
-  <!-- ================= FOOTER ================= -->
-  <footer>
-    <div class="wrap">
-      <div class="f-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px;">
-        <div>
-          <a class="logo on-dark" href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">
-            <svg class="swoosh" width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-              <path d="M5 14.5C9.2 7.6 16.2 3.6 24 4.2c5.2.4 9.6 2.7 12.4 6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
-              <path d="M9.5 18.6c3.4-5.3 9-8.4 15.1-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
-              <path d="M35 25.5C30.8 32.4 23.8 36.4 16 35.8c-5.2-.4-9.6-2.7-12.4-6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
-              <path d="M30.5 21.4c-3.4 5.3-9 8.4-15.1 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
-            </svg>
-            <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
-          </a>
-          <div class="tagline">Online Tyre Shop UAE</div>
-          <p style="margin-top: 16px; font-size: .88rem; max-width: 40ch;">{{ 'متجرك الإلكتروني المعتمد لشراء وتركيب الإطارات الأصلية في دبي، أبوظبي، الشارقة وكافة أنحاء الإمارات.' if locale == 'ar' else 'Buy tyres online, fitted locally across the UAE. 60+ brands, genuine date-fresh stock, fitting centres and mobile vans.' }}</p>
-        </div>
-
-        <div>
-          <h4>{{ 'الصفحات والروابط' if locale == 'ar' else 'Navigation' }}</h4>
-          <ul>
-            <li><a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a></li>
-            <li><a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'المدونة ومقالات الإطارات' if locale == 'ar' else 'Blog & Tyre Guides' }}</a></li>
-            <li><a href="/about-us{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'من نحن' if locale == 'ar' else 'About Us' }}</a></li>
-            <li><a href="/#services">{{ 'خدمات التركيب المتنقل' if locale == 'ar' else 'Mobile Fitting Services' }}</a></li>
-            <li><a href="/#how">{{ 'طريقة العمل والطلب' if locale == 'ar' else 'How It Works' }}</a></li>
-            <li><a href="/#brands">{{ 'ماركات الإطارات' if locale == 'ar' else 'Tyre Brands' }}</a></li>
-            <li><a href="/#faq">{{ 'الأسئلة الشائعة' if locale == 'ar' else 'Frequently Asked Questions' }}</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4>{{ 'الشروط والضمان' if locale == 'ar' else 'Legal & Trust' }}</h4>
-          <ul>
-            <li><a href="/terms-and-conditions{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الشروط والأحكام' if locale == 'ar' else 'Terms & Conditions' }}</a></li>
-            <li><a href="/privacy-policy{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'سياسة الخصوصية' if locale == 'ar' else 'Privacy Policy' }}</a></li>
-            <li><a href="/#notice">{{ 'إشعار الملكية' if locale == 'ar' else 'Ownership Notice' }}</a></li>
-            <li><a href="/#why">{{ 'ضمان الجودة وDOT' if locale == 'ar' else 'Genuine DOT Guarantee' }}</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4>{{ 'التواصل والتغطية' if locale == 'ar' else 'Contact & Coverage' }}</h4>
-          <ul>
-            <li><strong>Phone:</strong> <a href="tel:+971505069575">+971 50 506 9575</a></li>
-            <li><strong>WhatsApp:</strong> <a href="https://wa.me/971505069575" target="_blank" rel="noopener">+971 50 506 9575</a></li>
-            <li><strong>{{ 'أوقات العمل:' if locale == 'ar' else 'Hours:' }}</strong> {{ 'يومياً 8 ص &ndash; 10 م' if locale == 'ar' else 'Daily 8:00 AM &ndash; 10:00 PM' }}</li>
-            <li><strong>{{ 'التغطية:' if locale == 'ar' else 'Coverage:' }}</strong> {{ 'دبي، أبوظبي، الشارقة، عجمان والإمارات الشمالية' if locale == 'ar' else 'Dubai, Abu Dhabi, Sharjah, Ajman & Northern Emirates' }}</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="f-bottom">
-        <span>&copy; 2026 TyresVision &mdash; operated by DSP Trade Hub FZ-LLC. {{ 'جميع الحقوق محفوظة.' if locale == 'ar' else 'All rights reserved.' }}</span>
-        <span>United Arab Emirates</span>
-      </div>
+<!-- ================= FINAL CTA ================= -->
+<section class="final">
+  <div class="wrap">
+    <span class="eyebrow" style="color: #96E05C;">{{ 'دعم مستمر' if locale == 'ar' else 'Need Advice?' }}</span>
+    <h2>{{ 'جاهز لطلب إطاراتك الجديدة؟' if locale == 'ar' else 'Ready to order your tyres?' }}</h2>
+    <p>{{ 'إطارات أصلية 100% مع ضمان رسمي وتوصيل مجاني لمركز التركيب أو تركيب متنقل.' if locale == 'ar' else '100% genuine tyres with full manufacturer warranty and doorstep fitting across the UAE.' }}</p>
+    <div class="cta-row center">
+      <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+        WhatsApp for a quote
+      </a>
+      <a class="btn btn-ghost-light" href="tel:+971505069575">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+        +971 50 506 9575
+      </a>
     </div>
-  </footer>
-
-  <!-- ================= STICKY MOBILE CTA BAR ================= -->
-  <div class="mobile-cta">
-    <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-      WhatsApp
-    </a>
-    <a class="btn btn-call" href="tel:+971505069575">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-      {{ 'اتصال' if locale == 'ar' else 'Call' }}
-    </a>
+    <p class="hours">{{ 'متاحون يومياً من 8 صباحاً حتى 10 مساءً في كافة أنحاء الإمارات' if locale == 'ar' else 'Open 7 days a week, 8:00 AM &ndash; 10:00 PM across the UAE.' }}</p>
   </div>
+</section>
+{% endblock %}
 
-  <!-- ================= FLOATING DESKTOP WHATSAPP ================= -->
-  <a class="float-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener" aria-label="Chat with TyresVision on WhatsApp">
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-  </a>
+{% block extra_scripts %}
+<script>
+  // Reading progress bar
+  window.addEventListener('scroll', function() {
+    const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
+    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const scrolled = (winScroll / height) * 100;
+    const el = document.getElementById('reading-progress');
+    if (el) el.style.width = scrolled + '%';
+  });
 
-  <script>
-    // Reading progress bar
-    window.addEventListener('scroll', function() {
-      const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
-      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scrolled = (winScroll / height) * 100;
-      const el = document.getElementById('reading-progress');
-      if (el) el.style.width = scrolled + '%';
-    });
-
-    // Share / Copy Link
-    function copyArticleUrl() {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(window.location.href).then(function() {
-          const btnText = document.getElementById('shareBtnText');
-          if (btnText) {
-            const original = btnText.textContent;
-            btnText.textContent = '✓ Copied!';
-            setTimeout(function() { btnText.textContent = original; }, 2000);
-          }
-        });
-      }
+  // Share / Copy Link
+  function copyArticleUrl() {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href).then(function() {
+        const btnText = document.getElementById('shareBtnText');
+        if (btnText) {
+          const original = btnText.textContent;
+          btnText.textContent = '✓ Copied!';
+          setTimeout(function() { btnText.textContent = original; }, 2000);
+        }
+      });
     }
-  </script>
-</body>
-</html>
+  }
+</script>
+{% endblock %}
