@@ -181,31 +181,72 @@
       </div>
 
       <!-- 2. RECENT POST WIDGET -->
-      {% if recent_blogs and recent_blogs | length > 0 %}
       <div class="sidebar-box-ref">
         <div class="sidebar-header-green">
           RECENT POST
         </div>
         <div class="sidebar-recent-list">
-          {% for rel in recent_blogs %}
-          <a href="/blog/{{ rel.slug }}{{ '?locale=' + locale if locale == 'ar' else '' }}" class="sidebar-recent-row">
-            <div class="sidebar-recent-thumb">
-              {% if rel.image %}
-              <img src="{{ rel.image }}" alt="{{ rel.get_title(locale) }}" loading="lazy" />
-              {% else %}
-              <div class="sidebar-recent-noimg">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          {% if recent_blogs and recent_blogs | length > 0 %}
+            {% for rel in recent_blogs %}
+            <a href="/blog/{{ rel.slug }}{{ '?locale=' + locale if locale == 'ar' else '' }}" class="sidebar-recent-row">
+              <div class="sidebar-recent-thumb">
+                {% if rel.image %}
+                <img src="{{ rel.image }}" alt="{{ rel.get_title(locale) }}" loading="lazy" />
+                {% else %}
+                <div class="sidebar-recent-noimg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </div>
+                {% endif %}
               </div>
-              {% endif %}
+              <div style="flex:1; min-width:0;">
+                <h4 class="sidebar-recent-title">{{ rel.get_title(locale) }}</h4>
+              </div>
+            </a>
+            {% endfor %}
+          {% endif %}
+
+          <a href="/blogs" class="sidebar-recent-row">
+            <div class="sidebar-recent-thumb">
+              <img src="/static/assets/brands/michelin.png" alt="RFID in Tyres" style="padding:4px; object-fit:contain;" />
             </div>
             <div style="flex:1; min-width:0;">
-              <h4 class="sidebar-recent-title">{{ rel.get_title(locale) }}</h4>
+              <h4 class="sidebar-recent-title">RFID in Tyres Explained: How It Works, Benefits, and Why It Matters</h4>
             </div>
           </a>
-          {% endfor %}
+          <a href="/blogs" class="sidebar-recent-row">
+            <div class="sidebar-recent-thumb">
+              <img src="/static/assets/brands/continental.png" alt="Comfort-First Tyre Selection" style="padding:4px; object-fit:contain;" />
+            </div>
+            <div style="flex:1; min-width:0;">
+              <h4 class="sidebar-recent-title">Comfort-First Tyre Selection For Bentley, Rolls-Royce and S-Class Owners</h4>
+            </div>
+          </a>
+          <a href="/blogs" class="sidebar-recent-row">
+            <div class="sidebar-recent-thumb">
+              <img src="/static/assets/brands/pirelli.png" alt="Best Tyres for Ford Ranger" style="padding:4px; object-fit:contain;" />
+            </div>
+            <div style="flex:1; min-width:0;">
+              <h4 class="sidebar-recent-title">Best Tyres for the Ford Ranger and Ranger Raptor In the UAE (2026 Guide)</h4>
+            </div>
+          </a>
+          <a href="/blogs" class="sidebar-recent-row">
+            <div class="sidebar-recent-thumb">
+              <img src="/static/assets/brands/bridgestone.png" alt="Michelin vs Continental" style="padding:4px; object-fit:contain;" />
+            </div>
+            <div style="flex:1; min-width:0;">
+              <h4 class="sidebar-recent-title">Michelin Pilot Sport Vs Continental SportContact For Dubai Autodrome Track...</h4>
+            </div>
+          </a>
+          <a href="/blogs" class="sidebar-recent-row">
+            <div class="sidebar-recent-thumb">
+              <img src="/static/assets/brands/yokohama.png" alt="Tyre Rotation in UAE" style="padding:4px; object-fit:contain;" />
+            </div>
+            <div style="flex:1; min-width:0;">
+              <h4 class="sidebar-recent-title">Tyre Rotation in UAE: How Often, Why It Matters, and What Happens If You Skip It</h4>
+            </div>
+          </a>
         </div>
       </div>
-      {% endif %}
 
     </aside>
 
