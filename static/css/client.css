@@ -1512,9 +1512,9 @@ footer .tagline {
   outline-offset: 3px;
 }
 
-/* 4:3 Aspect Ratio Thumbnail Container */
+/* 16:9 Aspect Ratio Thumbnail Container (Fits Landscape Banner Graphics Perfectly) */
 .post-card-thumb {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 9;
   background: var(--bg-soft);
   position: relative;
   overflow: hidden;
@@ -1525,6 +1525,7 @@ footer .tagline {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   transition: transform .35s cubic-bezier(0.16, 1, 0.3, 1);
   display: block;
 }
