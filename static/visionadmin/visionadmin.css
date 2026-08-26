@@ -1,4 +1,4 @@
-﻿/* visionadmin.css - VisionAdmin CMS Styles */
+/* visionadmin.css - VisionAdmin CMS Styles */
 :root {
   --va-primary: #10b981;
   --va-primary-dark: #059669;
@@ -38,3 +38,13 @@ body {
   border-color: #cbd5e1;
   box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04);
 }
+
+/* CKEditor Contents Minimum Height */
+.cke_contents {
+  min-height: 200px !important;
+}
+
+.cke_inner .cke_contents iframe {
+  min-height: 200px !important;
+}
+

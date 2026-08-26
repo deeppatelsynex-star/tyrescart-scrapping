@@ -282,14 +282,16 @@
   window.addEventListener('DOMContentLoaded', () => {
     if (window.CKEDITOR) {
       CKEDITOR.replace('content_en', {
-        height: 280,
+        minHeight: 200,
+        height: 250,
         extraPlugins: 'codesnippet,sourcearea',
         codeSnippet_theme: 'monokai_sublime',
         removeButtons: 'About',
         versionCheck: false
       });
       CKEDITOR.replace('content_ar', {
-        height: 280,
+        minHeight: 200,
+        height: 250,
         extraPlugins: 'codesnippet,sourcearea',
         codeSnippet_theme: 'monokai_sublime',
         contentsLangDirection: 'rtl',
