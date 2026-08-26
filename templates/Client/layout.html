@@ -1,48 +1,289 @@
 <!DOCTYPE html>
-<html lang="{{ locale or 'en' }}" dir="{{ 'rtl' if locale == 'ar' else 'ltr' }}">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}TyresVision{% endblock %}</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Buy Tyres Online in Dubai, Abu Dhabi &amp; Sharjah | TyresVision{% endblock %}</title>
+<meta name="description" content="{% block meta_description %}Buy tyres online from 60+ brands, fitted free at 350+ centres across the UAE or at your door by mobile van. WhatsApp your tyre size for a price in minutes.{% endblock %}">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="TyresVision">
+<meta name="theme-color" content="#0E1108">
+<link rel="canonical" href="https://www.tyresvision.com/">
+<link rel="alternate" hreflang="en-ae" href="https://www.tyresvision.com/">
+<link rel="alternate" hreflang="x-default" href="https://www.tyresvision.com/">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='19' fill='%230E1108'/%3E%3Ccircle cx='20' cy='20' r='11' fill='none' stroke='%2358B31B' stroke-width='4.5'/%3E%3Ccircle cx='20' cy='20' r='4' fill='%2358B31B'/%3E%3C/svg%3E">
 
-  <!-- Google Fonts: Inter & Tajawal -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TyresVision">
+<meta property="og:locale" content="en_AE">
+<meta property="og:url" content="https://www.tyresvision.com/">
+<meta property="og:title" content="Buy Tyres Online in Dubai, Abu Dhabi & Sharjah | TyresVision">
+<meta property="og:description" content="60+ brands, 10,000+ products, fitted free at 350+ locations across the UAE — or at your door by mobile van.">
+<meta property="og:image" content="https://www.tyresvision.com/assets/online-tyres-shop-dubai.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="TyresVision — buy tyres online, fitted locally across the UAE">
 
-  <!-- Client CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/client.css') }}" />
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Buy Tyres Online in Dubai, Abu Dhabi & Sharjah | TyresVision">
+<meta name="twitter:description" content="60+ brands, 10,000+ products, fitted free at 350+ locations across the UAE — or at your door by mobile van.">
+<meta name="twitter:image" content="https://www.tyresvision.com/assets/online-tyres-shop-dubai.png">
 
-  {% block extra_head %}{% endblock %}
+<!-- Structured data: business entity (for Search, Maps, AI Overviews & answer engines) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AutomotiveBusiness",
+  "@id": "https://www.tyresvision.com/#business",
+  "name": "TyresVision",
+  "url": "https://www.tyresvision.com/",
+  "telephone": "+971505069575",
+  "priceRange": "AED",
+  "image": "https://www.tyresvision.com/assets/online-tyres-shop-dubai.png",
+  "description": "TyresVision is an online tyre shop serving the UAE, offering tyres from 60+ brands with free fitting at 350+ centres across Dubai, Abu Dhabi, Sharjah and Ajman, or mobile fitting at the customer's home or office.",
+  "areaServed": [
+    { "@type": "City", "name": "Dubai" },
+    { "@type": "City", "name": "Abu Dhabi" },
+    { "@type": "City", "name": "Sharjah" },
+    { "@type": "City", "name": "Ajman" },
+    { "@type": "Country", "name": "United Arab Emirates" }
+  ],
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+    "opens": "00:00",
+    "closes": "23:59"
+  },
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+971-50-506-9575",
+    "contactType": "customer service",
+    "areaServed": "AE",
+    "availableLanguage": ["English", "Arabic"]
+  },
+  "makesOffer": [
+    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Tyre sales" } },
+    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Tyre fitting" } },
+    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Mobile tyre fitting" } },
+    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Wheel alignment" } },
+    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Wheel balancing" } }
+  ]
+}
+</script>
+
+<!-- Structured data: FAQ (must mirror the visible FAQ section below) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I find my tyre size?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It's printed on the sidewall of your current tyre — something like 235/55 R19 105W. Send a photo on WhatsApp if you're not sure, or share your car's make, model and year and TyresVision will look it up."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is fitting included in the price?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Delivery to your chosen fitting centre is free and fitting is arranged for you. Mobile fitting at your own location and extras such as alignment are quoted upfront, with no surprises at the till."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are the tyres new and date-fresh?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Every tyre is brand new with a recent manufacturing date, sourced through authorised channels, and eligible tyres carry manufacturer-backed warranty."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which emirates does TyresVision cover?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Dubai, Abu Dhabi, Sharjah, Ajman and the rest of the UAE, through a network of fitting centres and mobile vans."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can TyresVision handle a company fleet?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — fleet pricing, consolidated invoicing and scheduled on-site visits are available. Call and ask for the fleet desk."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What if I need help right now?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Message TyresVision on WhatsApp or call +971 50 506 9575."
+      }
+    }
+  ]
+}
+</script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/client.css') }}">
+
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MNN5FHT2');</script>
+<!-- End Google Tag Manager -->
+{% block extra_head %}{% endblock %}
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MNN5FHT2"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<a class="skip" href="#main">Skip to content</a>
 
-  <!-- Header -->
-  <header class="site-header">
-    <div class="site-container site-nav">
-      <a href="/" style="text-decoration:none; font-weight:900; font-size:22px; color:var(--ink);">
-        TYRES<span style="color:var(--green);">VISION</span>
+<!-- ============================================================
+     LOGO NOTE: the mark below is a CSS/SVG rebuild of the
+     TyresVision logo. To use the real artwork instead, replace the
+     <a class="logo"> blocks with:
+     <a href="#top"><img src="tyresvision-logo.svg" alt="TyresVision" height="40"></a>
+     ============================================================ -->
+
+<header>
+  <nav class="nav" aria-label="Main">
+    <a class="logo" href="#top" aria-label="TyresVision home">
+      <svg class="swoosh" width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <path d="M5 14.5C9.2 7.6 16.2 3.6 24 4.2c5.2.4 9.6 2.7 12.4 6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+        <path d="M9.5 18.6c3.4-5.3 9-8.4 15.1-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
+        <path d="M35 25.5C30.8 32.4 23.8 36.4 16 35.8c-5.2-.4-9.6-2.7-12.4-6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+        <path d="M30.5 21.4c-3.4 5.3-9 8.4-15.1 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
+      </svg>
+      <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="#why">Why us</a>
+      <a href="#services">Services</a>
+      <a href="#how">How it works</a>
+      <a href="#brands">Brands</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-cta">
+      <a class="btn btn-wa btn-sm" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+        WhatsApp
       </a>
-      <nav style="display:flex; gap:20px; font-weight:600; font-size:14px;">
-        <a href="/" style="text-decoration:none; color:var(--ink);">Home</a>
-      </nav>
+      <a class="btn btn-call btn-sm" href="tel:+971505069575">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+        Call now
+      </a>
     </div>
-  </header>
+  </nav>
+</header>
 
-  <!-- Main Content -->
-  <main class="site-main">
-    {% block content %}{% endblock %}
-  </main>
+<main id="main">
+{% block content %}{% endblock %}
+</main>
 
-  <!-- Footer -->
-  <footer class="site-footer">
-    <div class="site-container" style="text-align:center; font-size:13px;">
-      &copy; 2026 TyresVision. All rights reserved.
+<!-- ================= OWNERSHIP / NON-ASSOCIATION NOTICE (MODAL) =================
+     Opened by the "Ownership notice" link in the footer.
+     REVIEW BY LEGAL COUNSEL BEFORE PUBLISHING.
+     Replace [Month YYYY] with the actual date of domain transfer.
+     ============================================================================= -->
+<dialog class="notice-modal" id="noticeModal" aria-labelledby="notice-title">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2 id="notice-title">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L3 6v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        Important notice regarding ownership of this domain
+      </h2>
+      <p class="stamp">Last updated: [January 2026]</p>
+      <button type="button" class="notice-close" id="noticeClose" aria-label="Close notice">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
     </div>
-  </footer>
 
-  <!-- Client JS -->
-  <script src="{{ url_for('static', filename='js/client.js') }}"></script>
-  {% block extra_scripts %}{% endblock %}
+    <div class="sheet-body">
+      <p>The domain <strong>tyresvision.com</strong> was acquired by <strong>DSP Trade Hub FZ-LLC</strong> in <strong>[January 2026]</strong> through an arm&rsquo;s-length purchase of the domain name. The website now published at this address is owned and operated solely by DSP Trade Hub FZ-LLC.</p>
+
+      <p>DSP Trade Hub FZ-LLC is a separate and independent legal entity. It has <strong>no association, affiliation, partnership, joint venture, agency, successor relationship or common ownership</strong> with any person, firm or company that previously owned this domain or operated a website or business under this or any similar name.</p>
+
+      <p>The transaction was limited to the domain name itself. <strong>No business, trading operation, goodwill, contracts, stock, customer accounts, employees, obligations or liabilities of any former operator were acquired or assumed</strong> by DSP Trade Hub FZ-LLC. Accordingly, DSP Trade Hub FZ-LLC does not accept and is not responsible for any debt, invoice, order, deposit, warranty, guarantee, refund, service commitment, claim or other obligation arising from the activities of any former operator, whether arising before or after the date of acquisition.</p>
+
+      <p>Any enquiry, claim or correspondence relating to a transaction, order or account with a former operator of this domain should be directed to that party, as DSP Trade Hub FZ-LLC holds no records of, and has no authority over, such matters.</p>
+
+      <p>For any matter concerning TyresVision as operated by DSP Trade Hub FZ-LLC, please contact us on <br> <a href="tel:+971505069575" style="color:var(--green-deep);font-weight:700">+971 50 506 9575</a>.</p>
+    </div>
+
+    <div class="sheet-foot">
+      <button type="button" class="btn btn-call" id="noticeClose2">Close</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <a class="logo lg on-dark" href="#top">
+          <svg class="swoosh" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <path d="M5 14.5C9.2 7.6 16.2 3.6 24 4.2c5.2.4 9.6 2.7 12.4 6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+            <path d="M9.5 18.6c3.4-5.3 9-8.4 15.1-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
+            <path d="M35 25.5C30.8 32.4 23.8 36.4 16 35.8c-5.2-.4-9.6-2.7-12.4-6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+            <path d="M30.5 21.4c-3.4 5.3-9 8.4-15.1 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
+          </svg>
+          <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
+        </a>
+        <p style="max-width:34ch;margin-top:16px">Buy tyres online, fitted locally across the UAE. 60+ brands, 10,000+ products, fitting centres and mobile vans.</p>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="tel:+971505069575">+971 50 506 9575</a></li>
+          <li><a href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">WhatsApp us</a></li>
+        </ul>
+        <h4 style="margin-top:26px">Legal</h4>
+        <ul>
+          <li><a href="#notice" data-notice>Ownership notice</a></li>
+        </ul>        
+      </div>
+      <div>
+        <h4>Coverage</h4>
+        <ul>
+          <li>Dubai</li><li>Abu Dhabi</li><li>Sharjah</li><li>Ajman &amp; Northern Emirates</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="f-bottom">
+      <span>&copy; <span id="yr">2026</span> TyresVision &mdash; operated by DSP Trade Hub FZ-LLC. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="mobile-cta" role="group" aria-label="Contact TyresVision">
+  <a class="btn btn-call" href="tel:+971505069575">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+    Call now
+  </a>
+  <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+    WhatsApp
+  </a>
+</div>
+
+<a class="float-wa" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
+  <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+</a>
+
+<script src="{{ url_for('static', filename='js/client.js') }}"></script>
+{% block extra_scripts %}{% endblock %}
 </body>
 </html>
