@@ -2407,111 +2407,120 @@ footer .tagline {
    Exact match to reference layout & brand tokens
    ============================================================ */
 
-/* 1. Full-Width Cinematic Hero Banner (Pure Brand Gradient Colors) */
-.about-hero-banner {
-  background:
-    radial-gradient(980px 440px at 86% -10%, rgba(88,179,27,.35), transparent 62%),
-    radial-gradient(800px 400px at 14% 110%, rgba(53,118,15,.35), transparent 60%),
-    linear-gradient(168deg, var(--ink) 0%, var(--ink-2) 45%, #1C380F 100%);
-  color: #ffffff;
+/* 1. Hero Section (Clean 2-Col Layout with Left Content & Right Media) */
+.about-hero-section {
+  padding: clamp(36px, 5vw, 64px) 0 clamp(48px, 6vw, 80px);
   position: relative;
   overflow: hidden;
-  padding: clamp(60px, 8vw, 100px) 0 clamp(54px, 7vw, 90px);
-  text-align: center;
+  background: var(--bg);
 }
 
-.about-hero-banner::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 4px;
-  background: repeating-linear-gradient(90deg, var(--green) 0 24px, rgba(255,255,255,.2) 24px 48px);
-  opacity: .95;
-}
-
-.about-hero-banner .wrap {
-  position: relative;
-  z-index: 3;
-}
-
-.about-hero-banner .eyebrow {
-  color: #96E05C;
-  font-size: .84rem;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  font-weight: 800;
-  display: inline-block;
-  margin-bottom: 14px;
-}
-
-.about-hero-banner h1 {
-  color: #ffffff;
-  font-size: clamp(2.2rem, 4.8vw, 3.5rem);
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -.025em;
-  max-width: 32ch;
-  margin: 0 auto 18px;
-}
-
-.about-hero-banner h1 em,
-.about-hero-banner h1 span.text-green {
-  font-style: normal;
-  color: var(--green-bright);
-}
-
-.about-hero-banner .lead {
-  color: rgba(255, 255, 255, .88);
-  max-width: 660px;
-  margin: 0 auto 28px;
-  font-size: clamp(1.02rem, 1.45vw, 1.15rem);
-  line-height: 1.65;
-}
-
-.about-hero-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
+.about-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 36px;
   align-items: center;
-  margin-top: 14px;
 }
 
-.about-hero-pill-btn {
-  display: inline-flex;
+@media(min-width: 960px) {
+  .about-hero-grid {
+    grid-template-columns: 1.15fr 1fr;
+    gap: 56px;
+  }
+}
+
+.about-hero-text {
+  min-width: 0;
+}
+
+.about-hero-text .breadcrumb-nav {
+  margin-bottom: 20px;
+  display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 24px;
-  border-radius: 100px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-decoration: none;
-  transition: all .25s ease;
+  font-size: 0.85rem;
+  color: var(--slate);
 }
 
-.about-hero-pill-btn.primary {
+.about-hero-text .breadcrumb-nav a {
+  color: var(--slate);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.about-hero-text .breadcrumb-nav a:hover {
+  color: var(--green-deep);
+}
+
+.about-hero-text .breadcrumb-nav .sep {
+  color: #CBD6C0;
+}
+
+.about-hero-text .breadcrumb-nav .current {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.about-hero-title {
+  font-size: clamp(2.3rem, 4.8vw, 3.6rem);
+  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -.025em;
+  color: var(--ink);
+  margin: 12px 0 20px;
+}
+
+.about-hero-lead {
+  font-size: clamp(1.02rem, 1.5vw, 1.18rem);
+  color: var(--slate);
+  line-height: 1.65;
+  margin-bottom: 32px;
+  max-width: 52ch;
+}
+
+.about-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 28px;
+  border-radius: 100px;
   background: var(--green);
   color: #0B1505;
-  box-shadow: 0 4px 16px rgba(88, 179, 27, 0.4);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  box-shadow: 0 4px 18px rgba(88, 179, 27, 0.38);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.about-hero-pill-btn.primary:hover {
+.about-hero-btn:hover {
   background: var(--green-bright);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(88, 179, 27, 0.55);
+  box-shadow: 0 8px 24px rgba(88, 179, 27, 0.48);
 }
 
-.about-hero-pill-btn.secondary {
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  color: #ffffff;
+.about-hero-media {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(14, 17, 8, .08);
+  border: 1px solid var(--line);
+  aspect-ratio: 4 / 3;
+  background: var(--bg-soft);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.about-hero-pill-btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.45);
-  transform: translateY(-2px);
+.about-hero-media:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 48px rgba(14, 17, 8, .12);
+}
+
+.about-hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 /* 2. Story Section (2-Col Image with badge + Text) */
@@ -2872,7 +2881,8 @@ footer .tagline {
 
 
 
-
+
+
 /* ---------------- ABOUT US ---------------- */
 .ab-breadcrumb {
   font-size: .85rem;
