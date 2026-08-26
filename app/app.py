@@ -85,11 +85,15 @@ def add_performance_headers(response):
     return response
 
 
-
-
-
-
 # ============================================================================
+# 1. CLIENT STOREFRONT ROUTES
+# ============================================================================
+
+@app.route('/')
+@app.route('/home')
+def client_home():
+    """Client blank home page."""
+    return render_template('Client/Home.html')
 # 2. SCRAPER ADMIN PAGE ROUTES
 # Base URL: https://tyrescart-scrapping.klever.ae/tcsadmin/
 # ============================================================================

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="{{ locale or 'en' }}" dir="{{ 'rtl' if locale == 'ar' else 'ltr' }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}TyresVision{% endblock %}</title>
+
+  <!-- Google Fonts: Inter & Tajawal -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Client CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/client.css') }}" />
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-container site-nav">
+      <a href="/" style="text-decoration:none; font-weight:900; font-size:22px; color:var(--ink);">
+        TYRES<span style="color:var(--green);">VISION</span>
+      </a>
+      <nav style="display:flex; gap:20px; font-weight:600; font-size:14px;">
+        <a href="/" style="text-decoration:none; color:var(--ink);">Home</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="site-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="site-container" style="text-align:center; font-size:13px;">
+      &copy; 2026 TyresVision. All rights reserved.
+    </div>
+  </footer>
+
+  <!-- Client JS -->
+  <script src="{{ url_for('static', filename='js/client.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
