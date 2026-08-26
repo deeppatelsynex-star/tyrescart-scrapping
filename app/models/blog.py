@@ -168,7 +168,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
     TABLE = 'blogs'
     COLUMNS = (
         'id', 'title', 'slug', 'content', 'short_description', 'image',
-        'blog_category_id', 'author_id', 'status', 'published_at',
+        'category_name', 'blog_category_id', 'author_id', 'status', 'published_at',
         'meta_title', 'meta_desc', 'created_at', 'updated_at', 'deleted_at',
         'created_by', 'updated_by'
     )
@@ -187,6 +187,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         self.content = self._parse_json(data.get('content'))
         self.short_description = self._parse_json(data.get('short_description'))
         self.image = data.get('image')
+        self.category_name = data.get('category_name') or ''
         self.blog_category_id = data.get('blog_category_id')
         self.author_id = data.get('author_id')
         self.status = data.get('status') or 'draft'
@@ -277,6 +278,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
             'id': self.id,
             'slug': self.slug,
             'image': self.image,
+            'category_name': self.category_name or '',
             'blog_category_id': self.blog_category_id,
             'author_id': self.author_id,
             'status': self.status,
@@ -308,6 +310,31 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
     # -------------------------------------------------------------------------
     # Query Helpers
     # -------------------------------------------------------------------------
+    @classmethod
+    def distinct_categories(cls) -> list:
+        """Returns distinct category names currently stored in blogs table."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT DISTINCT category_name 
+                    FROM blogs 
+                    WHERE category_name IS NOT NULL 
+                      AND category_name != '' 
+                      AND deleted_at IS NULL
+                    ORDER BY category_name ASC
+                """)
+                rows = cursor.fetchall()
+                found = [r['category_name'].strip() for r in rows if r.get('category_name') and r['category_name'].strip()]
+                # Pre-populate sensible defaults if table has few
+                defaults = ['Tyre Buying Guide', 'Tyre Maintenance', 'Mobile Tyre Fitting', 'Wheel Alignment', 'GCC Specifications', 'Car Battery & Service']
+                combined = []
+                for cat in found + defaults:
+                    if cat not in combined:
+                        combined.append(cat)
+                return combined
+        finally:
+            conn.close()
     @classmethod
     def all(cls, include_deleted: bool = False, status: str = None):
         """Returns all blogs with optional status/trash filtering."""
@@ -402,11 +429,11 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                 sql = """
                     INSERT INTO blogs (
                         title, slug, content, short_description, image,
-                        blog_category_id, author_id, status, published_at,
+                        category_name, blog_category_id, author_id, status, published_at,
                         meta_title, meta_desc, created_by, updated_by
                     ) VALUES (
                         %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
                         %s, %s, %s, %s
                     )
                 """
@@ -416,6 +443,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     content_json,
                     short_desc_json,
                     kwargs.get('image'),
+                    kwargs.get('category_name'),
                     kwargs.get('blog_category_id'),
                     kwargs.get('author_id', 1),
                     status,
@@ -450,6 +478,9 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         if 'image' in kwargs:
             updates.append("image = %s")
             params.append(kwargs['image'])
+        if 'category_name' in kwargs:
+            updates.append("category_name = %s")
+            params.append(kwargs['category_name'])
         if 'blog_category_id' in kwargs:
             updates.append("blog_category_id = %s")
             params.append(kwargs['blog_category_id'])

@@ -57,8 +57,8 @@ def api_get_blogs():
             short_desc = b.get_short_desc(locale)
             content = b.get_content(locale)
 
-            cat_name = 'Buying Guide' if 'choose' in (b.slug or '') or 'size' in (b.slug or '') else 'Maintenance'
-            if locale == 'ar':
+            cat_name = b.category_name if b.category_name else ('Buying Guide' if 'choose' in (b.slug or '') or 'size' in (b.slug or '') else 'Maintenance')
+            if locale == 'ar' and not b.category_name:
                 cat_name = 'دليل الشراء' if 'choose' in (b.slug or '') or 'size' in (b.slug or '') else 'الصيانة'
 
             prefix = f'/{locale}' if locale in ('en', 'ar') else ''
@@ -312,8 +312,8 @@ def _render_blog_detail(slug, locale):
         {'name': 'Car Battery & Service' if locale != 'ar' else 'البطاريات والخدمات', 'slug': 'battery-service', 'icon': '🔋', 'count': 4}
     ]
 
-    cat_name = 'Tyre Buying Guide' if 'choose' in (blog.slug or '') or 'size' in (blog.slug or '') else 'Tyre Maintenance'
-    if locale == 'ar':
+    cat_name = blog.category_name if blog.category_name else ('Tyre Buying Guide' if 'choose' in (blog.slug or '') or 'size' in (blog.slug or '') else 'Tyre Maintenance')
+    if locale == 'ar' and not blog.category_name:
         cat_name = 'دليل شراء الإطارات' if 'choose' in (blog.slug or '') or 'size' in (blog.slug or '') else 'صيانة الإطارات'
 
     blog_data = {

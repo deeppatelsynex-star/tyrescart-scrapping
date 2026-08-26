@@ -253,6 +253,13 @@ def register_visionadmin_routes(app):
     # 4. BLOGS JSON API ENDPOINTS (/visionadmin/api/blogs)
     # =========================================================================
 
+    @app.route('/visionadmin/api/categories', methods=['GET'])
+    @app.route('/visionadmin/api/blog-categories', methods=['GET'])
+    def visionadmin_get_categories():
+        """Returns all distinct category names from existing blogs table."""
+        categories = Blog.distinct_categories()
+        return jsonify({'success': True, 'categories': categories})
+
     @app.route('/visionadmin/api/blogs', methods=['GET'])
     def visionadmin_get_blogs():
         locale = request.args.get('locale')
@@ -278,6 +285,7 @@ def register_visionadmin_routes(app):
                 or q_lower in b.get_title('ar').lower() 
                 or q_lower in (b.slug or '').lower()
                 or q_lower in b.get_short_desc('en').lower()
+                or q_lower in (b.category_name or '').lower()
             ]
 
         all_active = [b for b in Blog.all(include_deleted=False) if b.deleted_at is None]
@@ -328,6 +336,7 @@ def register_visionadmin_routes(app):
                 content=data.get('content') or {"en": "", "ar": ""},
                 short_description=data.get('short_description') or {"en": "", "ar": ""},
                 image=data.get('image'),
+                category_name=data.get('category_name') or data.get('category') or 'Tyre Buying Guide',
                 blog_category_id=data.get('blog_category_id'),
                 author_id=data.get('author_id') or session.get('user_id') or 1,
                 status=data.get('status') or 'draft',

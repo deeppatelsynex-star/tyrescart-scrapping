@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS `blogs` (
   `content` json NOT NULL,
   `short_description` json DEFAULT NULL,
   `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `category_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `blog_category_id` bigint UNSIGNED DEFAULT NULL,
   `author_id` bigint UNSIGNED DEFAULT NULL,
   `status` enum('draft','published','archived') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
@@ -144,12 +145,17 @@ CREATE TABLE IF NOT EXISTS `blogs` (
   UNIQUE KEY `blogs_slug_unique` (`slug`),
   KEY `blogs_status_index` (`status`),
   KEY `blogs_published_at_index` (`published_at`),
+  KEY `blogs_category_name_index` (`category_name`),
   KEY `blogs_blog_category_id_index` (`blog_category_id`),
   KEY `blogs_created_by_foreign` (`created_by`),
   KEY `blogs_updated_by_foreign` (`updated_by`),
   KEY `idx_blogs_deleted_at` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
+
+NEW_BLOG_COLUMNS = {
+    "category_name": "ALTER TABLE blogs ADD COLUMN category_name VARCHAR(255) NULL AFTER image",
+}
 
 PERFORMANCE_INDEXES = [
     ("logTbl", "idx_log_file_id_id", "(file_id, id)"),
@@ -190,6 +196,18 @@ def add_missing_columns(cursor):
     existing_log = {row["COLUMN_NAME"] for row in cursor.fetchall()}
     for column, statement in NEW_LOG_COLUMNS.items():
         if column not in existing_log:
+            try:
+                cursor.execute(statement)
+            except Exception:
+                pass
+
+    cursor.execute(
+        "SELECT COLUMN_NAME FROM information_schema.COLUMNS "
+        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'blogs'"
+    )
+    existing_blogs = {row["COLUMN_NAME"] for row in cursor.fetchall()}
+    for column, statement in NEW_BLOG_COLUMNS.items():
+        if column not in existing_blogs:
             try:
                 cursor.execute(statement)
             except Exception:
