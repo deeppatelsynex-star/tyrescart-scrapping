@@ -1,39 +1,55 @@
 {% extends 'Client/layout.html' %}
 
-{% block title %}{{ post.title }} | TyresVision Blog{% endblock %}
+{% block title %}
+  {{ post.title }} | {% if locale == 'ar' %}مدونة تايرز فيجن{% else %}TyresVision Blog{% endif %}
+{% endblock %}
+
 {% block meta_description %}{{ post.short_description or (post.title ~ ' — expert advice and tyre guide for UAE drivers.') }}{% endblock %}
 
 {% block content %}
 <span id="top"></span>
 
 <!-- ================= ARTICLE HEADER ================= -->
-<section>
+<section style="padding-top:32px; padding-bottom:64px;">
   <div class="wrap">
-    <div style="max-width:800px; margin:0 auto;">
-      <a href="/blog" style="display:inline-flex; align-items:center; gap:6px; font-size:.88rem; font-weight:700; color:var(--slate); text-decoration:none; margin-bottom:20px;">
-        &larr; Back to all articles
+    <div style="max-width:820px; margin:0 auto;">
+      
+      <!-- Back Link -->
+      <a href="{% if locale == 'ar' %}/ar/blog{% else %}/en/blog{% endif %}" style="display:inline-flex; align-items:center; gap:6px; font-size:.88rem; font-weight:700; color:var(--slate); text-decoration:none; margin-bottom:24px;">
+        {% if locale == 'ar' %}&rarr; العودة إلى جميع المقالات{% else %}&larr; Back to all articles{% endif %}
       </a>
       
-      <span class="eyebrow">TyresVision Guide</span>
-      <h1 style="font-size:clamp(1.8rem, 3.8vw, 2.6rem); font-weight:800; line-height:1.2; letter-spacing:-.025em; color:var(--ink); margin:8px 0 16px;">
-        {{ post.title }}
-      </h1>
-      
-      <div style="display:flex; align-items:center; gap:12px; font-size:.88rem; color:var(--slate); font-weight:600; margin-bottom:28px;">
-        <span>{{ post.published_at }}</span>
-        <span style="width:3px; height:3px; border-radius:50%; background:var(--slate); opacity:.5;"></span>
-        <span>By {{ post.author.name if post.author else 'TyresVision Specialist' }}</span>
+      <div>
+        <span class="eyebrow">
+          {% if locale == 'ar' %}دليل تايرز فيجن{% else %}TyresVision Guide{% endif %}
+        </span>
+        
+        <h1 style="font-size:clamp(1.9rem, 4vw, 2.7rem); font-weight:800; line-height:1.2; letter-spacing:-.025em; color:var(--ink); margin:10px 0 16px;">
+          {{ post.title }}
+        </h1>
+        
+        <div style="display:flex; align-items:center; gap:12px; font-size:.88rem; color:var(--slate); font-weight:600; margin-bottom:28px;">
+          <span>{{ post.published_at }}</span>
+          <span style="width:3px; height:3px; border-radius:50%; background:var(--slate); opacity:.5;"></span>
+          <span>
+            {% if locale == 'ar' %}
+              بواسطة {{ post.author.name if post.author else 'أخصائي تايرز فيجن' }}
+            {% else %}
+              By {{ post.author.name if post.author else 'TyresVision Specialist' }}
+            {% endif %}
+          </span>
+        </div>
       </div>
 
       <!-- Cover Image -->
       {% if post.cover_image_url and post.cover_image_url != '/static/assets/online-tyres-shop-dubai.png' %}
-      <div style="border-radius:var(--radius); overflow:hidden; border:1px solid var(--line); margin-bottom:32px; aspect-ratio:16/9;">
+      <div style="border-radius:var(--radius); overflow:hidden; border:1px solid var(--line); margin-bottom:32px; aspect-ratio:16/9; box-shadow:0 4px 16px rgba(14,17,8,.06);">
         <img src="{{ post.cover_image_url }}" alt="{{ post.title }}" style="width:100%; height:100%; object-fit:cover;">
       </div>
       {% endif %}
 
       <!-- Article Prose Body -->
-      <div style="font-size:1.05rem; line-height:1.75; color:var(--ink);" class="article-body">
+      <div style="font-size:1.06rem; line-height:1.8; color:var(--ink);" class="article-body">
         {% if post.content %}
           {{ post.content | safe }}
         {% else %}
@@ -41,9 +57,17 @@
         {% endif %}
       </div>
 
-      <div style="margin-top:40px; padding-top:24px; border-top:1px solid var(--line);">
-        <a href="/blog" class="btn btn-white" style="display:inline-flex;">&larr; Return to Blog</a>
+      <!-- Return Button Footer -->
+      <div style="margin-top:48px; padding-top:24px; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <a href="{% if locale == 'ar' %}/ar/blog{% else %}/en/blog{% endif %}" class="btn btn-white" style="display:inline-flex;">
+          {% if locale == 'ar' %}&rarr; العودة للمدونة{% else %}&larr; Return to Blog{% endif %}
+        </a>
+
+        <a href="https://wa.me/971505069575?text={{ ('Hi, I have a question about: ' ~ post.title) | urlencode }}" target="_blank" rel="noopener" class="btn btn-wa" style="display:inline-flex;">
+          {% if locale == 'ar' %}استفسر عبر واتساب{% else %}Ask on WhatsApp{% endif %}
+        </a>
       </div>
+
     </div>
   </div>
 </section>
@@ -51,14 +75,26 @@
 <!-- ================= FINAL CTA ================= -->
 <section class="final">
   <div class="wrap">
-    <h2>Need advice or looking for tyre prices?</h2>
-    <p>Message our specialists on WhatsApp for instant sizing assistance and price quotes across 60+ brands.</p>
+    <h2>
+      {% if locale == 'ar' %}
+        هل تبحث عن استشارة أو أسعار الإطارات؟
+      {% else %}
+        Need advice or looking for tyre prices?
+      {% endif %}
+    </h2>
+    <p>
+      {% if locale == 'ar' %}
+        تواصل مع خبرائنا عبر واتساب للحصول على مقاس الإطار الدقيق وأفضل عروض الأسعار لأكثر من 60 علامة تجارية عالمية.
+      {% else %}
+        Message our specialists on WhatsApp for instant sizing assistance and price quotes across 60+ brands.
+      {% endif %}
+    </p>
     <div class="cta-row" style="justify-content:center">
       <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
-        WhatsApp us
+        {% if locale == 'ar' %}تواصل عبر واتساب{% else %}WhatsApp us{% endif %}
       </a>
       <a class="btn btn-white" href="tel:+971505069575">
-        Call +971 50 506 9575
+        {% if locale == 'ar' %}اتصل بنا +971 50 506 9575{% else %}Call +971 50 506 9575{% endif %}
       </a>
     </div>
   </div>

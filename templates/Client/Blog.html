@@ -1,24 +1,70 @@
 {% extends 'Client/layout.html' %}
 
-{% block title %}Tyre Care &amp; Buying Guides | TyresVision Blog{% endblock %}
-{% block meta_description %}Straight answers on tyre sizing, maintenance, and buying the right set for UAE roads and heat — from the team behind TyresVision.{% endblock %}
+{% block title %}
+  {% if locale == 'ar' %}
+    دليل ونصائح العناية بالإطارات وشراؤها في الإمارات | مدونة تايرز فيجن
+  {% else %}
+    Tyre Care &amp; Buying Guides | TyresVision Blog
+  {% endif %}
+{% endblock %}
+
+{% block meta_description %}
+  {% if locale == 'ar' %}
+    إرشادات ونصائح عملية وموثوقة حول مقاسات الإطارات، الصيانة، واختيار الطقم المناسب لطرقات وحرارة صيف الإمارات من خبراء تايرز فيجن.
+  {% else %}
+    Straight answers on tyre sizing, maintenance, and buying the right set for UAE roads and heat — from the team behind TyresVision.
+  {% endif %}
+{% endblock %}
 
 {% block content %}
 <span id="top"></span>
 
-<!-- ================= 1. BRAND HERO HEADER ================= -->
+<!-- ================= 1. BRAND HERO BANNER ================= -->
 <section class="blog-hero-banner">
   <div class="wrap">
-    <span class="eyebrow">TyresVision Knowledge Base</span>
-    <h1>Explore Our Blog — Tyre Advice &amp; <em>Car Maintenance</em></h1>
-    <p class="lead">Straight, practical answers on tyre selection, GCC specifications, summer heat care, and mobile fitting across Dubai, Abu Dhabi &amp; Sharjah.</p>
+    
+    <!-- Language Switcher Pill -->
+    <div style="display:inline-flex; align-items:center; background:rgba(255,255,255,0.12); backdrop-filter:blur(8px); padding:4px 6px; border-radius:100px; border:1px solid rgba(255,255,255,0.2); margin-bottom:18px;">
+      <a href="/en/blog" style="padding:4px 14px; border-radius:100px; font-size:0.78rem; font-weight:700; text-decoration:none; color:{{ '#0B1505' if locale != 'ar' else '#fff' }}; background:{{ 'var(--green)' if locale != 'ar' else 'transparent' }};">English</a>
+      <a href="/ar/blog" style="padding:4px 14px; border-radius:100px; font-size:0.78rem; font-weight:700; text-decoration:none; color:{{ '#0B1505' if locale == 'ar' else '#fff' }}; background:{{ 'var(--green)' if locale == 'ar' else 'transparent' }};">العربية</a>
+    </div>
+
+    <div>
+      <span class="eyebrow">
+        {% if locale == 'ar' %}قاعدة معرفة تايرز فيجن{% else %}TyresVision Knowledge Base{% endif %}
+      </span>
+      
+      <h1>
+        {% if locale == 'ar' %}
+          استكشف مدونتنا — نصائح الإطارات <em>وصيانة السيارات</em>
+        {% else %}
+          Explore Our Blog — Tyre Advice &amp; <em>Car Maintenance</em>
+        {% endif %}
+      </h1>
+      
+      <p class="lead">
+        {% if locale == 'ar' %}
+          إرشادات عملية ونصائح موثوقة حول اختيار الإطارات، مواصفات دول الخليج، والعناية في حرارة الصيف مع خدمة التركيب المتنقل في دبي، أبوظبي والشارقة.
+        {% else %}
+          Straight, practical answers on tyre selection, GCC specifications, summer heat care, and mobile fitting across Dubai, Abu Dhabi &amp; Sharjah.
+        {% endif %}
+      </p>
+    </div>
     
     <!-- Glassmorphic Category Filter Pills -->
     <div class="blog-filter-pills" role="tablist" aria-label="Blog categories">
-      <button type="button" class="filter-btn active" data-cat="" onclick="setCategoryFilter('')">All Articles</button>
-      <button type="button" class="filter-btn" data-cat="Buying Guide" onclick="setCategoryFilter('Buying Guide')">Buying Guides</button>
-      <button type="button" class="filter-btn" data-cat="Maintenance" onclick="setCategoryFilter('Maintenance')">Maintenance</button>
-      <button type="button" class="filter-btn" data-cat="How It Works" onclick="setCategoryFilter('How It Works')">How It Works</button>
+      <button type="button" class="filter-btn active" data-cat="" onclick="setCategoryFilter('')">
+        {% if locale == 'ar' %}جميع المقالات{% else %}All Articles{% endif %}
+      </button>
+      <button type="button" class="filter-btn" data-cat="Buying Guide" onclick="setCategoryFilter('Buying Guide')">
+        {% if locale == 'ar' %}أدلة الشراء{% else %}Buying Guides{% endif %}
+      </button>
+      <button type="button" class="filter-btn" data-cat="Maintenance" onclick="setCategoryFilter('Maintenance')">
+        {% if locale == 'ar' %}الصيانة{% else %}Maintenance{% endif %}
+      </button>
+      <button type="button" class="filter-btn" data-cat="How It Works" onclick="setCategoryFilter('How It Works')">
+        {% if locale == 'ar' %}كيف تعمل الخدمة{% else %}How It Works{% endif %}
+      </button>
     </div>
   </div>
 </section>
@@ -29,23 +75,25 @@
     
     <!-- Breadcrumb -->
     <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-      <a href="/">Home</a>
+      <a href="/">{% if locale == 'ar' %}الرئيسية{% else %}Home{% endif %}</a>
       <span class="sep">/</span>
-      <span class="current">Blog</span>
+      <span class="current">{% if locale == 'ar' %}المدونة{% else %}Blog{% endif %}</span>
     </nav>
 
     <!-- Loading State Indicator -->
     <div id="blog-loading" class="center" style="padding:60px 0;">
-      <span class="eyebrow">Loading Articles</span>
-      <p class="lead">Fetching latest tyre guides from the API...</p>
+      <span class="eyebrow">{% if locale == 'ar' %}جاري التحميل{% else %}Loading Articles{% endif %}</span>
+      <p class="lead">{% if locale == 'ar' %}جاري تحميل أحدث مقالات الإطارات من الخادم...{% else %}Fetching latest tyre guides from the API...{% endif %}</p>
     </div>
 
     <!-- Error State Container -->
     <div id="blog-error" class="center" style="display:none; padding:60px 0;">
-      <span class="eyebrow">Notice</span>
-      <h3>Unable to load blog articles</h3>
-      <p class="lead" style="margin-bottom:16px;">Please check your connection or try again.</p>
-      <button type="button" class="btn btn-wa" onclick="loadBlogsFromApi(currentPage, currentCategory)">Retry</button>
+      <span class="eyebrow">{% if locale == 'ar' %}تنبيه{% else %}Notice{% endif %}</span>
+      <h3>{% if locale == 'ar' %}تعذر تحميل المقالات{% else %}Unable to load blog articles{% endif %}</h3>
+      <p class="lead" style="margin-bottom:16px;">{% if locale == 'ar' %}يرجى التحقق من اتصالك بالإنترنت أو إعادة المحاولة.{% else %}Please check your connection or try again.{% endif %}</p>
+      <button type="button" class="btn btn-wa" onclick="loadBlogsFromApi(currentPage, currentCategory)">
+        {% if locale == 'ar' %}إعادة المحاولة{% else %}Retry{% endif %}
+      </button>
     </div>
 
     <!-- Dynamic 4-Column Card Grid (Matching Reference Screenshot) -->
@@ -63,24 +111,43 @@
 <!-- ================= 3. FINAL CTA SECTION ================= -->
 <section class="final">
   <div class="wrap">
-    <h2>Ready for a fresh set of tyres?</h2>
-    <p>Send your tyre size on WhatsApp for a price in minutes &mdash; or call and we&rsquo;ll sort it out on the phone.</p>
+    <h2>
+      {% if locale == 'ar' %}
+        هل أنت مستعد لطلب طقم إطارات جديد؟
+      {% else %}
+        Ready for a fresh set of tyres?
+      {% endif %}
+    </h2>
+    <p>
+      {% if locale == 'ar' %}
+        أرسل مقاس إطارات سيارتك عبر واتساب للحصول على أفضل سعر خلال دقائق — أو اتصل بنا مباشرة وسنساعدك فوراً.
+      {% else %}
+        Send your tyre size on WhatsApp for a price in minutes &mdash; or call and we&rsquo;ll sort it out on the phone.
+      {% endif %}
+    </p>
     <div class="cta-row" style="justify-content:center">
       <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-        WhatsApp us
+        {% if locale == 'ar' %}تواصل عبر واتساب{% else %}WhatsApp us{% endif %}
       </a>
       <a class="btn btn-white" href="tel:+971505069575">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-        Call +971 50 506 9575
+        {% if locale == 'ar' %}اتصل بنا +971 50 506 9575{% else %}Call +971 50 506 9575{% endif %}
       </a>
     </div>
-    <p class="hours">Open daily &mdash; call or message any time and we&rsquo;ll come back to you fast.</p>
+    <p class="hours">
+      {% if locale == 'ar' %}
+        خدمة العملاء متوفرة يومياً — تواصل معنا في أي وقت وسنرد عليك بسرعة.
+      {% else %}
+        Open daily &mdash; call or message any time and we&rsquo;ll come back to you fast.
+      {% endif %}
+    </p>
   </div>
 </section>
 
 <!-- ================= CLIENT-SIDE API FETCH & RENDER SCRIPT ================= -->
 <script>
+  const PAGE_LOCALE = "{{ locale or 'en' }}";
   let currentCategory = '';
   let currentPage = 1;
 
@@ -124,6 +191,7 @@
 
     try {
       const url = new URL('/api/blogs', window.location.origin);
+      url.searchParams.set('locale', PAGE_LOCALE);
       url.searchParams.set('page', page);
       url.searchParams.set('per_page', 12);
       if (category) {
@@ -138,21 +206,22 @@
       const data = await res.json();
 
       if (!data.success || !data.blogs || data.blogs.length === 0) {
-        gridEl.innerHTML = '<div class="center" style="grid-column:1/-1; padding:48px 0;"><span class="eyebrow">No Articles</span><p class="lead">No articles found in this category.</p></div>';
+        const noArticlesText = PAGE_LOCALE === 'ar' ? 'لا توجد مقالات متاحة في هذا القسم حالياً.' : 'No articles found in this category.';
+        gridEl.innerHTML = `<div class="center" style="grid-column:1/-1; padding:48px 0;"><span class="eyebrow">${PAGE_LOCALE === 'ar' ? 'تنبيه' : 'No Articles'}</span><p class="lead">${noArticlesText}</p></div>`;
       } else {
         gridEl.innerHTML = data.blogs.map(blog => {
-          const title = escapeHtml(blog.title || 'Untitled Article');
+          const title = escapeHtml(blog.title || (PAGE_LOCALE === 'ar' ? 'مقال بدون عنوان' : 'Untitled Article'));
           const desc = escapeHtml(blog.short_description || blog.excerpt || '');
           const pubDate = escapeHtml(blog.published_at || '24 Aug 2026');
           const imgUrl = escapeHtml(blog.cover_image_url || blog.image || '/static/assets/online-tyres-shop-dubai.png');
-          const blogUrl = escapeHtml(blog.url || ('/blog/' + encodeURIComponent(blog.slug)));
+          const blogUrl = escapeHtml(blog.url || (`/${PAGE_LOCALE}/blog/${encodeURIComponent(blog.slug)}`));
           
           // Optional badge (AIR, CONTINENTAL, etc.)
           let badgeHtml = '';
           if (blog.badge || (blog.slug && blog.slug.includes('air'))) {
             badgeHtml = `<span class="post-badge-pill">${escapeHtml(blog.badge || 'AIR')}</span>`;
-          } else if (blog.category && blog.category.toLowerCase().includes('buying')) {
-            badgeHtml = `<span class="post-badge-pill" style="background:linear-gradient(135deg, #10B981 0%, #059669 100%);">GUIDE</span>`;
+          } else if (blog.category && (blog.category.toLowerCase().includes('buying') || blog.category.includes('شراء'))) {
+            badgeHtml = `<span class="post-badge-pill" style="background:linear-gradient(135deg, #10B981 0%, #059669 100%);">${PAGE_LOCALE === 'ar' ? 'دليل' : 'GUIDE'}</span>`;
           }
 
           return `
@@ -181,7 +250,10 @@
       // Render Pagination Bar
       if (data.pagination) {
         const p = data.pagination;
-        paginationInfoEl.textContent = `Items ${p.start} to ${p.end} of ${p.total} total`;
+        const infoText = PAGE_LOCALE === 'ar' 
+          ? `عرض ${p.start} إلى ${p.end} من إجمالي ${p.total} مقال` 
+          : `Items ${p.start} to ${p.end} of ${p.total} total`;
+        paginationInfoEl.textContent = infoText;
 
         if (p.num_pages > 1) {
           let pillsHtml = '';
