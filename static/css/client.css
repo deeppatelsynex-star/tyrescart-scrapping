@@ -2407,28 +2407,17 @@ footer .tagline {
    Exact match to reference layout & brand tokens
    ============================================================ */
 
-/* 1. Full-Width Cinematic Hero Banner (Matches Reference Image & Loads DB Banner) */
+/* 1. Full-Width Cinematic Hero Banner (Pure Brand Gradient Colors) */
 .about-hero-banner {
+  background:
+    radial-gradient(980px 440px at 86% -10%, rgba(88,179,27,.35), transparent 62%),
+    radial-gradient(800px 400px at 14% 110%, rgba(53,118,15,.35), transparent 60%),
+    linear-gradient(168deg, var(--ink) 0%, var(--ink-2) 45%, #1C380F 100%);
   color: #ffffff;
   position: relative;
   overflow: hidden;
   padding: clamp(60px, 8vw, 100px) 0 clamp(54px, 7vw, 90px);
   text-align: center;
-  background-position: center center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-color: var(--ink);
-}
-
-.about-hero-banner::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: 
-    radial-gradient(1100px 500px at 86% -10%, rgba(88,179,27,.38), transparent 62%),
-    radial-gradient(900px 450px at 14% 110%, rgba(53,118,15,.36), transparent 60%),
-    linear-gradient(180deg, rgba(14, 17, 8, 0.78) 0%, rgba(14, 17, 8, 0.88) 100%);
-  z-index: 1;
 }
 
 .about-hero-banner::after {
@@ -2438,7 +2427,6 @@ footer .tagline {
   height: 4px;
   background: repeating-linear-gradient(90deg, var(--green) 0 24px, rgba(255,255,255,.2) 24px 48px);
   opacity: .95;
-  z-index: 2;
 }
 
 .about-hero-banner .wrap {
