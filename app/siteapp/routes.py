@@ -351,7 +351,25 @@ def _render_blog_detail(slug, locale):
     return resp
 
 
-# --- CMS PAGES ---
+# --- ABOUT US & CMS PAGES ---
+@site_bp.route('/about-us')
+@site_bp.route('/en/about-us')
+def about_us():
+    locale = 'en' if request.path.startswith('/en') else _get_locale()
+    page = Page.find_by_slug('about-us')
+    resp = make_response(render_template('Client/AboutUs.html', page=page, locale=locale))
+    resp.set_cookie('site_locale', locale, max_age=31536000, path='/')
+    return resp
+
+
+@site_bp.route('/ar/about-us')
+def about_us_ar():
+    page = Page.find_by_slug('about-us')
+    resp = make_response(render_template('Client/AboutUs.html', page=page, locale='ar'))
+    resp.set_cookie('site_locale', 'ar', max_age=31536000, path='/')
+    return resp
+
+
 @site_bp.route('/en/page/<slug>')
 @site_bp.route('/en/<slug>')
 def page_detail_en(slug):
@@ -360,7 +378,8 @@ def page_detail_en(slug):
         abort(404)
     page = Page.find_by_slug(slug)
     if page:
-        return render_template('Client/Page.html', page=page, locale='en')
+        tpl = 'Client/AboutUs.html' if slug == 'about-us' else 'Client/Page.html'
+        return render_template(tpl, page=page, locale='en')
     blog = Blog.find_by_slug(slug)
     if blog:
         return redirect(f'/en/blog/{slug}')
@@ -375,7 +394,8 @@ def page_detail_ar(slug):
         abort(404)
     page = Page.find_by_slug(slug)
     if page:
-        return render_template('Client/Page.html', page=page, locale='ar')
+        tpl = 'Client/AboutUs.html' if slug == 'about-us' else 'Client/Page.html'
+        return render_template(tpl, page=page, locale='ar')
     blog = Blog.find_by_slug(slug)
     if blog:
         return redirect(f'/ar/blog/{slug}')
@@ -392,7 +412,8 @@ def page_detail(slug):
     locale = _get_locale()
     page = Page.find_by_slug(slug)
     if page:
-        return render_template('Client/Page.html', page=page, locale=locale)
+        tpl = 'Client/AboutUs.html' if slug == 'about-us' else 'Client/Page.html'
+        return render_template(tpl, page=page, locale=locale)
 
     blog = Blog.find_by_slug(slug)
     if blog:
