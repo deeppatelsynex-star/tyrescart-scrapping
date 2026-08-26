@@ -236,13 +236,25 @@
     backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line);
   }
   .nav{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px 20px;max-width:var(--maxw);margin:0 auto}
-  .nav-links{display:none;gap:28px;font-size:.94rem;font-weight:600}
-  .nav-links a{text-decoration:none;color:var(--slate)}
+  .nav-links{display:none;gap:22px;font-size:.94rem;font-weight:600;align-items:center}
+  .nav-links a{text-decoration:none;color:var(--slate);transition:color .15s ease}
   .nav-links a:hover{color:var(--green-deep)}
   .nav-cta{display:flex;gap:9px;align-items:center}
   .nav-cta .btn-wa{display:none}
   @media(min-width:980px){.nav-links{display:flex}}
   @media(min-width:820px){.nav-cta .btn-wa{display:inline-flex}}
+
+  /* Language Switcher Pill */
+  .lang-switcher{
+    display:inline-flex;align-items:center;background:var(--bg-soft);
+    border:1px solid var(--line);border-radius:100px;padding:3px;gap:2px;
+    font-size:.8rem;font-weight:700;
+  }
+  .lang-switcher a{
+    display:inline-flex;align-items:center;padding:5px 10px;border-radius:100px;
+    text-decoration:none;color:var(--slate);transition:background .15s,color .15s;
+  }
+  .lang-switcher a.active{background:var(--ink);color:#fff}
 
   /* ---------------- SMALL-SCREEN SAFETY (prevents overflow on ~320-400px devices) ---------------- */
   @media(max-width:460px){
@@ -520,20 +532,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
     </a>
     <div class="nav-links">
-      <a href="#why">Why us</a>
-      <a href="#services">Services</a>
-      <a href="#how">How it works</a>
-      <a href="#brands">Brands</a>
-      <a href="#faq">FAQ</a>
+      <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a>
+      <a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'المدونة' if locale == 'ar' else 'Blog' }}</a>
+      <a href="/about-us{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'من نحن' if locale == 'ar' else 'About us' }}</a>
+      <a href="#services">{{ 'الخدمات' if locale == 'ar' else 'Services' }}</a>
+      <a href="#how">{{ 'كيف نعمل' if locale == 'ar' else 'How it works' }}</a>
+      <a href="#brands">{{ 'الماركات' if locale == 'ar' else 'Brands' }}</a>
+      <a href="#faq">{{ 'الأسئلة الشائعة' if locale == 'ar' else 'FAQ' }}</a>
     </div>
     <div class="nav-cta">
-      <a class="btn btn-wa btn-sm" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
+      <!-- Language Switcher (EN / AR) -->
+      <div class="lang-switcher">
+        <a href="?locale=en" class="{{ 'active' if locale != 'ar' else '' }}">EN</a>
+        <a href="?locale=ar" class="{{ 'active' if locale == 'ar' else '' }}">العربية</a>
+      </div>
+
+      <a class="btn btn-wa btn-sm" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
         WhatsApp
       </a>
       <a class="btn btn-call btn-sm" href="tel:+971505069575">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-        Call now
+        {{ 'اتصل الآن' if locale == 'ar' else 'Call now' }}
       </a>
     </div>
   </nav>
@@ -879,7 +899,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- ================= FOOTER ================= -->
 <footer>
   <div class="wrap">
-    <div class="f-grid">
+    <div class="f-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px;">
       <div>
         <a class="logo lg on-dark" href="#top">
           <svg class="swoosh" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
@@ -890,29 +910,47 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </svg>
           <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
         </a>
-        <p style="max-width:34ch;margin-top:16px">Buy tyres online, fitted locally across the UAE. 60+ brands, 10,000+ products, fitting centres and mobile vans.</p>
+        <div class="tagline">Online Tyre Shop UAE</div>
+        <p style="max-width:34ch;margin-top:16px;font-size:.88rem;">{{ 'متجرك الإلكتروني المعتمد لشراء وتركيب الإطارات الأصلية في دبي، أبوظبي، الشارقة وكافة أنحاء الإمارات.' if locale == 'ar' else 'Buy tyres online, fitted locally across the UAE. 60+ brands, genuine date-fresh stock, fitting centres and mobile vans.' }}</p>
       </div>
+
       <div>
-        <h4>Contact</h4>
+        <h4>{{ 'الصفحات والروابط' if locale == 'ar' else 'Navigation' }}</h4>
         <ul>
-          <li><a href="tel:+971505069575">+971 50 506 9575</a></li>
-          <li><a href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">WhatsApp us</a></li>
+          <li><a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a></li>
+          <li><a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'المدونة ومقالات الإطارات' if locale == 'ar' else 'Blog & Tyre Guides' }}</a></li>
+          <li><a href="/about-us{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'من نحن' if locale == 'ar' else 'About Us' }}</a></li>
+          <li><a href="#services">{{ 'خدمات التركيب المتنقل' if locale == 'ar' else 'Mobile Fitting Services' }}</a></li>
+          <li><a href="#how">{{ 'طريقة العمل والطلب' if locale == 'ar' else 'How It Works' }}</a></li>
+          <li><a href="#brands">{{ 'ماركات الإطارات' if locale == 'ar' else 'Tyre Brands' }}</a></li>
+          <li><a href="#faq">{{ 'الأسئلة الشائعة' if locale == 'ar' else 'Frequently Asked Questions' }}</a></li>
         </ul>
-        <h4 style="margin-top:26px">Legal</h4>
+      </div>
+
+      <div>
+        <h4>{{ 'الشروط والضمان' if locale == 'ar' else 'Legal & Trust' }}</h4>
         <ul>
-          <li><a href="#notice" data-notice>Ownership notice</a></li>
+          <li><a href="/terms-and-conditions{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الشروط والأحكام' if locale == 'ar' else 'Terms & Conditions' }}</a></li>
+          <li><a href="/privacy-policy{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'سياسة الخصوصية' if locale == 'ar' else 'Privacy Policy' }}</a></li>
+          <li><a href="#notice" data-notice>{{ 'إشعار الملكية' if locale == 'ar' else 'Ownership Notice' }}</a></li>
+          <li><a href="#why">{{ 'ضمان الجودة وDOT' if locale == 'ar' else 'Genuine DOT Guarantee' }}</a></li>
         </ul>        
       </div>
+
       <div>
-        <h4>Coverage</h4>
+        <h4>{{ 'التواصل والتغطية' if locale == 'ar' else 'Contact & Coverage' }}</h4>
         <ul>
-          <li>Dubai</li><li>Abu Dhabi</li><li>Sharjah</li><li>Ajman &amp; Northern Emirates</li>
+          <li><strong>Phone:</strong> <a href="tel:+971505069575">+971 50 506 9575</a></li>
+          <li><strong>WhatsApp:</strong> <a href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">+971 50 506 9575</a></li>
+          <li><strong>{{ 'أوقات العمل:' if locale == 'ar' else 'Hours:' }}</strong> {{ 'يومياً 8 ص &ndash; 10 م' if locale == 'ar' else 'Daily 8:00 AM &ndash; 10:00 PM' }}</li>
+          <li><strong>{{ 'التغطية:' if locale == 'ar' else 'Coverage:' }}</strong> {{ 'دبي، أبوظبي، الشارقة، عجمان والإمارات الشمالية' if locale == 'ar' else 'Dubai, Abu Dhabi, Sharjah, Ajman & Northern Emirates' }}</li>
         </ul>
       </div>
     </div>
 
     <div class="f-bottom">
-      <span>&copy; <span id="yr">2026</span> TyresVision &mdash; operated by DSP Trade Hub FZ-LLC. All rights reserved.</span>
+      <span>&copy; <span id="yr">2026</span> TyresVision &mdash; operated by DSP Trade Hub FZ-LLC. {{ 'جميع الحقوق محفوظة.' if locale == 'ar' else 'All rights reserved.' }}</span>
+      <span>United Arab Emirates</span>
     </div>
   </div>
 </footer>

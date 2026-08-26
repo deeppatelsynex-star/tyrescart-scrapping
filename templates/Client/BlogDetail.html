@@ -581,7 +581,10 @@
         <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a>
         <a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}" class="active">{{ 'المدونة' if locale == 'ar' else 'Blog' }}</a>
         <a href="/about-us{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'من نحن' if locale == 'ar' else 'About us' }}</a>
-        <a href="/terms-and-conditions{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الشروط' if locale == 'ar' else 'Terms' }}</a>
+        <a href="/#services">{{ 'الخدمات' if locale == 'ar' else 'Services' }}</a>
+        <a href="/#how">{{ 'طريقة العمل' if locale == 'ar' else 'How it works' }}</a>
+        <a href="/#brands">{{ 'الماركات' if locale == 'ar' else 'Brands' }}</a>
+        <a href="/#faq">{{ 'الأسئلة الشائعة' if locale == 'ar' else 'FAQ' }}</a>
       </div>
 
       <!-- Right CTA & Language Toggle -->
@@ -712,7 +715,7 @@
   <!-- ================= FOOTER ================= -->
   <footer>
     <div class="wrap">
-      <div class="f-grid">
+      <div class="f-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px;">
         <div>
           <a class="logo on-dark" href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">
             <svg class="swoosh" width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true">
@@ -724,33 +727,45 @@
             <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
           </a>
           <div class="tagline">Online Tyre Shop UAE</div>
-          <p style="margin-top: 16px; font-size: .88rem; max-width: 40ch;">{{ 'متجرك الإلكتروني المعتمد لشراء وتركيب الإطارات الأصلية في دبي، أبوظبي، الشارقة وعموم الإمارات.' if locale == 'ar' else 'The smarter, faster way to buy tyres in the UAE. Genuine stock, transparent pricing and local fitting.' }}</p>
+          <p style="margin-top: 16px; font-size: .88rem; max-width: 40ch;">{{ 'متجرك الإلكتروني المعتمد لشراء وتركيب الإطارات الأصلية في دبي، أبوظبي، الشارقة وكافة أنحاء الإمارات.' if locale == 'ar' else 'Buy tyres online, fitted locally across the UAE. 60+ brands, genuine date-fresh stock, fitting centres and mobile vans.' }}</p>
         </div>
 
         <div>
-          <h4>{{ 'روابط سريعة' if locale == 'ar' else 'Quick Links' }}</h4>
+          <h4>{{ 'الصفحات والروابط' if locale == 'ar' else 'Navigation' }}</h4>
           <ul>
             <li><a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</a></li>
-            <li><a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'المدونة' if locale == 'ar' else 'Blog Articles' }}</a></li>
+            <li><a href="/blogs{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'المدونة ومقالات الإطارات' if locale == 'ar' else 'Blog & Tyre Guides' }}</a></li>
             <li><a href="/about-us{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'من نحن' if locale == 'ar' else 'About Us' }}</a></li>
-            <li><a href="/terms-and-conditions{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الشروط والأحكام' if locale == 'ar' else 'Terms & Conditions' }}</a></li>
-            <li><a href="/privacy-policy{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'سياسة الخصوصية' if locale == 'ar' else 'Privacy Policy' }}</a></li>
+            <li><a href="/#services">{{ 'خدمات التركيب المتنقل' if locale == 'ar' else 'Mobile Fitting Services' }}</a></li>
+            <li><a href="/#how">{{ 'طريقة العمل والطلب' if locale == 'ar' else 'How It Works' }}</a></li>
+            <li><a href="/#brands">{{ 'ماركات الإطارات' if locale == 'ar' else 'Tyre Brands' }}</a></li>
+            <li><a href="/#faq">{{ 'الأسئلة الشائعة' if locale == 'ar' else 'Frequently Asked Questions' }}</a></li>
           </ul>
         </div>
 
         <div>
-          <h4>{{ 'التواصل' if locale == 'ar' else 'Contact' }}</h4>
+          <h4>{{ 'الشروط والضمان' if locale == 'ar' else 'Legal & Trust' }}</h4>
+          <ul>
+            <li><a href="/terms-and-conditions{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'الشروط والأحكام' if locale == 'ar' else 'Terms & Conditions' }}</a></li>
+            <li><a href="/privacy-policy{{ '?locale=' + locale if locale == 'ar' else '' }}">{{ 'سياسة الخصوصية' if locale == 'ar' else 'Privacy Policy' }}</a></li>
+            <li><a href="/#notice">{{ 'إشعار الملكية' if locale == 'ar' else 'Ownership Notice' }}</a></li>
+            <li><a href="/#why">{{ 'ضمان الجودة وDOT' if locale == 'ar' else 'Genuine DOT Guarantee' }}</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4>{{ 'التواصل والتغطية' if locale == 'ar' else 'Contact & Coverage' }}</h4>
           <ul>
             <li><strong>Phone:</strong> <a href="tel:+971505069575">+971 50 506 9575</a></li>
             <li><strong>WhatsApp:</strong> <a href="https://wa.me/971505069575" target="_blank" rel="noopener">+971 50 506 9575</a></li>
-            <li><strong>Hours:</strong> Daily 8:00 AM &ndash; 10:00 PM</li>
-            <li><strong>Coverage:</strong> All 7 Emirates, UAE</li>
+            <li><strong>{{ 'أوقات العمل:' if locale == 'ar' else 'Hours:' }}</strong> {{ 'يومياً 8 ص &ndash; 10 م' if locale == 'ar' else 'Daily 8:00 AM &ndash; 10:00 PM' }}</li>
+            <li><strong>{{ 'التغطية:' if locale == 'ar' else 'Coverage:' }}</strong> {{ 'دبي، أبوظبي، الشارقة، عجمان والإمارات الشمالية' if locale == 'ar' else 'Dubai, Abu Dhabi, Sharjah, Ajman & Northern Emirates' }}</li>
           </ul>
         </div>
       </div>
 
       <div class="f-bottom">
-        <span>&copy; 2026 TyresVision. {{ 'جميع الحقوق محفوظة.' if locale == 'ar' else 'All rights reserved.' }}</span>
+        <span>&copy; 2026 TyresVision &mdash; operated by DSP Trade Hub FZ-LLC. {{ 'جميع الحقوق محفوظة.' if locale == 'ar' else 'All rights reserved.' }}</span>
         <span>United Arab Emirates</span>
       </div>
     </div>
