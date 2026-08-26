@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale or session.get('site_locale', 'en') }}" dir="{{ 'rtl' if (locale == 'ar' or session.get('site_locale') == 'ar') else 'ltr' }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -158,7 +158,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <header>
   <nav class="nav" aria-label="Main">
-    <a class="logo" href="#top" aria-label="TyresVision home">
+    <a class="logo" href="/" aria-label="TyresVision home">
       <svg class="swoosh" width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true">
         <path d="M5 14.5C9.2 7.6 16.2 3.6 24 4.2c5.2.4 9.6 2.7 12.4 6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
         <path d="M9.5 18.6c3.4-5.3 9-8.4 15.1-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
@@ -175,6 +175,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <a href="#faq">FAQ</a>
     </div>
     <div class="nav-cta">
+      <!-- Language / RTL Toggle Button -->
+      {% if locale == 'ar' or session.get('site_locale') == 'ar' %}
+        <!-- Current: Arabic (RTL) -> Show England Flag + EN (Switch to English / LTR) -->
+        <a href="javascript:void(0)" onclick="toggleSiteLanguage()" class="lang-toggle-btn" aria-label="Switch to English (LTR)" title="Switch to English (LTR)">
+          <svg width="20" height="14" viewBox="0 0 60 30" style="border-radius:2px; box-shadow:0 0 1px rgba(0,0,0,0.35); flex-shrink:0;" aria-hidden="true">
+            <clipPath id="uk-flag-clip"><rect width="60" height="30" rx="3"/></clipPath>
+            <g clip-path="url(#uk-flag-clip)">
+              <rect width="60" height="30" fill="#012169"/>
+              <path d="M0,0 L60,30 M60,0 L0,30" stroke="#ffffff" stroke-width="6"/>
+              <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="3"/>
+              <path d="M30,0 v30 M0,15 h60" stroke="#ffffff" stroke-width="10"/>
+              <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>
+            </g>
+          </svg>
+          <span>EN</span>
+        </a>
+      {% else %}
+        <!-- Current: English (LTR) -> Show UAE Flag + AR (Switch to Arabic / RTL) -->
+        <a href="javascript:void(0)" onclick="toggleSiteLanguage()" class="lang-toggle-btn" aria-label="التبديل إلى العربية (RTL)" title="التبديل إلى العربية (RTL)">
+          <svg width="20" height="14" viewBox="0 0 20 14" style="border-radius:2px; box-shadow:0 0 1px rgba(0,0,0,0.35); flex-shrink:0;" aria-hidden="true">
+            <rect x="0" y="0" width="20" height="4.66" fill="#00732F"/>
+            <rect x="0" y="4.66" width="20" height="4.66" fill="#FFFFFF"/>
+            <rect x="0" y="9.33" width="20" height="4.66" fill="#000000"/>
+            <rect x="0" y="0" width="5.5" height="14" fill="#E62229"/>
+          </svg>
+          <span>AR</span>
+        </a>
+      {% endif %}
+
       <a class="btn btn-wa btn-sm" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
         WhatsApp
@@ -284,6 +313,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </a>
 
 <script src="{{ url_for('static', filename='js/client.js') }}"></script>
+<script>
+function toggleSiteLanguage() {
+  const path = window.location.pathname;
+  let target = '';
+
+  if (path.startsWith('/ar/')) {
+    target = path.replace(/^\/ar\//, '/en/');
+  } else if (path.startsWith('/en/')) {
+    target = path.replace(/^\/en\//, '/ar/');
+  } else if (path === '/ar' || path === '/ar/') {
+    target = '/en/blog';
+  } else if (path === '/en' || path === '/en/') {
+    target = '/ar/blog';
+  } else if (path.startsWith('/blog')) {
+    target = '/ar' + path;
+  } else {
+    const isAr = document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
+    target = isAr ? '/en/blog' : '/ar/blog';
+  }
+
+  window.location.href = target;
+}
+</script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -2132,4 +2132,39 @@ footer .tagline {
   border-radius: 100px;
 }
 
+/* Language & RTL / LTR Toggle Button */
+.lang-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border-radius: 100px;
+  background: #ffffff;
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: .82rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(14,17,8,.04);
+  transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  line-height: 1;
+}
+
+.lang-toggle-btn:hover {
+  border-color: var(--green);
+  background: var(--green-tint);
+  color: var(--green-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(88,179,27,.22);
+}
+
+.lang-toggle-btn svg {
+  display: block;
+}
+
+
 
