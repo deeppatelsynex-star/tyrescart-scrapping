@@ -22,10 +22,17 @@ def register_visionadmin_routes(app):
     @app.route('/visionadmin', methods=['GET'])
     @app.route('/visionadmin/', methods=['GET'])
     @app.route('/visionadmin/pages', methods=['GET'])
+    @app.route('/visonadmin', methods=['GET'])
+    @app.route('/visonadmin/', methods=['GET'])
+    @app.route('/admin', methods=['GET'])
+    @app.route('/admin/', methods=['GET'])
+    @app.route('/admin/pages', methods=['GET'])
     def visionadmin_pages():
         return render_template('visionadmin/pages.html', page='pages')
 
     @app.route('/visionadmin/blogs', methods=['GET'])
+    @app.route('/visonadmin/blogs', methods=['GET'])
+    @app.route('/admin/blogs', methods=['GET'])
     def visionadmin_blogs():
         return render_template('visionadmin/blogs.html', page='blogs')
 

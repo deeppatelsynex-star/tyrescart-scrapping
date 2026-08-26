@@ -180,7 +180,7 @@ def client_blog_detail(slug):
 @app.route('/<slug>')
 def client_page(slug):
     """Dynamic CMS static content page and article renderer."""
-    if slug in ('tcsadmin', 'visionadmin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico'):
+    if slug in ('tcsadmin', 'visionadmin', 'visonadmin', 'admin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico'):
         abort(404)
 
     req_locale = request.args.get('locale')
