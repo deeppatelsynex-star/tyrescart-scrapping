@@ -2133,6 +2133,16 @@ footer .tagline {
 }
 
 /* Language & RTL / LTR Toggle Button */
+.lang-toggle-btn,
+.lang-toggle-btn:link,
+.lang-toggle-btn:visited,
+.lang-toggle-btn:hover,
+.lang-toggle-btn:focus,
+.lang-toggle-btn:active,
+.lang-toggle-btn span {
+  text-decoration: none !important;
+}
+
 .lang-toggle-btn {
   display: inline-flex;
   align-items: center;
@@ -2146,7 +2156,7 @@ footer .tagline {
   font-size: .82rem;
   font-weight: 800;
   letter-spacing: .02em;
-  text-decoration: none;
+  text-decoration: none !important;
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(14,17,8,.04);
   transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -2160,6 +2170,7 @@ footer .tagline {
   color: var(--green-deep);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(88,179,27,.22);
+  text-decoration: none !important;
 }
 
 .lang-toggle-btn svg {

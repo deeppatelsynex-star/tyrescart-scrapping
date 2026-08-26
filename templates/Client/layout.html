@@ -179,7 +179,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <!-- Language / RTL Toggle Button -->
       {% if locale == 'ar' or session.get('site_locale') == 'ar' %}
         <!-- Current: Arabic (RTL) -> Show England Flag + EN (Switch to English / LTR) -->
-        <a href="javascript:void(0)" onclick="toggleSiteLanguage()" class="lang-toggle-btn" aria-label="Switch to English (LTR)" title="Switch to English (LTR)">
+        <a href="javascript:void(0)" onclick="toggleSiteLanguage()" class="lang-toggle-btn" style="text-decoration:none !important;" aria-label="Switch to English (LTR)" title="Switch to English (LTR)">
           <svg width="20" height="14" viewBox="0 0 60 30" style="border-radius:2px; box-shadow:0 0 1px rgba(0,0,0,0.35); flex-shrink:0;" aria-hidden="true">
             <clipPath id="uk-flag-clip"><rect width="60" height="30" rx="3"/></clipPath>
             <g clip-path="url(#uk-flag-clip)">
@@ -190,18 +190,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>
             </g>
           </svg>
-          <span>EN</span>
+          <span style="text-decoration:none !important;">EN</span>
         </a>
       {% else %}
         <!-- Current: English (LTR) -> Show UAE Flag + AR (Switch to Arabic / RTL) -->
-        <a href="javascript:void(0)" onclick="toggleSiteLanguage()" class="lang-toggle-btn" aria-label="التبديل إلى العربية (RTL)" title="التبديل إلى العربية (RTL)">
+        <a href="javascript:void(0)" onclick="toggleSiteLanguage()" class="lang-toggle-btn" style="text-decoration:none !important;" aria-label="التبديل إلى العربية (RTL)" title="التبديل إلى العربية (RTL)">
           <svg width="20" height="14" viewBox="0 0 20 14" style="border-radius:2px; box-shadow:0 0 1px rgba(0,0,0,0.35); flex-shrink:0;" aria-hidden="true">
             <rect x="0" y="0" width="20" height="4.66" fill="#00732F"/>
             <rect x="0" y="4.66" width="20" height="4.66" fill="#FFFFFF"/>
             <rect x="0" y="9.33" width="20" height="4.66" fill="#000000"/>
             <rect x="0" y="0" width="5.5" height="14" fill="#E62229"/>
           </svg>
-          <span>AR</span>
+          <span style="text-decoration:none !important;">AR</span>
         </a>
       {% endif %}
 
