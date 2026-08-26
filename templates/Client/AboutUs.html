@@ -8,6 +8,17 @@
   {% if locale == 'ar' %}في تايرز فيجن، نقدم إطارات سيارات أصلية معتمدة، وأسعار شفافة، وخدمة تركيب متنقلة عند باب منزلك أو في مراكزنا المعتمدة في كافة أنحاء الإمارات.{% else %}At TyresVision, we deliver premium tyres that combine cutting-edge technology, superior performance, and lasting reliability across the UAE.{% endif %}
 {% endblock %}
 
+{% block extra_head %}
+<style>
+@media(min-width: 960px) {
+  .hero-2col-layout {
+    grid-template-columns: 1.15fr 0.95fr !important;
+    gap: 56px !important;
+  }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <span id="top"></span>
 
@@ -30,37 +41,45 @@
       <span class="current">{% if locale == 'ar' %}من نحن{% else %}About Us{% endif %}</span>
     </nav>
 
-    <!-- Eyebrow & Title -->
-    <div>
-      <span class="eyebrow">
-        &mdash; {% if locale == 'ar' %}من نحن{% else %}ABOUT US{% endif %}
-      </span>
-      
-      <h1>
-        {% if locale == 'ar' %}
-          مدفوعون بالثقة،
-          <span class="text-green">مصممون للطريق.</span>
-        {% else %}
-          Driven by Confidence,
-          <span class="text-green">Built for the Road.</span>
-        {% endif %}
-      </h1>
-      
-      <p class="lead">
-        {% if locale == 'ar' %}
-          في تايرز فيجن، نقدم إطارات فائقة الجودة تجمع بين أحدث التقنيات والأداء المتميز والاعتمادية الدائمة. لأن كل رحلة تستحق قيادة واثقة وآمنة.
-        {% else %}
-          At TyresVision, we deliver premium tyres that combine cutting-edge technology, superior performance, and lasting reliability. Because every journey deserves confidence.
-        {% endif %}
-      </p>
-
+    <!-- Hero 2-Column Grid -->
+    <div style="display:grid; grid-template-columns:1fr; gap:40px; align-items:center;" class="hero-2col-layout">
+      <!-- Left Content -->
       <div>
-        <a href="#our-story" class="about-hero-cta">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-          </svg>
-          <span>{% if locale == 'ar' %}استكشف مسيرتنا &larr;{% else %}Our Journey &rarr;{% endif %}</span>
-        </a>
+        <span class="eyebrow">
+          &mdash; {% if locale == 'ar' %}من نحن{% else %}ABOUT US{% endif %}
+        </span>
+        
+        <h1>
+          {% if locale == 'ar' %}
+            مدفوعون بالثقة،
+            <span class="text-green">مصممون للطريق.</span>
+          {% else %}
+            Driven by Confidence,
+            <span class="text-green">Built for the Road.</span>
+          {% endif %}
+        </h1>
+        
+        <p class="lead">
+          {% if locale == 'ar' %}
+            في تايرز فيجن، نقدم إطارات فائقة الجودة تجمع بين أحدث التقنيات والأداء المتميز والاعتمادية الدائمة. لأن كل رحلة تستحق قيادة واثقة وآمنة.
+          {% else %}
+            At TyresVision, we deliver premium tyres that combine cutting-edge technology, superior performance, and lasting reliability. Because every journey deserves confidence.
+          {% endif %}
+        </p>
+
+        <div>
+          <a href="#our-story" class="about-hero-cta">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span>{% if locale == 'ar' %}استكشف مسيرتنا &larr;{% else %}Our Journey &rarr;{% endif %}</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Right Cinematic Showroom Tyre Image -->
+      <div style="border-radius:24px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.12); aspect-ratio:16/10; background:#11170D;">
+        <img src="/static/assets/about/hero-tyre-showroom.jpg" alt="TyresVision Showroom" style="width:100%; height:100%; object-fit:cover; display:block;" loading="eager">
       </div>
     </div>
 
@@ -484,8 +503,8 @@
     <div class="about-action-box">
       
       <div class="about-action-left">
-        <div class="about-action-wheel">
-          <img src="/static/assets/about/wheel-rim.png" alt="TyresVision Wheel" loading="lazy">
+        <div class="about-action-wheel" style="max-width:110px; width:110px; height:110px; flex-shrink:0;">
+          <img src="/static/assets/about/wheel-rim.png" alt="TyresVision Wheel" style="width:100%; height:100%; object-fit:contain;" loading="lazy">
         </div>
         <div class="about-action-icon-circle">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
