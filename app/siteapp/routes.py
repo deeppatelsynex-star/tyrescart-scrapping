@@ -90,7 +90,9 @@ def api_get_blogs():
     if cat_filter:
         formatted_blogs = [
             b for b in formatted_blogs
-            if cat_filter in b['category'].lower()
+            if cat_filter == (b.get('category') or '').strip().lower() 
+            or cat_filter in (b.get('category') or '').strip().lower() 
+            or cat_filter == Blog.slugify(b.get('category') or '')
         ]
 
     total_count = len(formatted_blogs)
@@ -199,7 +201,9 @@ def home_ar():
 def blog_en():
     """English blog listing route: /en/blog."""
     session['site_locale'] = 'en'
-    resp = make_response(render_template('Client/Blog.html', locale='en'))
+    categories = Blog.distinct_categories()
+    selected_category = (request.args.get('category') or '').strip()
+    resp = make_response(render_template('Client/Blog.html', locale='en', categories=categories, selected_category=selected_category))
     resp.set_cookie('site_locale', 'en', max_age=31536000, path='/')
     return resp
 
@@ -211,7 +215,9 @@ def blog_en():
 def blog_ar():
     """Arabic blog listing route: /ar/blog."""
     session['site_locale'] = 'ar'
-    resp = make_response(render_template('Client/Blog.html', locale='ar'))
+    categories = Blog.distinct_categories()
+    selected_category = (request.args.get('category') or '').strip()
+    resp = make_response(render_template('Client/Blog.html', locale='ar', categories=categories, selected_category=selected_category))
     resp.set_cookie('site_locale', 'ar', max_age=31536000, path='/')
     return resp
 
@@ -223,7 +229,9 @@ def blog_ar():
 def blog_default():
     """Default blog catalog route."""
     locale = _get_locale()
-    return render_template('Client/Blog.html', locale=locale)
+    categories = Blog.distinct_categories()
+    selected_category = (request.args.get('category') or '').strip()
+    return render_template('Client/Blog.html', locale=locale, categories=categories, selected_category=selected_category)
 
 
 # --- BLOG DETAIL ROUTES ---

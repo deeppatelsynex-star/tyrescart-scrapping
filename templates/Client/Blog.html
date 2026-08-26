@@ -46,18 +46,14 @@
     
     <!-- Glassmorphic Category Filter Pills -->
     <div class="blog-filter-pills" role="tablist" aria-label="Blog categories">
-      <button type="button" class="filter-btn active" data-cat="" onclick="setCategoryFilter('')">
+      <button type="button" class="filter-btn {% if not selected_category %}active{% endif %}" data-cat="" onclick="setCategoryFilter('')">
         {% if locale == 'ar' %}جميع المقالات{% else %}All Articles{% endif %}
       </button>
-      <button type="button" class="filter-btn" data-cat="Buying Guide" onclick="setCategoryFilter('Buying Guide')">
-        {% if locale == 'ar' %}أدلة الشراء{% else %}Buying Guides{% endif %}
-      </button>
-      <button type="button" class="filter-btn" data-cat="Maintenance" onclick="setCategoryFilter('Maintenance')">
-        {% if locale == 'ar' %}الصيانة{% else %}Maintenance{% endif %}
-      </button>
-      <button type="button" class="filter-btn" data-cat="How It Works" onclick="setCategoryFilter('How It Works')">
-        {% if locale == 'ar' %}كيف تعمل الخدمة{% else %}How It Works{% endif %}
-      </button>
+      {% for cat in categories %}
+        <button type="button" class="filter-btn {% if selected_category == cat or selected_category|lower == cat|lower %}active{% endif %}" data-cat="{{ cat }}" onclick="setCategoryFilter('{{ cat }}')">
+          {{ cat }}
+        </button>
+      {% endfor %}
     </div>
   </div>
 </section>
@@ -155,15 +151,30 @@
   }
 
   function setCategoryFilter(cat) {
+    const url = new URL(window.location.href);
+    if (cat && cat.trim()) {
+      url.searchParams.set('category', cat.trim());
+    } else {
+      url.searchParams.delete('category');
+    }
+    url.searchParams.delete('page');
+    window.history.pushState({}, '', url.toString());
+
+    updateCategoryButtons(cat);
+    loadBlogsFromApi(1, cat);
+  }
+
+  function updateCategoryButtons(cat) {
+    const cleanCat = (cat || '').trim().toLowerCase();
     const buttons = document.querySelectorAll('.filter-btn');
     buttons.forEach(btn => {
-      if (btn.getAttribute('data-cat') === cat) {
+      const btnCat = (btn.getAttribute('data-cat') || '').trim().toLowerCase();
+      if (btnCat === cleanCat) {
         btn.classList.add('active');
       } else {
         btn.classList.remove('active');
       }
     });
-    loadBlogsFromApi(1, cat);
   }
 
   async function loadBlogsFromApi(page = 1, category = currentCategory) {
@@ -175,7 +186,7 @@
     const pillsEl = document.getElementById('pagination-pills');
 
     currentPage = page;
-    currentCategory = category;
+    currentCategory = category || '';
 
     loadingEl.style.display = 'block';
     gridEl.style.display = 'none';
@@ -187,8 +198,8 @@
       url.searchParams.set('locale', PAGE_LOCALE);
       url.searchParams.set('page', page);
       url.searchParams.set('per_page', 12);
-      if (category) {
-        url.searchParams.set('category', category);
+      if (currentCategory) {
+        url.searchParams.set('category', currentCategory);
       }
 
       const res = await fetch(url.toString(), {
@@ -280,9 +291,25 @@
     }
   }
 
-  // Initial load
+  // Initial load respecting URL query parameters (e.g. ?category=test)
   document.addEventListener('DOMContentLoaded', () => {
-    loadBlogsFromApi(1, '');
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryParam = urlParams.get('category') || "{{ selected_category or '' }}";
+    const pageParam = parseInt(urlParams.get('page') || '1', 10);
+    
+    if (categoryParam) {
+      updateCategoryButtons(categoryParam);
+    }
+    loadBlogsFromApi(pageParam, categoryParam);
+  });
+
+  // Handle browser navigation (Back / Forward)
+  window.addEventListener('popstate', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryParam = urlParams.get('category') || '';
+    const pageParam = parseInt(urlParams.get('page') || '1', 10);
+    updateCategoryButtons(categoryParam);
+    loadBlogsFromApi(pageParam, categoryParam);
   });
 </script>
 {% endblock %}
