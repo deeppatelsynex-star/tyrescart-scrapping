@@ -8,7 +8,7 @@
 <style>
   /* ---------------- PAGE CONTAINER & BREADCRUMB ---------------- */
   .blog-catalog-wrap {
-    max-width: var(--maxw, 1280px);
+    max-width: var(--maxw);
     margin: 0 auto;
     padding: 24px 20px 60px;
   }
@@ -19,11 +19,11 @@
     gap: 8px;
     font-size: 0.88rem;
     font-weight: 600;
-    color: #4B5563;
+    color: var(--slate);
     margin-bottom: 24px;
   }
   .breadcrumb-nav a {
-    color: var(--green-deep, #00875A);
+    color: var(--green-deep);
     text-decoration: none;
     transition: opacity 0.15s ease;
   }
@@ -31,11 +31,11 @@
     text-decoration: underline;
   }
   .breadcrumb-nav .sep {
-    color: #9CA3AF;
+    color: #8C9985;
     font-size: 0.85rem;
   }
   .breadcrumb-nav .current {
-    color: #111827;
+    color: var(--ink);
     font-weight: 700;
   }
 
@@ -64,23 +64,23 @@
     }
   }
 
-  /* ---------------- BLOG CARD (EXACT MATCH TO IMAGE) ---------------- */
+  /* ---------------- BLOG CARD (DESIGN-SYSTEM COMPLIANT) ---------------- */
   .blog-card {
-    background: #ffffff;
-    border: 1px solid #E5E7EB;
-    border-radius: 8px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     text-decoration: none;
     color: inherit;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 1px 2px rgba(14, 17, 8, 0.05);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   }
   .blog-card:hover {
     transform: translateY(-2px);
-    border-color: #D1D5DB;
-    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08);
+    border-color: #CBD6C0;
+    box-shadow: var(--shadow);
   }
 
   /* Card Image Media */
@@ -88,7 +88,7 @@
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 10;
-    background: #F3F4F6;
+    background: var(--bg-soft);
     overflow: hidden;
   }
   .blog-card-media img {
@@ -107,12 +107,12 @@
     top: 10px;
     left: 10px;
     background: rgba(255, 255, 255, 0.95);
-    color: #111827;
+    color: var(--ink);
     font-size: 11.5px;
     font-weight: 700;
     padding: 3.5px 9px;
     border-radius: 4px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+    box-shadow: 0 1px 4px rgba(14, 17, 8, 0.12);
     letter-spacing: -0.01em;
     z-index: 2;
     line-height: 1.2;
@@ -134,7 +134,7 @@
     font-size: 13.5px;
     font-weight: 800;
     text-transform: uppercase;
-    color: #0E1108;
+    color: var(--ink);
     line-height: 1.38;
     letter-spacing: -0.01em;
     margin: 0;
@@ -146,14 +146,14 @@
     transition: color 0.15s ease;
   }
   .blog-card:hover .blog-card-title {
-    color: var(--green-deep, #00875A);
+    color: var(--green-deep);
   }
 
   /* Green Accent Divider Line */
   .blog-card-accent-line {
     width: 26px;
     height: 3px;
-    background: var(--green-deep, #00875A);
+    background: var(--green);
     margin: 10px 0 12px 0;
     border-radius: 2px;
   }
@@ -161,7 +161,7 @@
   .blog-card-desc {
     font-size: 12.5px;
     line-height: 1.55;
-    color: #4B5563;
+    color: var(--slate);
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -169,7 +169,7 @@
     overflow: hidden;
   }
 
-  /* ---------------- BOTTOM PAGINATION BAR (EXACT MATCH TO IMAGE) ---------------- */
+  /* ---------------- BOTTOM PAGINATION BAR ---------------- */
   .blog-pagination-bar {
     display: flex;
     align-items: center;
@@ -177,9 +177,9 @@
     flex-wrap: wrap;
     gap: 16px;
     padding: 24px 0 12px;
-    border-top: 1px solid #E5E7EB;
+    border-top: 1px solid var(--line);
     font-size: 13px;
-    color: #4B5563;
+    color: var(--slate);
   }
 
   .pagination-info {
@@ -189,17 +189,17 @@
   .pagination-controls {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
   }
 
   .page-nav-btn {
-    min-width: 32px;
-    height: 32px;
-    padding: 0 6px;
-    border-radius: 4px;
-    border: 1px solid #E5E7EB;
-    background: #ffffff;
-    color: #374151;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
     font-size: 13px;
     font-weight: 600;
     display: inline-flex;
@@ -210,15 +210,15 @@
     user-select: none;
   }
   .page-nav-btn:hover:not(.disabled):not(.active) {
-    border-color: #D1D5DB;
-    background: #F9FAFB;
-    color: #111827;
+    border-color: #CBD6C0;
+    background: var(--bg-soft);
+    color: var(--ink);
   }
   .page-nav-btn.active {
-    background: var(--green-deep, #00875A);
-    color: #ffffff;
-    border-color: var(--green-deep, #00875A);
-    font-weight: 700;
+    background: var(--green);
+    color: #0B1505;
+    border-color: var(--green);
+    font-weight: 800;
   }
   .page-nav-btn.disabled {
     opacity: 0.45;
@@ -227,7 +227,7 @@
   }
   .page-dots {
     padding: 0 4px;
-    color: #9CA3AF;
+    color: var(--slate);
     font-size: 13px;
     font-weight: 600;
   }
@@ -238,19 +238,20 @@
     gap: 8px;
   }
   .per-page-select {
-    border: 1px solid #E5E7EB;
-    border-radius: 4px;
-    padding: 5px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 6px 12px;
     font-size: 13px;
     font-weight: 600;
-    background: #ffffff;
-    color: #374151;
+    background: var(--bg);
+    color: var(--ink);
     cursor: pointer;
     outline: none;
     transition: border-color 0.15s ease;
   }
   .per-page-select:focus {
-    border-color: var(--green-deep, #00875A);
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px var(--green-tint);
   }
 </style>
 {% endblock %}
@@ -267,11 +268,11 @@
 
   {% if not blogs or blogs | length == 0 %}
   <!-- Empty State -->
-  <div style="background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 64px 24px; text-align: center; max-width: 520px; margin: 40px auto;">
+  <div style="background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 64px 24px; text-align: center; max-width: 520px; margin: 40px auto;">
     <div style="width: 52px; height: 52px; border-radius: 12px; background: var(--green-tint); color: var(--green-deep); display: grid; place-items: center; margin: 0 auto 16px;">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
     </div>
-    <h3 style="font-size: 1.25rem; margin-bottom: 8px; font-weight: 800;">{{ 'لا توجد مقالات منشورة حالياً' if locale == 'ar' else 'No Articles Published Yet' }}</h3>
+    <h3 style="font-size: 1.25rem; margin-bottom: 8px; font-weight: 800; color: var(--ink);">{{ 'لا توجد مقالات منشورة حالياً' if locale == 'ar' else 'No Articles Published Yet' }}</h3>
     <p style="color: var(--slate); font-size: .92rem; margin-bottom: 20px;">{{ 'نعمل على إضافة مقالات وإرشادات فنية جديدة. تابعونا قريباً!' if locale == 'ar' else 'We are currently preparing in-depth guides and articles. Please check back soon!' }}</p>
     <a href="/{{ '?locale=' + locale if locale == 'ar' else '' }}" class="btn btn-call btn-sm">{{ 'العودة للرئيسية' if locale == 'ar' else 'Back to Home' }}</a>
   </div>
@@ -290,7 +291,7 @@
         {% if blog.image %}
         <img src="{{ blog.image }}" alt="{{ blog.get_title(locale) }}" loading="lazy" />
         {% else %}
-        <div style="width: 100%; height: 100%; display: grid; place-items: center; color: #9CA3AF;">
+        <div style="width: 100%; height: 100%; display: grid; place-items: center; color: var(--slate);">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </div>
         {% endif %}
