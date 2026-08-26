@@ -25,8 +25,14 @@
       </span>
       
       <h1>
-        {% if locale == 'ar' %}
-          {{ about.hero.title }}
+        {% if '<em>' in about.hero.title or '<span' in about.hero.title %}
+          {{ about.hero.title | safe }}
+        {% elif '—' in about.hero.title %}
+          {% set parts = about.hero.title.split('—', 1) %}
+          {{ parts[0] }} — <em>{{ parts[1] }}</em>
+        {% elif ',' in about.hero.title %}
+          {% set parts = about.hero.title.split(',', 1) %}
+          {{ parts[0] }}, <em>{{ parts[1] }}</em>
         {% else %}
           {{ about.hero.title }}
         {% endif %}
