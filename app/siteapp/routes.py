@@ -316,7 +316,6 @@ def _render_blog_detail(slug, locale):
         categories.append({
             'name': cat,
             'slug': Blog.slugify(cat),
-            'icon': '🛞',
             'count': count
         })
 

@@ -266,10 +266,7 @@
           <div class="sidebar-cat-list">
             {% for cat in categories %}
             <a href="{% if locale == 'ar' %}/ar/blog?category={{ cat.name | urlencode }}{% else %}/en/blog?category={{ cat.name | urlencode }}{% endif %}" class="sidebar-cat-row">
-              <div class="sidebar-cat-name-wrap">
-                <span class="sidebar-cat-icon">{{ cat.icon }}</span>
-                <span>{{ cat.name }}</span>
-              </div>
+              <span class="sidebar-cat-name">{{ cat.name }}</span>
               <span class="sidebar-cat-count">{{ cat.count }}</span>
             </a>
             {% endfor %}
