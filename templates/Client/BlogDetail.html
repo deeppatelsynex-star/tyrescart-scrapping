@@ -278,32 +278,4 @@
     </div>
   </div>
 </section>
-
-<!-- ================= FINAL CTA ================= -->
-<section class="final">
-  <div class="wrap">
-    <h2>
-      {% if locale == 'ar' %}
-        هل تبحث عن استشارة أو أسعار الإطارات؟
-      {% else %}
-        Need advice or looking for tyre prices?
-      {% endif %}
-    </h2>
-    <p>
-      {% if locale == 'ar' %}
-        تواصل مع خبرائنا عبر واتساب للحصول على مقاس الإطار الدقيق وأفضل عروض الأسعار لأكثر من 60 علامة تجارية عالمية.
-      {% else %}
-        Message our specialists on WhatsApp for instant sizing assistance and price quotes across 60+ brands.
-      {% endif %}
-    </p>
-    <div class="cta-row" style="justify-content:center">
-      <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
-        {% if locale == 'ar' %}تواصل عبر واتساب{% else %}WhatsApp us{% endif %}
-      </a>
-      <a class="btn btn-white" href="tel:+971505069575">
-        {% if locale == 'ar' %}اتصل بنا +971 50 506 9575{% else %}Call +971 50 506 9575{% endif %}
-      </a>
-    </div>
-  </div>
-</section>
 {% endblock %}
