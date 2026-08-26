@@ -1190,12 +1190,20 @@ footer .wrap {
 .f-grid {
   display: grid;
   gap: 30px;
-  margin-bottom: 34px
+  margin-bottom: 34px;
 }
 
-@media(min-width:760px) {
+@media(min-width: 960px) {
   .f-grid {
-    grid-template-columns: 1.4fr 1fr 1fr
+    grid-template-columns: 1.4fr 1.3fr 1fr 1fr;
+    gap: 36px;
+  }
+}
+
+@media(min-width: 560px) and (max-width: 959px) {
+  .f-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
   }
 }
 

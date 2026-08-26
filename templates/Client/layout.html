@@ -273,21 +273,41 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </a>
         <p style="max-width:34ch;margin-top:16px">Buy tyres online, fitted locally across the UAE. 60+ brands, 10,000+ products, fitting centres and mobile vans.</p>
       </div>
+      <!-- Column 2: WHY TYRESVISION.COM? -->
       <div>
-        <h4>Contact</h4>
+        <h4 style="letter-spacing: .04em;">
+          {% if locale == 'ar' or session.get('site_locale') == 'ar' %}
+            <span style="color:#ffffff; font-weight:800;">لماذا</span> <span style="color:var(--green-bright); font-weight:800;">تايرز فيجن؟</span>
+          {% else %}
+            <span style="color:#ffffff; font-weight:800;">WHY</span> <span style="color:var(--green-bright); font-weight:800;">TYRESVISION.COM?</span>
+          {% endif %}
+        </h4>
+        <ul>
+          <li><a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar/blog{% else %}/en/blog{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}المدونة{% else %}Blog{% endif %}</a></li>
+        </ul>
+      </div>
+
+      <!-- Column 3: Contact & Legal -->
+      <div>
+        <h4>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}تواصل معنا{% else %}Contact{% endif %}</h4>
         <ul>
           <li><a href="tel:+971505069575">+971 50 506 9575</a></li>
-          <li><a href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">WhatsApp us</a></li>
+          <li><a href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}واتساب{% else %}WhatsApp us{% endif %}</a></li>
         </ul>
-        <h4 style="margin-top:26px">Legal</h4>
+        <h4 style="margin-top:24px">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}قانوني{% else %}Legal{% endif %}</h4>
         <ul>
-          <li><a href="#notice" data-notice>Ownership notice</a></li>
+          <li><a href="#notice" data-notice>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}إشعار الملكية{% else %}Ownership notice{% endif %}</a></li>
         </ul>        
       </div>
+
+      <!-- Column 4: Coverage -->
       <div>
-        <h4>Coverage</h4>
+        <h4>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}التغطية{% else %}Coverage{% endif %}</h4>
         <ul>
-          <li>Dubai</li><li>Abu Dhabi</li><li>Sharjah</li><li>Ajman &amp; Northern Emirates</li>
+          <li>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}دبي{% else %}Dubai{% endif %}</li>
+          <li>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}أبوظبي{% else %}Abu Dhabi{% endif %}</li>
+          <li>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}الشارقة{% else %}Sharjah{% endif %}</li>
+          <li>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}عجمان والإمارات الشمالية{% else %}Ajman &amp; Northern Emirates{% endif %}</li>
         </ul>
       </div>
     </div>
