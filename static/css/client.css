@@ -363,47 +363,62 @@ header {
 /* Tablet & Mobile: Header Call button shows only icon */
 @media(max-width: 979px) {
   .header-call-btn .btn-call-label {
-    display: none;
+    display: none !important;
   }
   .header-call-btn {
-    padding: 0;
-    width: 38px;
-    height: 38px;
-    min-width: 38px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    padding: 0 !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    line-height: 1 !important;
   }
   .header-call-btn svg {
-    margin: 0;
+    margin: 0 !important;
+    display: block !important;
+    flex-shrink: 0 !important;
   }
 }
 
 /* ---------------- SMALL-SCREEN SAFETY (prevents overflow on ~320-400px devices) ---------------- */
 @media(max-width:460px) {
   .nav {
-    padding: 10px 14px;
-    gap: 10px
+    padding: 10px 12px;
+    gap: 8px;
   }
 
   .logo .swoosh {
-    width: 28px;
-    height: 28px
+    width: 26px;
+    height: 26px;
   }
 
   .logo .word {
-    font-size: 1.02rem
+    font-size: 0.98rem;
   }
 
   .nav-cta {
-    gap: 6px
+    gap: 6px;
   }
 
   .header-call-btn {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+  }
+
+  .header-call-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .lang-toggle-btn {
+    padding: 5px 8px;
+    font-size: .78rem;
+    gap: 5px;
   }
 
   .btn {
