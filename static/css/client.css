@@ -2407,64 +2407,123 @@ footer .tagline {
    Exact match to reference layout & brand tokens
    ============================================================ */
 
-/* 1. Hero Section */
-.about-hero-section {
-  padding: clamp(28px, 4.5vw, 56px) 0 clamp(44px, 5.5vw, 72px);
+/* 1. Full-Width Cinematic Hero Banner (Matches Reference Image & Loads DB Banner) */
+.about-hero-banner {
+  color: #ffffff;
   position: relative;
   overflow: hidden;
-  background: #ffffff;
+  padding: clamp(60px, 8vw, 100px) 0 clamp(54px, 7vw, 90px);
+  text-align: center;
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-color: var(--ink);
 }
 
-.about-hero-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 36px;
-  align-items: center;
+.about-hero-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(1100px 500px at 86% -10%, rgba(88,179,27,.38), transparent 62%),
+    radial-gradient(900px 450px at 14% 110%, rgba(53,118,15,.36), transparent 60%),
+    linear-gradient(180deg, rgba(14, 17, 8, 0.78) 0%, rgba(14, 17, 8, 0.88) 100%);
+  z-index: 1;
 }
 
-@media(min-width: 960px) {
-  .about-hero-grid {
-    grid-template-columns: 1.15fr 1fr;
-    gap: 56px;
-  }
+.about-hero-banner::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, var(--green) 0 24px, rgba(255,255,255,.2) 24px 48px);
+  opacity: .95;
+  z-index: 2;
 }
 
-.about-hero-text {
-  min-width: 0;
+.about-hero-banner .wrap {
+  position: relative;
+  z-index: 3;
 }
 
-.about-hero-title {
-  font-size: clamp(2.2rem, 4.4vw, 3.3rem);
+.about-hero-banner .eyebrow {
+  color: #96E05C;
+  font-size: .84rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-weight: 800;
+  display: inline-block;
+  margin-bottom: 14px;
+}
+
+.about-hero-banner h1 {
+  color: #ffffff;
+  font-size: clamp(2.2rem, 4.8vw, 3.5rem);
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -.025em;
-  color: var(--ink);
-  margin: 12px 0 18px;
+  max-width: 32ch;
+  margin: 0 auto 18px;
 }
 
-.about-hero-lead {
-  font-size: clamp(1.02rem, 1.5vw, 1.18rem);
-  color: var(--slate);
+.about-hero-banner h1 em,
+.about-hero-banner h1 span.text-green {
+  font-style: normal;
+  color: var(--green-bright);
+}
+
+.about-hero-banner .lead {
+  color: rgba(255, 255, 255, .88);
+  max-width: 660px;
+  margin: 0 auto 28px;
+  font-size: clamp(1.02rem, 1.45vw, 1.15rem);
   line-height: 1.65;
-  margin-bottom: 28px;
-  max-width: 54ch;
 }
 
-.about-hero-media {
-  position: relative;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 16px 40px rgba(14, 17, 8, .08);
-  border: 1px solid var(--line);
-  aspect-ratio: 4 / 3;
-  background: var(--bg-soft);
+.about-hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 14px;
 }
 
-.about-hero-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.about-hero-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 100px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all .25s ease;
+}
+
+.about-hero-pill-btn.primary {
+  background: var(--green);
+  color: #0B1505;
+  box-shadow: 0 4px 16px rgba(88, 179, 27, 0.4);
+}
+
+.about-hero-pill-btn.primary:hover {
+  background: var(--green-bright);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(88, 179, 27, 0.55);
+}
+
+.about-hero-pill-btn.secondary {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+}
+
+.about-hero-pill-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-2px);
 }
 
 /* 2. Story Section (2-Col Image with badge + Text) */

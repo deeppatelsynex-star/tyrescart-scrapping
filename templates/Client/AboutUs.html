@@ -7,46 +7,47 @@
 <span id="top"></span>
 
 <!-- =========================================================================
-     1. HERO SECTION (Dynamic from Backend Page & Admin Banner Upload)
+     1. HERO SECTION (Full-Width Dark Banner with Database Background Image)
      ========================================================================= -->
-<section class="about-hero-section">
+<section class="about-hero-banner" style="background-image: url('{{ about.hero.image }}');">
   <div class="wrap">
     
     <!-- Top Breadcrumb -->
-    <nav class="breadcrumb-nav" style="margin-bottom:20px;" aria-label="Breadcrumb">
-      <a href="{% if locale == 'ar' %}/ar{% else %}/{% endif %}">{{ about.hero.breadcrumb_home }}</a>
-      <span class="sep" aria-hidden="true">&rsaquo;</span>
-      <span class="current">{{ about.hero.breadcrumb_current }}</span>
+    <nav class="breadcrumb-nav" style="margin-bottom:16px; justify-content:center;" aria-label="Breadcrumb">
+      <a href="{% if locale == 'ar' %}/ar{% else %}/{% endif %}" style="color:rgba(255,255,255,.75);">{{ about.hero.breadcrumb_home }}</a>
+      <span class="sep" style="color:rgba(255,255,255,.4);" aria-hidden="true">&rsaquo;</span>
+      <span class="current" style="color:#ffffff;">{{ about.hero.breadcrumb_current }}</span>
     </nav>
 
-    <div class="about-hero-grid">
-      <!-- Left Content -->
-      <div class="about-hero-text">
-        <span class="eyebrow">{{ about.hero.eyebrow }}</span>
-        <h1 class="about-hero-title">
+    <div>
+      <span class="eyebrow">
+        {{ about.hero.eyebrow }}
+      </span>
+      
+      <h1>
+        {% if locale == 'ar' %}
           {{ about.hero.title }}
-        </h1>
-        <p class="about-hero-lead">
-          {{ about.hero.lead }}
-        </p>
-        <div>
-          <a href="{{ about.hero.cta_link }}" class="btn btn-wa" style="display:inline-flex; align-items:center; gap:8px; padding:12px 24px; border-radius:100px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 16 16 12 12 8"></polyline>
-              <line x1="8" y1="12" x2="16" y2="12"></line>
-            </svg>
-            <span>{{ about.hero.cta_text }}</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Right Dynamic Header Image (Uploaded from Admin CMS) -->
-      <div class="about-hero-media">
-        <img src="{{ about.hero.image }}" 
-             alt="{{ about.hero.title }}" 
-             loading="eager">
-      </div>
+        {% else %}
+          {{ about.hero.title }}
+        {% endif %}
+      </h1>
+      
+      <p class="lead">
+        {{ about.hero.lead }}
+      </p>
+    </div>
+    
+    <!-- Hero Action Pills matching reference image -->
+    <div class="about-hero-pills">
+      <a href="{{ about.hero.cta_link }}" class="about-hero-pill-btn primary">
+        <span>{{ about.hero.cta_text }}</span>
+      </a>
+      <a href="#our-story" class="about-hero-pill-btn secondary">
+        <span>{% if locale == 'ar' %}قصتنا ومميزاتنا{% else %}Our Story{% endif %}</span>
+      </a>
+      <a href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20would%20like%20a%20tyre%20quote." target="_blank" rel="noopener" class="about-hero-pill-btn secondary">
+        <span>{% if locale == 'ar' %}تواصل عبر واتساب{% else %}Contact Us{% endif %}</span>
+      </a>
     </div>
 
   </div>
