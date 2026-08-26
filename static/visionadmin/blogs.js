@@ -211,9 +211,11 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </td>
           <td class="py-3.5 px-4">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
-              ${escapeHtml(b.category_name || 'Tyre Buying Guide')}
-            </span>
+            ${b.category_name ? `
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
+                ${escapeHtml(b.category_name)}
+              </span>
+            ` : '<span class="text-xs text-slate-400">—</span>'}
           </td>
           <td class="py-3.5 px-4">
             ${b.image ? `
@@ -321,36 +323,39 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------------------------------------------------------------------------
   // 5.5 Category Dropdown & Inline "+ Add Category" Handler
   // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // 5.5 Category Dropdown & Inline "+ Add Category" Handler
+  // ---------------------------------------------------------------------------
   const categorySelect = document.getElementById('category_name');
-  let lastValidCategory = 'Tyre Buying Guide';
+  let lastValidCategory = '';
 
   async function loadCategories(selectedCategory = null) {
     if (!categorySelect) return;
-    let categories = [
-      'Tyre Buying Guide',
-      'Tyre Maintenance',
-      'Mobile Tyre Fitting',
-      'Wheel Alignment',
-      'GCC Specifications',
-      'Car Battery & Service'
-    ];
+    let categories = [];
 
     try {
       const res = await fetch('/visionadmin/api/categories');
       const data = await res.json();
-      if (data && data.success && Array.isArray(data.categories) && data.categories.length > 0) {
-        categories = data.categories;
+      if (data && data.success && Array.isArray(data.categories)) {
+        categories = data.categories.filter(c => c && String(c).trim());
       }
     } catch (err) {
       console.warn('Error fetching categories:', err);
     }
 
-    if (selectedCategory && !categories.includes(selectedCategory) && selectedCategory !== '__add_new__') {
+    if (selectedCategory && selectedCategory.trim() && !categories.includes(selectedCategory) && selectedCategory !== '__add_new__') {
       categories.push(selectedCategory);
     }
 
-    categorySelect.innerHTML = categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('') +
-      `<option value="__add_new__" class="font-bold text-emerald-600">+ Add Category</option>`;
+    let optionsHtml = '';
+    if (categories.length === 0) {
+      optionsHtml = `<option value="">Select Category...</option>`;
+    } else {
+      optionsHtml = categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    }
+    optionsHtml += `<option value="__add_new__" class="font-bold text-emerald-600">+ Add Category</option>`;
+
+    categorySelect.innerHTML = optionsHtml;
 
     if (selectedCategory && selectedCategory !== '__add_new__') {
       categorySelect.value = selectedCategory;
@@ -358,6 +363,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (categories.length > 0) {
       categorySelect.value = categories[0];
       lastValidCategory = categories[0];
+    } else {
+      categorySelect.value = '';
+      lastValidCategory = '';
     }
   }
 
@@ -369,9 +377,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   categorySelect?.addEventListener('change', () => {
     if (categorySelect.value === '__add_new__') {
-      const newCategory = prompt('Enter New Category Name (e.g. Off-Road Tyre Care):');
+      const newCategory = prompt('Enter New Category Name:');
       if (newCategory && newCategory.trim()) {
         const cleanName = newCategory.trim();
+        // Remove empty placeholder if any
+        const emptyOpt = categorySelect.querySelector('option[value=""]');
+        if (emptyOpt) emptyOpt.remove();
+
         // Insert new option before the "+ Add Category" option
         const opt = document.createElement('option');
         opt.value = cleanName;
@@ -420,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setVal('meta_desc_en', (typeof blog.meta_desc === 'object' ? blog.meta_desc?.en : '') || '');
       setVal('meta_desc_ar', (typeof blog.meta_desc === 'object' ? blog.meta_desc?.ar : '') || '');
 
-      loadCategories(blog.category_name || 'Tyre Buying Guide');
+      loadCategories(blog.category_name || null);
       setImagePreview(blog.image || '');
 
       const contentEnVal = (typeof blog.content === 'object' ? blog.content?.en : blog.content) || '';
@@ -431,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } else {
       setVal('status', 'published');
-      loadCategories('Tyre Buying Guide');
+      loadCategories(null);
       setImagePreview('');
 
       setEditorContent('blog_content_en', '');
@@ -507,7 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ar: getVal('short_description_ar')
       },
       slug: slug,
-      category_name: getVal('category_name') || 'Tyre Buying Guide',
+      category_name: (getVal('category_name') === '__add_new__' ? '' : getVal('category_name')) || null,
       image: imageInput ? imageInput.value.trim() || null : null,
       status: getVal('status') || 'draft',
       meta_title: {

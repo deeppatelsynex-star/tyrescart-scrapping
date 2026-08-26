@@ -336,7 +336,7 @@ def register_visionadmin_routes(app):
                 content=data.get('content') or {"en": "", "ar": ""},
                 short_description=data.get('short_description') or {"en": "", "ar": ""},
                 image=data.get('image'),
-                category_name=data.get('category_name') or data.get('category') or 'Tyre Buying Guide',
+                category_name=(data.get('category_name') or data.get('category') or '').strip() or None,
                 blog_category_id=data.get('blog_category_id'),
                 author_id=data.get('author_id') or session.get('user_id') or 1,
                 status=data.get('status') or 'draft',

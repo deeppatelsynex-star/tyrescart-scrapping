@@ -326,13 +326,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                 """)
                 rows = cursor.fetchall()
                 found = [r['category_name'].strip() for r in rows if r.get('category_name') and r['category_name'].strip()]
-                # Pre-populate sensible defaults if table has few
-                defaults = ['Tyre Buying Guide', 'Tyre Maintenance', 'Mobile Tyre Fitting', 'Wheel Alignment', 'GCC Specifications', 'Car Battery & Service']
-                combined = []
-                for cat in found + defaults:
-                    if cat not in combined:
-                        combined.append(cat)
-                return combined
+                return found
         finally:
             conn.close()
     @classmethod

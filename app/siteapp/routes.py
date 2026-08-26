@@ -57,9 +57,7 @@ def api_get_blogs():
             short_desc = b.get_short_desc(locale)
             content = b.get_content(locale)
 
-            cat_name = b.category_name if b.category_name else ('Buying Guide' if 'choose' in (b.slug or '') or 'size' in (b.slug or '') else 'Maintenance')
-            if locale == 'ar' and not b.category_name:
-                cat_name = 'دليل الشراء' if 'choose' in (b.slug or '') or 'size' in (b.slug or '') else 'الصيانة'
+            cat_name = b.category_name or ('Blog' if locale != 'ar' else 'مدونة')
 
             prefix = f'/{locale}' if locale in ('en', 'ar') else ''
             blog_url = f'{prefix}/blog/{b.slug}'
@@ -302,19 +300,19 @@ def _render_blog_detail(slug, locale):
             'url': f"/{locale}/blog/{b.slug}" if locale in ('en', 'ar') else f"/blog/{b.slug}"
         })
 
-    # Sidebar categories
-    categories = [
-        {'name': 'Tyre Buying Guide' if locale != 'ar' else 'أدلة شراء الإطارات', 'slug': 'buying-guide', 'icon': '🛞', 'count': 12},
-        {'name': 'Tyre Maintenance' if locale != 'ar' else 'صيانة وحماية الإطارات', 'slug': 'maintenance', 'icon': '🔧', 'count': 8},
-        {'name': 'Mobile Tyre Fitting' if locale != 'ar' else 'التركيب المتنقل', 'slug': 'mobile-fitting', 'icon': '🚐', 'count': 6},
-        {'name': 'Wheel Alignment' if locale != 'ar' else 'ميزان وترصيص العجلات', 'slug': 'alignment', 'icon': '⚙️', 'count': 5},
-        {'name': 'GCC Specifications' if locale != 'ar' else 'مواصفات الخليج', 'slug': 'gcc-specs', 'icon': '☀️', 'count': 7},
-        {'name': 'Car Battery & Service' if locale != 'ar' else 'البطاريات والخدمات', 'slug': 'battery-service', 'icon': '🔋', 'count': 4}
-    ]
+    # Dynamic Sidebar categories from DB
+    distinct_cats = Blog.distinct_categories()
+    categories = []
+    for cat in distinct_cats:
+        count = len([b for b in all_published if (b.category_name or '').strip() == cat.strip()])
+        categories.append({
+            'name': cat,
+            'slug': Blog.slugify(cat),
+            'icon': '🛞',
+            'count': count
+        })
 
-    cat_name = blog.category_name if blog.category_name else ('Tyre Buying Guide' if 'choose' in (blog.slug or '') or 'size' in (blog.slug or '') else 'Tyre Maintenance')
-    if locale == 'ar' and not blog.category_name:
-        cat_name = 'دليل شراء الإطارات' if 'choose' in (blog.slug or '') or 'size' in (blog.slug or '') else 'صيانة الإطارات'
+    cat_name = blog.category_name or ('Blog' if locale != 'ar' else 'مدونة')
 
     blog_data = {
         'id': blog.id,
