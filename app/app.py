@@ -165,8 +165,37 @@ def client_blog_detail(slug):
     blog = Blog.find_by_slug(slug)
     if blog:
         all_published = Blog.published()
-        recent_blogs = [b for b in all_published if b.slug != slug][:4]
-        return render_template('Client/BlogDetail.html', blog=blog, recent_blogs=recent_blogs, locale=locale)
+        prev_blog = None
+        next_blog = None
+        for i, b in enumerate(all_published):
+            if b.slug == slug:
+                if i > 0:
+                    prev_blog = all_published[i - 1]
+                if i < len(all_published) - 1:
+                    next_blog = all_published[i + 1]
+                break
+
+        recent_blogs = [b for b in all_published if b.slug != slug][:6]
+        categories = [
+            {'name': 'Motorcycle', 'name_ar': 'دراجات نارية', 'slug': 'motorcycle'},
+            {'name': 'Tyres', 'name_ar': 'إطارات السيارات', 'slug': 'tyres'},
+            {'name': 'Battery', 'name_ar': 'بطاريات السيارات', 'slug': 'battery'},
+            {'name': 'Bike Tyres', 'name_ar': 'إطارات الدراجات', 'slug': 'bike-tyres'},
+            {'name': 'Wheels & Rims', 'name_ar': 'جنوط وإطارات', 'slug': 'wheels-rims'},
+            {'name': 'Oil Change', 'name_ar': 'تغيير الزيت', 'slug': 'oil-change'},
+            {'name': 'Car Service', 'name_ar': 'خدمات وصيانة السيارات', 'slug': 'car-service'},
+            {'name': 'News', 'name_ar': 'الأخبار', 'slug': 'news'},
+            {'name': 'News & Tips', 'name_ar': 'نصائح وإرشادات', 'slug': 'news-tips'}
+        ]
+        return render_template(
+            'Client/BlogDetail.html',
+            blog=blog,
+            recent_blogs=recent_blogs,
+            prev_blog=prev_blog,
+            next_blog=next_blog,
+            categories=categories,
+            locale=locale
+        )
 
     # 2. Check if it's a static page
     page = Page.find_by_slug(slug)
