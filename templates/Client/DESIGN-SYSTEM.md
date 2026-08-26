@@ -73,15 +73,115 @@ Body defaults: `font-size: 17px`, `line-height: 1.6`, antialiased.
 
 ---
 
-## 3. Layout & Spacing
+## 3. Page Layout, Margins & Padding
+
+### 3.1 The container system
+Every section follows the same two-layer wrapper pattern:
+
+```html
+<section>            <!-- full-bleed, provides vertical rhythm + optional bg color -->
+  <div class="wrap">  <!-- centers content, caps width, provides horizontal gutter -->
+    ...
+  </div>
+</section>
+```
+
+```css
+.wrap    { max-width: var(--maxw)/*1280px*/; margin: 0 auto; padding: 0 20px; }
+section  { padding: clamp(52px,7vw,88px) 0; }   /* vertical rhythm between sections */
+```
+
+- **Horizontal margin**: content never touches the viewport edge — `.wrap` gives a flat **20px gutter** on both sides at every breakpoint (no responsive change to the gutter itself; only the content inside reflows).
+- **Horizontal centering**: `.wrap` is capped at **1280px** and centered with `margin:0 auto`. Below 1280px viewport width, `.wrap` is simply `100vw − 40px`.
+- **Vertical rhythm**: `<section>` is the *only* place top/bottom spacing between page blocks is set — a fluid `clamp(52px, 7vw, 88px)`, i.e. 52px on small screens growing to 88px on large screens. No section adds its own extra margin on top of this except where noted below.
+- Sections have **no side padding of their own** — that's `.wrap`'s job. This keeps full-bleed background colors (hero, `--bg-soft` sections, footer, final CTA) edge-to-edge while content stays gutter-safe.
+
+### 3.2 Per-section spacing overrides
+Most sections just take the default `section{padding:clamp(52px,7vw,88px) 0}`. A few override it inline:
+
+| Section | Override | Why |
+|---|---|---|
+| `.stats` (index.php:611) | `padding-top:34px; padding-bottom:34px` | Tighter band directly under the hero — reads as a strip, not a full section |
+| `.faq .wrap` (index.php:788) | `max-width:840px` (narrower than the global 1280px) | Keeps FAQ line length readable, doesn't stretch full-width |
+| Everything else | default `clamp(52px,7vw,88px)` | Hero, Why, Services, How, Brands, Reviews, Final CTA all share the same rhythm |
+
+### 3.3 Heading-to-content spacing (within a section)
+A consistent pattern repeats in every section: **eyebrow → h2 → lead**, then a gap, then the content grid:
+
+| Gap | Value | Where |
+|---|---|---|
+| Eyebrow → heading | `14px` (`.eyebrow{margin-bottom:14px}`) | all sections |
+| Heading → paragraph | `.5em` (`h1,h2,h3{margin:0 0 .5em}`) | all sections |
+| Paragraph bottom | `1rem` (`p{margin:0 0 1rem}`) | all sections |
+| Section header → content grid below | **36–44px**, varies per section (inline `margin-top`) | see table below |
+
+| Content block | `margin-top` | Source |
+|---|---|---|
+| Why-us cards (`.grid.g3`) | `44px` | index.php:631 |
+| Reviews cards (`.grid.g3`) | `40px` | index.php:766 |
+| FAQ accordion wrapper | `36px` | index.php:793 |
+| Services grid (`.svc-grid`) | `34px` (from CSS, not inline) | index.php:336 |
+| Steps grid (`.steps`) | `38px` (from CSS) | index.php:343 |
+| Brand list (`.brand-list`) | `30px` (from CSS) | index.php:363 |
+| CTA row under a heading/grid | `26px` (`.cta-row{margin-top:26px}`) | global |
+
+### 3.4 Component-level padding & margin
+
+| Component | Padding | Margin | Notes |
+|---|---|---|---|
+| `.card` | `26px 24px` (`18px 16px` on ≤559px) | — | grid gap handles spacing between cards |
+| `.step` | `22px 18px 20px` | — | extra top padding clears the absolute-positioned step number |
+| `.quote` (review card) | `26px 24px` (`18px 16px` on ≤559px) | — | |
+| `.quote-card` (hero form) | `26px` | — | 20px border-radius, elevated shadow |
+| `.field` | — | `margin-bottom:14px` | vertical stack spacing between form fields |
+| `.field input/select` | `13px 14px` | — | |
+| `.field-row` | — | `gap:12px` | 2-up grid for Car Details / Emirate |
+| `.btn` | `15px 26px` (`.btn-sm`: `11px 18px`) | — | pill buttons |
+| `.svc` (service tag) | `18px 16px` | — | |
+| `.brand` (brand pill) | `10px 18px` | — | |
+| `.pill` (hero badge) | `8px 14px` | — | |
+| `details/summary` (FAQ) | `18px 52px 18px 20px` (summary) / `0 20px 20px` (body) | `margin-bottom:10px` between items | extra right padding on summary clears the chevron icon |
+| `.notice-modal .sheet-head` | `22px 56px 16px 26px` | — | right padding clears the close button |
+| `.notice-modal .sheet-body` | `20px 26px 4px` | — | scrollable region |
+| `.notice-modal .sheet-foot` | `16px 26px 20px` | — | |
+| `footer .wrap` | — | `padding-top:48px; padding-bottom:40px` (overrides the default section rhythm — footer isn't a `<section>`) | |
+| `.f-notice` | `padding-top:20px` | `margin-bottom:20px` | sits above the legal fine print, `max-width:78ch` |
+| `.f-bottom` | `padding-top:22px` | — | copyright bar |
+| `.mobile-cta` | `12px 14px` | — | fixed bottom bar, mobile only |
+| `nav` (header) | `12px 20px` (`10px 14px` on ≤460px) | — | note: uses its own 20px side padding *and* its own max-width — the header does not use `.wrap` |
+
+### 3.5 Page-level (body) spacing
+```css
+body{ padding-bottom:76px; }             /* reserves room for the fixed .mobile-cta bar */
+@media(min-width:820px){ body{padding-bottom:0} }  /* removed once the bar is hidden on desktop */
+```
+This is the **only** margin/padding applied directly to `<body>` — everything else is section- or component-scoped. There is no top padding on `<body>`; the sticky `<header>` sits inline at the top of normal flow (not overlaying content), so no offset is needed.
+
+### 3.6 Grid gaps (spacing *between* items, not around them)
+
+| Grid | Gap |
+|---|---|
+| `.grid` (cards, base) | `14px` → `18px` at ≥560px |
+| `.svc-grid` | `12px` |
+| `.steps` | `14px` → `18px` at ≥560px |
+| `.stats-inner` | `1px` (hairline — the gap itself is the visible divider line, via `background:var(--line)` behind white cells) |
+| `.brand-list` | `10px` |
+| `.f-grid` (footer columns) | `30px` |
+| `.hero-grid` | `44px` → `56px` at ≥900px |
+| `.field-row` | `12px` |
+| `.cta-row` | `12px` |
+| `.mobile-cta` | `10px` |
+
+### 3.7 Quick tokens
 
 | Token | Value |
 |---|---|
 | `--maxw` | `1280px` — global content max-width (`.wrap`) |
 | `--radius` | `14px` — default corner radius (cards, steps) |
-| Page gutter | `20px` (`.wrap` padding) |
-| Section padding | `clamp(52px, 7vw, 88px)` vertical |
-| Grid gaps | `12–18px` (responsive: smaller on mobile, larger ≥560px) |
+| Page gutter | `20px` flat, both sides, all breakpoints (`.wrap` padding) |
+| Section vertical rhythm | `clamp(52px, 7vw, 88px)` top+bottom |
+| Sticky mobile CTA clearance | `76px` reserved via `body{padding-bottom}` below 820px |
+| Grid gaps | `12–18px` typical (responsive: smaller on mobile, larger ≥560px) |
 
 ### Border Radius Scale
 - `10px` — form inputs
