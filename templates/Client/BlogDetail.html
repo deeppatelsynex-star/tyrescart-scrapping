@@ -411,8 +411,8 @@
     <span class="current">{{ blog.get_title(locale) }}</span>
   </nav>
 
-  <!-- ================= ARTICLE HEADER ================= -->
-  <header class="article-header">
+  <!-- ================= ARTICLE HEADER SECTION ================= -->
+  <section class="article-header">
     <h1 class="article-title">{{ blog.get_title(locale) }}</h1>
     <div class="article-title-accent"></div>
 
@@ -436,7 +436,7 @@
         </a>
       </div>
     </div>
-  </header>
+  </section>
 
   <!-- ================= FEATURED MEDIA ================= -->
   {% if blog.image %}

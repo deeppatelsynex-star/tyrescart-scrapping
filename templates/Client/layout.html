@@ -220,8 +220,8 @@
     .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
     .center .cta-row { justify-content: center; }
 
-    /* ---------------- HEADER ---------------- */
-    header {
+    /* ---------------- MAIN SITE HEADER ---------------- */
+    header.site-header {
       position: sticky;
       top: 0;
       z-index: 100;
@@ -490,7 +490,7 @@
   <a class="skip" href="#main">Skip to content</a>
 
   <!-- ================= HEADER ================= -->
-  <header>
+  <header class="site-header">
     <nav class="nav" aria-label="Main Navigation">
       <!-- TyresVision Brand Logo -->
       <a class="logo" href="/{{ '?locale=' + locale if locale == 'ar' else '' }}" aria-label="TyresVision Home">
