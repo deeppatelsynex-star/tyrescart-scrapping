@@ -1,0 +1,331 @@
+{% extends 'Client/layout.html' %}
+
+{% block title %}{{ page.get_seo_title(locale) if page else ('About Us | TyresVision UAE' if locale != 'ar' else 'من نحن | تايرز فيجن الإمارات') }} | {% if locale == 'ar' %}تايرز فيجن{% else %}TyresVision{% endif %}{% endblock %}
+{% block meta_description %}{{ page.get_meta_desc(locale) if page else ('Learn about TyresVision — the UAE online tyre shop offering 60+ brands, free fitting across 350+ centres or mobile van installation at your door.' if locale != 'ar' else 'تعرف على تايرز فيجن — متجر الإطارات الرائد في الإمارات عبر الإنترنت مع أكثر من 60 علامة تجارية عالمية وتركيب مجاني في 350+ مركز أو عبر الفان المتنقل.') }}{% endblock %}
+
+{% block content %}
+<span id="top"></span>
+
+<!-- ================= MAIN EDITORIAL ABOUT US WRAPPER ================= -->
+<section style="padding-top:28px; padding-bottom:72px;">
+  <div class="wrap">
+
+    <!-- 2-Column Responsive Layout (Main Article + Sidebar Widgets) -->
+    <div class="detail-page-layout">
+      
+      <!-- LEFT COLUMN: Main Editorial Content -->
+      <article class="detail-main-col">
+
+        <!-- 1. Breadcrumb Navigation -->
+        <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+          <a href="{% if locale == 'ar' %}/ar{% else %}/{% endif %}">{% if locale == 'ar' %}الرئيسية{% else %}Home{% endif %}</a>
+          <span class="sep" aria-hidden="true">&rsaquo;</span>
+          <a href="{% if locale == 'ar' %}/ar#why{% else %}/#why{% endif %}">{% if locale == 'ar' %}لماذا نحن{% else %}Why Us{% endif %}</a>
+          <span class="sep" aria-hidden="true">&rsaquo;</span>
+          <span class="current">{% if locale == 'ar' %}من نحن{% else %}About Us{% endif %}</span>
+        </nav>
+
+        <!-- 2. Topic Badge Pill -->
+        <a href="{% if locale == 'ar' %}/ar/about-us{% else %}/en/about-us{% endif %}" class="category-badge-pill">
+          {% if locale == 'ar' %}من نحن — تايرز فيجن{% else %}About TyresVision{% endif %}
+        </a>
+
+        <!-- 3. Main Headline -->
+        <h1 class="detail-title">
+          {{ page.get_title(locale) if page else ('Genuine Tyres, Honest Service — Built for UAE Drivers' if locale != 'ar' else 'إطارات أصلية، خدمة موثوقة — مصممة لسائقي الإمارات') }}
+        </h1>
+
+        <!-- 4. Author / Metadata Row -->
+        <div class="detail-meta-row">
+          <span class="meta-item">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <span>{% if locale == 'ar' %}فريق تايرز فيجن{% else %}TyresVision Team{% endif %}</span>
+          </span>
+          <span class="meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+            <span>{% if locale == 'ar' %}منذ 2026{% else %}Est. 2026{% endif %}</span>
+          </span>
+          <span class="meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+            <span>{% if locale == 'ar' %}تركيب سريع وضمان معتمد{% else %}Fast Fitting &amp; Warranty{% endif %}</span>
+          </span>
+        </div>
+
+        <!-- 5. Hero Cover Image (16:9 Aspect Ratio) -->
+        <div class="detail-cover-hero">
+          <img src="{{ page.banner_image if (page and page.banner_image) else '/static/assets/online-tyres-shop-dubai.png' }}" 
+               alt="{{ page.get_title(locale) if page else 'About TyresVision UAE' }}" 
+               loading="eager">
+        </div>
+
+        <!-- 6. Table of Contents / "In This Overview" Box -->
+        <div class="toc-box">
+          <div class="toc-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+            <span>{% if locale == 'ar' %}محتويات الصفحة{% else %}In This Overview{% endif %}</span>
+          </div>
+          <ul class="toc-list">
+            <li><a href="#who-we-are">{% if locale == 'ar' %}١. من نحن وما هي رؤيتنا{% else %}1. Who We Are &amp; Our Vision{% endif %}</a></li>
+            <li><a href="#genuine-tyres">{% if locale == 'ar' %}٢. إطارات أصلية ١٠٠٪ وضمان الوكيل{% else %}2. 100% Genuine Tyres Guarantee{% endif %}</a></li>
+            <li><a href="#fitting-choices">{% if locale == 'ar' %}٣. خيارات التركيب: متنقل أو مراكز معتمدة{% else %}3. Mobile Van or Garage Network{% endif %}</a></li>
+            <li><a href="#core-values">{% if locale == 'ar' %}٤. التزاماتنا وقيم الخدمة{% else %}4. Our Core Values &amp; Pricing{% endif %}</a></li>
+            <li><a href="#uae-coverage">{% if locale == 'ar' %}٥. نطاق التغطية في كافة الإمارات{% else %}5. Full UAE Emirates Coverage{% endif %}</a></li>
+            <li><a href="#get-in-touch">{% if locale == 'ar' %}٦. تواصل مع خبرائنا عبر واتساب{% else %}6. Instant Quotes &amp; Support{% endif %}</a></li>
+          </ul>
+        </div>
+
+        <!-- 7. Editorial Prose Content -->
+        <div class="article-prose">
+          
+          {% if page and page.get_content(locale) and (page.get_content(locale) | length > 200) %}
+            {{ page.get_content(locale) | safe }}
+          {% else %}
+            <p class="lead">
+              {% if locale == 'ar' %}
+                تأسست <strong>تايرز فيجن</strong> لتقديم تجربة شراء إطارات شفافة وعادلة وسريعة في دولة الإمارات العربية المتحدة — بدون مساومة أو رسوم خفية، مع توفير أفضل الماركات العالمية وتركيبها عند باب بيتك أو في أكثر من 350 مركزاً معتمداً.
+              {% else %}
+                <strong>TyresVision</strong> exists to make buying tyres in the UAE simple, fair, and fast &mdash; no showroom haggling, no upselling, and no unexpected checkout fees. We connect motorists directly with over 60 global tyre manufacturers, backed by free doorstep mobile fitting or installation at 350+ certified garages.
+              {% endif %}
+            </p>
+
+            <h2 id="who-we-are">
+              {% if locale == 'ar' %}من نحن وما هي رؤيتنا{% else %}Who We Are &amp; What Drives Us{% endif %}
+            </h2>
+            <p>
+              {% if locale == 'ar' %}
+                ندرك في تايرز فيجن أن استبدال إطارات سيارتك في مناخ الإمارات الحار ليس مجرد صيانة روتينية، بل هو ركيزة أساسية لسلامتك وسلامة عائلتك على الطريق. بنينا منصتنا الرقمية بالكامل لتمكين كل سائق من اختيار المقاس الصحيح بضغطة زر وتلقي عروض أسعار فورية عبر واتساب في دقائق معدودة.
+              {% else %}
+                In the demanding climate and high-speed motorways of the UAE, tyre health isn't just routine maintenance &mdash; it is critical for you and your family's safety. We built our platform to eliminate the traditional friction of tyre shopping, allowing you to browse verified sizes, compare top brands side-by-side, and receive transparent WhatsApp quotes within minutes.
+              {% endif %}
+            </p>
+
+            <h2 id="genuine-tyres">
+              {% if locale == 'ar' %}إطارات أصلية ١٠٠٪ وأكثر من ٦٠ ماركة عالمية{% else %}100% Certified Tyres &amp; Brand Portfolio{% endif %}
+            </h2>
+            <p>
+              {% if locale == 'ar' %}
+                نعمل حصرياً مع الوكلاء والموزعين الرسميين المعتمدين في الإمارات لضمان حصولك على إطارات جديدة تماماً بتواريخ إنتاج حديثة ومطابقة لأعلى المواصفات القياسية الخليجية (GSO).
+              {% else %}
+                We partner exclusively with authorized UAE distributors and certified brand representatives. Every tyre purchased through TyresVision comes with recent manufacturing dates, GCC compliance certification, and manufacturer-backed warranties.
+              {% endif %}
+            </p>
+
+            <!-- Green Checkmark Feature Highlights -->
+            <ul class="check-list">
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span><strong>{% if locale == 'ar' %}أكثر من ٦٠ علامة تجارية عالمية:{% else %}60+ Global Tyre Brands:{% endif %}</strong> {% if locale == 'ar' %}ميشلان، بريدجستون، كونتيننتال، بيريللي، غوديير، دنلوب، يوكوهاما، هانكوك، وغيرها.{% else %}Michelin, Bridgestone, Continental, Pirelli, Goodyear, Dunlop, Yokohama, Hankook, and more.{% endif %}</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span><strong>{% if locale == 'ar' %}تواريخ إنتاج حديثة وضمان رسمي:{% else %}Fresh Production Dates &amp; Official Warranty:{% endif %}</strong> {% if locale == 'ar' %}إطارات جديدة ومخزنة وفق المعايير العالمية لحماية مطاط الإطار من التلف.{% else %}Directly sourced new stock with guaranteed GCC compliance and manufacturer coverage.{% endif %}</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span><strong>{% if locale == 'ar' %}تركيب متنقل عند باب بيتك مجاناً:{% else %}Doorstep Mobile Van Installation:{% endif %}</strong> {% if locale == 'ar' %}فانات مجهزة بأحدث أجهزة الفك والتركيب والترصيص الدقيق تصلك أينما كنت.{% else %}Custom-fitted mobile vans bringing precision fitting, balancing, and disposal directly to your driveway or workplace.{% endif %}</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span><strong>{% if locale == 'ar' %}شبكة تضم أكثر من ٣٥٠ مركز معتمد:{% else %}350+ Certified Partner Centres:{% endif %}</strong> {% if locale == 'ar' %}مراكز خدمة وتوزيع مجهزة في دبي، أبوظبي، الشارقة، عجمان، ورأس الخيمة.{% else %}Strategic locations across Dubai, Abu Dhabi, Sharjah, Ajman, and the Northern Emirates.{% endif %}</span>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span><strong>{% if locale == 'ar' %}أسعار شفافة بدون أي رسوم خفية:{% else %}Transparent Pricing — All-Inclusive:{% endif %}</strong> {% if locale == 'ar' %}السعر الذي نقتبسه لك يشمل التوصيل، التركيب، والترصيص وضريبة القيمة المضافة.{% else %}Every quote includes tyre delivery, professional fitting, wheel balancing, and VAT.{% endif %}</span>
+              </li>
+            </ul>
+
+            <h2 id="fitting-choices">
+              {% if locale == 'ar' %}مرونة التركيب: الفان المتنقل أو شبكة المراكز المعتمدة{% else %}Fitting Flexibility: Mobile Van or Garage Partner{% endif %}
+            </h2>
+            <p>
+              {% if locale == 'ar' %}
+                سواء كنت تفضل توفير وقتك وطلب الفان المتنقل لتركيب الإطارات أثناء وجودك في المنزل أو العمل، أو كنت ترغب في زيارة أحد مراكزنا المعتمدة القريبة منك لتركيب الإطارات وفحص ميزان العجلات، نضمن لك نفس الدقة والاحترافية وسرعة الإنجاز.
+              {% else %}
+                Whether you prefer the ultimate convenience of doorstep fitting while you relax at home or work, or you choose to visit an authorized fitting garage near your neighborhood for alignment checks, our technicians deliver the exact same high standard of precision and service.
+              {% endif %}
+            </p>
+
+            <h2 id="core-values">
+              {% if locale == 'ar' %}التزاماتنا تجاه عملائنا{% else %}Our Promise to Every UAE Motorist{% endif %}
+            </h2>
+            
+            <blockquote>
+              {% if locale == 'ar' %}
+                "نؤمن بأن استبدال إطارات سيارتك يجب أن يكون سهلاً مثل إرسال رسالة واتساب. أسعار صادقة، إطارات أصلية معتمدة، وخدمة عملاء حقيقية تهتم بسلامتك على الطريق."
+              {% else %}
+                "We believe tyre shopping should be as effortless as sending a message. Honest pricing, certified stock, and customer care that genuinely prioritizes your road safety."
+              {% endif %}
+            </blockquote>
+
+            <h2 id="uae-coverage">
+              {% if locale == 'ar' %}نطاق الخدمة والتغطية الجغرافية{% else %}Comprehensive UAE Coverage{% endif %}
+            </h2>
+            <p>
+              {% if locale == 'ar' %}
+                نغطي كافة أرجاء دولة الإمارات العربية المتحدة، بما في ذلك دبي، أبوظبي، الشارقة، عجمان، أم القيوين، رأس الخيمة، والفجيرة. شبكتنا اللوجستية تضمن وصول إطاراتك وتركيبها في نفس اليوم أو اليوم التالي كحد أقصى.
+              {% else %}
+                Our mobile fitting network and partner centres span across Dubai, Abu Dhabi, Sharjah, Ajman, Umm Al Quwain, Ras Al Khaimah, and Fujairah. Our responsive logistics ensure same-day or next-day turnaround across the country.
+              {% endif %}
+            </p>
+
+            <h2 id="get-in-touch">
+              {% if locale == 'ar' %}هل تبحث عن استشارة أو مقاس إطاراتك؟{% else %}Need Advice or Looking for Tyre Prices?{% endif %}
+            </h2>
+            <p>
+              {% if locale == 'ar' %}
+                أرسل صورة لمقاس إطارك أو اذكر نوع وموديل سيارتك لفريقنا عبر واتساب وسنقدم لك أفضل خيارات الإطارات المتوفرة بأسعار تنافسية خلال دقائق.
+              {% else %}
+                Send a quick photo of your current tyre sidewall or share your car's make and model with our specialists on WhatsApp. We'll give you instant recommendations and transparent price quotes.
+              {% endif %}
+            </p>
+
+            <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:20px;">
+              <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20have%20an%20inquiry." target="_blank" rel="noopener">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+                {% if locale == 'ar' %}تواصل عبر واتساب{% else %}WhatsApp our Specialists{% endif %}
+              </a>
+              <a class="btn btn-call" href="tel:+971505069575">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                {% if locale == 'ar' %}اتصل بنا +971 50 506 9575{% else %}Call +971 50 506 9575{% endif %}
+              </a>
+            </div>
+
+          {% endif %}
+
+        </div>
+
+        <!-- 8. Social Share Row -->
+        <div class="share-section">
+          <div class="share-label">
+            {% if locale == 'ar' %}شارك هذه الصفحة{% else %}Share this page{% endif %}
+          </div>
+          <div class="share-buttons-row">
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url | urlencode }}" target="_blank" rel="noopener" class="share-btn btn-fb" aria-label="Share on Facebook">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="https://twitter.com/intent/tweet?text={{ (page.get_title(locale) if page else 'About TyresVision UAE') | urlencode }}&url={{ request.url | urlencode }}" target="_blank" rel="noopener" class="share-btn btn-tw" aria-label="Share on X (Twitter)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.url | urlencode }}&title={{ (page.get_title(locale) if page else 'About TyresVision UAE') | urlencode }}" target="_blank" rel="noopener" class="share-btn btn-in" aria-label="Share on LinkedIn">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451c.979 0 1.778-.773 1.778-1.729V1.73C24 .774 23.205 0 22.225 0z"/></svg>
+            </a>
+            <a href="https://wa.me/?text={{ ((page.get_title(locale) if page else 'About TyresVision UAE') ~ ' ' ~ request.url) | urlencode }}" target="_blank" rel="noopener" class="share-btn btn-wa" aria-label="Share on WhatsApp">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+            </a>
+            <a href="mailto:?subject={{ (page.get_title(locale) if page else 'About TyresVision UAE') | urlencode }}&body={{ request.url | urlencode }}" class="share-btn btn-mail" aria-label="Share via Email">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- 9. Previous / Next Article Navigation Card -->
+        <div class="prev-next-nav-card">
+          <!-- Previous Link -->
+          {% if prev_link %}
+          <a href="{{ prev_link.url }}" class="prev-next-item">
+            <div class="prev-next-thumb">
+              <img src="{{ prev_link.cover_image_url }}" alt="{{ prev_link.title }}">
+            </div>
+            <div class="prev-next-text">
+              <span class="prev-next-sub">{% if locale == 'ar' %}&rarr; {{ prev_link.sub }}{% else %}&larr; {{ prev_link.sub }}{% endif %}</span>
+              <p class="prev-next-title">{{ prev_link.title }}</p>
+            </div>
+          </a>
+          {% endif %}
+
+          <!-- Next Link -->
+          {% if next_link %}
+          <a href="{{ next_link.url }}" class="prev-next-item next">
+            <div class="prev-next-text">
+              <span class="prev-next-sub">{% if locale == 'ar' %}{{ next_link.sub }} &larr;{% else %}{{ next_link.sub }} &rarr;{% endif %}</span>
+              <p class="prev-next-title">{{ next_link.title }}</p>
+            </div>
+            <div class="prev-next-thumb">
+              <img src="{{ next_link.cover_image_url }}" alt="{{ next_link.title }}">
+            </div>
+          </a>
+          {% endif %}
+        </div>
+
+      </article>
+
+      <!-- RIGHT COLUMN: Sidebar Widgets (Related Blogs + Categories) -->
+      <aside class="detail-sidebar">
+        
+        <!-- Widget 1: Related Blogs -->
+        <div class="sidebar-card">
+          <h3 class="widget-title-accent">
+            {% if locale == 'ar' %}مقالات ونصائح مختارة{% else %}Related Blogs{% endif %}
+          </h3>
+          
+          <div class="related-blogs-list">
+            {% if related_posts and related_posts | length > 0 %}
+              {% for rp in related_posts %}
+              <a href="{{ rp.url }}" class="related-blog-row">
+                <div class="related-blog-thumb">
+                  <img src="{{ rp.cover_image_url }}" alt="{{ rp.title }}">
+                </div>
+                <div class="related-blog-content">
+                  <h4 class="related-blog-title">{{ rp.title }}</h4>
+                  <span class="related-blog-date">{{ rp.published_at }}</span>
+                </div>
+              </a>
+              {% endfor %}
+            {% else %}
+              <a href="{% if locale == 'ar' %}/ar/blog{% else %}/en/blog{% endif %}" class="related-blog-row">
+                <div class="related-blog-thumb">
+                  <img src="/static/assets/online-tyres-shop-dubai.png" alt="Tyres Guide">
+                </div>
+                <div class="related-blog-content">
+                  <h4 class="related-blog-title">{% if locale == 'ar' %}دليل شراء الإطارات المناسبة في الإمارات{% else %}How to Choose the Right Tyres in UAE{% endif %}</h4>
+                  <span class="related-blog-date">August 26, 2026</span>
+                </div>
+              </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Widget 2: Categories / Services -->
+        <div class="sidebar-card">
+          <h3 class="widget-title-accent">
+            {% if locale == 'ar' %}الأقسام والخدمات{% else %}Categories{% endif %}
+          </h3>
+
+          <div class="sidebar-cat-list">
+            {% if categories and categories | length > 0 %}
+              {% for cat in categories %}
+              <a href="{% if locale == 'ar' %}/ar/blog?category={{ cat.name | urlencode }}{% else %}/en/blog?category={{ cat.name | urlencode }}{% endif %}" class="sidebar-cat-row">
+                <span class="sidebar-cat-name">{{ cat.name }}</span>
+                <span class="sidebar-cat-count">{{ cat.count }}</span>
+              </a>
+              {% endfor %}
+            {% else %}
+              <a href="{% if locale == 'ar' %}/ar#services{% else %}/#services{% endif %}" class="sidebar-cat-row">
+                <span class="sidebar-cat-name">{% if locale == 'ar' %}تركيب متنقل عند الباب{% else %}Mobile Doorstep Fitting{% endif %}</span>
+                <span class="sidebar-cat-count">Free</span>
+              </a>
+              <a href="{% if locale == 'ar' %}/ar#brands{% else %}/#brands{% endif %}" class="sidebar-cat-row">
+                <span class="sidebar-cat-name">{% if locale == 'ar' %}ماركات الإطارات المعتمدة{% else %}60+ Global Brands{% endif %}</span>
+                <span class="sidebar-cat-count">60+</span>
+              </a>
+              <a href="{% if locale == 'ar' %}/ar#why{% else %}/#why{% endif %}" class="sidebar-cat-row">
+                <span class="sidebar-cat-name">{% if locale == 'ar' %}مراكز الخدمة المعتمدة{% else %}350+ Partner Centres{% endif %}</span>
+                <span class="sidebar-cat-count">350+</span>
+              </a>
+            {% endif %}
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

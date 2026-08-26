@@ -352,22 +352,66 @@ def _render_blog_detail(slug, locale):
 
 
 # --- ABOUT US & CMS PAGES ---
+def _render_about_us(locale='en'):
+    page = Page.find_by_slug('about-us')
+    all_published = Blog.all(status='published')
+
+    related_posts = []
+    for b in all_published[:5]:
+        related_posts.append({
+            'title': b.get_title(locale),
+            'slug': b.slug,
+            'cover_image_url': b.image or '/static/assets/online-tyres-shop-dubai.png',
+            'published_at': b.published_at.strftime('%B %d, %Y') if b.published_at else 'August 24, 2026',
+            'url': f"/{locale}/blog/{b.slug}" if locale in ('en', 'ar') else f"/blog/{b.slug}"
+        })
+
+    distinct_cats = Blog.distinct_categories()
+    categories = []
+    for cat in distinct_cats:
+        count = len([b for b in all_published if (b.category_name or '').strip() == cat.strip()])
+        categories.append({
+            'name': cat,
+            'slug': Blog.slugify(cat),
+            'count': count
+        })
+
+    prev_link = {
+        'title': 'Why Choose TyresVision' if locale != 'ar' else 'لماذا تختار تايرز فيجن',
+        'url': f"/{locale}#why" if locale in ('en', 'ar') else "/#why",
+        'cover_image_url': '/static/assets/online-tyres-shop-dubai.png',
+        'sub': 'Our Services & Guarantee' if locale != 'ar' else 'خدماتنا وضماننا'
+    }
+    next_link = {
+        'title': 'Browse Our Tyre Blog & Guides' if locale != 'ar' else 'تصفح المدونة وأدلة الإطارات',
+        'url': f"/{locale}/blog" if locale in ('en', 'ar') else "/blog",
+        'cover_image_url': (related_posts[0]['cover_image_url'] if related_posts else '/static/assets/online-tyres-shop-dubai.png'),
+        'sub': 'Expert Advice & Insights' if locale != 'ar' else 'نصائح الخبراء ورؤى السوق'
+    }
+
+    resp = make_response(render_template(
+        'Client/AboutUs.html',
+        page=page,
+        related_posts=related_posts,
+        categories=categories,
+        prev_link=prev_link,
+        next_link=next_link,
+        locale=locale
+    ))
+    resp.set_cookie('site_locale', locale, max_age=31536000, path='/')
+    return resp
+
+
 @site_bp.route('/about-us')
 @site_bp.route('/en/about-us')
 def about_us():
     locale = 'en' if request.path.startswith('/en') else _get_locale()
-    page = Page.find_by_slug('about-us')
-    if page:
-        return render_template('Client/Page.html', page=page, locale=locale)
-    return redirect(url_for('site.home', locale=locale))
+    return _render_about_us(locale)
 
 
 @site_bp.route('/ar/about-us')
 def about_us_ar():
-    page = Page.find_by_slug('about-us')
-    if page:
-        return render_template('Client/Page.html', page=page, locale='ar')
-    return redirect('/ar')
+    return _render_about_us('ar')
 
 
 @site_bp.route('/en/page/<slug>')
