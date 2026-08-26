@@ -225,21 +225,90 @@ def _render_blog_detail(slug, locale):
     if not blog:
         abort(404)
 
+    all_published = Blog.published() or []
+    other_blogs = [b for b in all_published if b.slug != slug]
+
+    # Find prev and next blogs
+    prev_post = None
+    next_post = None
+    for idx, b in enumerate(all_published):
+        if b.slug == slug:
+            if idx > 0:
+                prev_post = {
+                    'title': all_published[idx - 1].get_title(locale),
+                    'slug': all_published[idx - 1].slug,
+                    'cover_image_url': all_published[idx - 1].image or '/static/assets/online-tyres-shop-dubai.png',
+                    'url': f"/{locale}/blog/{all_published[idx - 1].slug}" if locale in ('en', 'ar') else f"/blog/{all_published[idx - 1].slug}"
+                }
+            if idx < len(all_published) - 1:
+                next_post = {
+                    'title': all_published[idx + 1].get_title(locale),
+                    'slug': all_published[idx + 1].slug,
+                    'cover_image_url': all_published[idx + 1].image or '/static/assets/online-tyres-shop-dubai.png',
+                    'url': f"/{locale}/blog/{all_published[idx + 1].slug}" if locale in ('en', 'ar') else f"/blog/{all_published[idx + 1].slug}"
+                }
+            break
+
+    # If no other blogs in DB, create fallback prev/next
+    if not prev_post and other_blogs:
+        prev_post = {
+            'title': other_blogs[0].get_title(locale),
+            'slug': other_blogs[0].slug,
+            'cover_image_url': other_blogs[0].image or '/static/assets/online-tyres-shop-dubai.png',
+            'url': f"/{locale}/blog/{other_blogs[0].slug}"
+        }
+
+    # Related posts for sidebar
+    related_posts = []
+    for b in other_blogs[:5]:
+        related_posts.append({
+            'title': b.get_title(locale),
+            'slug': b.slug,
+            'cover_image_url': b.image or '/static/assets/online-tyres-shop-dubai.png',
+            'published_at': b.published_at.strftime('%B %d, %Y') if b.published_at else 'August 24, 2026',
+            'url': f"/{locale}/blog/{b.slug}" if locale in ('en', 'ar') else f"/blog/{b.slug}"
+        })
+
+    # Sidebar categories
+    categories = [
+        {'name': 'Tyre Buying Guide' if locale != 'ar' else 'أدلة شراء الإطارات', 'slug': 'buying-guide', 'icon': '🛞', 'count': 12},
+        {'name': 'Tyre Maintenance' if locale != 'ar' else 'صيانة وحماية الإطارات', 'slug': 'maintenance', 'icon': '🔧', 'count': 8},
+        {'name': 'Mobile Tyre Fitting' if locale != 'ar' else 'التركيب المتنقل', 'slug': 'mobile-fitting', 'icon': '🚐', 'count': 6},
+        {'name': 'Wheel Alignment' if locale != 'ar' else 'ميزان وترصيص العجلات', 'slug': 'alignment', 'icon': '⚙️', 'count': 5},
+        {'name': 'GCC Specifications' if locale != 'ar' else 'مواصفات الخليج', 'slug': 'gcc-specs', 'icon': '☀️', 'count': 7},
+        {'name': 'Car Battery & Service' if locale != 'ar' else 'البطاريات والخدمات', 'slug': 'battery-service', 'icon': '🔋', 'count': 4}
+    ]
+
+    cat_name = 'Tyre Buying Guide' if 'choose' in (blog.slug or '') or 'size' in (blog.slug or '') else 'Tyre Maintenance'
+    if locale == 'ar':
+        cat_name = 'دليل شراء الإطارات' if 'choose' in (blog.slug or '') or 'size' in (blog.slug or '') else 'صيانة الإطارات'
+
     blog_data = {
         'id': blog.id,
         'slug': blog.slug,
         'title': blog.get_title(locale),
         'content': blog.get_content(locale),
         'short_description': blog.get_short_desc(locale),
+        'category': cat_name,
         'cover_image_url': blog.image or '/static/assets/online-tyres-shop-dubai.png',
         'published_at': blog.published_at.strftime('%B %d, %Y') if blog.published_at else (blog.created_at.strftime('%B %d, %Y') if blog.created_at else 'August 24, 2026'),
+        'read_time': '5 min read' if locale != 'ar' else 'قراءة 5 دقائق',
         'author': {
-            'name': 'Sharvil Kumar' if locale != 'ar' else 'شارفيل كومار',
+            'name': 'Admin' if locale != 'ar' else 'المشرف',
             'role': 'Tyre Specialist, TyresVision' if locale != 'ar' else 'أخصائي إطارات، تايرز فيجن',
-            'avatar_initials': 'SK'
+            'avatar_initials': 'TV'
         }
     }
-    return render_template('Client/BlogDetail.html', post=blog_data, locale=locale)
+
+    return render_template(
+        'Client/BlogDetail.html',
+        post=blog_data,
+        related_posts=related_posts,
+        categories=categories,
+        prev_post=prev_post,
+        next_post=next_post,
+        locale=locale
+    )
 
 
 @site_bp.route('/about-us')
