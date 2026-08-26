@@ -22,146 +22,387 @@
 {% block content %}
 <span id="top"></span>
 
-<!-- =========================================================================
-     1. HERO SECTION (Dark Atmospheric Highway & Showroom Background)
-     ========================================================================= -->
-<section class="about-hero-dark">
-  <div class="wrap">
-    
-    <!-- Top Breadcrumb -->
-    <nav class="about-breadcrumb" aria-label="Breadcrumb">
-      <a href="{% if locale == 'ar' %}/ar{% else %}/{% endif %}">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-          <polyline points="9 22 9 12 15 12 15 22"></polyline>
-        </svg>
-        <span>{% if locale == 'ar' %}الرئيسية{% else %}Home{% endif %}</span>
-      </a>
-      <span class="sep" aria-hidden="true">/</span>
-      <span class="current">{% if locale == 'ar' %}من نحن{% else %}About Us{% endif %}</span>
-    </nav>
+{# =========================================================================
+   CENTRAL SECTION RENDERER — DYNAMIC CMS PAGE BUILDER
+   Loops through active sections ordered by sort_order.
+   Uses predefined, fixed design components so layout remains consistent.
+   ========================================================================= #}
 
-    <!-- Hero 2-Column Grid -->
-    <div style="display:grid; grid-template-columns:1fr; gap:40px; align-items:center;" class="hero-2col-layout">
-      <!-- Left Content -->
-      <div>
-        <span class="eyebrow">
-          &mdash; {% if locale == 'ar' %}من نحن{% else %}ABOUT US{% endif %}
-        </span>
-        
-        <h1>
-          {% if locale == 'ar' %}
-            مدفوعون بالثقة،
-            <span class="text-green">مصممون للطريق.</span>
-          {% else %}
-            Driven by Confidence,
-            <span class="text-green">Built for the Road.</span>
-          {% endif %}
-        </h1>
-        
-        <p class="lead">
-          {% if locale == 'ar' %}
-            في تايرز فيجن، نقدم إطارات فائقة الجودة تجمع بين أحدث التقنيات والأداء المتميز والاعتمادية الدائمة. لأن كل رحلة تستحق قيادة واثقة وآمنة.
-          {% else %}
-            At TyresVision, we deliver premium tyres that combine cutting-edge technology, superior performance, and lasting reliability. Because every journey deserves confidence.
-          {% endif %}
-        </p>
+{% for sec in sections %}
 
+  {# -------------------------------------------------------------------------
+     COMPONENT 1: HERO SECTION (type == 'hero')
+     ------------------------------------------------------------------------- #}
+  {% if sec.section_type == 'hero' %}
+  <section class="about-hero-dark" id="hero-{{ sec.id }}">
+    <div class="wrap">
+      
+      <!-- Top Breadcrumb -->
+      <nav class="about-breadcrumb" aria-label="Breadcrumb">
+        <a href="{% if locale == 'ar' %}/ar{% else %}/{% endif %}">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>{% if locale == 'ar' %}الرئيسية{% else %}Home{% endif %}</span>
+        </a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span class="current">{% if locale == 'ar' %}من نحن{% else %}About Us{% endif %}</span>
+      </nav>
+
+      <!-- Hero 2-Column Grid -->
+      <div style="display:grid; grid-template-columns:1fr; gap:40px; align-items:center;" class="hero-2col-layout">
+        <!-- Left Content -->
         <div>
-          <a href="#our-story" class="about-hero-cta">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          {% if sec.section_subtitle %}
+          <span class="eyebrow">
+            &mdash; {{ sec.section_subtitle }}
+          </span>
+          {% endif %}
+          
+          <h1>
+            {{ sec.section_title | replace('\n', '<br>') | safe }}
+          </h1>
+          
+          {% if sec.content %}
+          <p class="lead">
+            {{ sec.content }}
+          </p>
+          {% endif %}
+
+          {% if sec.button_text %}
+          <div>
+            <a href="{{ sec.button_url or '#our-story' }}" class="about-hero-cta">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span>{{ sec.button_text }}</span>
+            </a>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Right Cinematic Showroom Tyre Image -->
+        <div style="border-radius:24px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.12); aspect-ratio:16/10; background:#11170D;">
+          <img src="{{ sec.image or '/static/assets/about/hero-tyre-showroom.jpg' }}" alt="{{ sec.section_title }}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="eager">
+        </div>
+      </div>
+
+      <!-- 4 Key Hero Pillars on Dark Surface -->
+      {% set features_list = sec.section_data.features or sec.section_data.items or [] %}
+      {% if features_list %}
+      <div class="about-hero-features-grid">
+        {% for feat in features_list %}
+        <div class="about-hero-feat-item">
+          <div class="about-hero-feat-icon">
+            {% if feat.icon == 'dollar-sign' %}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
             </svg>
-            <span>{% if locale == 'ar' %}استكشف مسيرتنا &larr;{% else %}Our Journey &rarr;{% endif %}</span>
-          </a>
+            {% elif feat.icon == 'truck' %}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+            {% elif feat.icon == 'headset' %}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+            </svg>
+            {% else %}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+            {% endif %}
+          </div>
+          <div>
+            <div class="about-hero-feat-title">{{ feat.title }}</div>
+            <div class="about-hero-feat-sub">{{ feat.sub or feat.desc }}</div>
+          </div>
         </div>
+        {% endfor %}
       </div>
-
-      <!-- Right Cinematic Showroom Tyre Image -->
-      <div style="border-radius:24px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.12); aspect-ratio:16/10; background:#11170D;">
-        <img src="/static/assets/about/hero-tyre-showroom.jpg" alt="TyresVision Showroom" style="width:100%; height:100%; object-fit:cover; display:block;" loading="eager">
-      </div>
-    </div>
-
-    <!-- 4 Key Hero Pillars on Dark Surface -->
-    <div class="about-hero-features-grid">
-      
-      <!-- Feature 1 -->
-      <div class="about-hero-feat-item">
-        <div class="about-hero-feat-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            <polyline points="9 12 11 14 15 10"></polyline>
-          </svg>
-        </div>
-        <div>
-          <div class="about-hero-feat-title">{% if locale == 'ar' %}جودة ممتازة{% else %}Premium Quality{% endif %}</div>
-          <div class="about-hero-feat-sub">{% if locale == 'ar' %}علامات تجارية موثوقة وجودة فائقة.{% else %}Trusted brands and superior quality.{% endif %}</div>
-        </div>
-      </div>
-
-      <!-- Feature 2 -->
-      <div class="about-hero-feat-item">
-        <div class="about-hero-feat-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="12" y1="1" x2="12" y2="23"></line>
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-          </svg>
-        </div>
-        <div>
-          <div class="about-hero-feat-title">{% if locale == 'ar' %}أفضل الأسعار{% else %}Best Prices{% endif %}</div>
-          <div class="about-hero-feat-sub">{% if locale == 'ar' %}أسعار تنافسية وشفافة كل يوم.{% else %}Competitive prices every day.{% endif %}</div>
-        </div>
-      </div>
-
-      <!-- Feature 3 -->
-      <div class="about-hero-feat-item">
-        <div class="about-hero-feat-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="1" y="3" width="15" height="13"></rect>
-            <polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon>
-            <circle cx="5.5" cy="18.5" r="2.5"></circle>
-            <circle cx="18.5" cy="18.5" r="2.5"></circle>
-          </svg>
-        </div>
-        <div>
-          <div class="about-hero-feat-title">{% if locale == 'ar' %}توصيل سريع{% else %}Fast Delivery{% endif %}</div>
-          <div class="about-hero-feat-sub">{% if locale == 'ar' %}توصيل وتركيب سريع وموثوق.{% else %}Quick and reliable delivery.{% endif %}</div>
-        </div>
-      </div>
-
-      <!-- Feature 4 -->
-      <div class="about-hero-feat-item">
-        <div class="about-hero-feat-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
-            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
-          </svg>
-        </div>
-        <div>
-          <div class="about-hero-feat-title">{% if locale == 'ar' %}دعم الخبراء{% else %}Expert Support{% endif %}</div>
-          <div class="about-hero-feat-sub">{% if locale == 'ar' %}نحن هنا لمساعدتك في أي وقت.{% else %}We're here to help you anytime.{% endif %}</div>
-        </div>
-      </div>
+      {% endif %}
 
     </div>
+  </section>
 
-  </div>
-</section>
+  {# -------------------------------------------------------------------------
+     COMPONENT 2: CONTENT + IMAGE SECTION (type == 'content_image')
+     ------------------------------------------------------------------------- #}
+  {% elif sec.section_type == 'content_image' %}
+  <section id="story-{{ sec.id }}" class="about-story-section">
+    <div class="wrap">
+      <div class="about-story-grid" style="{% if sec.image_position == 'left' %}grid-template-columns: 1fr 1.15fr;{% else %}grid-template-columns: 1.15fr 1fr;{% endif %}">
+        
+        {% if sec.image_position == 'left' %}
+        <!-- Image with Floating Badge on Left -->
+        <div class="about-story-media">
+          <img src="{{ sec.image or '/static/assets/about/warehouse-tyres.jpg' }}" alt="{{ sec.section_title }}" loading="lazy">
+          {% if sec.section_data.badge_title %}
+          <div class="about-story-floating-badge">
+            <div class="about-badge-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="about-badge-title">{{ sec.section_data.badge_title }}</div>
+              <div class="about-badge-sub">{{ sec.section_data.badge_sub }}</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
 
-<!-- =========================================================================
-     2. OUR STORY SECTION (The Road That Started Our Journey)
-     ========================================================================= -->
-<section id="our-story" class="about-story-section">
-  <div class="wrap">
-    <div class="about-story-grid">
+        <!-- Story Prose Content -->
+        <div class="about-story-content">
+          {% if sec.section_subtitle %}
+          <span class="eyebrow">&mdash; {{ sec.section_subtitle }}</span>
+          {% endif %}
+          <h2>{{ sec.section_title }}</h2>
+          
+          {% if sec.content %}
+            {% for para in sec.content.split('\n\n') %}
+              {% if para.strip() %}
+              <p>{{ para.strip() }}</p>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+
+          {% if sec.button_text %}
+          <div>
+            <a href="{{ sec.button_url or '/#why' }}" class="about-btn-outline">
+              <span>{{ sec.button_text }}</span>
+            </a>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if sec.image_position != 'left' %}
+        <!-- Image with Floating Badge on Right -->
+        <div class="about-story-media">
+          <img src="{{ sec.image or '/static/assets/about/warehouse-tyres.jpg' }}" alt="{{ sec.section_title }}" loading="lazy">
+          {% if sec.section_data.badge_title %}
+          <div class="about-story-floating-badge">
+            <div class="about-badge-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="about-badge-title">{{ sec.section_data.badge_title }}</div>
+              <div class="about-badge-sub">{{ sec.section_data.badge_sub }}</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </section>
+
+  {# -------------------------------------------------------------------------
+     COMPONENT 3: FEATURES / VALUES SECTION (type == 'features')
+     ------------------------------------------------------------------------- #}
+  {% elif sec.section_type == 'features' %}
+  <section class="about-values-section" id="features-{{ sec.id }}">
+    <div class="wrap">
       
-      <!-- Left: Story Warehouse Image with Floating Badge -->
-      <div class="about-story-img-wrap">
-        <img src="/static/assets/about/warehouse-tyres.jpg" alt="TyresVision Warehouse" loading="lazy">
-        <div class="about-badge-floating">
-          <div class="badge-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <div style="text-align:center; max-width:680px; margin:0 auto;">
+        {% if sec.section_subtitle %}
+        <span class="eyebrow">&mdash; {{ sec.section_subtitle }}</span>
+        {% endif %}
+        <h2>{{ sec.section_title }}</h2>
+        {% if sec.content %}
+        <p class="about-values-lead">{{ sec.content }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Multi-Card Values Grid -->
+      {% set cards_list = sec.section_data.cards or sec.section_data.items or [] %}
+      {% if cards_list %}
+      <div class="about-values-grid" style="{% if cards_list|length == 4 %}grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));{% endif %}">
+        {% for card in cards_list %}
+        <div class="about-val-card">
+          <div class="about-val-icon">
+            {% if card.icon == 'award' %}
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="8" r="6"></circle>
+              <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
+            </svg>
+            {% elif card.icon == 'heart' or card.icon == 'users' %}
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            {% elif card.icon == 'zap' or card.icon == 'innovation' %}
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 18h6"></path>
+              <path d="M10 22h4"></path>
+              <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+            </svg>
+            {% elif card.icon == 'globe' %}
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            {% elif card.icon == 'headset' %}
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+            </svg>
+            {% else %}
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+            {% endif %}
+          </div>
+          <h3 class="about-val-title">{{ card.title }}</h3>
+          <p class="about-val-desc">{{ card.desc or card.sub }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+
+  {# -------------------------------------------------------------------------
+     COMPONENT 4: STATISTICS SECTION (type == 'stats')
+     ------------------------------------------------------------------------- #}
+  {% elif sec.section_type == 'stats' %}
+  <section class="about-stats-band" id="stats-{{ sec.id }}">
+    <div class="wrap">
+      {% set metrics_list = sec.section_data.metrics or sec.section_data.items or [] %}
+      {% if metrics_list %}
+      <div class="about-stats-grid">
+        {% for stat in metrics_list %}
+        <div class="about-stat-item">
+          <div class="about-stat-icon">
+            {% if stat.icon == 'disc' %}
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M12 3v6"></path>
+              <path d="M12 15v6"></path>
+              <path d="M3 12h6"></path>
+              <path d="M15 12h6"></path>
+            </svg>
+            {% elif stat.icon == 'globe' %}
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            {% elif stat.icon == 'award' %}
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17"></path>
+              <path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.7-2.9l-3.3 2.5"></path>
+              <path d="m2 13 4 4"></path>
+            </svg>
+            {% else %}
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <circle cx="12" cy="12" r="4"></circle>
+              <line x1="12" y1="2" x2="12" y2="4"></line>
+              <line x1="12" y1="20" x2="12" y2="22"></line>
+              <line x1="20" y1="12" x2="22" y2="12"></line>
+              <line x1="2" y1="12" x2="4" y2="12"></line>
+            </svg>
+            {% endif %}
+          </div>
+          <div class="about-stat-num">{{ stat.number }}</div>
+          <div class="about-stat-label">{{ stat.heading or stat.label }}</div>
+          <div class="about-stat-sub">{{ stat.subtext or stat.sub }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {# -------------------------------------------------------------------------
+     COMPONENT 5: MISSION / VISION / TEAM SECTION (type == 'mission_vision')
+     ------------------------------------------------------------------------- #}
+  {% elif sec.section_type == 'mission_vision' %}
+  <section class="about-team-section" id="team-{{ sec.id }}">
+    <div class="wrap">
+      <div class="about-team-grid" style="{% if sec.image_position == 'left' %}grid-template-columns: 1.2fr 1fr;{% else %}grid-template-columns: 1fr 1.2fr;{% endif %}">
+        
+        {% if sec.image_position == 'left' %}
+        <!-- Image on Left -->
+        <div class="about-team-media">
+          <img src="{{ sec.image or '/static/assets/about/team-specialists.jpg' }}" alt="{{ sec.section_title }}" loading="lazy">
+        </div>
+        {% endif %}
+
+        <!-- Content on Side -->
+        <div>
+          {% if sec.section_subtitle %}
+          <span class="eyebrow">&mdash; {{ sec.section_subtitle }}</span>
+          {% endif %}
+          <h2>{{ sec.section_title }}</h2>
+          
+          {% if sec.content %}
+            {% for para in sec.content.split('\n\n') %}
+              {% if para.strip() %}
+              <p class="about-team-lead">{{ para.strip() }}</p>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+
+          {% if sec.button_text %}
+          <div>
+            <a href="{{ sec.button_url or 'https://wa.me/971505069575' }}" target="_blank" rel="noopener" class="about-btn-outline">
+              <span>{{ sec.button_text }}</span>
+            </a>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if sec.image_position != 'left' %}
+        <!-- Image on Right -->
+        <div class="about-team-media">
+          <img src="{{ sec.image or '/static/assets/about/team-specialists.jpg' }}" alt="{{ sec.section_title }}" loading="lazy">
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </section>
+
+  {# -------------------------------------------------------------------------
+     COMPONENT 6: CTA BANNER SECTION (type == 'cta')
+     ------------------------------------------------------------------------- #}
+  {% elif sec.section_type == 'cta' %}
+  <section class="about-action-wrap" id="cta-{{ sec.id }}">
+    <div class="wrap">
+      
+      <div class="about-action-box">
+        
+        <div class="about-action-left">
+          {% if sec.image %}
+          <div class="about-action-wheel" style="max-width:110px; width:110px; height:110px; flex-shrink:0;">
+            <img src="{{ sec.image }}" alt="{{ sec.section_title }}" style="width:100%; height:100%; object-fit:contain;" loading="lazy">
+          </div>
+          {% endif %}
+          
+          <div class="about-action-icon-circle">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -169,373 +410,31 @@
             </svg>
           </div>
           <div>
-            <div class="badge-title">{% if locale == 'ar' %}العميل أولاً{% else %}Customer First{% endif %}</div>
-            <div class="badge-sub">{% if locale == 'ar' %}سلامتك ورضاك هما أولويتنا القصوى.{% else %}Your safety and satisfaction are our priority.{% endif %}</div>
+            <h3 class="about-action-title">
+              {{ sec.section_title }}
+            </h3>
+            {% if sec.content %}
+            <p class="about-action-desc">
+              {{ sec.content }}
+            </p>
+            {% endif %}
           </div>
         </div>
-      </div>
 
-      <!-- Right: Story Prose -->
-      <div class="about-story-content">
-        <span class="about-section-eyebrow">&mdash; {% if locale == 'ar' %}قصتنا{% else %}OUR STORY{% endif %}</span>
-        <h2>{% if locale == 'ar' %}الطريق الذي بدأ منه مشوارنا.{% else %}The Road That Started Our Journey.{% endif %}</h2>
-        
-        <p>
-          {% if locale == 'ar' %}
-            أُنشئت تايرز فيجن بمهمة واضحة وبسيطة &mdash; توفير إطارات سيارات عالية الجودة بأسعار عادلة ومتاحة للجميع. ما بدأ كفكرة رقمية مبتكرة أصبح اليوم اسماً موثوقاً لآلاف السائقين في دولة الإمارات.
-          {% else %}
-            TyresVision was built with a simple mission &mdash; to make high-quality tyres accessible to everyone. What started as a small idea is today a trusted name for thousands of customers.
-          {% endif %}
-        </p>
-        <p>
-          {% if locale == 'ar' %}
-            نتعاون مع كبرى الشركات المصنعة العالمية، ونستخدم أحدث التقنيات لضمان معايير جودة صارمة تمنحك الأداء الأفضل في كل مرة تنطلق فيها على الطريق.
-          {% else %}
-            We partner with world-class brands, use advanced technology, and maintain rigorous quality standards to ensure you get the best performance, every single time.
-          {% endif %}
-        </p>
-        <p>
-          {% if locale == 'ar' %}
-            من شوارع المدينة إلى الطرق السريعة الطويلة، نحن هنا لنضمن استمرار رحلتك بكل أمان وثقة.
-          {% else %}
-            From city streets to highway adventures, we're here to keep you moving forward with confidence.
-          {% endif %}
-        </p>
-
+        {% if sec.button_text %}
         <div>
-          <a href="{% if locale == 'ar' %}/ar#why{% else %}/#why{% endif %}" class="about-btn-outline">
-            <span>{% if locale == 'ar' %}تعرف أكثر على قصتنا &larr;{% else %}Learn More About Us &rarr;{% endif %}</span>
+          <a href="{{ sec.button_url or 'https://wa.me/971505069575' }}" target="_blank" rel="noopener" class="about-action-btn">
+            <span>{{ sec.button_text }}</span>
           </a>
         </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- =========================================================================
-     3. VALUES SECTION (What Drives Us Forward - 5 Cards Grid)
-     ========================================================================= -->
-<section class="about-values-section">
-  <div class="wrap">
-    
-    <div style="text-align:center; max-width:680px; margin:0 auto;">
-      <span class="about-section-eyebrow">&mdash; {% if locale == 'ar' %}قيمنا ومبادئنا{% else %}OUR VALUES{% endif %}</span>
-      <h2 style="font-size:clamp(1.9rem, 3.5vw, 2.5rem); font-weight:800; color:var(--ink); margin:0 0 12px; letter-spacing:-.02em;">
-        {% if locale == 'ar' %}ما يدفعنا دوماً إلى الأمام{% else %}What Drives Us Forward{% endif %}
-      </h2>
-      <p style="color:var(--slate); font-size:1rem; line-height:1.6; margin:0;">
-        {% if locale == 'ar' %}
-          ترشدنا قيمنا في كل خطوة نبني بها علاقات طويلة الأمد مع عملائنا وشركائنا.
-        {% else %}
-          Our values guide everything we do and help us build lasting relationships with our customers.
         {% endif %}
-      </p>
-    </div>
 
-    <!-- 5 Clean Floating Cards Grid -->
-    <div class="about-values-grid">
-      
-      <!-- Value 1: Integrity -->
-      <div class="about-val-card">
-        <div class="about-val-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            <polyline points="9 12 11 14 15 10"></polyline>
-          </svg>
-        </div>
-        <h3 class="about-val-title">{% if locale == 'ar' %}النزاهة والصدق{% else %}Integrity{% endif %}</h3>
-        <p class="about-val-desc">{% if locale == 'ar' %}ممارسات تجارية نزيهة وعلاقات واضحة وشفافة.{% else %}Honest business practices and transparent relationships.{% endif %}</p>
-      </div>
-
-      <!-- Value 2: Quality -->
-      <div class="about-val-card">
-        <div class="about-val-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="8" r="6"></circle>
-            <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
-          </svg>
-        </div>
-        <h3 class="about-val-title">{% if locale == 'ar' %}أعلى معايير الجودة{% else %}Quality{% endif %}</h3>
-        <p class="about-val-desc">{% if locale == 'ar' %}لا نساوم أبداً على جودة الإطارات والخدمات المقدمة.{% else %}We never compromise on the quality of products and services.{% endif %}</p>
-      </div>
-
-      <!-- Value 3: Customer Focus -->
-      <div class="about-val-card">
-        <div class="about-val-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-        </div>
-        <h3 class="about-val-title">{% if locale == 'ar' %}التركيز على العميل{% else %}Customer Focus{% endif %}</h3>
-        <p class="about-val-desc">{% if locale == 'ar' %}احتياجاتك تلهمنا لتقديم خدمة أسرع وأفضل كل يوم.{% else %}Your needs inspire us to deliver better every single day.{% endif %}</p>
-      </div>
-
-      <!-- Value 4: Innovation -->
-      <div class="about-val-card">
-        <div class="about-val-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M9 18h6"></path>
-            <path d="M10 22h4"></path>
-            <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
-          </svg>
-        </div>
-        <h3 class="about-val-title">{% if locale == 'ar' %}الابتكار المستمر{% else %}Innovation{% endif %}</h3>
-        <p class="about-val-desc">{% if locale == 'ar' %}تطوير مستمر من خلال الحلول الرقمية والتقنيات الذكية.{% else %}Constantly improving through technology and smarter solutions.{% endif %}</p>
-      </div>
-
-      <!-- Value 5: Sustainability -->
-      <div class="about-val-card">
-        <div class="about-val-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="2" y1="12" x2="22" y2="12"></line>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-          </svg>
-        </div>
-        <h3 class="about-val-title">{% if locale == 'ar' %}الاستدامة والمسؤولية{% else %}Sustainability{% endif %}</h3>
-        <p class="about-val-desc">{% if locale == 'ar' %}خيارات مسؤولة وحلول بيئية لمستقبل أفضل.{% else %}Responsible choices for a better tomorrow.{% endif %}</p>
       </div>
 
     </div>
+  </section>
+  {% endif %}
 
-  </div>
-</section>
+{% endfor %}
 
-<!-- =========================================================================
-     4. STATISTICS BAND (Dark Atmospheric Highway with 4 Key Metrics)
-     ========================================================================= -->
-<section class="about-stats-band">
-  <div class="wrap">
-    <div class="about-stats-grid">
-      
-      <!-- Stat 1: 50K+ Happy Customers -->
-      <div class="about-stat-col">
-        <div class="about-stat-icon-wrap">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"></circle>
-            <circle cx="12" cy="12" r="4"></circle>
-            <line x1="12" y1="2" x2="12" y2="4"></line>
-            <line x1="12" y1="20" x2="12" y2="22"></line>
-            <line x1="20" y1="12" x2="22" y2="12"></line>
-            <line x1="2" y1="12" x2="4" y2="12"></line>
-          </svg>
-        </div>
-        <div class="about-stat-number">50K+</div>
-        <div class="about-stat-heading">{% if locale == 'ar' %}عميل سعيد وموثوق{% else %}Happy Customers{% endif %}</div>
-        <div class="about-stat-subtext">{% if locale == 'ar' %}موثوق من آلاف السائقين عبر الدولة.{% else %}Trusted by drivers across the country.{% endif %}</div>
-      </div>
-
-      <!-- Stat 2: 20K+ Tyres Sold -->
-      <div class="about-stat-col">
-        <div class="about-stat-icon-wrap">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="9"></circle>
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M12 3v6"></path>
-            <path d="M12 15v6"></path>
-            <path d="M3 12h6"></path>
-            <path d="M15 12h6"></path>
-          </svg>
-        </div>
-        <div class="about-stat-number">20K+</div>
-        <div class="about-stat-heading">{% if locale == 'ar' %}إطار تم تركيبه{% else %}Tyres Sold{% endif %}</div>
-        <div class="about-stat-subtext">{% if locale == 'ar' %}تشكيلة ضخمة تغطي كافة الاحتياجات.{% else %}A wide range of tyres for every need.{% endif %}</div>
-      </div>
-
-      <!-- Stat 3: 100+ Top Brands -->
-      <div class="about-stat-col">
-        <div class="about-stat-icon-wrap">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="2" y1="12" x2="22" y2="12"></line>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-          </svg>
-        </div>
-        <div class="about-stat-number">100+</div>
-        <div class="about-stat-heading">{% if locale == 'ar' %}علامة تجارية رائدة{% else %}Top Brands{% endif %}</div>
-        <div class="about-stat-subtext">{% if locale == 'ar' %}نقدم أشهر الماركات العالمية المعتمدة.{% else %}Offering the world's most trusted tyre brands.{% endif %}</div>
-      </div>
-
-      <!-- Stat 4: 10+ Years of Experience -->
-      <div class="about-stat-col">
-        <div class="about-stat-icon-wrap">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17"></path>
-            <path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.7-2.9l-3.3 2.5"></path>
-            <path d="m2 13 4 4"></path>
-          </svg>
-        </div>
-        <div class="about-stat-number">10+</div>
-        <div class="about-stat-heading">{% if locale == 'ar' %}سنوات من الخبرة{% else %}Years of Experience{% endif %}</div>
-        <div class="about-stat-subtext">{% if locale == 'ar' %}عقد من التميز والاحترافية في قطاع الإطارات.{% else %}Decade of expertise in tyre industry.{% endif %}</div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- =========================================================================
-     5. OUR TEAM (People Behind Our Performance)
-     ========================================================================= -->
-<section class="about-team-section">
-  <div class="wrap">
-    <div class="about-team-grid">
-      
-      <!-- Left Content -->
-      <div class="about-team-content">
-        <span class="about-section-eyebrow">&mdash; {% if locale == 'ar' %}فريق العمل{% else %}OUR TEAM{% endif %}</span>
-        <h2>{% if locale == 'ar' %}الكوادر وراء تميز أدائنا{% else %}People Behind Our Performance{% endif %}</h2>
-        <p>
-          {% if locale == 'ar' %}
-            يتكون فريقنا من محترفين شغوفين يعيشون ويتنفسون التميز في عالم السيارات وخدمات الإطارات.
-          {% else %}
-            Our team is made up of passionate professionals who live and breathe automotive excellence.
-          {% endif %}
-        </p>
-        <p>
-          {% if locale == 'ar' %}
-            من خبراء المنتجات والمقاسات إلى مهندسي خدمة العملاء وفنيي التركيب المتنقل، نعمل معاً لضمان حصولك على أفضل تجربة مع كل تواصل.
-          {% else %}
-            From product experts to customer support, we work together to ensure you get the best experience with every interaction.
-          {% endif %}
-        </p>
-        <div style="margin-top:24px;">
-          <a href="https://wa.me/971505069575?text=Hi%20TyresVision%20Team" target="_blank" rel="noopener" class="about-btn-outline">
-            <span>{% if locale == 'ar' %}تعرف على فريقنا &larr;{% else %}Meet Our Team &rarr;{% endif %}</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Right Team Photo -->
-      <div class="about-team-media">
-        <img src="/static/assets/about/team-specialists.jpg" alt="TyresVision Team Specialists" loading="lazy">
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- =========================================================================
-     6. OUR COMMITMENT (Committed to Quality. Committed to You.)
-     ========================================================================= -->
-<section class="about-commitment-section">
-  <div class="wrap">
-    
-    <div style="text-align:center; max-width:720px; margin:0 auto;">
-      <span class="about-section-eyebrow">&mdash; {% if locale == 'ar' %}التزامنا الدائم{% else %}OUR COMMITMENT{% endif %}</span>
-      <h2 style="font-size:clamp(1.9rem, 3.5vw, 2.5rem); font-weight:800; color:var(--ink); margin:0 0 12px; letter-spacing:-.02em;">
-        {% if locale == 'ar' %}ملتزمون بالجودة. ملتزمون برضاك.{% else %}Committed to Quality. Committed to You.{% endif %}
-      </h2>
-      <p style="color:var(--slate); font-size:1rem; line-height:1.6; margin:0;">
-        {% if locale == 'ar' %}
-          نحن ملتزمون بتقديم إطارات سيارات فائقة الجودة، وخدمة استثنائية، ومشورة صادقة. ثقتكم هي دافعنا الدائم للارتقاء بالمعايير.
-        {% else %}
-          We are committed to providing premium quality tyres, exceptional service, and honest advice. Your trust is what drives us to keep raising the bar.
-        {% endif %}
-      </p>
-    </div>
-
-    <!-- 4 Clean Commitment Cards Row -->
-    <div class="about-commitment-grid">
-      
-      <!-- Commit 1 -->
-      <div class="about-commit-card">
-        <div class="about-commit-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            <polyline points="9 12 11 14 15 10"></polyline>
-          </svg>
-        </div>
-        <h3 class="about-commit-title">{% if locale == 'ar' %}أمان واعتمادية{% else %}Safe &amp; Reliable{% endif %}</h3>
-        <p class="about-commit-desc">{% if locale == 'ar' %}إطارات يمكنك الاعتماد عليها في كل رحلة.{% else %}Tyres you can count on for every journey.{% endif %}</p>
-      </div>
-
-      <!-- Commit 2 -->
-      <div class="about-commit-card">
-        <div class="about-commit-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="8" r="6"></circle>
-            <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
-          </svg>
-        </div>
-        <h3 class="about-commit-title">{% if locale == 'ar' %}مختبرة وموثوقة{% else %}Tested &amp; Trusted{% endif %}</h3>
-        <p class="about-commit-desc">{% if locale == 'ar' %}كل منتج يطابق أعلى معايير الجودة الصارمة.{% else %}Every product meets strict quality standards.{% endif %}</p>
-      </div>
-
-      <!-- Commit 3 -->
-      <div class="about-commit-card">
-        <div class="about-commit-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
-            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
-          </svg>
-        </div>
-        <h3 class="about-commit-title">{% if locale == 'ar' %}دائماً بجانبك{% else %}Always Here{% endif %}</h3>
-        <p class="about-commit-desc">{% if locale == 'ar' %}دعم يمكنك الاعتماد عليه كلما احتجت.{% else %}Support you can rely on, whenever you need.{% endif %}</p>
-      </div>
-
-      <!-- Commit 4 -->
-      <div class="about-commit-card">
-        <div class="about-commit-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17"></path>
-            <path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.7-2.9l-3.3 2.5"></path>
-            <path d="m2 13 4 4"></path>
-          </svg>
-        </div>
-        <h3 class="about-commit-title">{% if locale == 'ar' %}شراكة طويلة الأمد{% else %}Long-Term Partnership{% endif %}</h3>
-        <p class="about-commit-desc">{% if locale == 'ar' %}نبني علاقات ثقة تتجاوز مجرد المعاملات التجارية.{% else %}Building relationships beyond just business.{% endif %}</p>
-      </div>
-
-    </div>
-
-  </div>
-</section>
-
-<!-- =========================================================================
-     7. BOTTOM ACTION BANNER (Let's Move Forward Together)
-     ========================================================================= -->
-<section class="about-action-wrap">
-  <div class="wrap">
-    
-    <div class="about-action-box">
-      
-      <div class="about-action-left">
-        <div class="about-action-wheel" style="max-width:110px; width:110px; height:110px; flex-shrink:0;">
-          <img src="/static/assets/about/wheel-rim.png" alt="TyresVision Wheel" style="width:100%; height:100%; object-fit:contain;" loading="lazy">
-        </div>
-        <div class="about-action-icon-circle">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
-        </div>
-        <div>
-          <h3 class="about-action-title">
-            {% if locale == 'ar' %}دعنا ننطلق معاً إلى الأمام.{% else %}Let's Move Forward Together.{% endif %}
-          </h3>
-          <p class="about-action-desc">
-            {% if locale == 'ar' %}
-              استكشف مجموعتنا من الإطارات الممتازة وجرّب الفارق مع <strong>تايرز فيجن</strong>.
-            {% else %}
-              Explore our range of premium tyres and experience the difference with <strong>TyresVision</strong>.
-            {% endif %}
-          </p>
-        </div>
-      </div>
-
-      <div>
-        <a href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20would%20like%20to%20contact%20you%20today." target="_blank" rel="noopener" class="about-action-btn">
-          <span>{% if locale == 'ar' %}تواصل معنا اليوم &larr;{% else %}Contact Us Today &rarr;{% endif %}</span>
-        </a>
-      </div>
-
-    </div>
-
-  </div>
-</section>
 {% endblock %}

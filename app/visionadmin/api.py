@@ -10,6 +10,7 @@ from flask import Blueprint, jsonify, render_template, request, session
 from werkzeug.utils import secure_filename
 from models.page import Page
 from models.blog import Blog
+from models.page_section import PageSection
 
 
 def register_visionadmin_routes(app):
@@ -35,6 +36,15 @@ def register_visionadmin_routes(app):
     @app.route('/admin/blogs', methods=['GET'])
     def visionadmin_blogs():
         return render_template('visionadmin/blogs.html', page='blogs')
+
+    @app.route('/visionadmin/sections', methods=['GET'])
+    @app.route('/visionadmin/about-sections', methods=['GET'])
+    @app.route('/visonadmin/sections', methods=['GET'])
+    @app.route('/visonadmin/about-sections', methods=['GET'])
+    @app.route('/admin/sections', methods=['GET'])
+    @app.route('/admin/about-sections', methods=['GET'])
+    def visionadmin_sections():
+        return render_template('visionadmin/sections.html', page='sections')
 
     # =========================================================================
     # 2. FILE UPLOAD ENDPOINTS
@@ -412,4 +422,138 @@ def register_visionadmin_routes(app):
         return jsonify({
             'success': True,
             'message': 'Blog article restored successfully.'
+        })
+
+    # =========================================================================
+    # 5. PAGE SECTIONS CRUD & REORDER API (About Us, etc.)
+    # =========================================================================
+
+    @app.route('/visionadmin/api/sections', methods=['GET'])
+    def visionadmin_get_sections():
+        """Returns all sections for a page (including inactive) ordered by sort_order."""
+        page_slug = request.args.get('page') or request.args.get('page_slug') or 'about-us'
+        sections = PageSection.all_for_page(page_slug=page_slug, include_inactive=True)
+        return jsonify({
+            'page': page_slug,
+            'sections': sections,
+            'count': len(sections)
+        })
+
+    @app.route('/visionadmin/api/sections/<int:section_id>', methods=['GET'])
+    def visionadmin_get_section_detail(section_id):
+        """Returns a single section by id."""
+        sec = PageSection.find_by_id(section_id)
+        if not sec:
+            return jsonify({'error': 'Section not found.'}), 404
+        return jsonify({'section': sec})
+
+    @app.route('/visionadmin/api/sections', methods=['POST'])
+    def visionadmin_create_section():
+        """Creates a new section."""
+        data = request.get_json(silent=True) or request.form.to_dict()
+        if not data:
+            return jsonify({'error': 'No data provided.'}), 400
+
+        section_type = data.get('section_type')
+        if not section_type:
+            return jsonify({'error': 'section_type is required.'}), 400
+
+        try:
+            new_sec = PageSection.create(data)
+            return jsonify({
+                'success': True,
+                'section': new_sec,
+                'message': 'Section added successfully.'
+            }), 201
+        except Exception as e:
+            return jsonify({'error': f'Failed to create section: {str(e)}'}), 500
+
+    @app.route('/visionadmin/api/sections/<int:section_id>', methods=['PUT'])
+    def visionadmin_update_section(section_id):
+        """Updates an existing section."""
+        sec = PageSection.find_by_id(section_id)
+        if not sec:
+            return jsonify({'error': 'Section not found.'}), 404
+
+        data = request.get_json(silent=True) or request.form.to_dict()
+        if not data:
+            return jsonify({'error': 'No data provided.'}), 400
+
+        try:
+            updated = PageSection.update(section_id, data)
+            return jsonify({
+                'success': True,
+                'section': updated,
+                'message': 'Section updated successfully.'
+            })
+        except Exception as e:
+            return jsonify({'error': f'Failed to update section: {str(e)}'}), 500
+
+    @app.route('/visionadmin/api/sections/<int:section_id>', methods=['DELETE'])
+    def visionadmin_delete_section(section_id):
+        """Soft deletes a section."""
+        sec = PageSection.find_by_id(section_id)
+        if not sec:
+            return jsonify({'error': 'Section not found.'}), 404
+
+        PageSection.soft_delete(section_id)
+        return jsonify({
+            'success': True,
+            'message': 'Section deleted successfully.'
+        })
+
+    @app.route('/visionadmin/api/sections/<int:section_id>/toggle', methods=['POST'])
+    def visionadmin_toggle_section(section_id):
+        """Toggles active/disabled state of a section."""
+        sec = PageSection.find_by_id(section_id)
+        if not sec:
+            return jsonify({'error': 'Section not found.'}), 404
+
+        toggled = PageSection.toggle_active(section_id)
+        status_str = 'enabled' if toggled.get('is_active') else 'disabled'
+        return jsonify({
+            'success': True,
+            'section': toggled,
+            'message': f'Section {status_str} successfully.'
+        })
+
+    @app.route('/visionadmin/api/sections/reorder', methods=['POST'])
+    def visionadmin_reorder_sections():
+        """Updates section order based on ordered list of IDs."""
+        data = request.get_json(silent=True) or {}
+        ordered_ids = data.get('ordered_ids') or data.get('ids') or []
+        if not ordered_ids or not isinstance(ordered_ids, list):
+            return jsonify({'error': 'ordered_ids list is required.'}), 400
+
+        try:
+            PageSection.reorder(ordered_ids)
+            return jsonify({
+                'success': True,
+                'message': 'Section order saved successfully.'
+            })
+        except Exception as e:
+            return jsonify({'error': f'Failed to reorder sections: {str(e)}'}), 500
+
+    # =========================================================================
+    # 6. PUBLIC API ENDPOINTS (Returns active sections ordered by sort_order)
+    # =========================================================================
+
+    @app.route('/api/pages/<slug>/sections', methods=['GET'])
+    @app.route('/api/sections/<slug>', methods=['GET'])
+    @app.route('/api/pages/about-us/sections', methods=['GET'])
+    def public_get_page_sections(slug='about-us'):
+        """Public API returning active sections for a page ordered by sort_order."""
+        target_slug = slug if slug else 'about-us'
+        locale = request.args.get('locale') or request.args.get('lang')
+        sections = PageSection.all_for_page(page_slug=target_slug, include_inactive=False)
+        
+        if locale:
+            formatted = [PageSection.to_localized_dict(s, locale=locale) for s in sections]
+        else:
+            formatted = sections
+
+        return jsonify({
+            'page': target_slug,
+            'sections': formatted,
+            'count': len(formatted)
         })

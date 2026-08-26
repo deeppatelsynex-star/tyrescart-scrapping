@@ -4,6 +4,7 @@ import math
 from flask import Blueprint, render_template, request, session, jsonify, abort, redirect, url_for, make_response
 from models.blog import Blog
 from models.page import Page
+from models.page_section import PageSection
 
 site_bp = Blueprint('site', __name__)
 
@@ -521,8 +522,10 @@ def _build_about_us_context(page, locale='en'):
 def about_us():
     locale = 'en' if request.path.startswith('/en') else _get_locale()
     page = Page.find_by_slug('about-us')
+    raw_sections = PageSection.all_for_page('about-us', include_inactive=False)
+    sections = [PageSection.to_localized_dict(s, locale=locale) for s in raw_sections]
     about_data = _build_about_us_context(page, locale)
-    resp = make_response(render_template('Client/AboutUs.html', page=page, about=about_data, locale=locale))
+    resp = make_response(render_template('Client/AboutUs.html', page=page, sections=sections, about=about_data, locale=locale))
     resp.set_cookie('site_locale', locale, max_age=31536000, path='/')
     return resp
 
@@ -530,8 +533,10 @@ def about_us():
 @site_bp.route('/ar/about-us')
 def about_us_ar():
     page = Page.find_by_slug('about-us')
+    raw_sections = PageSection.all_for_page('about-us', include_inactive=False)
+    sections = [PageSection.to_localized_dict(s, locale='ar') for s in raw_sections]
     about_data = _build_about_us_context(page, 'ar')
-    resp = make_response(render_template('Client/AboutUs.html', page=page, about=about_data, locale='ar'))
+    resp = make_response(render_template('Client/AboutUs.html', page=page, sections=sections, about=about_data, locale='ar'))
     resp.set_cookie('site_locale', 'ar', max_age=31536000, path='/')
     return resp
 
@@ -545,8 +550,10 @@ def page_detail_en(slug):
     page = Page.find_by_slug(slug)
     if page:
         if slug == 'about-us':
+            raw_sections = PageSection.all_for_page('about-us', include_inactive=False)
+            sections = [PageSection.to_localized_dict(s, locale='en') for s in raw_sections]
             about_data = _build_about_us_context(page, 'en')
-            return render_template('Client/AboutUs.html', page=page, about=about_data, locale='en')
+            return render_template('Client/AboutUs.html', page=page, sections=sections, about=about_data, locale='en')
         return render_template('Client/Page.html', page=page, locale='en')
     blog = Blog.find_by_slug(slug)
     if blog:
@@ -563,8 +570,10 @@ def page_detail_ar(slug):
     page = Page.find_by_slug(slug)
     if page:
         if slug == 'about-us':
+            raw_sections = PageSection.all_for_page('about-us', include_inactive=False)
+            sections = [PageSection.to_localized_dict(s, locale='ar') for s in raw_sections]
             about_data = _build_about_us_context(page, 'ar')
-            return render_template('Client/AboutUs.html', page=page, about=about_data, locale='ar')
+            return render_template('Client/AboutUs.html', page=page, sections=sections, about=about_data, locale='ar')
         return render_template('Client/Page.html', page=page, locale='ar')
     blog = Blog.find_by_slug(slug)
     if blog:
@@ -583,8 +592,10 @@ def page_detail(slug):
     page = Page.find_by_slug(slug)
     if page:
         if slug == 'about-us':
+            raw_sections = PageSection.all_for_page('about-us', include_inactive=False)
+            sections = [PageSection.to_localized_dict(s, locale=locale) for s in raw_sections]
             about_data = _build_about_us_context(page, locale)
-            return render_template('Client/AboutUs.html', page=page, about=about_data, locale=locale)
+            return render_template('Client/AboutUs.html', page=page, sections=sections, about=about_data, locale=locale)
         return render_template('Client/Page.html', page=page, locale=locale)
 
     blog = Blog.find_by_slug(slug)
