@@ -265,15 +265,15 @@
     let metricsHtml = '';
     if (Array.isArray(metricsList) && metricsList.length > 0) {
       metricsHtml = `
-        <div class="about-stats-grid">
+        <div class="about-stats-grid" style="text-align: center;">
           ${metricsList.map(stat => `
-            <div class="about-stat-item">
-              <div class="about-stat-icon">
-                ${renderSvgIcon(stat.icon || 'disc', '2', 32)}
+            <div class="about-stat-col" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 16px;">
+              <div class="about-stat-icon-wrap" style="display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; color: var(--green-bright, #34d399);">
+                ${renderSvgIcon(stat.icon || 'disc', '2', 36)}
               </div>
-              <div class="about-stat-num">${escapeHtml(stat.number || '')}</div>
-              <div class="about-stat-label">${escapeHtml(stat.heading || stat.label || '')}</div>
-              <div class="about-stat-sub">${escapeHtml(stat.subtext || stat.sub || '')}</div>
+              <div class="about-stat-number" style="text-align: center; width: 100%; font-size: clamp(2rem, 3.8vw, 3rem); font-weight: 800; color: #ffffff; margin-bottom: 6px; letter-spacing: -0.02em;">${escapeHtml(stat.number || '')}</div>
+              <div class="about-stat-heading" style="text-align: center; width: 100%; font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 4px;">${escapeHtml(stat.heading || stat.label || '')}</div>
+              <div class="about-stat-subtext" style="text-align: center; width: 100%; font-size: 0.85rem; color: rgba(255, 255, 255, 0.75); line-height: 1.5; max-width: 250px; margin: 0 auto;">${escapeHtml(stat.subtext || stat.sub || '')}</div>
             </div>
           `).join('')}
         </div>
