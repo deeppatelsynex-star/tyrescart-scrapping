@@ -1326,18 +1326,33 @@ footer .tagline {
 
 .skip {
   position: absolute;
-  left: -9999px;
-  top: 0;
+  top: -100px;
+  left: 12px;
   background: #fff;
   color: var(--ink);
   padding: 12px 18px;
-  z-index: 200;
-  font-weight: 700
+  z-index: 99999;
+  font-weight: 700;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  transition: transform 0.2s ease;
+  transform: translateY(-100%);
 }
 
 .skip:focus {
+  top: 12px;
   left: 12px;
-  top: 12px
+  transform: translateY(0);
+}
+
+[dir="rtl"] .skip {
+  left: auto;
+  right: 12px;
+}
+
+[dir="rtl"] .skip:focus {
+  left: auto;
+  right: 12px;
 }
 
 @media(prefers-reduced-motion:reduce) {
