@@ -1,4 +1,4 @@
-﻿/**
+/**
  * static/js/client-page-sections.js
  * TyresVision Dynamic Client Page & Section Renderer
  * 
@@ -343,9 +343,9 @@
     const pageTitle = page?.title || (isAr ? 'من نحن' : 'About Us');
 
     return `
-      <section class="about-hero-dark" style="padding-top:36px; padding-bottom:44px; min-height:auto;">
+      <div style="background:#0c1008; border-bottom:1px solid rgba(255,255,255,0.06); padding: 18px 0;">
         <div class="wrap">
-          <nav class="about-breadcrumb" aria-label="Breadcrumb" style="margin-bottom:18px;">
+          <nav class="about-breadcrumb" aria-label="Breadcrumb" style="margin-bottom:0;">
             <a href="${homeUrl}">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -356,19 +356,8 @@
             <span class="sep" aria-hidden="true">/</span>
             <span class="current">${escapeHtml(pageTitle)}</span>
           </nav>
-          <div style="max-width:800px;">
-            <span class="eyebrow" style="color:var(--brand-glow, #34d399);">&mdash; ${isAr ? 'تايرز فيجن الإمارات' : 'TyresVision UAE'}</span>
-            <h1 style="color:#ffffff; font-size:clamp(1.9rem, 3.8vw, 2.7rem); font-weight:800; margin-top:8px; line-height:1.2;">
-              ${escapeHtml(pageTitle)}
-            </h1>
-            ${page?.meta_description ? `
-              <p class="lead" style="margin-top:10px; max-width:680px; color:rgba(255,255,255,0.75);">
-                ${escapeHtml(page.meta_description)}
-              </p>
-            ` : ''}
-          </div>
         </div>
-      </section>
+      </div>
     `;
   }
 

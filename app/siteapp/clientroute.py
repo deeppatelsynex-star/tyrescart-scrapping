@@ -389,10 +389,7 @@ def _build_about_us_context(page, locale='en'):
 def about_us():
     locale = 'en' if request.path.startswith('/en') else _get_locale()
     page = Page.find_by_slug('about-us')
-    raw_sections = PageSection.all_for_page('about-us', include_inactive=False)
-    sections = [PageSection.to_localized_dict(s, locale=locale) for s in raw_sections]
-    about_data = _build_about_us_context(page, locale)
-    resp = make_response(render_template('Client/AboutUs.html', page=page, sections=sections, about=about_data, locale=locale))
+    resp = make_response(render_template('Client/AboutUs.html', page=page, slug='about-us', locale=locale))
     resp.set_cookie('site_locale', locale, max_age=31536000, path='/')
     return resp
 
@@ -400,10 +397,7 @@ def about_us():
 @site_bp.route('/ar/about-us')
 def about_us_ar():
     page = Page.find_by_slug('about-us')
-    raw_sections = PageSection.all_for_page('about-us', include_inactive=False)
-    sections = [PageSection.to_localized_dict(s, locale='ar') for s in raw_sections]
-    about_data = _build_about_us_context(page, 'ar')
-    resp = make_response(render_template('Client/AboutUs.html', page=page, sections=sections, about=about_data, locale='ar'))
+    resp = make_response(render_template('Client/AboutUs.html', page=page, slug='about-us', locale='ar'))
     resp.set_cookie('site_locale', 'ar', max_age=31536000, path='/')
     return resp
 
@@ -416,12 +410,7 @@ def page_detail_en(slug):
         abort(404)
     page = Page.find_by_slug(slug)
     if page:
-        raw_sections = PageSection.all_for_page(slug, include_inactive=False)
-        if raw_sections or slug == 'about-us':
-            sections = [PageSection.to_localized_dict(s, locale='en') for s in raw_sections]
-            about_data = _build_about_us_context(page, 'en')
-            return render_template('Client/AboutUs.html', page=page, sections=sections, about=about_data, locale='en')
-        return render_template('Client/Page.html', page=page, locale='en')
+        return render_template('Client/AboutUs.html', page=page, slug=slug, locale='en')
     blog = Blog.find_by_slug(slug)
     if blog:
         return redirect(f'/en/blog/{slug}')
@@ -436,12 +425,7 @@ def page_detail_ar(slug):
         abort(404)
     page = Page.find_by_slug(slug)
     if page:
-        raw_sections = PageSection.all_for_page(slug, include_inactive=False)
-        if raw_sections or slug == 'about-us':
-            sections = [PageSection.to_localized_dict(s, locale='ar') for s in raw_sections]
-            about_data = _build_about_us_context(page, 'ar')
-            return render_template('Client/AboutUs.html', page=page, sections=sections, about=about_data, locale='ar')
-        return render_template('Client/Page.html', page=page, locale='ar')
+        return render_template('Client/AboutUs.html', page=page, slug=slug, locale='ar')
     blog = Blog.find_by_slug(slug)
     if blog:
         return redirect(f'/ar/blog/{slug}')
@@ -457,12 +441,7 @@ def page_detail(slug):
     locale = _get_locale()
     page = Page.find_by_slug(slug)
     if page:
-        raw_sections = PageSection.all_for_page(slug, include_inactive=False)
-        if raw_sections or slug == 'about-us':
-            sections = [PageSection.to_localized_dict(s, locale=locale) for s in raw_sections]
-            about_data = _build_about_us_context(page, locale)
-            return render_template('Client/AboutUs.html', page=page, sections=sections, about=about_data, locale=locale)
-        return render_template('Client/Page.html', page=page, locale=locale)
+        return render_template('Client/AboutUs.html', page=page, slug=slug, locale=locale)
     blog = Blog.find_by_slug(slug)
     if blog:
         prefix = f'/{locale}' if locale in ('en', 'ar') else ''
