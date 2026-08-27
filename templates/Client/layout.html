@@ -168,6 +168,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
     </a>
     <div class="nav-links">
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar/about-us{% else %}/en/about-us{% endif %}" class="{% if request.path in ['/about-us', '/en/about-us', '/ar/about-us'] %}active{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}من نحن{% else %}About Us{% endif %}</a>
       <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#why{% else %}/#why{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}لماذا نحن{% else %}Why us{% endif %}</a>
       <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#services{% else %}/#services{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}خدماتنا{% else %}Services{% endif %}</a>
       <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#how{% else %}/#how{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}كيف نعمل{% else %}How it works{% endif %}</a>
@@ -283,6 +284,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           {% endif %}
         </h4>
         <ul>
+          <li><a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar/about-us{% else %}/en/about-us{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}من نحن{% else %}About Us{% endif %}</a></li>
           <li><a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar/blog{% else %}/en/blog{% endif %}">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}المدونة{% else %}Blog{% endif %}</a></li>
         </ul>
       </div>
