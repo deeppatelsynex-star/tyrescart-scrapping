@@ -3492,12 +3492,28 @@ footer .tagline {
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-/* Mobile Nav Drawer Backdrop (Hidden by default on desktop) */
+/* Mobile Nav Drawer Backdrop (Hidden by default) */
 .mobile-nav-backdrop {
   display: none;
 }
 
-/* Mobile Nav Drawer Panel (Hidden by default on desktop) */
+.mobile-nav-backdrop.open {
+  display: block;
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 17, 8, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 998;
+  animation: fadeInBackdrop 0.25s ease forwards;
+}
+
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Mobile Nav Drawer Panel (Hidden by default) */
 .mobile-nav-drawer {
   display: none;
 }
@@ -3507,25 +3523,7 @@ footer .tagline {
     display: inline-flex;
   }
 
-  .mobile-nav-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(14, 17, 8, 0.65);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 998;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-  }
-
-  .mobile-nav-backdrop.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .mobile-nav-drawer {
+  .mobile-nav-drawer.open {
     display: flex;
     position: fixed;
     top: 0;
@@ -3537,28 +3535,25 @@ footer .tagline {
     z-index: 999;
     flex-direction: column;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
-    transform: translateX(-100%);
-    visibility: hidden;
-    pointer-events: none;
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s;
+    animation: slideInDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     overflow: hidden;
   }
 
-  .mobile-nav-drawer.open {
-    transform: translateX(0);
-    visibility: visible;
-    pointer-events: auto;
+  @keyframes slideInDrawer {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
   }
 
   /* RTL: Drawer slides in from right */
-  html[dir="rtl"] .mobile-nav-drawer {
+  html[dir="rtl"] .mobile-nav-drawer.open {
     left: auto;
     right: 0;
-    transform: translateX(100%);
+    animation: slideInDrawerRtl 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  html[dir="rtl"] .mobile-nav-drawer.open {
-    transform: translateX(0);
+  @keyframes slideInDrawerRtl {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
   }
 }
 
