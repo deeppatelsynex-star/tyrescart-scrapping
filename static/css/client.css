@@ -2411,11 +2411,6 @@ footer .tagline {
 .about-hero-dark {
   position: relative;
   background-color: #080C05;
-  background-image: 
-    radial-gradient(1000px 500px at 85% 20%, rgba(88, 179, 27, 0.28), transparent 60%),
-    radial-gradient(800px 450px at 15% 100%, rgba(53, 118, 15, 0.3), transparent 60%),
-    linear-gradient(180deg, rgba(8, 12, 5, 0.85) 0%, rgba(8, 12, 5, 0.92) 100%),
-    url('/static/assets/about/hero-tyre-showroom.jpg');
   background-position: center center;
   background-size: cover;
   background-repeat: no-repeat;

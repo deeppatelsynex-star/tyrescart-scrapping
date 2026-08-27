@@ -64,7 +64,7 @@
     const defaultTitle = isAr ? 'من نحن' : 'About Us';
     const pageTitle = page?.title || defaultTitle;
     const titleHtml = (sec.section_title || '').replace(/\n/g, '<br>');
-    const heroImage = sec.image || '/static/assets/about/hero-tyre-showroom.jpg';
+    const heroImage = sec.image || '';
 
     let featuresHtml = '';
     const featuresList = (sec.section_data && (sec.section_data.features || sec.section_data.items)) || [];
@@ -86,8 +86,12 @@
       `;
     }
 
+    const bgStyle = heroImage
+      ? `background: linear-gradient(90deg, rgba(12, 16, 8, 0.95) 0%, rgba(12, 16, 8, 0.88) 55%, rgba(12, 16, 8, 0.72) 100%), url('${heroImage}') center center / cover no-repeat;`
+      : `background: #0c1008;`;
+
     return `
-      <section class="about-hero-dark" id="hero-${sec.id}">
+      <section class="about-hero-dark" id="hero-${sec.id}" style="${bgStyle}">
         <div class="wrap">
           
           <!-- Top Breadcrumb -->
@@ -103,39 +107,31 @@
             <span class="current">${escapeHtml(pageTitle)}</span>
           </nav>
 
-          <!-- Hero 2-Column Grid -->
-          <div style="display:grid; grid-template-columns:1fr; gap:40px; align-items:center;" class="hero-2col-layout">
-            <!-- Left Content -->
-            <div>
-              ${sec.section_subtitle ? `
-                <span class="eyebrow">&mdash; ${escapeHtml(sec.section_subtitle)}</span>
-              ` : ''}
-              
-              <h1>${titleHtml}</h1>
-              
-              ${sec.content ? `
-                <div class="lead">${sec.content}</div>
-              ` : ''}
+          <!-- Hero Content from Database -->
+          <div class="hero-db-content" style="max-width: 860px;">
+            ${sec.section_subtitle ? `
+              <span class="eyebrow">&mdash; ${escapeHtml(sec.section_subtitle)}</span>
+            ` : ''}
+            
+            ${titleHtml ? `<h1>${titleHtml}</h1>` : ''}
+            
+            ${sec.content ? `
+              <div class="lead">${sec.content}</div>
+            ` : ''}
 
-              ${sec.button_text ? `
-                <div>
-                  <a href="${sec.button_url || '#our-story'}" class="about-hero-cta">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    <span>${escapeHtml(sec.button_text)}</span>
-                  </a>
-                </div>
-              ` : ''}
-            </div>
-
-            <!-- Right Cinematic Showroom Image -->
-            <div style="border-radius:24px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.12); aspect-ratio:16/10; background:#11170D;">
-              <img src="${heroImage}" alt="${escapeHtml(sec.section_title || pageTitle)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="eager" />
-            </div>
+            ${sec.button_text ? `
+              <div style="margin-top: 24px;">
+                <a href="${sec.button_url || '#'}" class="about-hero-cta">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                  <span>${escapeHtml(sec.button_text)}</span>
+                </a>
+              </div>
+            ` : ''}
           </div>
 
-          <!-- 4 Key Hero Pillars on Dark Surface -->
+          <!-- Key Hero Pillars -->
           ${featuresHtml}
 
         </div>
@@ -144,13 +140,15 @@
   }
 
   function renderContentImageSection(sec, page, locale) {
+    const hasImage = Boolean(sec.image && sec.image.trim());
     const isLeft = sec.image_position === 'left';
-    const gridStyle = isLeft ? 'grid-template-columns: 1fr 1.15fr;' : 'grid-template-columns: 1.15fr 1fr;';
-    const imgSrc = sec.image || '/static/assets/about/warehouse-tyres.jpg';
+    const gridStyle = hasImage
+      ? (isLeft ? 'grid-template-columns: 1fr 1.15fr;' : 'grid-template-columns: 1.15fr 1fr;')
+      : 'grid-template-columns: 1fr;';
 
-    const mediaHtml = `
+    const mediaHtml = hasImage ? `
       <div class="about-story-media">
-        <img src="${imgSrc}" alt="${escapeHtml(sec.section_title || '')}" loading="lazy" />
+        <img src="${sec.image}" alt="${escapeHtml(sec.section_title || '')}" loading="lazy" />
         ${sec.section_data && sec.section_data.badge_title ? `
           <div class="about-story-floating-badge">
             <div class="about-badge-icon">
@@ -168,19 +166,23 @@
           </div>
         ` : ''}
       </div>
-    `;
+    ` : '';
 
     const contentHtml = `
-      <div class="about-story-content">
+      <div class="about-story-content" ${!hasImage ? 'style="max-width: 900px;"' : ''}>
         ${sec.section_subtitle ? `<span class="eyebrow">&mdash; ${escapeHtml(sec.section_subtitle)}</span>` : ''}
-        <h2>${escapeHtml(sec.section_title || '')}</h2>
+        ${sec.section_title ? `<h2>${escapeHtml(sec.section_title)}</h2>` : ''}
         
         ${sec.content ? `<div class="about-story-rich">${sec.content}</div>` : ''}
 
         ${sec.button_text ? `
           <div>
-            <a href="${sec.button_url || '/#why'}" class="about-btn-outline">
+            <a href="${sec.button_url || '#'}" class="about-btn-primary">
               <span>${escapeHtml(sec.button_text)}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
             </a>
           </div>
         ` : ''}
@@ -188,10 +190,10 @@
     `;
 
     return `
-      <section id="story-${sec.id}" class="about-story-section">
+      <section class="about-story-section" id="story-${sec.id}">
         <div class="wrap">
           <div class="about-story-grid" style="${gridStyle}">
-            ${isLeft ? mediaHtml + contentHtml : contentHtml + mediaHtml}
+            ${hasImage ? (isLeft ? mediaHtml + contentHtml : contentHtml + mediaHtml) : contentHtml}
           </div>
         </div>
       </section>
@@ -199,19 +201,19 @@
   }
 
   function renderFeaturesSection(sec, page, locale) {
-    const cardsList = (sec.section_data && (sec.section_data.cards || sec.section_data.items)) || [];
     let cardsHtml = '';
+    const cardsList = (sec.section_data && (sec.section_data.cards || sec.section_data.items || sec.section_data.features)) || [];
+    
     if (Array.isArray(cardsList) && cardsList.length > 0) {
-      const gridStyle = cardsList.length === 4 ? 'grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));' : '';
       cardsHtml = `
-        <div class="about-values-grid" style="${gridStyle}">
+        <div class="about-why-grid">
           ${cardsList.map(card => `
-            <div class="about-val-card">
-              <div class="about-val-icon">
-                ${renderSvgIcon(card.icon || 'award', '2.2', 26)}
+            <div class="about-why-card">
+              <div class="about-why-icon-wrap">
+                ${renderSvgIcon(card.icon || 'shield', '2.2', 26)}
               </div>
-              <h3 class="about-val-title">${escapeHtml(card.title || '')}</h3>
-              <p class="about-val-desc">${escapeHtml(card.desc || card.sub || '')}</p>
+              <h3 class="about-why-card-title">${escapeHtml(card.title || '')}</h3>
+              <p class="about-why-card-desc">${escapeHtml(card.desc || card.description || '')}</p>
             </div>
           `).join('')}
         </div>
@@ -219,13 +221,15 @@
     }
 
     return `
-      <section class="about-values-section" id="features-${sec.id}">
+      <section class="about-why-section" id="why-${sec.id}">
         <div class="wrap">
-          <div style="text-align:center; max-width:680px; margin:0 auto;">
-            ${sec.section_subtitle ? `<span class="eyebrow">&mdash; ${escapeHtml(sec.section_subtitle)}</span>` : ''}
-            <h2>${escapeHtml(sec.section_title || '')}</h2>
-            ${sec.content ? `<div class="about-values-lead">${sec.content}</div>` : ''}
-          </div>
+          ${(sec.section_title || sec.section_subtitle) ? `
+            <div class="about-section-head">
+              ${sec.section_subtitle ? `<span class="eyebrow">&mdash; ${escapeHtml(sec.section_subtitle)}</span>` : ''}
+              ${sec.section_title ? `<h2>${escapeHtml(sec.section_title)}</h2>` : ''}
+              ${sec.content ? `<div class="sublead">${sec.content}</div>` : ''}
+            </div>
+          ` : ''}
           ${cardsHtml}
         </div>
       </section>
@@ -262,24 +266,26 @@
   }
 
   function renderMissionSection(sec, page, locale) {
+    const hasImage = Boolean(sec.image && sec.image.trim());
     const isLeft = sec.image_position === 'left';
-    const gridStyle = isLeft ? 'grid-template-columns: 1.2fr 1fr;' : 'grid-template-columns: 1fr 1.2fr;';
-    const imgSrc = sec.image || '/static/assets/about/team-specialists.jpg';
+    const gridStyle = hasImage
+      ? (isLeft ? 'grid-template-columns: 1.2fr 1fr;' : 'grid-template-columns: 1fr 1.2fr;')
+      : 'grid-template-columns: 1fr;';
 
-    const mediaHtml = `
+    const mediaHtml = hasImage ? `
       <div class="about-team-media">
-        <img src="${imgSrc}" alt="${escapeHtml(sec.section_title || '')}" loading="lazy" />
+        <img src="${sec.image}" alt="${escapeHtml(sec.section_title || '')}" loading="lazy" />
       </div>
-    `;
+    ` : '';
 
     const contentHtml = `
-      <div>
+      <div ${!hasImage ? 'style="max-width: 900px;"' : ''}>
         ${sec.section_subtitle ? `<span class="eyebrow">&mdash; ${escapeHtml(sec.section_subtitle)}</span>` : ''}
-        <h2>${escapeHtml(sec.section_title || '')}</h2>
+        ${sec.section_title ? `<h2>${escapeHtml(sec.section_title)}</h2>` : ''}
         ${sec.content ? `<div class="about-team-rich">${sec.content}</div>` : ''}
         ${sec.button_text ? `
           <div>
-            <a href="${sec.button_url || 'https://wa.me/971505069575'}" target="_blank" rel="noopener" class="about-btn-outline">
+            <a href="${sec.button_url || '#'}" class="about-btn-outline">
               <span>${escapeHtml(sec.button_text)}</span>
             </a>
           </div>
@@ -291,7 +297,7 @@
       <section class="about-team-section" id="team-${sec.id}">
         <div class="wrap">
           <div class="about-team-grid" style="${gridStyle}">
-            ${isLeft ? mediaHtml + contentHtml : contentHtml + mediaHtml}
+            ${hasImage ? (isLeft ? mediaHtml + contentHtml : contentHtml + mediaHtml) : contentHtml}
           </div>
         </div>
       </section>
@@ -325,7 +331,7 @@
 
             ${sec.button_text ? `
               <div>
-                <a href="${sec.button_url || 'https://wa.me/971505069575'}" target="_blank" rel="noopener" class="about-action-btn">
+                <a href="${sec.button_url || '#'}" class="about-action-btn">
                   <span>${escapeHtml(sec.button_text)}</span>
                 </a>
               </div>

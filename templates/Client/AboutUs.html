@@ -70,17 +70,14 @@
 
 <!-- Dynamic Sections Root Container (Rendered purely dynamically via client-page-sections.js) -->
 <div id="dynamic-sections-root" data-slug="{{ (page.slug if page else slug) or 'about-us' }}" data-locale="{{ locale or 'en' }}">
-  <!-- Shimmering Loading Placeholder -->
-  <section class="about-hero-dark" style="min-height: 480px; display: flex; align-items: center;">
+  <!-- Clean Loading Placeholder -->
+  <section class="about-hero-dark" style="min-height: 360px; display: flex; align-items: center;">
     <div class="wrap" style="width: 100%;">
-      <div style="display:grid; grid-template-columns:1fr; gap:40px;" class="hero-2col-layout">
-        <div style="display:flex; flex-direction:column; gap:16px;">
-          <div class="skeleton-pulse" style="width: 140px; height: 16px; background: rgba(255,255,255,0.1); border-radius: 8px;"></div>
-          <div class="skeleton-pulse" style="width: 80%; height: 48px; background: rgba(255,255,255,0.1); border-radius: 12px;"></div>
-          <div class="skeleton-pulse" style="width: 95%; height: 20px; background: rgba(255,255,255,0.08); border-radius: 6px;"></div>
-          <div class="skeleton-pulse" style="width: 70%; height: 20px; background: rgba(255,255,255,0.08); border-radius: 6px;"></div>
-        </div>
-        <div class="skeleton-pulse" style="border-radius:24px; aspect-ratio:16/10; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08);"></div>
+      <div style="display:flex; flex-direction:column; gap:16px; max-width:760px;">
+        <div class="skeleton-pulse" style="width: 140px; height: 16px; background: rgba(255,255,255,0.1); border-radius: 8px;"></div>
+        <div class="skeleton-pulse" style="width: 85%; height: 44px; background: rgba(255,255,255,0.12); border-radius: 12px;"></div>
+        <div class="skeleton-pulse" style="width: 95%; height: 18px; background: rgba(255,255,255,0.08); border-radius: 6px;"></div>
+        <div class="skeleton-pulse" style="width: 75%; height: 18px; background: rgba(255,255,255,0.08); border-radius: 6px;"></div>
       </div>
     </div>
   </section>
