@@ -118,9 +118,24 @@ document.addEventListener('DOMContentLoaded', () => {
       const isFirst = idx === 0;
       const isLast = idx === allSections.length - 1;
 
+      // Extract repeater count or features
+      let itemsCount = 0;
+      if (sec.section_data) {
+        if (Array.isArray(sec.section_data)) itemsCount = sec.section_data.length;
+        else if (typeof sec.section_data === 'object') {
+          if (Array.isArray(sec.section_data.cards)) itemsCount = sec.section_data.cards.length;
+          else if (Array.isArray(sec.section_data.items)) itemsCount = sec.section_data.items.length;
+          else if (Array.isArray(sec.section_data.features)) itemsCount = sec.section_data.features.length;
+          else if (Array.isArray(sec.section_data.metrics)) itemsCount = sec.section_data.metrics.length;
+        }
+      }
+
+      const btnText = typeof sec.button_text === 'object' ? (sec.button_text.en || sec.button_text.ar || '') : (sec.button_text || '');
+
       return `
-        <div class="group bg-white rounded-3xl p-5 border ${sec.is_active ? 'border-slate-200/90' : 'border-slate-200/60 bg-slate-50/50 opacity-70'} shadow-2xs hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4" data-id="${sec.id}">
-          <div class="flex items-center gap-4 min-w-0">
+        <div class="group bg-white rounded-3xl p-5 border ${sec.is_active ? 'border-slate-200/90' : 'border-slate-200/60 bg-slate-50/50 opacity-75'} shadow-2xs hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4" data-id="${sec.id}">
+          <div class="flex items-center gap-4 min-w-0 flex-1">
+            <!-- Sequence & Order Controls -->
             <div class="flex flex-col items-center justify-center shrink-0">
               <span class="text-xs font-black text-slate-400 font-mono tracking-wider">${seqNum}</span>
               <div class="flex flex-col gap-0.5 mt-1">
@@ -132,21 +147,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 </button>
               </div>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-800 flex items-center justify-center text-xl shrink-0 border border-slate-200/80 shadow-2xs">
-              ${meta.emoji}
+
+            <!-- Layout Emoji / Thumbnail -->
+            <div class="relative shrink-0">
+              ${sec.image 
+                ? `<div class="w-13 h-13 rounded-2xl bg-slate-900 p-0.5 border border-slate-200 shadow-xs overflow-hidden"><img src="${sec.image}" alt="Thumb" class="w-full h-full object-cover rounded-xl" /></div>`
+                : `<div class="w-13 h-13 rounded-2xl bg-slate-100 text-slate-800 flex items-center justify-center text-2xl shrink-0 border border-slate-200/80 shadow-2xs">${meta.emoji}</div>`
+              }
+              <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-lg bg-slate-900 text-white text-[10px] flex items-center justify-center font-black shadow-xs">${meta.emoji}</span>
             </div>
-            <div class="min-w-0">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-slate-950 text-white">${meta.label}</span>
+
+            <!-- Content Overview & Meta Chips -->
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
+                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-950 text-white">${meta.label}</span>
                 ${sec.is_active 
                   ? '<span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200/80">Active</span>'
                   : '<span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 text-slate-500 border border-slate-200">Disabled</span>'
                 }
+                ${itemsCount > 0 ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">${itemsCount} Items</span>` : ''}
+                ${btnText ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/60 truncate max-w-[140px]">CTA: ${btnText}</span>` : ''}
+                ${sec.image_position ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">${sec.image_position === 'left' ? 'Image Left' : 'Image Right'}</span>` : ''}
               </div>
-              <h4 class="text-sm font-black text-slate-950 truncate max-w-md">${titleEn || 'Untitled Section'}</h4>
-              ${titleAr ? `<p class="text-[11px] text-slate-400 truncate max-w-md" dir="rtl">${titleAr}</p>` : ''}
+              <h4 class="text-sm font-black text-slate-950 truncate">${titleEn || 'Untitled Section'}</h4>
+              ${titleAr ? `<p class="text-xs text-slate-400 truncate mt-0.5" dir="rtl">${titleAr}</p>` : ''}
             </div>
           </div>
+
+          <!-- Actions -->
           <div class="flex items-center gap-2 shrink-0 self-end md:self-center">
             <button type="button" class="btn-toggle-active px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${sec.is_active ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" data-id="${sec.id}">
               ${sec.is_active ? 'Disable' : 'Enable'}
@@ -530,6 +558,24 @@ document.addEventListener('DOMContentLoaded', () => {
     formIsActive.checked = true;
     renderRepeaterItems();
     openModal();
+  });
+
+  // Quick Add from Predefined Layouts Catalog
+  document.querySelectorAll('.btn-quick-add-layout').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.type || 'hero';
+      formSectionId.value = '';
+      modalTitle.textContent = `Add Predefined Section (${TYPE_METADATA[type]?.label || type})`;
+      sectionForm.reset();
+      setSelectedType(type);
+      setLocaleTab('en');
+      updateImagePreview('');
+      repeaterItems = [];
+      formSortOrder.value = allSections.length + 1;
+      formIsActive.checked = true;
+      renderRepeaterItems();
+      openModal();
+    });
   });
 
   function openEditModal(secId) {
