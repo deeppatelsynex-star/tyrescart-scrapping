@@ -669,7 +669,35 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const ICON_CHOICES = [
+      { val: 'disc', label: 'Tyre / Disc' },
+      { val: 'award', label: 'Award / Brands' },
+      { val: 'clock', label: 'Clock / 24-7' },
+      { val: 'users', label: 'Users / Customer' },
+      { val: 'truck', label: 'Truck / Delivery' },
+      { val: 'shield', label: 'Shield / Warranty' },
+      { val: 'dollar-sign', label: 'Dollar / Price' },
+      { val: 'headset', label: 'Headset / Support' },
+      { val: 'globe', label: 'Globe / Network' },
+      { val: 'zap', label: 'Zap / Fast' },
+      { val: 'heart', label: 'Heart / Care' }
+    ];
+
     repeaterList.innerHTML = repeaterItems.map((item, i) => {
+      const currentIcon = String(item.icon || '').toLowerCase();
+      let matchedIcon = 'disc';
+      if (currentIcon.includes('brand') || currentIcon.includes('award') || currentIcon.includes('quality') || currentIcon.includes('star')) matchedIcon = 'award';
+      else if (currentIcon.includes('clock') || currentIcon.includes('time') || currentIcon.includes('24') || currentIcon.includes('access') || currentIcon.includes('online')) matchedIcon = 'clock';
+      else if (currentIcon.includes('user') || currentIcon.includes('customer') || currentIcon.includes('team') || currentIcon.includes('heart')) matchedIcon = 'users';
+      else if (currentIcon.includes('truck') || currentIcon.includes('delivery') || currentIcon.includes('ship')) matchedIcon = 'truck';
+      else if (currentIcon.includes('shield') || currentIcon.includes('warrant') || currentIcon.includes('safe')) matchedIcon = 'shield';
+      else if (currentIcon.includes('dollar') || currentIcon.includes('price') || currentIcon.includes('cost')) matchedIcon = 'dollar-sign';
+      else if (currentIcon.includes('headset') || currentIcon.includes('support') || currentIcon.includes('call')) matchedIcon = 'headset';
+      else if (currentIcon.includes('globe') || currentIcon.includes('network') || currentIcon.includes('uae')) matchedIcon = 'globe';
+      else if (currentIcon.includes('zap') || currentIcon.includes('fast') || currentIcon.includes('speed')) matchedIcon = 'zap';
+      else if (currentIcon.includes('tyre') || currentIcon.includes('wheel') || currentIcon.includes('disc')) matchedIcon = 'disc';
+      else if (['disc', 'award', 'clock', 'users', 'truck', 'shield', 'dollar-sign', 'headset', 'globe', 'zap', 'heart'].includes(currentIcon)) matchedIcon = currentIcon;
+
       if (type === 'stats') {
         return `
           <div class="p-3 bg-white rounded-2xl border border-slate-200 space-y-2">
@@ -679,7 +707,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="grid grid-cols-2 gap-2">
               <input type="text" placeholder="Number (e.g. 50K+)" class="rep-num px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-black bg-slate-50" value="${item.number || ''}" />
-              <input type="text" placeholder="Icon (users, disc, globe, award)" class="rep-icon px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50" value="${item.icon || ''}" />
+              <select class="rep-icon px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50">
+                ${ICON_CHOICES.map(opt => `<option value="${opt.val}" ${matchedIcon === opt.val ? 'selected' : ''}>Icon: ${opt.label}</option>`).join('')}
+              </select>
             </div>
             <div class="grid grid-cols-2 gap-2">
               <input type="text" placeholder="Heading (EN)" class="rep-head-en px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold" value="${typeof item.heading === 'object' ? (item.heading.en || '') : (item.heading || '')}" />
@@ -699,7 +729,9 @@ document.addEventListener('DOMContentLoaded', () => {
               <button type="button" class="btn-remove-repeater text-rose-500 hover:text-rose-700 text-xs font-bold cursor-pointer" data-index="${i}">Remove</button>
             </div>
             <div class="grid grid-cols-3 gap-2">
-              <input type="text" placeholder="Icon (shield, award, heart, zap, truck, dollar-sign)" class="rep-icon col-span-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50" value="${item.icon || ''}" />
+              <select class="rep-icon col-span-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50">
+                ${ICON_CHOICES.map(opt => `<option value="${opt.val}" ${matchedIcon === opt.val ? 'selected' : ''}>Icon: ${opt.label}</option>`).join('')}
+              </select>
               <input type="text" placeholder="Title (EN)" class="rep-title-en col-span-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold" value="${typeof item.title === 'object' ? (item.title.en || '') : (item.title || '')}" />
               <input type="text" dir="rtl" placeholder="العنوان (AR)" class="rep-title-ar col-span-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold" value="${typeof item.title === 'object' ? (item.title.ar || '') : ''}" />
             </div>
