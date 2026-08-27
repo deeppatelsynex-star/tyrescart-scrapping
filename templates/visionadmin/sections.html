@@ -488,6 +488,6 @@
 
 {% endblock %}
 
-{% block extra_scripts %}
-<script src="/static/visionadmin/sections.js?v=2.0"></script>
+{% block scripts %}
+<script src="/static/visionadmin/sections.js?v={{ range(10000, 99999) | random }}"></script>
 {% endblock %}
