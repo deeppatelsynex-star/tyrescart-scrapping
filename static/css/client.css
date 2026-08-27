@@ -3454,3 +3454,258 @@ footer .tagline {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(53, 118, 15, 0.45);
 }
+
+/* ============================================================
+   MOBILE HAMBURGER & RESPONSIVE DRAWER NAVIGATION
+   ============================================================ */
+.mobile-menu-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 38px;
+  height: 38px;
+  background: var(--bg-soft, #f6f8f3);
+  border: 1px solid var(--line, #e3e7de);
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 0;
+  color: var(--ink);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.mobile-menu-btn:hover {
+  background: var(--line);
+  color: var(--green-deep);
+}
+
+.mobile-menu-btn .hamburger-bar {
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+@media (max-width: 979px) {
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+}
+
+/* Mobile Nav Drawer Backdrop */
+.mobile-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 17, 8, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-nav-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Mobile Nav Drawer Panel */
+.mobile-nav-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 320px;
+  max-width: 85vw;
+  background: #ffffff;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+  transform: translateX(-100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.mobile-nav-drawer.open {
+  transform: translateX(0);
+}
+
+/* RTL: Drawer slides in from right */
+html[dir="rtl"] .mobile-nav-drawer {
+  left: auto;
+  right: 0;
+  transform: translateX(100%);
+}
+
+html[dir="rtl"] .mobile-nav-drawer.open {
+  transform: translateX(0);
+}
+
+.mobile-nav-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line, #e3e7de);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+}
+
+.mobile-nav-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--line, #e3e7de);
+  background: var(--bg-soft, #f6f8f3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--slate);
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-close:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #ef4444;
+}
+
+.mobile-nav-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 12px;
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--slate);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-link svg {
+  color: var(--green-deep);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.mobile-nav-link:hover {
+  background: var(--green-tint, #eff9e6);
+  color: var(--green-deep);
+}
+
+.mobile-nav-link:hover svg {
+  transform: scale(1.15);
+}
+
+.mobile-nav-link.active {
+  background: #0e1108;
+  color: #ffffff;
+}
+
+.mobile-nav-link.active svg {
+  color: var(--green-bright, #68c927);
+}
+
+.mobile-nav-foot {
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--line, #e3e7de);
+  background: var(--bg-soft, #f6f8f3);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mobile-nav-lang-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mobile-nav-lang-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--slate);
+}
+
+.mobile-nav-cta-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-nav-cta-btns .btn {
+  width: 100%;
+  justify-content: center;
+  padding: 12px 18px;
+  font-size: 0.92rem;
+}
+
+/* ============================================================
+   RTL RESPONSIVE & LAYOUT OPTIMIZATIONS
+   ============================================================ */
+html[dir="rtl"] {
+  text-align: right;
+}
+
+html[dir="rtl"] .logo {
+  direction: ltr;
+}
+
+html[dir="rtl"] .float-wa {
+  left: 20px;
+  right: auto;
+}
+
+html[dir="rtl"] .breadcrumb-nav {
+  direction: rtl;
+}
+
+html[dir="rtl"] .breadcrumb-nav .sep {
+  transform: scaleX(-1);
+  display: inline-block;
+}
+
+html[dir="rtl"] .prev-next-nav-card {
+  direction: rtl;
+}
+
+html[dir="rtl"] .check-list li {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+html[dir="rtl"] .faq-question-btn {
+  text-align: right;
+}
+
+html[dir="rtl"] .about-hero-feat-item {
+  text-align: right;
+}
+
+html[dir="rtl"] .about-stat-col {
+  text-align: right;
+}
+
+html[dir="rtl"] .about-action-content {
+  text-align: right;
+}
+

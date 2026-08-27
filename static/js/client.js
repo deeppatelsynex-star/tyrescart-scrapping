@@ -100,4 +100,43 @@
     // Deep link: /#notice opens the modal on load
     if(window.location.hash === '#notice') openNotice();
   }
+
+  /* ---------- Mobile Navigation Drawer ---------- */
+  var menuBtn = document.getElementById('mobileMenuBtn');
+  var drawer = document.getElementById('mobileNavDrawer');
+  var backdrop = document.getElementById('mobileNavBackdrop');
+  var closeBtn = document.getElementById('mobileNavClose');
+
+  function openMobileNav() {
+    if (drawer) drawer.classList.add('open');
+    if (backdrop) backdrop.classList.add('open');
+    if (menuBtn) menuBtn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMobileNav() {
+    if (drawer) drawer.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('open');
+    if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  if (menuBtn) menuBtn.addEventListener('click', openMobileNav);
+  if (closeBtn) closeBtn.addEventListener('click', closeMobileNav);
+  if (backdrop) backdrop.addEventListener('click', closeMobileNav);
+
+  if (drawer) {
+    var links = drawer.querySelectorAll('a');
+    for (var i = 0; i < links.length; i++) {
+      links[i].addEventListener('click', function() {
+        closeMobileNav();
+      });
+    }
+  }
+
+  window.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && drawer && drawer.classList.contains('open')) {
+      closeMobileNav();
+    }
+  });
 })();
