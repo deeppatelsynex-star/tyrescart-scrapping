@@ -5,6 +5,7 @@
 # live in this file (/api/blogs, /api/blogs/<slug>) now live in the unified
 # app/api.py alongside the tcsadmin and visionadmin APIs.
 import json
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, session, abort, redirect, make_response
 from models.blog import Blog
 from models.page import Page
@@ -190,6 +191,14 @@ def _render_blog_detail(slug, locale):
 
     cat_name = blog.category_name or ('Blog' if locale != 'ar' else 'مدونة')
 
+    pub_dt = blog.published_at or blog.created_at
+    if pub_dt:
+        published_str = pub_dt.strftime('%d-%m-%Y')
+        reviewed_str = (pub_dt - timedelta(days=2)).strftime('%d-%m-%Y')
+    else:
+        published_str = '26-08-2026'
+        reviewed_str = '24-08-2026'
+
     blog_data = {
         'id': blog.id,
         'slug': blog.slug,
@@ -198,7 +207,8 @@ def _render_blog_detail(slug, locale):
         'short_description': blog.get_short_desc(locale),
         'category': cat_name,
         'cover_image_url': blog.image or '/static/assets/online-tyres-shop-dubai.png',
-        'published_at': blog.published_at.strftime('%d-%m-%Y') if blog.published_at else (blog.created_at.strftime('%d-%m-%Y') if blog.created_at else '24-08-2026'),
+        'published_at': published_str,
+        'reviewed_at': reviewed_str,
         'read_time': '5 min read' if locale != 'ar' else 'قراءة 5 دقائق',
         'faqs': blog.get_faqs(locale),
         'author': {
