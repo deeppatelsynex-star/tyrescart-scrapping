@@ -726,11 +726,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <!-- Row 2: Heading EN & AR -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Heading / Label (EN) *</label>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Heading / Label (English) *</label>
                 <input type="text" placeholder="e.g. Tyres Available" class="rep-head-en w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-emerald-500" value="${typeof item.heading === 'object' ? (item.heading.en || '') : (item.heading || '')}" />
               </div>
               <div>
-                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1 text-right">العنوان الرئيسي (AR) *</label>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Heading / Label (Arabic) *</label>
                 <input type="text" dir="rtl" placeholder="مثال: إطارات متوفرة" class="rep-head-ar w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-right focus:ring-2 focus:ring-emerald-500" value="${typeof item.heading === 'object' ? (item.heading.ar || '') : ''}" />
               </div>
             </div>
@@ -738,11 +738,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <!-- Row 3: Subtext EN & AR -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Subtext / Description (EN)</label>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Subtext / Description (English)</label>
                 <input type="text" placeholder="e.g. Quality options for different vehicles" class="rep-sub-en w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500" value="${typeof item.subtext === 'object' ? (item.subtext.en || '') : (item.subtext || '')}" />
               </div>
               <div>
-                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1 text-right">النص الفرعي / الوصف (AR)</label>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Subtext / Description (Arabic)</label>
                 <input type="text" dir="rtl" placeholder="مثال: خيارات عالية الجودة لكافة المركبات" class="rep-sub-ar w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-right focus:ring-2 focus:ring-emerald-500" value="${typeof item.subtext === 'object' ? (item.subtext.ar || '') : ''}" />
               </div>
             </div>
@@ -768,11 +768,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 </select>
               </div>
               <div>
-                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Card Title (EN) *</label>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Card Title (English) *</label>
                 <input type="text" placeholder="e.g. Genuine Tyres" class="rep-title-en w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-emerald-500" value="${typeof item.title === 'object' ? (item.title.en || '') : (item.title || '')}" />
               </div>
               <div>
-                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1 text-right">عنوان البطاقة (AR) *</label>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Card Title (Arabic) *</label>
                 <input type="text" dir="rtl" placeholder="مثال: إطارات أصلية معتمدة" class="rep-title-ar w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-right focus:ring-2 focus:ring-emerald-500" value="${typeof item.title === 'object' ? (item.title.ar || '') : ''}" />
               </div>
             </div>
@@ -780,11 +780,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <!-- Row 2: Descriptions -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Description (EN)</label>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Description (English)</label>
                 <input type="text" placeholder="e.g. 100% certified authentic tyre brands" class="rep-desc-en w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500" value="${typeof item.desc === 'object' ? (item.desc.en || '') : (item.desc || item.sub || '')}" />
               </div>
               <div>
-                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1 text-right">الوصف (AR)</label>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Description (Arabic)</label>
                 <input type="text" dir="rtl" placeholder="مثال: إطارات مضمونة وموثوقة لجميع الطرقات" class="rep-desc-ar w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-right focus:ring-2 focus:ring-emerald-500" value="${typeof item.desc === 'object' ? (item.desc.ar || '') : ''}" />
               </div>
             </div>
