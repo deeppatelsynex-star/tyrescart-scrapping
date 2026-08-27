@@ -526,6 +526,9 @@
 
       root.innerHTML = finalHtml;
 
+      // 3. Initialize scroll-triggered interactive count-up animation for numbers
+      initStatsCounterObserver(root);
+
     } catch (err) {
       console.error('Failed to load page sections dynamically:', err);
       root.innerHTML = `
@@ -535,6 +538,93 @@
         </div>
       `;
     }
+  }
+
+  function animateCountUp(element) {
+    const rawText = element.getAttribute('data-count-target') || element.textContent.trim();
+    if (!rawText) return;
+
+    // Supports "10K+", "100+", "24/7", "100%", "50,000+", "$500"
+    const match = rawText.match(/^([^\d]*)([\d,.]+)(.*)$/);
+    if (!match) return;
+
+    const prefix = match[1] || '';
+    const numStr = match[2].replace(/,/g, '');
+    const suffix = match[3] || '';
+    const targetNum = parseFloat(numStr);
+    if (isNaN(targetNum)) return;
+
+    const isFloat = numStr.includes('.');
+    const decimals = isFloat ? (numStr.split('.')[1] || '').length : 0;
+    const duration = 1600; // 1.6s
+    const startTime = performance.now();
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function updateCount(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOutCubic(progress);
+      const currentNum = (targetNum * eased);
+
+      let formattedNum = isFloat
+        ? currentNum.toFixed(decimals)
+        : Math.floor(currentNum).toLocaleString();
+
+      element.textContent = `${prefix}${formattedNum}${suffix}`;
+
+      if (progress < 1) {
+        requestAnimationFrame(updateCount);
+      } else {
+        element.textContent = rawText; // set exact target
+      }
+    }
+
+    requestAnimationFrame(updateCount);
+  }
+
+  function initStatsCounterObserver(rootEl) {
+    const statCols = (rootEl || document).querySelectorAll('.about-stat-col');
+    if (!statCols || statCols.length === 0) return;
+
+    if (!('IntersectionObserver' in window)) {
+      return; // Fallback: default text is already rendered
+    }
+
+    const observer = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const numEl = entry.target.querySelector('.about-stat-number');
+          if (numEl && !numEl.classList.contains('counted')) {
+            numEl.classList.add('counted');
+            entry.target.classList.add('stat-animated');
+            animateCountUp(numEl);
+          }
+          obs.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.2,
+      rootMargin: '0px 0px -30px 0px'
+    });
+
+    statCols.forEach(col => {
+      const numEl = col.querySelector('.about-stat-number');
+      if (numEl) {
+        const raw = numEl.textContent.trim();
+        numEl.setAttribute('data-count-target', raw);
+        // Extract prefix and suffix to initialize at 0
+        const match = raw.match(/^([^\d]*)([\d,.]+)(.*)$/);
+        if (match) {
+          const prefix = match[1] || '';
+          const suffix = match[3] || '';
+          numEl.textContent = `${prefix}0${suffix}`;
+        }
+        observer.observe(col);
+      }
+    });
   }
 
   // Initialize on DOM load

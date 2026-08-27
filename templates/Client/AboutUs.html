@@ -62,6 +62,21 @@
 .hero-db-content li {
   margin-bottom: 6px;
 }
+.stat-animated .about-stat-icon-wrap {
+  animation: statIconPulse 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stat-animated .about-stat-number {
+  animation: statNumberPop 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes statIconPulse {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes statNumberPop {
+  0% { transform: translateY(12px); opacity: 0.2; }
+  100% { transform: translateY(0); opacity: 1; }
+}
 </style>
 {% endblock %}
 
