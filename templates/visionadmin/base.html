@@ -65,21 +65,62 @@
       </div>
 
       <!-- Main Navigation Menu -->
-      <div class="space-y-1.5">
-        <span class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-2">Content Modules</span>
+      <div class="space-y-2">
+        <span class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-1">Content Modules</span>
 
-        <!-- Pages Link with Animated Hover Icon -->
-        <a href="/visionadmin/pages" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'pages' %}bg-slate-950 text-white shadow-md shadow-slate-950/15{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-100/80{% endif %}">
-          <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'pages' %}bg-white/15 text-emerald-400{% else %}bg-slate-100 text-slate-500 group-hover:bg-emerald-50 group-hover:text-emerald-600{% endif %} transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
-              <svg class="w-4 h-4 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <!-- Pages Tree Structure (Parent: pages, Children: page list, Sections list) -->
+        <div class="space-y-1">
+          <!-- Parent: Pages Toggle Header -->
+          <button type="button" id="va-pages-tree-toggle" class="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer select-none {% if page in ['pages', 'sections'] %}bg-slate-900 text-white shadow-md shadow-slate-950/15{% else %}text-slate-700 hover:text-slate-950 hover:bg-slate-100/80{% endif %}">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['pages', 'sections'] %}bg-white/15 text-emerald-400{% else %}bg-slate-100 text-slate-500 group-hover:bg-emerald-50 group-hover:text-emerald-600{% endif %} transition-all duration-300 group-hover:scale-110">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
+              <span class="font-bold tracking-tight">pages</span>
             </div>
-            <span>Pages &amp; Policies</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md {% if page in ['pages', 'sections'] %}bg-white/20 text-white{% else %}bg-slate-100 text-slate-500{% endif %}">2</span>
+              <svg id="va-pages-tree-chevron" class="w-4 h-4 transition-transform duration-300 {% if page in ['pages', 'sections'] %}rotate-180 text-white/80{% else %}text-slate-400 group-hover:text-slate-700{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </button>
+
+          <!-- Tree Branch Container -->
+          <div id="va-pages-tree-branch" class="pl-4 pr-1 py-1 space-y-1 relative transition-all duration-300 ease-in-out {% if page not in ['pages', 'sections'] %}hidden{% endif %}">
+            
+            <!-- Continuous Tree Vertical Line -->
+            <div class="absolute left-6 top-0 bottom-4 w-px bg-slate-200"></div>
+
+            <!-- Child 1: page list (├── page list) -->
+            <a href="/visionadmin/pages" class="group flex items-center justify-between pl-7 pr-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 relative {% if page == 'pages' %}bg-slate-950 text-white shadow-xs font-black{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-100/90{% endif %}">
+              <!-- Tree Horizontal Branch Connector -->
+              <span class="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-px bg-slate-200 group-hover:bg-emerald-400 transition-colors"></span>
+              
+              <div class="flex items-center gap-2 relative z-10">
+                <div class="w-2 h-2 rounded-full transition-all duration-200 {% if page == 'pages' %}bg-emerald-400 ring-4 ring-emerald-400/20 scale-110{% else %}bg-slate-300 group-hover:bg-emerald-500 group-hover:scale-125{% endif %}"></div>
+                <span class="truncate">page list</span>
+              </div>
+
+              {% if page == 'pages' %}
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              {% endif %}
+            </a>
+
+            <!-- Child 2: Sections list (└── Sections list) -->
+            <a href="/visionadmin/sections" class="group flex items-center justify-between pl-7 pr-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 relative {% if page == 'sections' %}bg-slate-950 text-white shadow-xs font-black{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-100/90{% endif %}">
+              <!-- Tree Curve Corner Connector -->
+              <span class="absolute left-6 top-0 h-1/2 w-4 border-b border-l border-slate-200 rounded-bl-lg group-hover:border-emerald-400 transition-colors"></span>
+              
+              <div class="flex items-center gap-2 relative z-10">
+                <div class="w-2 h-2 rounded-full transition-all duration-200 {% if page == 'sections' %}bg-emerald-400 ring-4 ring-emerald-400/20 scale-110{% else %}bg-slate-300 group-hover:bg-emerald-500 group-hover:scale-125{% endif %}"></div>
+                <span class="truncate">Sections list</span>
+              </div>
+
+              {% if page == 'sections' %}
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              {% endif %}
+            </a>
           </div>
-          {% if page == 'pages' %}
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 ring-4 ring-emerald-400/20"></span>
-          {% endif %}
-        </a>
+        </div>
 
         <!-- Blogs Link with Animated Hover Icon -->
         <a href="/visionadmin/blogs" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'blogs' %}bg-slate-950 text-white shadow-md shadow-slate-950/15{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-100/80{% endif %}">
@@ -90,19 +131,6 @@
             <span>Blogs &amp; Articles</span>
           </div>
           {% if page == 'blogs' %}
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 ring-4 ring-emerald-400/20"></span>
-          {% endif %}
-        </a>
-
-        <!-- About Us Sections Link with Animated Hover Icon -->
-        <a href="/visionadmin/sections" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'sections' %}bg-slate-950 text-white shadow-md shadow-slate-950/15{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-100/80{% endif %}">
-          <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'sections' %}bg-white/15 text-emerald-400{% else %}bg-slate-100 text-slate-500 group-hover:bg-emerald-50 group-hover:text-emerald-600{% endif %} transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
-              <svg class="w-4 h-4 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-            </div>
-            <span>About Us Sections</span>
-          </div>
-          {% if page == 'sections' %}
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 ring-4 ring-emerald-400/20"></span>
           {% endif %}
         </a>
@@ -312,6 +340,24 @@
     if (openBtn) openBtn.addEventListener('click', () => toggleSidebar(true));
     if (closeBtn) closeBtn.addEventListener('click', () => toggleSidebar(false));
     if (backdrop) backdrop.addEventListener('click', () => toggleSidebar(false));
+
+    // Pages Tree Accordion Toggle
+    const pagesTreeToggle = document.getElementById('va-pages-tree-toggle');
+    const pagesTreeBranch = document.getElementById('va-pages-tree-branch');
+    const pagesTreeChevron = document.getElementById('va-pages-tree-chevron');
+
+    if (pagesTreeToggle && pagesTreeBranch) {
+      pagesTreeToggle.addEventListener('click', () => {
+        const isHidden = pagesTreeBranch.classList.contains('hidden');
+        if (isHidden) {
+          pagesTreeBranch.classList.remove('hidden');
+          if (pagesTreeChevron) pagesTreeChevron.classList.add('rotate-180');
+        } else {
+          pagesTreeBranch.classList.add('hidden');
+          if (pagesTreeChevron) pagesTreeChevron.classList.remove('rotate-180');
+        }
+      });
+    }
 
     window.vaShowToast = function(message, type = 'success') {
       const toast = document.getElementById('va-toast');
