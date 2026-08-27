@@ -856,6 +856,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formSectionId.value = '';
     modalTitle.textContent = 'Add Predefined Section';
     sectionForm.reset();
+    if (formPageSlug) formPageSlug.value = currentPageSlug;
     setSelectedType('hero');
     setLocaleTab('en');
     setEditorContent('form-content-en', '');
@@ -875,6 +876,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formSectionId.value = '';
       modalTitle.textContent = `Add Predefined Section (${TYPE_METADATA[type]?.label || type})`;
       sectionForm.reset();
+      if (formPageSlug) formPageSlug.value = currentPageSlug;
       setSelectedType(type);
       setLocaleTab('en');
       setEditorContent('form-content-en', '');
@@ -894,6 +896,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     formSectionId.value = sec.id;
     modalTitle.textContent = `Edit ${TYPE_METADATA[sec.section_type]?.label || 'Section'}`;
+    if (formPageSlug) formPageSlug.value = sec.page_slug || currentPageSlug;
 
     formTitleEn.value = typeof sec.section_title === 'object' ? (sec.section_title.en || '') : (sec.section_title || '');
     formTitleAr.value = typeof sec.section_title === 'object' ? (sec.section_title.ar || '') : '';

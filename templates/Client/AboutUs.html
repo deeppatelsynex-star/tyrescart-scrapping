@@ -1,11 +1,19 @@
 {% extends 'Client/layout.html' %}
 
 {% block title %}
-  {% if locale == 'ar' %}من نحن | تايرز فيجن الإمارات — إطارات أصلية وخدمة موثوقة{% else %}About Us | TyresVision UAE — Driven by Confidence, Built for the Road{% endif %}
+  {% if page and page.title %}
+    {{ page.title }} | {% if locale == 'ar' %}تايرز فيجن الإمارات{% else %}TyresVision UAE{% endif %}
+  {% else %}
+    {% if locale == 'ar' %}من نحن | تايرز فيجن الإمارات — إطارات أصلية وخدمة موثوقة{% else %}About Us | TyresVision UAE — Driven by Confidence, Built for the Road{% endif %}
+  {% endif %}
 {% endblock %}
 
 {% block meta_description %}
-  {% if locale == 'ar' %}في تايرز فيجن، نقدم إطارات سيارات أصلية معتمدة، وأسعار شفافة، وخدمة تركيب متنقلة عند باب منزلك أو في مراكزنا المعتمدة في كافة أنحاء الإمارات.{% else %}At TyresVision, we deliver premium tyres that combine cutting-edge technology, superior performance, and lasting reliability across the UAE.{% endif %}
+  {% if page and page.meta_description %}
+    {{ page.meta_description }}
+  {% else %}
+    {% if locale == 'ar' %}في تايرز فيجن، نقدم إطارات سيارات أصلية معتمدة، وأسعار شفافة، وخدمة تركيب متنقلة عند باب منزلك أو في مراكزنا المعتمدة في كافة أنحاء الإمارات.{% else %}At TyresVision, we deliver premium tyres that combine cutting-edge technology, superior performance, and lasting reliability across the UAE.{% endif %}
+  {% endif %}
 {% endblock %}
 
 {% block extra_head %}
@@ -28,6 +36,43 @@
    Uses predefined, fixed design components so layout remains consistent.
    ========================================================================= #}
 
+{% set ns = namespace(has_hero=false) %}
+{% for s in sections %}
+  {% if s.section_type == 'hero' %}
+    {% set ns.has_hero = true %}
+  {% endif %}
+{% endfor %}
+
+{# If page has dynamic sections but NO Hero section, render standard clean header banner #}
+{% if not ns.has_hero %}
+<section class="about-hero-dark" style="padding-top:36px; padding-bottom:44px; min-height:auto;">
+  <div class="wrap">
+    <nav class="about-breadcrumb" aria-label="Breadcrumb" style="margin-bottom:18px;">
+      <a href="{% if locale == 'ar' %}/ar{% else %}/{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>{% if locale == 'ar' %}الرئيسية{% else %}Home{% endif %}</span>
+      </a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="current">{{ (page.title if (page and page.title) else '') or ('من نحن' if locale == 'ar' else 'About Us') }}</span>
+    </nav>
+    <div style="max-width:800px;">
+      <span class="eyebrow" style="color:var(--brand-glow, #34d399);">&mdash; {% if locale == 'ar' %}تايرز فيجن الإمارات{% else %}TyresVision UAE{% endif %}</span>
+      <h1 style="color:#ffffff; font-size:clamp(1.9rem, 3.8vw, 2.7rem); font-weight:800; margin-top:8px; line-height:1.2;">
+        {{ (page.title if (page and page.title) else '') or ('من نحن' if locale == 'ar' else 'About Us') }}
+      </h1>
+      {% if page and page.meta_description %}
+      <p class="lead" style="margin-top:10px; max-width:680px; color:rgba(255,255,255,0.75);">
+        {{ page.meta_description }}
+      </p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 {% for sec in sections %}
 
   {# -------------------------------------------------------------------------
@@ -47,7 +92,7 @@
           <span>{% if locale == 'ar' %}الرئيسية{% else %}Home{% endif %}</span>
         </a>
         <span class="sep" aria-hidden="true">/</span>
-        <span class="current">{% if locale == 'ar' %}من نحن{% else %}About Us{% endif %}</span>
+        <span class="current">{{ (page.title if (page and page.title) else '') or ('من نحن' if locale == 'ar' else 'About Us') }}</span>
       </nav>
 
       <!-- Hero 2-Column Grid -->
