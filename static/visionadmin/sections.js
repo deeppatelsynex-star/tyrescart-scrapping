@@ -10,12 +10,54 @@ document.addEventListener('DOMContentLoaded', () => {
   let repeaterItems = [];
 
   const TYPE_METADATA = {
-    hero: { label: 'Hero Section', emoji: '🦸', desc: 'Cinematic Dark Showroom + 4 Feature Points' },
-    content_image: { label: 'Content + Image', emoji: '🖼️', desc: 'Narrative Story with Warehouse Media & Floating Badge' },
-    features: { label: 'Features / Values', emoji: '✨', desc: 'Multi-card Value Pillars Grid' },
-    stats: { label: 'Statistics Band', emoji: '📊', desc: 'Atmospheric Dark 4-Metric Stats Band' },
-    mission_vision: { label: 'Mission / Team', emoji: '🎯', desc: 'Specialist Team / Mission 2-Column Split' },
-    cta: { label: 'CTA Action Box', emoji: '🚀', desc: 'Bottom Action Card with Wheel Visual & Button' }
+    hero: { 
+      label: 'Hero Banner', 
+      shortLabel: 'Hero', 
+      emoji: '🦸', 
+      badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
+      tagColor: 'bg-emerald-500',
+      desc: 'Cinematic Dark Showroom + 4 Feature Points' 
+    },
+    content_image: { 
+      label: 'Content + Image', 
+      shortLabel: '2-Column', 
+      emoji: '🖼️', 
+      badgeBg: 'bg-blue-50 text-blue-800 border-blue-200/80',
+      tagColor: 'bg-blue-500',
+      desc: 'Narrative Story with Warehouse Media & Floating Badge' 
+    },
+    features: { 
+      label: 'Features / Values', 
+      shortLabel: 'Features', 
+      emoji: '✨', 
+      badgeBg: 'bg-purple-50 text-purple-800 border-purple-200/80',
+      tagColor: 'bg-purple-500',
+      desc: 'Multi-card Value Pillars Grid' 
+    },
+    stats: { 
+      label: 'Statistics Band', 
+      shortLabel: 'Stats', 
+      emoji: '📊', 
+      badgeBg: 'bg-indigo-50 text-indigo-800 border-indigo-200/80',
+      tagColor: 'bg-indigo-500',
+      desc: 'Atmospheric Dark 4-Metric Stats Band' 
+    },
+    mission_vision: { 
+      label: 'Mission & Team', 
+      shortLabel: 'Mission', 
+      emoji: '🎯', 
+      badgeBg: 'bg-amber-50 text-amber-800 border-amber-200/80',
+      tagColor: 'bg-amber-500',
+      desc: 'Specialist Team / Mission 2-Column Split' 
+    },
+    cta: { 
+      label: 'CTA Action Box', 
+      shortLabel: 'CTA Box', 
+      emoji: '🚀', 
+      badgeBg: 'bg-rose-50 text-rose-800 border-rose-200/80',
+      tagColor: 'bg-rose-500',
+      desc: 'Bottom Action Card with Wheel Visual & Button' 
+    }
   };
 
   // Target Page handling (Query param ?page=...)
@@ -167,9 +209,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (allSections.length === 0) {
       const pageName = currentPageSlug.split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
       sectionsContainer.innerHTML = `
-        <div class="p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200/80">
+        <div class="p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200/80 shadow-2xs">
           <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-xl">📄</div>
-          <p class="text-sm font-bold text-slate-700">No Sections Configured for "${pageName}"</p>
+          <p class="text-sm font-black text-slate-800">No Sections Configured for "${pageName}"</p>
           <p class="text-xs text-slate-400 mt-1">Click "+ Add Section" or choose a predefined layout above to start building this page.</p>
         </div>
       `;
@@ -177,81 +219,206 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     sectionsContainer.innerHTML = allSections.map((sec, idx) => {
-      const meta = TYPE_METADATA[sec.section_type] || { label: sec.section_type, emoji: '📄', desc: '' };
+      const meta = TYPE_METADATA[sec.section_type] || { 
+        label: sec.section_type, 
+        shortLabel: 'Section', 
+        emoji: '📄', 
+        badgeBg: 'bg-slate-100 text-slate-800 border-slate-200', 
+        tagColor: 'bg-slate-500', 
+        desc: '' 
+      };
+
       const titleEn = typeof sec.section_title === 'object' ? (sec.section_title.en || sec.section_title.ar || '') : (sec.section_title || '');
       const titleAr = typeof sec.section_title === 'object' ? (sec.section_title.ar || '') : '';
+
+      const subtitleEn = typeof sec.section_subtitle === 'object' ? (sec.section_subtitle.en || sec.section_subtitle.ar || '') : (sec.section_subtitle || '');
+      const subtitleAr = typeof sec.section_subtitle === 'object' ? (sec.section_subtitle.ar || '') : '';
+
+      const contentEn = typeof sec.content === 'object' ? (sec.content.en || sec.content.ar || '') : (sec.content || '');
+      const contentAr = typeof sec.content === 'object' ? (sec.content.ar || '') : '';
+
+      const btnText = typeof sec.button_text === 'object' ? (sec.button_text.en || sec.button_text.ar || '') : (sec.button_text || '');
+      const btnUrl = sec.button_url || '';
+
       const seqNum = String(idx + 1).padStart(2, '0');
       const isFirst = idx === 0;
       const isLast = idx === allSections.length - 1;
 
-      // Extract repeater count or features
+      // Extract repeater count and render miniature structured preview chips
       let itemsCount = 0;
+      let renderedItemsChips = '';
+
       if (sec.section_data) {
-        if (Array.isArray(sec.section_data)) itemsCount = sec.section_data.length;
-        else if (typeof sec.section_data === 'object') {
-          if (Array.isArray(sec.section_data.cards)) itemsCount = sec.section_data.cards.length;
-          else if (Array.isArray(sec.section_data.items)) itemsCount = sec.section_data.items.length;
-          else if (Array.isArray(sec.section_data.features)) itemsCount = sec.section_data.features.length;
-          else if (Array.isArray(sec.section_data.metrics)) itemsCount = sec.section_data.metrics.length;
+        let chipList = [];
+        if (Array.isArray(sec.section_data.metrics) && sec.section_data.metrics.length > 0) {
+          itemsCount = sec.section_data.metrics.length;
+          chipList = sec.section_data.metrics.map(m => {
+            const heading = typeof m.heading === 'object' ? (m.heading.en || m.heading.ar || '') : (m.heading || '');
+            return `<span class="px-2 py-0.5 rounded-md bg-slate-100/90 text-slate-700 text-[10px] font-bold border border-slate-200/80"><span class="font-black text-slate-900">${m.number || ''}</span> ${heading}</span>`;
+          });
+        } else if (Array.isArray(sec.section_data.cards) && sec.section_data.cards.length > 0) {
+          itemsCount = sec.section_data.cards.length;
+          chipList = sec.section_data.cards.map(c => {
+            const title = typeof c.title === 'object' ? (c.title.en || c.title.ar || '') : (c.title || '');
+            return `<span class="px-2 py-0.5 rounded-md bg-slate-100/90 text-slate-700 text-[10px] font-semibold border border-slate-200/80 truncate max-w-[160px]">${title}</span>`;
+          });
+        } else if (Array.isArray(sec.section_data.features) && sec.section_data.features.length > 0) {
+          itemsCount = sec.section_data.features.length;
+          chipList = sec.section_data.features.map(f => {
+            const heading = typeof f.heading === 'object' ? (f.heading.en || f.heading.ar || '') : (f.heading || f.title || '');
+            return `<span class="px-2 py-0.5 rounded-md bg-slate-100/90 text-slate-700 text-[10px] font-semibold border border-slate-200/80 truncate max-w-[160px]">${heading}</span>`;
+          });
+        } else if (Array.isArray(sec.section_data.items) && sec.section_data.items.length > 0) {
+          itemsCount = sec.section_data.items.length;
+          chipList = sec.section_data.items.map(it => {
+            const title = typeof it.title === 'object' ? (it.title.en || it.title.ar || '') : (it.title || it.heading || '');
+            return `<span class="px-2 py-0.5 rounded-md bg-slate-100/90 text-slate-700 text-[10px] font-semibold border border-slate-200/80 truncate max-w-[160px]">${title}</span>`;
+          });
+        } else if (Array.isArray(sec.section_data)) {
+          itemsCount = sec.section_data.length;
+        }
+
+        if (chipList.length > 0) {
+          renderedItemsChips = chipList.slice(0, 4).join(' ') + (chipList.length > 4 ? `<span class="text-[10px] text-slate-400 font-bold px-1">+${chipList.length - 4} more</span>` : '');
         }
       }
 
-      const btnText = typeof sec.button_text === 'object' ? (sec.button_text.en || sec.button_text.ar || '') : (sec.button_text || '');
-
       return `
-        <div class="group bg-white rounded-3xl p-5 border ${sec.is_active ? 'border-slate-200/90' : 'border-slate-200/60 bg-slate-50/50 opacity-75'} shadow-2xs hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4" data-id="${sec.id}">
-          <div class="flex items-center gap-4 min-w-0 flex-1">
-            <!-- Sequence & Order Controls -->
-            <div class="flex flex-col items-center justify-center shrink-0">
-              <span class="text-xs font-black text-slate-400 font-mono tracking-wider">${seqNum}</span>
-              <div class="flex flex-col gap-0.5 mt-1">
-                <button type="button" class="btn-move-up p-1 rounded-md text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition ${isFirst ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}" data-id="${sec.id}" ${isFirst ? 'disabled' : ''} title="Move Up">
-                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
-                </button>
-                <button type="button" class="btn-move-down p-1 rounded-md text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition ${isLast ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}" data-id="${sec.id}" ${isLast ? 'disabled' : ''} title="Move Down">
-                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
+        <div class="group relative bg-white hover:bg-slate-50/40 rounded-3xl p-4 sm:p-5 border ${sec.is_active ? 'border-slate-200/90 shadow-2xs hover:shadow-md' : 'border-slate-200/60 bg-slate-50/50 opacity-75 shadow-none'} transition-all duration-200" data-id="${sec.id}">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            
+            <!-- Left Area: Sequence + Media + Content Details -->
+            <div class="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+              
+              <!-- 1. Sequence & Order Controls -->
+              <div class="flex flex-col items-center justify-center shrink-0 pt-0.5">
+                <span class="w-7 h-7 rounded-xl bg-slate-100 text-slate-700 font-mono font-black text-xs flex items-center justify-center border border-slate-200/80 shadow-2xs">${seqNum}</span>
+                <div class="flex flex-col gap-0.5 mt-1.5">
+                  <button type="button" class="btn-move-up p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition ${isFirst ? 'opacity-25 cursor-not-allowed' : 'cursor-pointer active:scale-90'}" data-id="${sec.id}" ${isFirst ? 'disabled' : ''} title="Move Up">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                  </button>
+                  <button type="button" class="btn-move-down p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition ${isLast ? 'opacity-25 cursor-not-allowed' : 'cursor-pointer active:scale-90'}" data-id="${sec.id}" ${isLast ? 'disabled' : ''} title="Move Down">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. Visual Media Thumbnail / Layout Visualizer (Strict Fixed Size!) -->
+              <div class="relative shrink-0 w-28 h-20 sm:w-36 sm:h-24 md:w-44 md:h-28 rounded-2xl overflow-hidden bg-slate-950 border border-slate-200/90 shadow-2xs group/media">
+                ${sec.image ? `
+                  <img src="${sec.image}" alt="Preview" class="w-full h-full object-cover group-hover/media:scale-105 transition-transform duration-500" loading="lazy" />
+                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent pointer-events-none"></div>
+                  <!-- Layout Tag Overlaid -->
+                  <div class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-slate-950/85 backdrop-blur-xs text-white text-[9px] font-black border border-white/15 shadow-xs flex items-center gap-1">
+                    <span>${meta.emoji}</span>
+                    <span class="truncate max-w-[75px]">${meta.shortLabel}</span>
+                  </div>
+                  <!-- Alignment pill -->
+                  ${sec.image_position ? `
+                    <div class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-slate-900/90 backdrop-blur-xs text-slate-200 text-[9px] font-extrabold border border-white/10 shadow-xs">
+                      ${sec.image_position === 'left' ? '◧ Left' : '◨ Right'}
+                    </div>
+                  ` : ''}
+                ` : `
+                  <!-- No Image Gradient Placeholder -->
+                  <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white p-2 text-center relative overflow-hidden">
+                    <span class="text-2xl mb-0.5 filter drop-shadow">${meta.emoji}</span>
+                    <span class="text-[9px] font-black text-slate-200 uppercase tracking-wider">${meta.shortLabel}</span>
+                  </div>
+                `}
+              </div>
+
+              <!-- 3. Rich Content & Bilingual Typography Body -->
+              <div class="min-w-0 flex-1 space-y-1.5">
+                
+                <!-- Meta Badges Line -->
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <!-- Type Badge -->
+                  <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${meta.badgeBg}">
+                    ${meta.label}
+                  </span>
+
+                  <!-- Status Badge -->
+                  ${sec.is_active 
+                    ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200/80"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Live</span>'
+                    : '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-slate-100 text-slate-500 border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Disabled</span>'
+                  }
+
+                  <!-- Structured Items Count -->
+                  ${itemsCount > 0 ? `
+                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center gap-1">
+                      <svg class="w-3 h-3 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                      <span>${itemsCount} ${sec.section_type === 'stats' ? 'Metrics' : (sec.section_type === 'hero' ? 'Pillars' : 'Cards')}</span>
+                    </span>
+                  ` : ''}
+
+                  <!-- CTA Button Badge -->
+                  ${btnText ? `
+                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/70 truncate max-w-[180px] flex items-center gap-1">
+                      <span>🔗</span>
+                      <span class="truncate">${btnText}</span>
+                    </span>
+                  ` : ''}
+                </div>
+
+                <!-- Subtitle Eyebrow (if available) -->
+                ${(subtitleEn || subtitleAr) ? `
+                  <div class="text-[10px] font-black uppercase tracking-widest text-emerald-600 truncate">
+                    ${subtitleEn || subtitleAr}
+                  </div>
+                ` : ''}
+
+                <!-- Main Headlines (EN & AR) -->
+                <div>
+                  <h3 class="text-sm sm:text-base font-black text-slate-950 tracking-tight leading-snug truncate">
+                    ${titleEn || 'Untitled Section'}
+                  </h3>
+                  ${titleAr ? `
+                    <p class="text-xs font-semibold text-slate-400 mt-0.5 truncate" dir="rtl">${titleAr}</p>
+                  ` : ''}
+                </div>
+
+                <!-- Description Snippet (if available) -->
+                ${(contentEn || contentAr) ? `
+                  <p class="text-xs text-slate-600 font-normal leading-relaxed line-clamp-2 bg-slate-50/80 p-2 sm:p-2.5 rounded-xl border border-slate-100/90">
+                    ${contentEn || contentAr}
+                  </p>
+                ` : ''}
+
+                <!-- Mini Structured Chips Preview (if available) -->
+                ${renderedItemsChips ? `
+                  <div class="flex flex-wrap items-center gap-1 pt-0.5">
+                    ${renderedItemsChips}
+                  </div>
+                ` : ''}
+
               </div>
             </div>
 
-            <!-- Layout Emoji / Thumbnail -->
-            <div class="relative shrink-0">
-              ${sec.image 
-                ? `<div class="w-13 h-13 rounded-2xl bg-slate-900 p-0.5 border border-slate-200 shadow-xs overflow-hidden"><img src="${sec.image}" alt="Thumb" class="w-full h-full object-cover rounded-xl" /></div>`
-                : `<div class="w-13 h-13 rounded-2xl bg-slate-100 text-slate-800 flex items-center justify-center text-2xl shrink-0 border border-slate-200/80 shadow-2xs">${meta.emoji}</div>`
-              }
-              <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-lg bg-slate-900 text-white text-[10px] flex items-center justify-center font-black shadow-xs">${meta.emoji}</span>
-            </div>
+            <!-- Right Area: Actions Group -->
+            <div class="flex sm:flex-row lg:flex-col items-center justify-end gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+              
+              <!-- Enable / Disable Toggle -->
+              <button type="button" class="btn-toggle-active w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${sec.is_active ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'}" data-id="${sec.id}">
+                <span class="w-2 h-2 rounded-full ${sec.is_active ? 'bg-emerald-500' : 'bg-slate-400'}"></span>
+                <span>${sec.is_active ? 'Active' : 'Disabled'}</span>
+              </button>
 
-            <!-- Content Overview & Meta Chips -->
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
-                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-950 text-white">${meta.label}</span>
-                ${sec.is_active 
-                  ? '<span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200/80">Active</span>'
-                  : '<span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 text-slate-500 border border-slate-200">Disabled</span>'
-                }
-                ${itemsCount > 0 ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">${itemsCount} Items</span>` : ''}
-                ${btnText ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/60 truncate max-w-[140px]">CTA: ${btnText}</span>` : ''}
-                ${sec.image_position ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">${sec.image_position === 'left' ? 'Image Left' : 'Image Right'}</span>` : ''}
+              <div class="flex items-center gap-1.5 w-full sm:w-auto">
+                <!-- Edit Button -->
+                <button type="button" class="btn-edit-section flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-black shadow-2xs hover:shadow-xs transition active:scale-95 cursor-pointer" data-id="${sec.id}">
+                  <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  <span>Edit</span>
+                </button>
+
+                <!-- Delete Button -->
+                <button type="button" class="btn-delete-section p-2 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition cursor-pointer" data-id="${sec.id}" title="Delete Section">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
               </div>
-              <h4 class="text-sm font-black text-slate-950 truncate">${titleEn || 'Untitled Section'}</h4>
-              ${titleAr ? `<p class="text-xs text-slate-400 truncate mt-0.5" dir="rtl">${titleAr}</p>` : ''}
-            </div>
-          </div>
 
-          <!-- Actions -->
-          <div class="flex items-center gap-2 shrink-0 self-end md:self-center">
-            <button type="button" class="btn-toggle-active px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${sec.is_active ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}" data-id="${sec.id}">
-              ${sec.is_active ? 'Disable' : 'Enable'}
-            </button>
-            <button type="button" class="btn-edit-section inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold shadow-2xs transition cursor-pointer" data-id="${sec.id}">
-              <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              <span>Edit</span>
-            </button>
-            <button type="button" class="btn-delete-section p-2 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer" data-id="${sec.id}" title="Delete">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            </button>
+            </div>
+
           </div>
         </div>
       `;
