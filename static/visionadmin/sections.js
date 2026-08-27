@@ -700,44 +700,93 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (type === 'stats') {
         return `
-          <div class="p-3 bg-white rounded-2xl border border-slate-200 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-black text-slate-700">Stat #${i + 1}</span>
-              <button type="button" class="btn-remove-repeater text-rose-500 hover:text-rose-700 text-xs font-bold cursor-pointer" data-index="${i}">Remove</button>
+          <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <span class="text-[11px] font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Statistic Metric #${i + 1}</span>
+              </span>
+              <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
             </div>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="text" placeholder="Number (e.g. 50K+)" class="rep-num px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-black bg-slate-50" value="${item.number || ''}" />
-              <select class="rep-icon px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50">
-                ${ICON_CHOICES.map(opt => `<option value="${opt.val}" ${matchedIcon === opt.val ? 'selected' : ''}>Icon: ${opt.label}</option>`).join('')}
-              </select>
+            
+            <!-- Row 1: Number & Icon -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Metric Number / Stat *</label>
+                <input type="text" placeholder="e.g. 10K+ or 24/7 or 100%" class="rep-num w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-black bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500" value="${item.number || ''}" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Select Icon *</label>
+                <select class="rep-icon w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                  ${ICON_CHOICES.map(opt => `<option value="${opt.val}" ${matchedIcon === opt.val ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                </select>
+              </div>
             </div>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="text" placeholder="Heading (EN)" class="rep-head-en px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold" value="${typeof item.heading === 'object' ? (item.heading.en || '') : (item.heading || '')}" />
-              <input type="text" dir="rtl" placeholder="العنوان (AR)" class="rep-head-ar px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold" value="${typeof item.heading === 'object' ? (item.heading.ar || '') : ''}" />
+
+            <!-- Row 2: Heading EN & AR -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Heading / Label (EN) *</label>
+                <input type="text" placeholder="e.g. Tyres Available" class="rep-head-en w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-emerald-500" value="${typeof item.heading === 'object' ? (item.heading.en || '') : (item.heading || '')}" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1 text-right">العنوان الرئيسي (AR) *</label>
+                <input type="text" dir="rtl" placeholder="مثال: إطارات متوفرة" class="rep-head-ar w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-right focus:ring-2 focus:ring-emerald-500" value="${typeof item.heading === 'object' ? (item.heading.ar || '') : ''}" />
+              </div>
             </div>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="text" placeholder="Subtext (EN)" class="rep-sub-en px-3 py-1.5 rounded-xl border border-slate-200 text-xs" value="${typeof item.subtext === 'object' ? (item.subtext.en || '') : (item.subtext || '')}" />
-              <input type="text" dir="rtl" placeholder="النص الفرعي (AR)" class="rep-sub-ar px-3 py-1.5 rounded-xl border border-slate-200 text-xs" value="${typeof item.subtext === 'object' ? (item.subtext.ar || '') : ''}" />
+
+            <!-- Row 3: Subtext EN & AR -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Subtext / Description (EN)</label>
+                <input type="text" placeholder="e.g. Quality options for different vehicles" class="rep-sub-en w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500" value="${typeof item.subtext === 'object' ? (item.subtext.en || '') : (item.subtext || '')}" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1 text-right">النص الفرعي / الوصف (AR)</label>
+                <input type="text" dir="rtl" placeholder="مثال: خيارات عالية الجودة لكافة المركبات" class="rep-sub-ar w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-right focus:ring-2 focus:ring-emerald-500" value="${typeof item.subtext === 'object' ? (item.subtext.ar || '') : ''}" />
+              </div>
             </div>
           </div>
         `;
       } else {
         return `
-          <div class="p-3 bg-white rounded-2xl border border-slate-200 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-black text-slate-700">Card / Item #${i + 1}</span>
-              <button type="button" class="btn-remove-repeater text-rose-500 hover:text-rose-700 text-xs font-bold cursor-pointer" data-index="${i}">Remove</button>
+          <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <span class="text-[11px] font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Card Item #${i + 1}</span>
+              </span>
+              <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
             </div>
-            <div class="grid grid-cols-3 gap-2">
-              <select class="rep-icon col-span-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50">
-                ${ICON_CHOICES.map(opt => `<option value="${opt.val}" ${matchedIcon === opt.val ? 'selected' : ''}>Icon: ${opt.label}</option>`).join('')}
-              </select>
-              <input type="text" placeholder="Title (EN)" class="rep-title-en col-span-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold" value="${typeof item.title === 'object' ? (item.title.en || '') : (item.title || '')}" />
-              <input type="text" dir="rtl" placeholder="العنوان (AR)" class="rep-title-ar col-span-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold" value="${typeof item.title === 'object' ? (item.title.ar || '') : ''}" />
+            
+            <!-- Row 1: Icon & Titles -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Select Icon *</label>
+                <select class="rep-icon w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                  ${ICON_CHOICES.map(opt => `<option value="${opt.val}" ${matchedIcon === opt.val ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Card Title (EN) *</label>
+                <input type="text" placeholder="e.g. Genuine Tyres" class="rep-title-en w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-emerald-500" value="${typeof item.title === 'object' ? (item.title.en || '') : (item.title || '')}" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1 text-right">عنوان البطاقة (AR) *</label>
+                <input type="text" dir="rtl" placeholder="مثال: إطارات أصلية معتمدة" class="rep-title-ar w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-right focus:ring-2 focus:ring-emerald-500" value="${typeof item.title === 'object' ? (item.title.ar || '') : ''}" />
+              </div>
             </div>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="text" placeholder="Description / Sub (EN)" class="rep-desc-en px-3 py-1.5 rounded-xl border border-slate-200 text-xs" value="${typeof item.desc === 'object' ? (item.desc.en || '') : (item.desc || item.sub || '')}" />
-              <input type="text" dir="rtl" placeholder="الوصف (AR)" class="rep-desc-ar px-3 py-1.5 rounded-xl border border-slate-200 text-xs" value="${typeof item.desc === 'object' ? (item.desc.ar || '') : ''}" />
+
+            <!-- Row 2: Descriptions -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Description (EN)</label>
+                <input type="text" placeholder="e.g. 100% certified authentic tyre brands" class="rep-desc-en w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500" value="${typeof item.desc === 'object' ? (item.desc.en || '') : (item.desc || item.sub || '')}" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1 text-right">الوصف (AR)</label>
+                <input type="text" dir="rtl" placeholder="مثال: إطارات مضمونة وموثوقة لجميع الطرقات" class="rep-desc-ar w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-right focus:ring-2 focus:ring-emerald-500" value="${typeof item.desc === 'object' ? (item.desc.ar || '') : ''}" />
+              </div>
             </div>
           </div>
         `;
