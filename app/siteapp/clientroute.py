@@ -200,6 +200,7 @@ def _render_blog_detail(slug, locale):
         'cover_image_url': blog.image or '/static/assets/online-tyres-shop-dubai.png',
         'published_at': blog.published_at.strftime('%d-%m-%Y') if blog.published_at else (blog.created_at.strftime('%d-%m-%Y') if blog.created_at else '24-08-2026'),
         'read_time': '5 min read' if locale != 'ar' else 'قراءة 5 دقائق',
+        'faqs': blog.get_faqs(locale),
         'author': {
             'name': 'Admin' if locale != 'ar' else 'المشرف',
             'role': 'Tyre Specialist, TyresVision' if locale != 'ar' else 'أخصائي إطارات، تايرز فيجن',

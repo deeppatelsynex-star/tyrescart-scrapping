@@ -169,7 +169,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
     COLUMNS = (
         'id', 'title', 'slug', 'content', 'short_description', 'image',
         'category_name', 'blog_category_id', 'author_id', 'status', 'published_at',
-        'meta_title', 'meta_desc', 'created_at', 'updated_at', 'deleted_at',
+        'meta_title', 'meta_desc', 'faqs', 'created_at', 'updated_at', 'deleted_at',
         'created_by', 'updated_by'
     )
 
@@ -194,6 +194,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         self.published_at = data.get('published_at')
         self.meta_title = self._parse_json(data.get('meta_title'))
         self.meta_desc = self._parse_json(data.get('meta_desc'))
+        self.faqs = self._parse_json(data.get('faqs'))
         self.created_at = data.get('created_at')
         self.updated_at = data.get('updated_at')
         self.deleted_at = data.get('deleted_at')
@@ -267,6 +268,39 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
             return self.meta_desc.get(locale)
         return self.get_short_desc(locale)
 
+    def get_faqs(self, locale: str = 'en') -> list:
+        """
+        Returns localized list of FAQ objects [{'question': '...', 'answer': '...'}].
+        Supports either:
+        - List of dicts: [{'question': {'en': '...', 'ar': '...'}, 'answer': {'en': '...', 'ar': '...'}}, ...]
+        - Dict with locale keys: {'en': [{'question': '...', 'answer': '...'}], 'ar': [...]}
+        """
+        if not self.faqs:
+            return []
+        if isinstance(self.faqs, dict):
+            items = self.faqs.get(locale) or self.faqs.get('en') or []
+            if isinstance(items, list):
+                return [
+                    {
+                        'question': it.get('question') if isinstance(it, dict) else str(it),
+                        'answer': it.get('answer') if isinstance(it, dict) else ''
+                    }
+                    for it in items if isinstance(it, dict) and it.get('question')
+                ]
+        if isinstance(self.faqs, list):
+            result = []
+            for item in self.faqs:
+                if not isinstance(item, dict):
+                    continue
+                q = item.get('question')
+                a = item.get('answer')
+                q_text = (q.get(locale) or q.get('en') or next(iter(q.values()), '')) if isinstance(q, dict) else str(q or '')
+                a_text = (a.get(locale) or a.get('en') or next(iter(a.values()), '')) if isinstance(a, dict) else str(a or '')
+                if q_text:
+                    result.append({'question': q_text, 'answer': a_text})
+            return result
+        return []
+
     @property
     def is_published(self) -> bool:
         """Checks if blog post is published and not deleted."""
@@ -296,6 +330,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                 'short_description': self.get_short_desc(locale),
                 'meta_title': self.get_meta_title(locale),
                 'meta_desc': self.get_meta_desc(locale),
+                'faqs': self.get_faqs(locale),
             })
         else:
             base.update({
@@ -304,6 +339,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                 'short_description': self.short_description,
                 'meta_title': self.meta_title,
                 'meta_desc': self.meta_desc,
+                'faqs': self.faqs if isinstance(self.faqs, (list, dict)) else [],
             })
         return base
 
@@ -409,6 +445,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         short_desc_json = cls._dump_json(kwargs.get('short_description'))
         meta_title_json = cls._dump_json(kwargs.get('meta_title'))
         meta_desc_json = cls._dump_json(kwargs.get('meta_desc'))
+        faqs_json = cls._dump_json(kwargs.get('faqs', []))
         status = kwargs.get('status', 'draft')
         if status not in cls.VALID_STATUSES:
             status = 'draft'
@@ -424,11 +461,11 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     INSERT INTO blogs (
                         title, slug, content, short_description, image,
                         category_name, blog_category_id, author_id, status, published_at,
-                        meta_title, meta_desc, created_by, updated_by
+                        meta_title, meta_desc, faqs, created_by, updated_by
                     ) VALUES (
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s
+                        %s, %s, %s, %s, %s
                     )
                 """
                 cursor.execute(sql, (
@@ -444,6 +481,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     published_at,
                     meta_title_json,
                     meta_desc_json,
+                    faqs_json,
                     kwargs.get('created_by'),
                     kwargs.get('updated_by')
                 ))
@@ -495,6 +533,9 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         if 'meta_desc' in kwargs:
             updates.append("meta_desc = %s")
             params.append(self._dump_json(kwargs['meta_desc']))
+        if 'faqs' in kwargs:
+            updates.append("faqs = %s")
+            params.append(self._dump_json(kwargs['faqs']))
         if 'updated_by' in kwargs:
             updates.append("updated_by = %s")
             params.append(kwargs['updated_by'])

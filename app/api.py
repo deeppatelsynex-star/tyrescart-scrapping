@@ -1639,6 +1639,7 @@ def register_visionadmin_api_routes(app):
                 published_at=data.get('published_at'),
                 meta_title=data.get('meta_title'),
                 meta_desc=data.get('meta_desc'),
+                faqs=data.get('faqs') or [],
                 created_by=session.get('user_id'),
                 updated_by=session.get('user_id')
             )

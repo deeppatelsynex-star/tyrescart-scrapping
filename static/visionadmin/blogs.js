@@ -401,6 +401,110 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // 5.8 Blog FAQs Repeater Management
+  // ---------------------------------------------------------------------------
+  let blogFaqItems = [];
+  const faqListContainer = document.getElementById('blog-faq-list');
+  const addFaqBtn = document.getElementById('btn-add-faq-item');
+
+  function renderFaqItems() {
+    if (!faqListContainer) return;
+    if (blogFaqItems.length === 0) {
+      faqListContainer.innerHTML = `
+        <div class="py-6 px-4 rounded-xl border border-dashed border-slate-200 text-center bg-white/60">
+          <p class="text-xs text-slate-400 font-semibold">No FAQ items added yet for this article.</p>
+          <button type="button" class="mt-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 underline cursor-pointer" onclick="document.getElementById('btn-add-faq-item').click()">
+            + Add first FAQ question &amp; answer
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    faqListContainer.innerHTML = blogFaqItems.map((item, idx) => {
+      const qEn = escapeHtml(item?.question?.en || (typeof item?.question === 'string' ? item.question : ''));
+      const qAr = escapeHtml(item?.question?.ar || '');
+      const aEn = escapeHtml(item?.answer?.en || (typeof item?.answer === 'string' ? item.answer : ''));
+      const aAr = escapeHtml(item?.answer?.ar || '');
+
+      return `
+        <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-3.5" data-faq-idx="${idx}">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center text-[10px] font-black">${idx + 1}</span>
+              <span>FAQ Item #${idx + 1}</span>
+            </span>
+            <button type="button" class="btn-remove-faq text-[11px] font-bold text-rose-500 hover:text-rose-700 transition flex items-center gap-1 cursor-pointer" data-idx="${idx}">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <span>Remove</span>
+            </button>
+          </div>
+
+          <!-- Question Fields -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">Question (English)</label>
+              <input type="text" class="faq-input-q-en w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="e.g. How often should tyres be rotated?" value="${qEn}" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">Question (Arabic)</label>
+              <input type="text" dir="rtl" class="faq-input-q-ar w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="السؤال بالعربية (مثال: كم مرة يجب تدوير الإطارات؟)..." value="${qAr}" />
+            </div>
+          </div>
+
+          <!-- Answer Fields -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">Answer (English)</label>
+              <textarea rows="2" class="faq-input-a-en w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="Provide detailed answer in English...">${aEn}</textarea>
+            </div>
+            <div>
+              <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">Answer (Arabic)</label>
+              <textarea rows="2" dir="rtl" class="faq-input-a-ar w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="الإجابة التفصيلية بالعربية...">${aAr}</textarea>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Attach listeners
+    faqListContainer.querySelectorAll('.btn-remove-faq').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        syncFaqFromDOM();
+        blogFaqItems.splice(idx, 1);
+        renderFaqItems();
+      });
+    });
+  }
+
+  function syncFaqFromDOM() {
+    if (!faqListContainer) return;
+    const cards = faqListContainer.querySelectorAll('[data-faq-idx]');
+    cards.forEach((card, idx) => {
+      if (!blogFaqItems[idx]) blogFaqItems[idx] = { question: {}, answer: {} };
+      const qEn = card.querySelector('.faq-input-q-en')?.value.trim() || '';
+      const qAr = card.querySelector('.faq-input-q-ar')?.value.trim() || '';
+      const aEn = card.querySelector('.faq-input-a-en')?.value.trim() || '';
+      const aAr = card.querySelector('.faq-input-a-ar')?.value.trim() || '';
+
+      blogFaqItems[idx] = {
+        question: { en: qEn, ar: qAr },
+        answer: { en: aEn, ar: aAr }
+      };
+    });
+  }
+
+  addFaqBtn?.addEventListener('click', () => {
+    syncFaqFromDOM();
+    blogFaqItems.push({
+      question: { en: '', ar: '' },
+      answer: { en: '', ar: '' }
+    });
+    renderFaqItems();
+  });
+
+  // ---------------------------------------------------------------------------
   // 6. Modal Open / Close & Auto Slugify
   // ---------------------------------------------------------------------------
   function setVal(id, v) {
@@ -441,6 +545,10 @@ document.addEventListener('DOMContentLoaded', () => {
       setEditorContent('blog_content_en', contentEnVal);
       setEditorContent('blog_content_ar', contentArVal);
 
+      // Populate FAQ items
+      blogFaqItems = Array.isArray(blog.faqs) ? JSON.parse(JSON.stringify(blog.faqs)) : [];
+      renderFaqItems();
+
     } else {
       setVal('status', 'published');
       loadCategories(null);
@@ -448,6 +556,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       setEditorContent('blog_content_en', '');
       setEditorContent('blog_content_ar', '');
+
+      blogFaqItems = [];
+      renderFaqItems();
     }
 
     if (modal) modal.classList.remove('hidden');
@@ -511,6 +622,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const content_en = getEditorContent('blog_content_en');
     const content_ar = getEditorContent('blog_content_ar');
 
+    // Sync FAQ repeater values
+    syncFaqFromDOM();
+    const validFaqs = blogFaqItems.filter(f => {
+      const qEn = (f?.question?.en || '').trim();
+      const qAr = (f?.question?.ar || '').trim();
+      const aEn = (f?.answer?.en || '').trim();
+      const aAr = (f?.answer?.ar || '').trim();
+      return qEn || qAr || aEn || aAr;
+    });
+
     const payload = {
       title: { en: title_en, ar: title_ar },
       content: { en: content_en, ar: content_ar },
@@ -529,7 +650,8 @@ document.addEventListener('DOMContentLoaded', () => {
       meta_desc: {
         en: getVal('meta_desc_en'),
         ar: getVal('meta_desc_ar')
-      }
+      },
+      faqs: validFaqs
     };
 
     if (saveBtn) saveBtn.disabled = true;

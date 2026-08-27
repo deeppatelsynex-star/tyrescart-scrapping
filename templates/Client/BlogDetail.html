@@ -155,6 +155,96 @@
 
         </div>
 
+        <!-- Blog FAQs Accordion Section -->
+        <div class="blog-faqs-wrap">
+          <div class="blog-faqs-head">
+            <span class="blog-faqs-eyebrow">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>{% if locale == 'ar' %}الأسئلة الشائعة{% else %}FREQUENTLY ASKED QUESTIONS{% endif %}</span>
+            </span>
+            <h3 class="blog-faqs-title">
+              {% if locale == 'ar' %}أسئلة يتكرر طرحها حول هذا المقال{% else %}Frequently Asked Questions{% endif %}
+            </h3>
+          </div>
+
+          <div class="blog-faqs-accordion">
+            {% if post.faqs and post.faqs | length > 0 %}
+              {% for faq in post.faqs %}
+                {% if faq.question %}
+                <div class="faq-item {% if loop.first %}active{% endif %}">
+                  <button type="button" class="faq-question-btn" aria-expanded="{% if loop.first %}true{% else %}false{% endif %}">
+                    <span class="faq-q-text">{{ faq.question }}</span>
+                    <span class="faq-chevron-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </button>
+                  <div class="faq-answer-panel" {% if not loop.first %}style="display: none;"{% endif %}>
+                    <div class="faq-answer-content">
+                      {{ faq.answer }}
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              <!-- Informative Default FAQs -->
+              <div class="faq-item active">
+                <button type="button" class="faq-question-btn" aria-expanded="true">
+                  <span class="faq-q-text">{% if locale == 'ar' %}كم مرة يجب فحص ضغط الهواء وتدوير الإطارات في الإمارات؟{% else %}How often should tyre pressure and rotation be checked in the UAE?{% endif %}</span>
+                  <span class="faq-chevron-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                  </span>
+                </button>
+                <div class="faq-answer-panel">
+                  <div class="faq-answer-content">
+                    {% if locale == 'ar' %}
+                      يُنصح بفحص ضغط الهواء شهرياً والإطار بارد، وتدوير الإطارات كل 8,000 إلى 10,000 كم لضمان تآكل متوازن ومقاومة أعلى لحرارة الطرق السريعة.
+                    {% else %}
+                      Tyre pressure should be inspected at least once a month when cold. Rotating tyres every 8,000 to 10,000 km ensures balanced tread wear and extends overall service life under high ambient temperatures.
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="faq-item">
+                <button type="button" class="faq-question-btn" aria-expanded="false">
+                  <span class="faq-q-text">{% if locale == 'ar' %}ما هي مواصفات الخليج (GCC Specs) للإطارات المعتمدة؟{% else %}What are the key GCC specifications required for passenger tyres?{% endif %}</span>
+                  <span class="faq-chevron-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                  </span>
+                </button>
+                <div class="faq-answer-panel" style="display: none;">
+                  <div class="faq-answer-content">
+                    {% if locale == 'ar' %}
+                      تشترط هيئة المواصفات والمقاييس الإماراتية وجود علامة المطابقة الخليجية (GSO) وتصنيف درجات الحرارة Temperature A لتحمل درجات الحرارة المرتفعة على الأسفلت.
+                    {% else %}
+                      GCC-certified tyres carry the GSO compliance mark and feature a Temperature Grade A rating, ensuring the rubber compound resists extreme heat deformation and blowout risks.
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="faq-item">
+                <button type="button" class="faq-question-btn" aria-expanded="false">
+                  <span class="faq-q-text">{% if locale == 'ar' %}كيف يمكنني حجز خدمة تركيب وتوصيل الإطارات المتنقلة؟{% else %}How do I schedule mobile tyre fitting and installation in Dubai?{% endif %}</span>
+                  <span class="faq-chevron-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                  </span>
+                </button>
+                <div class="faq-answer-panel" style="display: none;">
+                  <div class="faq-answer-content">
+                    {% if locale == 'ar' %}
+                      يمكنك اختيار طقم الإطارات المناسب عبر موقعنا وتحديد خدمة التركيب عند باب منزلك أو مقر عملك، أو التواصل المباشر مع خبرائنا عبر واتساب للتنسيق الفوري.
+                    {% else %}
+                      Simply browse your desired brand on TyresCart and select doorstep mobile fitting during checkout, or message our team directly via WhatsApp for instant appointment booking across the UAE.
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
         <!-- Social Share Row -->
         <div class="share-section">
           <div class="share-label">
@@ -282,4 +372,41 @@
     </div>
   </div>
 </section>
+
+<!-- Blog FAQs Accordion Toggle Script -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const faqItems = document.querySelectorAll('.blog-faqs-accordion .faq-item');
+    faqItems.forEach(item => {
+      const btn = item.querySelector('.faq-question-btn');
+      const panel = item.querySelector('.faq-answer-panel');
+      if (!btn || !panel) return;
+
+      btn.addEventListener('click', function() {
+        const isOpen = item.classList.contains('active');
+
+        // Optional: close other open items for neat accordion behavior
+        faqItems.forEach(otherItem => {
+          if (otherItem !== item) {
+            otherItem.classList.remove('active');
+            const otherBtn = otherItem.querySelector('.faq-question-btn');
+            const otherPanel = otherItem.querySelector('.faq-answer-panel');
+            if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+            if (otherPanel) otherPanel.style.display = 'none';
+          }
+        });
+
+        if (isOpen) {
+          item.classList.remove('active');
+          btn.setAttribute('aria-expanded', 'false');
+          panel.style.display = 'none';
+        } else {
+          item.classList.add('active');
+          btn.setAttribute('aria-expanded', 'true');
+          panel.style.display = 'block';
+        }
+      });
+    });
+  });
+</script>
 {% endblock %}
