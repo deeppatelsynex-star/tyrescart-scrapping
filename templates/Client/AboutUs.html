@@ -89,7 +89,7 @@
       </div>
 
       <!-- 4 Key Hero Pillars on Dark Surface -->
-      {% set features_list = sec.section_data.features or sec.section_data.items or [] %}
+      {% set features_list = (sec.section_data.get('features') if sec.section_data is mapping else None) or (sec.section_data.get('items') if sec.section_data is mapping else None) or [] %}
       {% if features_list %}
       <div class="about-hero-features-grid">
         {% for feat in features_list %}
@@ -235,7 +235,7 @@
       </div>
 
       <!-- Multi-Card Values Grid -->
-      {% set cards_list = sec.section_data.cards or sec.section_data.items or [] %}
+      {% set cards_list = (sec.section_data.get('cards') if sec.section_data is mapping else None) or (sec.section_data.get('items') if sec.section_data is mapping else None) or [] %}
       {% if cards_list %}
       <div class="about-values-grid" style="{% if cards_list|length == 4 %}grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));{% endif %}">
         {% for card in cards_list %}
@@ -291,7 +291,7 @@
   {% elif sec.section_type == 'stats' %}
   <section class="about-stats-band" id="stats-{{ sec.id }}">
     <div class="wrap">
-      {% set metrics_list = sec.section_data.metrics or sec.section_data.items or [] %}
+      {% set metrics_list = (sec.section_data.get('metrics') if sec.section_data is mapping else None) or (sec.section_data.get('items') if sec.section_data is mapping else None) or [] %}
       {% if metrics_list %}
       <div class="about-stats-grid">
         {% for stat in metrics_list %}
