@@ -1843,7 +1843,7 @@ footer .tagline {
 
 /* Reviewed By Author / Expert Card */
 .reviewed-by-card {
-  margin: 36px 0 28px;
+  margin: 0 0 32px;
   padding: 20px 24px;
   background: #ffffff;
   border: 1px solid #E2E8F0;
