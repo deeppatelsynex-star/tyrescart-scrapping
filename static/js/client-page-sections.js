@@ -375,19 +375,23 @@
       contentHtml = bodyContent;
     } else {
       contentHtml = `
-        <h1 style="color:#ffffff; font-size:clamp(2rem, 3.8vw, 2.75rem); font-weight:800; line-height:1.25; margin-bottom:16px;">
+        <h1 style="color:#ffffff; font-size:clamp(2.1rem, 3.8vw, 2.9rem); font-weight:800; line-height:1.25; margin-bottom:18px;">
           ${escapeHtml(pageTitle)}
         </h1>
-        ${bodyContent ? `<div style="color:rgba(255,255,255,0.85); font-size:1.02rem; line-height:1.75;">${bodyContent}</div>` : ''}
+        ${bodyContent ? `<div style="color:rgba(255,255,255,0.88); font-size:1.05rem; line-height:1.8;">${bodyContent}</div>` : ''}
       `;
     }
 
+    const bgStyle = heroImage
+      ? `background: linear-gradient(90deg, rgba(12, 16, 8, 0.95) 0%, rgba(12, 16, 8, 0.88) 55%, rgba(12, 16, 8, 0.72) 100%), url('${heroImage}') center center / cover no-repeat;`
+      : `background: #0c1008;`;
+
     return `
-      <section class="about-hero-dark" id="page-hero-banner">
+      <section class="about-hero-dark" id="page-hero-banner" style="${bgStyle} padding-top: 52px; padding-bottom: 64px; position: relative;">
         <div class="wrap">
           
           <!-- Top Breadcrumb -->
-          <nav class="about-breadcrumb" aria-label="Breadcrumb">
+          <nav class="about-breadcrumb" aria-label="Breadcrumb" style="margin-bottom: 24px;">
             <a href="${homeUrl}">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -399,19 +403,9 @@
             <span class="current">${escapeHtml(pageTitle)}</span>
           </nav>
 
-          <!-- Hero 2-Column Grid -->
-          <div style="display:grid; grid-template-columns:1fr; gap:40px; align-items:center;" class="hero-2col-layout">
-            <!-- Left Dynamic Database Content -->
-            <div class="hero-db-content">
-              ${contentHtml}
-            </div>
-
-            <!-- Right Dynamic Database Hero Image -->
-            ${heroImage ? `
-              <div style="border-radius:24px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.12); aspect-ratio:16/10; background:#11170D;">
-                <img src="${heroImage}" alt="${escapeHtml(pageTitle)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="eager" />
-              </div>
-            ` : ''}
+          <!-- Dynamic Database Content Layer -->
+          <div class="hero-db-content" style="max-width: 860px;">
+            ${contentHtml}
           </div>
 
         </div>
