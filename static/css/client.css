@@ -2107,7 +2107,7 @@ footer .tagline {
   color: var(--green-deep);
 }
 
-/* Blog FAQs Accordion Section */
+/* Blog FAQs Accordion Section with Ultra-Smooth Animation */
 .blog-faqs-wrap {
   margin: 32px 0 32px;
   background: #ffffff;
@@ -2152,13 +2152,13 @@ footer .tagline {
   border-radius: 14px;
   background: #F8FAFC;
   overflow: hidden;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
 }
 
 .faq-item.active {
   border-color: #A7F3D0;
   background: #ffffff;
-  box-shadow: 0 4px 14px rgba(12, 122, 54, 0.05);
+  box-shadow: 0 4px 16px rgba(12, 122, 54, 0.06);
 }
 
 .faq-question-btn {
@@ -2175,7 +2175,7 @@ footer .tagline {
   font-size: 1rem;
   font-weight: 700;
   color: var(--ink, #0e1108);
-  transition: color 0.15s ease;
+  transition: color 0.25s ease;
 }
 
 [dir="rtl"] .faq-question-btn {
@@ -2196,7 +2196,7 @@ footer .tagline {
   justify-content: center;
   flex-shrink: 0;
   color: #475569;
-  transition: transform 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease, color 0.3s ease;
 }
 
 .faq-item.active .faq-chevron-icon {
@@ -2205,8 +2205,30 @@ footer .tagline {
   color: #047857;
 }
 
+/* Ultra Smooth CSS Grid Accordion Collapse/Expand */
 .faq-answer-panel {
-  padding: 0 20px 18px;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0 20px;
+}
+
+.faq-item.active .faq-answer-panel {
+  grid-template-rows: 1fr;
+  padding-bottom: 18px;
+}
+
+.faq-answer-inner {
+  overflow: hidden;
+  min-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.faq-item.active .faq-answer-inner {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .faq-answer-content {
@@ -2215,6 +2237,136 @@ footer .tagline {
   color: #475569;
   border-top: 1px dashed #E2E8F0;
   padding-top: 14px;
+}
+
+/* Sidebar Promotional Ad Banner Card */
+.sidebar-ad-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #062b16 0%, #0c4a28 45%, #056a38 100%);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: 18px;
+  padding: 24px 22px;
+  color: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(6, 43, 22, 0.35), 0 8px 10px -6px rgba(6, 43, 22, 0.2);
+}
+
+.sidebar-ad-card::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.25) 0%, rgba(52, 211, 153, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.sidebar-ad-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #FDE047;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 100px;
+  margin-bottom: 12px;
+}
+
+.sidebar-ad-title {
+  font-size: 1.18rem;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #ffffff;
+  margin: 0 0 10px;
+}
+
+.sidebar-ad-desc {
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: rgba(240, 253, 244, 0.88);
+  margin: 0 0 18px;
+}
+
+.sidebar-ad-perks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #D1FAE5;
+}
+
+.sidebar-ad-perk-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-ad-perk-icon {
+  width: 14px;
+  height: 14px;
+  color: #4ADE80;
+  flex-shrink: 0;
+}
+
+.sidebar-ad-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-ad-btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: #FACC15;
+  color: #0F172A;
+  font-weight: 800;
+  font-size: 0.88rem;
+  padding: 12px 18px;
+  border-radius: 12px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(250, 204, 21, 0.35);
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar-ad-btn-primary:hover {
+  background: #EAB308;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(250, 204, 21, 0.45);
+}
+
+.sidebar-ad-btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.84rem;
+  padding: 10px 16px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar-ad-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 /* Social Share Row */
