@@ -1948,20 +1948,38 @@ footer .tagline {
   }
 }
 
-/* Article Prose Typography & Media Responsiveness */
+/* Article Prose Card Container */
 .article-prose {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  padding: clamp(24px, 4vw, 42px);
+  box-shadow: 0 2px 14px rgba(14, 17, 8, 0.03);
   font-size: 1.05rem;
-  line-height: 1.78;
+  line-height: 1.8;
   color: var(--ink);
   overflow-wrap: break-word;
   word-break: break-word;
+  margin-bottom: 28px;
 }
 
 @media(max-width: 600px) {
   .article-prose {
+    padding: 20px 18px;
+    border-radius: 14px;
     font-size: 1rem;
     line-height: 1.72;
   }
+}
+
+.article-prose .lead {
+  font-size: 1.12rem;
+  line-height: 1.75;
+  color: #1E293B;
+  font-weight: 500;
+  margin-bottom: 26px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #F1F5F9;
 }
 
 .article-prose h2 {
