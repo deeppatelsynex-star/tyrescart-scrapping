@@ -117,6 +117,68 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCancelDelete = document.getElementById('btn-cancel-delete');
   const btnConfirmDelete = document.getElementById('btn-confirm-delete');
 
+  // ---------------------------------------------------------------------------
+  // 1. Flask-CKEditor Helper Functions
+  // ---------------------------------------------------------------------------
+  function getEditorContent(name) {
+    if (window.CKEDITOR && CKEDITOR.instances && CKEDITOR.instances[name]) {
+      try {
+        CKEDITOR.instances[name].updateElement();
+        return CKEDITOR.instances[name].getData() || '';
+      } catch (err) {
+        console.warn(`Error getting data from CKEditor "${name}":`, err);
+      }
+    }
+    const el = document.getElementById(name);
+    return el ? el.value : '';
+  }
+
+  function setEditorContent(name, val) {
+    val = val || '';
+    const el = document.getElementById(name);
+    if (el) el.value = val;
+
+    if (window.CKEDITOR && CKEDITOR.instances && CKEDITOR.instances[name]) {
+      try {
+        const inst = CKEDITOR.instances[name];
+        if (inst.status === 'ready' || inst.instanceReady) {
+          inst.setData(val);
+        } else {
+          inst.on('instanceReady', function() {
+            this.setData(val);
+          });
+        }
+      } catch (err) {
+        console.warn(`Error setting data in CKEditor "${name}":`, err);
+      }
+    }
+  }
+
+  function stripHtml(html) {
+    if (!html) return '';
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return (doc.body.textContent || '').trim();
+  }
+
+  // Hook change events to automatically sync to textarea
+  if (window.CKEDITOR) {
+    CKEDITOR.on('instanceReady', function(evt) {
+      evt.editor.on('change', function() {
+        this.updateElement();
+      });
+      evt.editor.on('mode', function() {
+        if (this.mode === 'source') {
+          const editable = this.editable();
+          if (editable) {
+            editable.attachListener(editable, 'input', () => {
+              evt.editor.updateElement();
+            });
+          }
+        }
+      });
+    });
+  }
+
   function showToast(msg, type = 'success') {
     const toast = document.getElementById('va-toast');
     if (!toast) return;
@@ -379,9 +441,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <!-- Description Snippet (if available) -->
-                ${(contentEn || contentAr) ? `
+                ${(stripHtml(contentEn) || stripHtml(contentAr)) ? `
                   <p class="text-xs text-slate-600 font-normal leading-relaxed line-clamp-2 bg-slate-50/80 p-2 sm:p-2.5 rounded-xl border border-slate-100/90">
-                    ${contentEn || contentAr}
+                    ${stripHtml(contentEn) || stripHtml(contentAr)}
                   </p>
                 ` : ''}
 
@@ -731,6 +793,17 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('wrap-btn-text-ar').classList.remove('hidden');
       document.getElementById('wrap-btn-text-en').classList.add('hidden');
     }
+
+    // Refresh and resize active CKEditor instance
+    if (window.CKEDITOR && CKEDITOR.instances) {
+      setTimeout(() => {
+        if (locale === 'ar' && CKEDITOR.instances['form-content-ar']) {
+          CKEDITOR.instances['form-content-ar'].resize();
+        } else if (locale === 'en' && CKEDITOR.instances['form-content-en']) {
+          CKEDITOR.instances['form-content-en'].resize();
+        }
+      }, 50);
+    }
   }
 
   tabEn.addEventListener('click', () => setLocaleTab('en'));
@@ -785,6 +858,8 @@ document.addEventListener('DOMContentLoaded', () => {
     sectionForm.reset();
     setSelectedType('hero');
     setLocaleTab('en');
+    setEditorContent('form-content-en', '');
+    setEditorContent('form-content-ar', '');
     updateImagePreview('');
     repeaterItems = [];
     formSortOrder.value = allSections.length + 1;
@@ -802,6 +877,8 @@ document.addEventListener('DOMContentLoaded', () => {
       sectionForm.reset();
       setSelectedType(type);
       setLocaleTab('en');
+      setEditorContent('form-content-en', '');
+      setEditorContent('form-content-ar', '');
       updateImagePreview('');
       repeaterItems = [];
       formSortOrder.value = allSections.length + 1;
@@ -824,8 +901,10 @@ document.addEventListener('DOMContentLoaded', () => {
     formSubtitleEn.value = typeof sec.section_subtitle === 'object' ? (sec.section_subtitle.en || '') : (sec.section_subtitle || '');
     formSubtitleAr.value = typeof sec.section_subtitle === 'object' ? (sec.section_subtitle.ar || '') : '';
 
-    formContentEn.value = typeof sec.content === 'object' ? (sec.content.en || '') : (sec.content || '');
-    formContentAr.value = typeof sec.content === 'object' ? (sec.content.ar || '') : '';
+    const rawContentEn = typeof sec.content === 'object' ? (sec.content.en || '') : (sec.content || '');
+    const rawContentAr = typeof sec.content === 'object' ? (sec.content.ar || '') : '';
+    setEditorContent('form-content-en', rawContentEn);
+    setEditorContent('form-content-ar', rawContentAr);
 
     formImageUrl.value = sec.image || '';
     updateImagePreview(sec.image || '');
@@ -861,7 +940,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       sectionModal.classList.remove('opacity-0');
       sectionModalBox.classList.remove('scale-95');
-    }, 10);
+      if (window.CKEDITOR && CKEDITOR.instances) {
+        if (CKEDITOR.instances['form-content-en']) CKEDITOR.instances['form-content-en'].resize();
+        if (CKEDITOR.instances['form-content-ar']) CKEDITOR.instances['form-content-ar'].resize();
+      }
+    }, 100);
   }
 
   function closeModal() {
@@ -880,6 +963,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const isEdit = Boolean(secId);
     const sectionType = getSelectedType();
 
+    // Force update from all CKEditor instances
+    if (window.CKEDITOR && CKEDITOR.instances) {
+      for (const instName in CKEDITOR.instances) {
+        try {
+          CKEDITOR.instances[instName].updateElement();
+        } catch (e) {}
+      }
+    }
+
     const titleEn = formTitleEn.value.trim();
     const titleAr = formTitleAr.value.trim() || titleEn;
     if (!titleEn && !titleAr) {
@@ -892,8 +984,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const subtitleEn = formSubtitleEn.value.trim();
     const subtitleAr = formSubtitleAr.value.trim() || subtitleEn;
 
-    const contentEn = formContentEn.value.trim();
-    const contentAr = formContentAr.value.trim() || contentEn;
+    const contentEn = getEditorContent('form-content-en').trim();
+    const contentAr = getEditorContent('form-content-ar').trim() || contentEn;
 
     const btnTextEn = formBtnTextEn.value.trim();
     const btnTextAr = formBtnTextAr.value.trim() || btnTextEn;

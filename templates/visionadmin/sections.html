@@ -389,14 +389,17 @@
         </div>
       </div>
 
-      <!-- Description / Prose Content Field -->
-      <div id="field-content-wrap">
-        <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1">Section Description / Content</label>
+      <!-- Description / Prose Content Field (CKEditor Rich Text & Code View) -->
+      <div id="field-content-wrap" class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700">Section Description / Content</label>
+          <span class="text-[10px] text-slate-400 font-mono">Flask-CKEditor &amp; Code View</span>
+        </div>
         <div id="wrap-content-en">
-          <textarea id="form-content-en" rows="3" placeholder="Enter paragraph text..." class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50/50"></textarea>
+          <textarea id="form-content-en" name="form-content-en" rows="4" placeholder="Enter rich paragraph text..." class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50/50"></textarea>
         </div>
         <div id="wrap-content-ar" class="hidden">
-          <textarea id="form-content-ar" dir="rtl" rows="3" placeholder="أدخل نص المحتوى..." class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50/50 text-right"></textarea>
+          <textarea id="form-content-ar" name="form-content-ar" dir="rtl" rows="4" placeholder="أدخل نص المحتوى..." class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50/50 text-right"></textarea>
         </div>
       </div>
 
@@ -511,5 +514,30 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Flask-CKEditor JS -->
+{{ ckeditor.load() }}
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    if (window.CKEDITOR) {
+      CKEDITOR.replace('form-content-en', {
+        minHeight: 160,
+        height: 180,
+        extraPlugins: 'codesnippet,sourcearea',
+        codeSnippet_theme: 'monokai_sublime',
+        removeButtons: 'About',
+        versionCheck: false
+      });
+      CKEDITOR.replace('form-content-ar', {
+        minHeight: 160,
+        height: 180,
+        extraPlugins: 'codesnippet,sourcearea',
+        codeSnippet_theme: 'monokai_sublime',
+        contentsLangDirection: 'rtl',
+        removeButtons: 'About',
+        versionCheck: false
+      });
+    }
+  });
+</script>
 <script src="/static/visionadmin/sections.js?v={{ range(10000, 99999) | random }}"></script>
 {% endblock %}

@@ -65,9 +65,9 @@
           </h1>
           
           {% if sec.content %}
-          <p class="lead">
-            {{ sec.content }}
-          </p>
+          <div class="lead">
+            {{ sec.content | safe }}
+          </div>
           {% endif %}
 
           {% if sec.button_text %}
@@ -170,11 +170,15 @@
           <h2>{{ sec.section_title }}</h2>
           
           {% if sec.content %}
-            {% for para in sec.content.split('\n\n') %}
-              {% if para.strip() %}
-              <p>{{ para.strip() }}</p>
-              {% endif %}
-            {% endfor %}
+            {% if '<p>' in sec.content or '<div' in sec.content or '<br' in sec.content or '<ul' in sec.content or '<strong' in sec.content or '<em' in sec.content %}
+              <div class="about-story-rich">{{ sec.content | safe }}</div>
+            {% else %}
+              {% for para in sec.content.split('\n\n') %}
+                {% if para.strip() %}
+                <p>{{ para.strip() }}</p>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
           {% endif %}
 
           {% if sec.button_text %}
@@ -226,7 +230,7 @@
         {% endif %}
         <h2>{{ sec.section_title }}</h2>
         {% if sec.content %}
-        <p class="about-values-lead">{{ sec.content }}</p>
+        <div class="about-values-lead">{{ sec.content | safe }}</div>
         {% endif %}
       </div>
 
@@ -358,11 +362,15 @@
           <h2>{{ sec.section_title }}</h2>
           
           {% if sec.content %}
-            {% for para in sec.content.split('\n\n') %}
-              {% if para.strip() %}
-              <p class="about-team-lead">{{ para.strip() }}</p>
-              {% endif %}
-            {% endfor %}
+            {% if '<p>' in sec.content or '<div' in sec.content or '<br' in sec.content or '<ul' in sec.content or '<strong' in sec.content or '<em' in sec.content %}
+              <div class="about-team-rich">{{ sec.content | safe }}</div>
+            {% else %}
+              {% for para in sec.content.split('\n\n') %}
+                {% if para.strip() %}
+                <p class="about-team-lead">{{ para.strip() }}</p>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
           {% endif %}
 
           {% if sec.button_text %}
@@ -414,9 +422,9 @@
               {{ sec.section_title }}
             </h3>
             {% if sec.content %}
-            <p class="about-action-desc">
-              {{ sec.content }}
-            </p>
+            <div class="about-action-desc">
+              {{ sec.content | safe }}
+            </div>
             {% endif %}
           </div>
         </div>
