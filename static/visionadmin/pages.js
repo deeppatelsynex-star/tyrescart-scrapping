@@ -219,6 +219,10 @@ document.addEventListener('DOMContentLoaded', () => {
           </td>
           <td class="py-3.5 px-4 sm:px-6 text-right space-x-1.5 whitespace-nowrap">
             ${!isTrash ? `
+              <a href="/visionadmin/sections?page=${encodeURIComponent(p.slug)}" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-950 text-white text-xs font-bold shadow-2xs transition">
+                <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                <span>Sections</span>
+              </a>
               <button type="button" onclick="window.editPage(${p.id})" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 text-xs font-bold shadow-2xs hover:shadow-xs transition cursor-pointer">
                 <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 group-hover:-rotate-12 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                 <span>Edit</span>

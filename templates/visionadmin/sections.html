@@ -4,21 +4,37 @@
 {% block content %}
 <div class="space-y-6">
 
-  <!-- Header & Primary Actions -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <!-- Header & Primary Actions with Dynamic Page Switcher -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white rounded-3xl p-5 border border-slate-200/80 shadow-2xs">
     <div class="space-y-1">
       <div class="flex items-center gap-2">
-        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">Page Builder</span>
-        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700">About Us Page</span>
+        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">Dynamic Page Builder</span>
+        <span id="badge-page-slug" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-900 text-white font-mono">about-us</span>
       </div>
-      <h1 class="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">About Us &mdash; Sections</h1>
-      <p class="text-xs sm:text-sm text-slate-500 font-medium">Manage and reorder predefined sections dynamically. Frontend layout and design remain fixed while content updates instantly.</p>
+      <h1 id="page-sections-title" class="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">About Us &mdash; Sections</h1>
+      <p class="text-xs sm:text-sm text-slate-500 font-medium">Manage and reorder predefined dynamic sections for any page across the storefront.</p>
     </div>
-    <div class="flex items-center gap-2 shrink-0">
-      <a href="/en/about-us" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold border border-slate-200 shadow-2xs transition">
+
+    <!-- Page Switcher and Action Buttons -->
+    <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+      
+      <!-- Target Page Dropdown Selector -->
+      <div class="relative min-w-[200px]">
+        <select id="select-target-page" class="w-full pl-3.5 pr-8 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200/70 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer appearance-none shadow-inner">
+          <option value="about-us" selected>About Us (about-us)</option>
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <!-- Live Page Link -->
+      <a href="/en/about-us" id="link-view-live-page" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold border border-slate-200 shadow-2xs transition">
         <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         <span>View Live Page</span>
       </a>
+
+      <!-- Add Section Button -->
       <button type="button" id="btn-add-section" class="group inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-slate-950 hover:bg-slate-800 active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer">
         <div class="w-5 h-5 rounded-lg bg-white/15 flex items-center justify-center group-hover:rotate-90 transition-transform duration-300">
           <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -271,7 +287,13 @@
     <!-- Modal Form Body (Scrollable) -->
     <form id="section-form" class="p-6 overflow-y-auto space-y-6 flex-1 text-xs sm:text-sm">
       <input type="hidden" id="form-section-id" value="" />
-      <input type="hidden" id="form-page-slug" value="about-us" />
+
+      <!-- Target Page Field -->
+      <div>
+        <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Target Page Slug *</label>
+        <input type="text" id="form-page-slug" placeholder="e.g. about-us, privacy-policy, terms-conditions" value="about-us" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-900 bg-slate-50/50 focus:ring-2 focus:ring-emerald-500 font-mono" required />
+        <p class="text-[10px] text-slate-400 font-medium mt-1">Specify which page route this dynamic section belongs to (e.g. <span class="font-mono text-emerald-600">about-us</span>, <span class="font-mono text-emerald-600">privacy-policy</span>, etc.).</p>
+      </div>
 
       <!-- Step 1: Section Type Selector -->
       <div>

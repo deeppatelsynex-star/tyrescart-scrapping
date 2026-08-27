@@ -18,6 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
     cta: { label: 'CTA Action Box', emoji: '🚀', desc: 'Bottom Action Card with Wheel Visual & Button' }
   };
 
+  // Target Page handling (Query param ?page=...)
+  const urlParams = new URLSearchParams(window.location.search);
+  let currentPageSlug = urlParams.get('page') || 'about-us';
+
+  const selectTargetPage = document.getElementById('select-target-page');
+  const badgePageSlug = document.getElementById('badge-page-slug');
+  const pageSectionsTitle = document.getElementById('page-sections-title');
+  const linkViewLivePage = document.getElementById('link-view-live-page');
+
   // DOM Elements
   const sectionsContainer = document.getElementById('sections-container');
   const statTotal = document.getElementById('stat-total-sections');
@@ -40,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Form Fields
   const formSectionId = document.getElementById('form-section-id');
+  const formPageSlug = document.getElementById('form-page-slug');
   const formTitleEn = document.getElementById('form-title-en');
   const formTitleAr = document.getElementById('form-title-ar');
   const formSubtitleEn = document.getElementById('form-subtitle-en');
@@ -80,9 +90,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3500);
   }
 
+  function updateTargetPageUI(slug) {
+    currentPageSlug = slug || 'about-us';
+    if (badgePageSlug) badgePageSlug.textContent = currentPageSlug;
+    if (formPageSlug) formPageSlug.value = currentPageSlug;
+
+    const formattedTitle = currentPageSlug.split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    if (pageSectionsTitle) {
+      pageSectionsTitle.innerHTML = `${formattedTitle} &mdash; Sections`;
+    }
+    if (linkViewLivePage) {
+      linkViewLivePage.href = `/en/${currentPageSlug}`;
+    }
+  }
+
+  async function loadAvailablePages() {
+    try {
+      const resp = await fetch('/visionadmin/api/pages?status=all');
+      const data = await resp.json();
+      const pages = data.pages || [];
+
+      const pageList = [{ slug: 'about-us', title: 'About Us' }];
+      pages.forEach(p => {
+        const titleEn = typeof p.title === 'object' ? (p.title.en || p.title.ar) : p.title;
+        if (!pageList.some(x => x.slug === p.slug)) {
+          pageList.push({ slug: p.slug, title: titleEn || p.slug });
+        }
+      });
+
+      if (!pageList.some(x => x.slug === currentPageSlug)) {
+        pageList.push({ slug: currentPageSlug, title: currentPageSlug });
+      }
+
+      if (selectTargetPage) {
+        selectTargetPage.innerHTML = pageList.map(p => `
+          <option value="${p.slug}" ${p.slug === currentPageSlug ? 'selected' : ''}>
+            ${p.title} (${p.slug})
+          </option>
+        `).join('');
+      }
+    } catch (e) {
+      console.warn('Could not load pages list:', e);
+    }
+  }
+
+  if (selectTargetPage) {
+    selectTargetPage.addEventListener('change', () => {
+      updateTargetPageUI(selectTargetPage.value);
+      const newUrl = window.location.pathname + '?page=' + encodeURIComponent(currentPageSlug);
+      window.history.pushState({ page: currentPageSlug }, '', newUrl);
+      fetchSections();
+    });
+  }
+
   async function fetchSections() {
     try {
-      const resp = await fetch('/visionadmin/api/sections?page=about-us');
+      updateTargetPageUI(currentPageSlug);
+      const resp = await fetch(`/visionadmin/api/sections?page=${encodeURIComponent(currentPageSlug)}`);
       const data = await resp.json();
       allSections = data.sections || [];
       renderSectionsList();
@@ -101,10 +165,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderSectionsList() {
     if (allSections.length === 0) {
+      const pageName = currentPageSlug.split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
       sectionsContainer.innerHTML = `
         <div class="p-12 text-center text-slate-400 bg-white rounded-3xl border border-slate-200/80">
-          <p class="text-sm font-bold text-slate-700">No Sections Found</p>
-          <p class="text-xs text-slate-400 mt-1">Click "+ Add Section" to build your dynamic About Us page.</p>
+          <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-xl">📄</div>
+          <p class="text-sm font-bold text-slate-700">No Sections Configured for "${pageName}"</p>
+          <p class="text-xs text-slate-400 mt-1">Click "+ Add Section" or choose a predefined layout above to start building this page.</p>
         </div>
       `;
       return;
@@ -680,8 +746,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (repData.length > 0) sectionData.items = repData;
     }
 
+    const targetSlug = formPageSlug?.value?.trim() || currentPageSlug || 'about-us';
+
     const payload = {
-      page_slug: 'about-us',
+      page_slug: targetSlug,
       section_type: sectionType,
       section_title: { en: titleEn, ar: titleAr },
       section_subtitle: { en: subtitleEn, ar: subtitleAr },
@@ -724,5 +792,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  loadAvailablePages();
   fetchSections();
 });
