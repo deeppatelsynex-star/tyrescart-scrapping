@@ -10,6 +10,7 @@ from flask import Blueprint, render_template, request, session, abort, redirect,
 from models.blog import Blog
 from models.page import Page
 from models.page_section import PageSection
+from models.setting import Setting
 
 site_bp = Blueprint('site', __name__)
 
@@ -218,6 +219,8 @@ def _render_blog_detail(slug, locale):
         }
     }
 
+    reviewer_info = Setting.get_reviewer_settings(locale)
+
     resp = make_response(render_template(
         'Client/BlogDetail.html',
         post=blog_data,
@@ -225,6 +228,7 @@ def _render_blog_detail(slug, locale):
         categories=categories,
         prev_post=prev_post,
         next_post=next_post,
+        reviewer=reviewer_info,
         locale=locale
     ))
     resp.set_cookie('site_locale', locale, max_age=31536000, path='/')

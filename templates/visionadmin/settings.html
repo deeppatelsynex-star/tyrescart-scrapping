@@ -1,0 +1,191 @@
+﻿{% extends "visionadmin/base.html" %}
+{% block title %}Reviewer Settings - VisionAdmin CMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-5xl">
+
+  <!-- Header & Breadcrumb -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">Configuration</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">Reviewer Settings</h1>
+      <p class="text-xs sm:text-sm text-slate-500 font-medium">Manage global tyre expert verification, author credentials, and editorial trust badges.</p>
+    </div>
+    
+    <div class="flex items-center gap-2 shrink-0">
+      <button type="button" id="btn-save-settings" class="group inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-slate-950 hover:bg-slate-800 active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer">
+        <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>Save Configuration</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Settings Container Card -->
+  <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] space-y-8">
+    
+    <form id="reviewer-settings-form" class="space-y-7">
+
+      <!-- Field 1: Enable Reviewed By Section -->
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-6 items-start pb-6 border-b border-slate-100">
+        <div class="sm:col-span-4 space-y-0.5">
+          <label for="reviewer_enabled" class="block text-sm font-bold text-slate-800">
+            Enable Reviewed By Section
+          </label>
+          <span class="text-[11px] font-semibold text-slate-400 block">[store view]</span>
+        </div>
+        <div class="sm:col-span-8 max-w-md">
+          <select id="reviewer_enabled" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-xs">
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+          <p class="text-[11px] text-slate-400 font-medium mt-1.5">Toggles the Reviewed By expert badge across all public blog articles.</p>
+        </div>
+      </div>
+
+      <!-- Field 2: Reviewer Initials -->
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-6 items-start pb-6 border-b border-slate-100">
+        <div class="sm:col-span-4 space-y-0.5">
+          <label for="reviewer_initials" class="block text-sm font-bold text-slate-800">
+            Reviewer Initials
+          </label>
+          <span class="text-[11px] font-semibold text-slate-400 block">[store view]</span>
+        </div>
+        <div class="sm:col-span-8 max-w-md">
+          <input type="text" id="reviewer_initials" maxlength="4" placeholder="SK" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs" />
+          <p class="text-[11px] text-slate-400 font-medium mt-1.5">e.g. SK for avatar circle</p>
+        </div>
+      </div>
+
+      <!-- Language Selector Tabs for Bilingual Content -->
+      <div class="flex items-center gap-2 pb-2">
+        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mr-2">Language:</span>
+        <button type="button" class="lang-tab px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-xs transition cursor-pointer" data-lang="en">🇬🇧 English</button>
+        <button type="button" class="lang-tab px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer" data-lang="ar">🇦🇪 Arabic</button>
+      </div>
+
+      <!-- English Fields Block -->
+      <div id="lang-block-en" class="space-y-6">
+        
+        <!-- Reviewer Name (EN) -->
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-6 items-start pb-6 border-b border-slate-100">
+          <div class="sm:col-span-4 space-y-0.5">
+            <label for="reviewer_name_en" class="block text-sm font-bold text-slate-800">
+              Reviewer Name (English)
+            </label>
+            <span class="text-[11px] font-semibold text-slate-400 block">[store view]</span>
+          </div>
+          <div class="sm:col-span-8">
+            <input type="text" id="reviewer_name_en" placeholder="Sharvil Kumar" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs" />
+          </div>
+        </div>
+
+        <!-- Reviewer Job Title (EN) -->
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-6 items-start pb-6 border-b border-slate-100">
+          <div class="sm:col-span-4 space-y-0.5">
+            <label for="reviewer_role_en" class="block text-sm font-bold text-slate-800">
+              Reviewer Job Title (English)
+            </label>
+            <span class="text-[11px] font-semibold text-slate-400 block">[store view]</span>
+          </div>
+          <div class="sm:col-span-8">
+            <input type="text" id="reviewer_role_en" placeholder="Tyre Selection Specialist, TyresCart" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs" />
+          </div>
+        </div>
+
+        <!-- Reviewer Description (EN) -->
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-6 items-start">
+          <div class="sm:col-span-4 space-y-0.5">
+            <label for="reviewer_bio_en" class="block text-sm font-bold text-slate-800">
+              Reviewer Description (English)
+            </label>
+            <span class="text-[11px] font-semibold text-slate-400 block">[store view]</span>
+          </div>
+          <div class="sm:col-span-8">
+            <textarea id="reviewer_bio_en" rows="4" placeholder="Sharvil Kumar oversees operations at TyresCart, helping customers find tyres that match their vehicle and budget. He ensures a smooth purchasing experience and trusted installation support." class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs leading-relaxed"></textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Arabic Fields Block -->
+      <div id="lang-block-ar" class="space-y-6 hidden">
+        
+        <!-- Reviewer Name (AR) -->
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-6 items-start pb-6 border-b border-slate-100">
+          <div class="sm:col-span-4 space-y-0.5">
+            <label for="reviewer_name_ar" class="block text-sm font-bold text-slate-800">
+              Reviewer Name (Arabic)
+            </label>
+            <span class="text-[11px] font-semibold text-slate-400 block">[store view]</span>
+          </div>
+          <div class="sm:col-span-8">
+            <input type="text" id="reviewer_name_ar" dir="rtl" placeholder="شارفيل كومار" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs" />
+          </div>
+        </div>
+
+        <!-- Reviewer Job Title (AR) -->
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-6 items-start pb-6 border-b border-slate-100">
+          <div class="sm:col-span-4 space-y-0.5">
+            <label for="reviewer_role_ar" class="block text-sm font-bold text-slate-800">
+              Reviewer Job Title (Arabic)
+            </label>
+            <span class="text-[11px] font-semibold text-slate-400 block">[store view]</span>
+          </div>
+          <div class="sm:col-span-8">
+            <input type="text" id="reviewer_role_ar" dir="rtl" placeholder="أخصائي اختيار الإطارات، تايرز كارت" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs" />
+          </div>
+        </div>
+
+        <!-- Reviewer Description (AR) -->
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-6 items-start">
+          <div class="sm:col-span-4 space-y-0.5">
+            <label for="reviewer_bio_ar" class="block text-sm font-bold text-slate-800">
+              Reviewer Description (Arabic)
+            </label>
+            <span class="text-[11px] font-semibold text-slate-400 block">[store view]</span>
+          </div>
+          <div class="sm:col-span-8">
+            <textarea id="reviewer_bio_ar" rows="4" dir="rtl" placeholder="يشرف شارفيل كومار على العمليات في تايرز كارت، لمساعدة العملاء في العثور على الإطارات المثالية..." class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs leading-relaxed"></textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Live Storefront Preview Box -->
+      <div class="pt-6 border-t border-slate-200">
+        <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Live Card Preview</h3>
+        
+        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
+          <div class="flex items-start gap-3.5">
+            <div id="preview-avatar" class="w-12 h-12 rounded-full bg-slate-900 text-white font-black text-sm flex items-center justify-center shrink-0 border-2 border-emerald-400/30 shadow-xs">
+              SK
+            </div>
+            <div class="space-y-1 min-w-0 flex-1">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60 inline-block">REVIEWED BY</span>
+                  <h4 id="preview-name" class="text-base font-black text-slate-900 mt-0.5">Sharvil Kumar</h4>
+                </div>
+                <span class="text-[11px] font-bold text-slate-400 bg-white px-2.5 py-1 rounded-full border border-slate-200">Reviewed on 24-08-2026</span>
+              </div>
+              <p id="preview-role" class="text-xs font-bold text-slate-600">Tyre Selection Specialist, TyresCart</p>
+              <p id="preview-bio" class="text-xs text-slate-500 font-medium leading-relaxed pt-1">
+                Sharvil Kumar oversees operations at TyresCart, helping customers find tyres that match their vehicle and budget. He ensures a smooth purchasing experience and trusted installation support.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/visionadmin/settings.js"></script>
+{% endblock %}

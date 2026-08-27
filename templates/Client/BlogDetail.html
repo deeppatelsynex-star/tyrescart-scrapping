@@ -61,30 +61,26 @@
         </div>
 
         <!-- Reviewed By Author / Expert Box (Directly Below Image) -->
+        {% if reviewer and reviewer.enabled %}
         <div class="reviewed-by-card">
           <div class="reviewed-by-badge-avatar">
-            <span>SK</span>
+            <span>{{ reviewer.initials or 'SK' }}</span>
           </div>
           <div class="reviewed-by-content">
             <div class="reviewed-by-top">
               <div class="reviewed-by-headings">
                 <span class="reviewed-by-label">{% if locale == 'ar' %}تمت المراجعة بواسطة{% else %}REVIEWED BY{% endif %}</span>
-                <h4 class="reviewed-by-name">{% if locale == 'ar' %}شارفيل كومار{% else %}Sharvil Kumar{% endif %}</h4>
+                <h4 class="reviewed-by-name">{{ reviewer.name }}</h4>
               </div>
               <div class="reviewed-by-date-badge">
                 <span>{% if locale == 'ar' %}تمت المراجعة في {{ post.reviewed_at }}{% else %}Reviewed on {{ post.reviewed_at }}{% endif %}</span>
               </div>
             </div>
-            <p class="reviewed-by-role">{% if locale == 'ar' %}أخصائي اختيار الإطارات، تايرز كارت{% else %}Tyre Selection Specialist, TyresCart{% endif %}</p>
-            <p class="reviewed-by-bio">
-              {% if locale == 'ar' %}
-                يشرف شارفيل كومار على العمليات في تايرز كارت، لمساعدة العملاء في العثور على الإطارات المثالية التي تتطابق مع سياراتهم وميزانيتهم، مع ضمان تجربة شراء سلسة وخدمة تركيب معتمدة وموثوقة.
-              {% else %}
-                Sharvil Kumar oversees operations at TyresCart, helping customers find tyres that match their vehicle and budget. He ensures a smooth purchasing experience and trusted installation support.
-              {% endif %}
-            </p>
+            <p class="reviewed-by-role">{{ reviewer.role }}</p>
+            <p class="reviewed-by-bio">{{ reviewer.bio }}</p>
           </div>
         </div>
+        {% endif %}
 
         <!-- Article Prose Content -->
         <div class="article-prose">

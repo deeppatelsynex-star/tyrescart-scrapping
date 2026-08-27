@@ -1821,6 +1821,57 @@ def register_visionadmin_api_routes(app):
         except Exception as e:
             return jsonify({'error': f'Failed to reorder sections: {str(e)}'}), 500
 
+    # =========================================================================
+    # 5. REVIEWER SETTINGS CONFIGURATION API
+    # =========================================================================
+
+    @app.route('/visionadmin/api/settings/reviewer', methods=['GET'])
+    @app.route('/visionadmin/api/reviewer-settings', methods=['GET'])
+    def visionadmin_get_reviewer_settings():
+        from models.setting import Setting
+        settings = Setting.get_reviewer_settings()
+        return jsonify({
+            'success': True,
+            'settings': settings
+        })
+
+    @app.route('/visionadmin/api/settings/reviewer', methods=['POST', 'PUT'])
+    @app.route('/visionadmin/api/reviewer-settings', methods=['POST', 'PUT'])
+    def visionadmin_save_reviewer_settings():
+        from models.setting import Setting
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+        
+        # Normalize enabled flag
+        enabled_val = data.get('enabled', True)
+        if isinstance(enabled_val, str):
+            enabled = enabled_val.strip().lower() in ('true', '1', 'yes')
+        else:
+            enabled = bool(enabled_val)
+
+        payload = {
+            'enabled': enabled,
+            'name': data.get('name') if isinstance(data.get('name'), dict) else {
+                'en': (data.get('name_en') or data.get('name') or 'Sharvil Kumar').strip(),
+                'ar': (data.get('name_ar') or 'شارفيل كومار').strip()
+            },
+            'initials': (data.get('initials') or 'SK').strip(),
+            'role': data.get('role') if isinstance(data.get('role'), dict) else {
+                'en': (data.get('role_en') or data.get('role') or 'Tyre Selection Specialist, TyresCart').strip(),
+                'ar': (data.get('role_ar') or 'أخصائي اختيار الإطارات، تايرز كارت').strip()
+            },
+            'bio': data.get('bio') if isinstance(data.get('bio'), dict) else {
+                'en': (data.get('bio_en') or data.get('bio') or data.get('description_en') or '').strip(),
+                'ar': (data.get('bio_ar') or data.get('description_ar') or '').strip()
+            }
+        }
+
+        Setting.set('reviewer_settings', payload, group='reviewer')
+        return jsonify({
+            'success': True,
+            'settings': Setting.get_reviewer_settings(),
+            'message': 'Reviewer settings saved successfully.'
+        })
+
 
 def register_client_api_routes(app):
     """Registers all public, un-prefixed /api/* endpoints for the client storefront."""

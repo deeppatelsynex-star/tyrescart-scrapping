@@ -134,6 +134,19 @@
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 ring-4 ring-emerald-400/20"></span>
           {% endif %}
         </a>
+
+        <!-- Reviewer Settings Navigation Link -->
+        <a href="/visionadmin/settings" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page in ['settings', 'config', 'reviewer-settings'] %}bg-slate-950 text-white shadow-md shadow-slate-950/15{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-100/80{% endif %}">
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['settings', 'config', 'reviewer-settings'] %}bg-white/15 text-emerald-400{% else %}bg-slate-100 text-slate-500 group-hover:bg-emerald-50 group-hover:text-emerald-600{% endif %} transition-all duration-300 group-hover:scale-110 group-hover:rotate-45">
+              <svg class="w-4 h-4 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+            </div>
+            <span>Reviewer Settings</span>
+          </div>
+          {% if page in ['settings', 'config', 'reviewer-settings'] %}
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 ring-4 ring-emerald-400/20"></span>
+          {% endif %}
+        </a>
       </div>
 
       <!-- Quick Platform Links with Animated Hover Icons -->
