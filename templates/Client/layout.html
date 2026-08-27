@@ -225,104 +225,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </nav>
 </header>
 
-<!-- Mobile Navigation Drawer Overlay & Backdrop -->
-<div class="mobile-nav-backdrop" id="mobileNavBackdrop" aria-hidden="true"></div>
-
-<!-- Mobile Navigation Drawer Panel -->
-<aside class="mobile-nav-drawer" id="mobileNavDrawer" aria-label="Mobile Navigation" aria-hidden="true">
-  <div class="mobile-nav-head">
-    <a class="logo" href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar{% else %}/{% endif %}" aria-label="TyresVision home">
-      <svg class="swoosh" width="28" height="28" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-        <path d="M5 14.5C9.2 7.6 16.2 3.6 24 4.2c5.2.4 9.6 2.7 12.4 6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
-        <path d="M9.5 18.6c3.4-5.3 9-8.4 15.1-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
-        <path d="M35 25.5C30.8 32.4 23.8 36.4 16 35.8c-5.2-.4-9.6-2.7-12.4-6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
-        <path d="M30.5 21.4c-3.4 5.3-9 8.4-15.1 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
-      </svg>
-      <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
-    </a>
-    <button type="button" class="mobile-nav-close" id="mobileNavClose" aria-label="Close navigation menu">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-  </div>
-
-  <div class="mobile-nav-body">
-    <nav class="mobile-nav-links">
-      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar{% else %}/{% endif %}" class="mobile-nav-link {% if request.path in ['/', '/en', '/ar', '/home', '/en/home', '/ar/home'] %}active{% endif %}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}الرئيسية{% else %}Home{% endif %}</span>
-      </a>
-      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar/about-us{% else %}/en/about-us{% endif %}" class="mobile-nav-link {% if request.path in ['/about-us', '/en/about-us', '/ar/about-us'] %}active{% endif %}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}من نحن{% else %}About Us{% endif %}</span>
-      </a>
-      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar/blog{% else %}/en/blog{% endif %}" class="mobile-nav-link {% if request.path.startswith('/blog') or request.path.startswith('/en/blog') or request.path.startswith('/ar/blog') %}active{% endif %}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="6" x2="16" y2="6"/><line x1="9" y1="10" x2="16" y2="10"/></svg>
-        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}المدونة{% else %}Blog{% endif %}</span>
-      </a>
-      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#why{% else %}/#why{% endif %}" class="mobile-nav-link">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}لماذا نحن{% else %}Why Us{% endif %}</span>
-      </a>
-      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#services{% else %}/#services{% endif %}" class="mobile-nav-link">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}خدماتنا{% else %}Services{% endif %}</span>
-      </a>
-      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#how{% else %}/#how{% endif %}" class="mobile-nav-link">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
-        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}كيف نعمل{% else %}How it Works{% endif %}</span>
-      </a>
-      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#brands{% else %}/#brands{% endif %}" class="mobile-nav-link">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="22"/></svg>
-        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}الماركات{% else %}Brands{% endif %}</span>
-      </a>
-      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#faq{% else %}/#faq{% endif %}" class="mobile-nav-link">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}الأسئلة الشائعة{% else %}FAQ{% endif %}</span>
-      </a>
-    </nav>
-  </div>
-
-  <div class="mobile-nav-foot">
-    <div class="mobile-nav-lang-row">
-      <span class="mobile-nav-lang-label">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}اللغة{% else %}Language{% endif %}:</span>
-      <a href="javascript:void(0)" onclick="toggleSiteLanguage()" class="lang-toggle-btn" style="text-decoration:none !important;">
-        {% if locale == 'ar' or session.get('site_locale') == 'ar' %}
-          <svg width="20" height="14" viewBox="0 0 60 30" style="border-radius:2px;" aria-hidden="true">
-            <clipPath id="uk-flag-m"><rect width="60" height="30" rx="3"/></clipPath>
-            <g clip-path="url(#uk-flag-m)">
-              <rect width="60" height="30" fill="#012169"/>
-              <path d="M0,0 L60,30 M60,0 L0,30" stroke="#ffffff" stroke-width="6"/>
-              <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="3"/>
-              <path d="M30,0 v30 M0,15 h60" stroke="#ffffff" stroke-width="10"/>
-              <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>
-            </g>
-          </svg>
-          <span>English (EN)</span>
-        {% else %}
-          <svg width="20" height="14" viewBox="0 0 20 14" style="border-radius:2px;" aria-hidden="true">
-            <rect x="0" y="0" width="20" height="4.66" fill="#00732F"/>
-            <rect x="0" y="4.66" width="20" height="4.66" fill="#FFFFFF"/>
-            <rect x="0" y="9.33" width="20" height="4.66" fill="#000000"/>
-            <rect x="0" y="0" width="5.5" height="14" fill="#E62229"/>
-          </svg>
-          <span>العربية (AR)</span>
-        {% endif %}
-      </a>
-    </div>
-
-    <div class="mobile-nav-cta-btns">
-      <a class="btn btn-wa w-full" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-        <span>WhatsApp</span>
-      </a>
-      <a class="btn btn-call w-full" href="tel:+971505069575">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}اتصل الآن{% else %}Call Now{% endif %}</span>
-      </a>
-    </div>
-  </div>
-</aside>
-
 <main id="main">
 {% block content %}{% endblock %}
 </main>
@@ -475,6 +377,104 @@ function toggleSiteLanguage() {
   window.location.href = target + search;
 }
 </script>
+<!-- Mobile Navigation Drawer Overlay & Backdrop -->
+<div class="mobile-nav-backdrop" id="mobileNavBackdrop" aria-hidden="true"></div>
+
+<!-- Mobile Navigation Drawer Panel (Floating Modal Overlay) -->
+<aside class="mobile-nav-drawer" id="mobileNavDrawer" aria-label="Mobile Navigation" aria-hidden="true">
+  <div class="mobile-nav-head">
+    <a class="logo" href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar{% else %}/{% endif %}" aria-label="TyresVision home">
+      <svg class="swoosh" width="28" height="28" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <path d="M5 14.5C9.2 7.6 16.2 3.6 24 4.2c5.2.4 9.6 2.7 12.4 6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+        <path d="M9.5 18.6c3.4-5.3 9-8.4 15.1-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
+        <path d="M35 25.5C30.8 32.4 23.8 36.4 16 35.8c-5.2-.4-9.6-2.7-12.4-6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+        <path d="M30.5 21.4c-3.4 5.3-9 8.4-15.1 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".75"/>
+      </svg>
+      <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
+    </a>
+    <button type="button" class="mobile-nav-close" id="mobileNavClose" aria-label="Close navigation menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="mobile-nav-body">
+    <nav class="mobile-nav-links">
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar{% else %}/{% endif %}" class="mobile-nav-link {% if request.path in ['/', '/en', '/ar', '/home', '/en/home', '/ar/home'] %}active{% endif %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}الرئيسية{% else %}Home{% endif %}</span>
+      </a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar/about-us{% else %}/en/about-us{% endif %}" class="mobile-nav-link {% if request.path in ['/about-us', '/en/about-us', '/ar/about-us'] %}active{% endif %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}من نحن{% else %}About Us{% endif %}</span>
+      </a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar/blog{% else %}/en/blog{% endif %}" class="mobile-nav-link {% if request.path.startswith('/blog') or request.path.startswith('/en/blog') or request.path.startswith('/ar/blog') %}active{% endif %}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="6" x2="16" y2="6"/><line x1="9" y1="10" x2="16" y2="10"/></svg>
+        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}المدونة{% else %}Blog{% endif %}</span>
+      </a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#why{% else %}/#why{% endif %}" class="mobile-nav-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}لماذا نحن{% else %}Why Us{% endif %}</span>
+      </a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#services{% else %}/#services{% endif %}" class="mobile-nav-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}خدماتنا{% else %}Services{% endif %}</span>
+      </a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#how{% else %}/#how{% endif %}" class="mobile-nav-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}كيف نعمل{% else %}How it Works{% endif %}</span>
+      </a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#brands{% else %}/#brands{% endif %}" class="mobile-nav-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="22"/></svg>
+        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}الماركات{% else %}Brands{% endif %}</span>
+      </a>
+      <a href="{% if locale == 'ar' or session.get('site_locale') == 'ar' %}/ar#faq{% else %}/#faq{% endif %}" class="mobile-nav-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}الأسئلة الشائعة{% else %}FAQ{% endif %}</span>
+      </a>
+    </nav>
+  </div>
+
+  <div class="mobile-nav-foot">
+    <div class="mobile-nav-lang-row">
+      <span class="mobile-nav-lang-label">{% if locale == 'ar' or session.get('site_locale') == 'ar' %}اللغة{% else %}Language{% endif %}:</span>
+      <a href="javascript:void(0)" onclick="toggleSiteLanguage()" class="lang-toggle-btn" style="text-decoration:none !important;">
+        {% if locale == 'ar' or session.get('site_locale') == 'ar' %}
+          <svg width="20" height="14" viewBox="0 0 60 30" style="border-radius:2px;" aria-hidden="true">
+            <clipPath id="uk-flag-m"><rect width="60" height="30" rx="3"/></clipPath>
+            <g clip-path="url(#uk-flag-m)">
+              <rect width="60" height="30" fill="#012169"/>
+              <path d="M0,0 L60,30 M60,0 L0,30" stroke="#ffffff" stroke-width="6"/>
+              <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="3"/>
+              <path d="M30,0 v30 M0,15 h60" stroke="#ffffff" stroke-width="10"/>
+              <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>
+            </g>
+          </svg>
+          <span>English (EN)</span>
+        {% else %}
+          <svg width="20" height="14" viewBox="0 0 20 14" style="border-radius:2px;" aria-hidden="true">
+            <rect x="0" y="0" width="20" height="4.66" fill="#00732F"/>
+            <rect x="0" y="4.66" width="20" height="4.66" fill="#FFFFFF"/>
+            <rect x="0" y="9.33" width="20" height="4.66" fill="#000000"/>
+            <rect x="0" y="0" width="5.5" height="14" fill="#E62229"/>
+          </svg>
+          <span>العربية (AR)</span>
+        {% endif %}
+      </a>
+    </div>
+
+    <div class="mobile-nav-cta-btns">
+      <a class="btn btn-wa w-full" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+        <span>WhatsApp</span>
+      </a>
+      <a class="btn btn-call w-full" href="tel:+971505069575">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+        <span>{% if locale == 'ar' or session.get('site_locale') == 'ar' %}اتصل الآن{% else %}Call Now{% endif %}</span>
+      </a>
+    </div>
+  </div>
+</aside>
+
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

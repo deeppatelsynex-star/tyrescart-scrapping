@@ -3524,28 +3524,27 @@ footer .tagline {
 
 /* Mobile Nav Drawer Backdrop (Hidden by default) */
 .mobile-nav-backdrop {
-  display: none;
+  display: none !important;
 }
 
 .mobile-nav-backdrop.open {
-  display: block;
-  position: fixed;
-  inset: 0;
-  background: rgba(14, 17, 8, 0.65);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 998;
-  animation: fadeInBackdrop 0.25s ease forwards;
-}
-
-@keyframes fadeInBackdrop {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  display: block !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(14, 17, 8, 0.65) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  z-index: 99998 !important;
 }
 
 /* Mobile Nav Drawer Panel (Hidden by default) */
 .mobile-nav-drawer {
-  display: none;
+  display: none !important;
 }
 
 @media (max-width: 979px) {
@@ -3554,36 +3553,27 @@ footer .tagline {
   }
 
   .mobile-nav-drawer.open {
-    display: flex;
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 320px;
-    max-width: 85vw;
-    background: #ffffff;
-    z-index: 999;
-    flex-direction: column;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
-    animation: slideInDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    overflow: hidden;
+    display: flex !important;
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    width: 300px !important;
+    max-width: 85vw !important;
+    height: 100vh !important;
+    background: #ffffff !important;
+    z-index: 99999 !important;
+    flex-direction: column !important;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.3) !important;
+    overflow: hidden !important;
   }
 
-  @keyframes slideInDrawer {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
-  }
-
-  /* RTL: Drawer slides in from right */
-  html[dir="rtl"] .mobile-nav-drawer.open {
-    left: auto;
-    right: 0;
-    animation: slideInDrawerRtl 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-
-  @keyframes slideInDrawerRtl {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
+  /* In Arabic / RTL: Drawer is firmly pinned on the RIGHT side */
+  html[dir="rtl"] .mobile-nav-drawer.open,
+  [dir="rtl"] .mobile-nav-drawer.open {
+    left: auto !important;
+    right: 0 !important;
   }
 }
 
@@ -3749,4 +3739,21 @@ html[dir="rtl"] .about-stat-col {
 html[dir="rtl"] .about-action-content {
   text-align: right;
 }
+
+html[dir="rtl"] .post-date-pill,
+[dir="rtl"] .post-date-pill {
+  left: auto;
+  right: 12px;
+}
+
+html[dir="rtl"] .post-badge-pill,
+[dir="rtl"] .post-badge-pill {
+  right: auto;
+  left: 12px;
+}
+
+html[dir="rtl"] .category-badge-pill {
+  text-align: right;
+}
+
 
