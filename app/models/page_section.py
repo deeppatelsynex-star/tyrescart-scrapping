@@ -1,4 +1,4 @@
-﻿import json
+import json
 from datetime import datetime, timezone
 from db import get_connection
 
@@ -66,6 +66,8 @@ class PageSection:
                 section_type = data.get("section_type", "hero")
                 section_title = cls._dump_json(data.get("section_title", {}))
                 section_subtitle = cls._dump_json(data.get("section_subtitle", {}))
+                meta_title = cls._dump_json(data.get("meta_title", {}))
+                meta_description = cls._dump_json(data.get("meta_description", {}))
                 content = cls._dump_json(data.get("content", {}))
                 image = data.get("image")
                 image_position = data.get("image_position", "right")
@@ -78,14 +80,14 @@ class PageSection:
                 sql = """
                     INSERT INTO page_sections (
                         page_slug, section_type, section_title, section_subtitle,
-                        content, image, image_position, button_text, button_url,
-                        section_data, sort_order, is_active
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        meta_title, meta_description, content, image, image_position,
+                        button_text, button_url, section_data, sort_order, is_active
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
                 cursor.execute(sql, (
                     page_slug, section_type, section_title, section_subtitle,
-                    content, image, image_position, button_text, button_url,
-                    section_data, sort_order, is_active
+                    meta_title, meta_description, content, image, image_position,
+                    button_text, button_url, section_data, sort_order, is_active
                 ))
                 new_id = cursor.lastrowid
                 conn.commit()
@@ -111,6 +113,12 @@ class PageSection:
                 if "section_subtitle" in data:
                     fields.append("section_subtitle = %s")
                     params.append(cls._dump_json(data["section_subtitle"]))
+                if "meta_title" in data:
+                    fields.append("meta_title = %s")
+                    params.append(cls._dump_json(data["meta_title"]))
+                if "meta_description" in data:
+                    fields.append("meta_description = %s")
+                    params.append(cls._dump_json(data["meta_description"]))
                 if "content" in data:
                     fields.append("content = %s")
                     params.append(cls._dump_json(data["content"]))
@@ -203,6 +211,8 @@ class PageSection:
             "section_type": row.get("section_type") or "hero",
             "section_title": cls._parse_json(row.get("section_title")),
             "section_subtitle": cls._parse_json(row.get("section_subtitle")),
+            "meta_title": cls._parse_json(row.get("meta_title")),
+            "meta_description": cls._parse_json(row.get("meta_description")),
             "content": cls._parse_json(row.get("content")),
             "image": row.get("image"),
             "image_position": row.get("image_position") or "right",
@@ -258,6 +268,8 @@ class PageSection:
             "section_type": section.get("section_type"),
             "section_title": get_loc(section.get("section_title")),
             "section_subtitle": get_loc(section.get("section_subtitle")),
+            "meta_title": get_loc(section.get("meta_title")),
+            "meta_description": get_loc(section.get("meta_description")),
             "content": get_loc(section.get("content")),
             "image": section.get("image"),
             "image_position": section.get("image_position") or "right",
@@ -266,6 +278,8 @@ class PageSection:
             "section_data": localized_data,
             "raw_title": section.get("section_title"),
             "raw_subtitle": section.get("section_subtitle"),
+            "raw_meta_title": section.get("meta_title"),
+            "raw_meta_description": section.get("meta_description"),
             "raw_content": section.get("content"),
             "raw_button_text": section.get("button_text"),
             "raw_section_data": section.get("section_data"),

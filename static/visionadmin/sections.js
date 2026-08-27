@@ -96,6 +96,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const formTitleAr = document.getElementById('form-title-ar');
   const formSubtitleEn = document.getElementById('form-subtitle-en');
   const formSubtitleAr = document.getElementById('form-subtitle-ar');
+  const formMetaTitleEn = document.getElementById('form-meta-title-en');
+  const formMetaTitleAr = document.getElementById('form-meta-title-ar');
+  const formMetaDescEn = document.getElementById('form-meta-desc-en');
+  const formMetaDescAr = document.getElementById('form-meta-desc-ar');
   const formContentEn = document.getElementById('form-content-en');
   const formContentAr = document.getElementById('form-content-ar');
   const formImageUrl = document.getElementById('form-image-url');
@@ -776,6 +780,14 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('wrap-title-ar').classList.add('hidden');
       document.getElementById('wrap-subtitle-en').classList.remove('hidden');
       document.getElementById('wrap-subtitle-ar').classList.add('hidden');
+      const metaTitleEnWrap = document.getElementById('wrap-meta-title-en');
+      const metaTitleArWrap = document.getElementById('wrap-meta-title-ar');
+      const metaDescEnWrap = document.getElementById('wrap-meta-desc-en');
+      const metaDescArWrap = document.getElementById('wrap-meta-desc-ar');
+      if (metaTitleEnWrap) metaTitleEnWrap.classList.remove('hidden');
+      if (metaTitleArWrap) metaTitleArWrap.classList.add('hidden');
+      if (metaDescEnWrap) metaDescEnWrap.classList.remove('hidden');
+      if (metaDescArWrap) metaDescArWrap.classList.add('hidden');
       document.getElementById('wrap-content-en').classList.remove('hidden');
       document.getElementById('wrap-content-ar').classList.add('hidden');
       document.getElementById('wrap-btn-text-en').classList.remove('hidden');
@@ -788,6 +800,14 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('wrap-title-en').classList.add('hidden');
       document.getElementById('wrap-subtitle-ar').classList.remove('hidden');
       document.getElementById('wrap-subtitle-en').classList.add('hidden');
+      const metaTitleEnWrap = document.getElementById('wrap-meta-title-en');
+      const metaTitleArWrap = document.getElementById('wrap-meta-title-ar');
+      const metaDescEnWrap = document.getElementById('wrap-meta-desc-en');
+      const metaDescArWrap = document.getElementById('wrap-meta-desc-ar');
+      if (metaTitleArWrap) metaTitleArWrap.classList.remove('hidden');
+      if (metaTitleEnWrap) metaTitleEnWrap.classList.add('hidden');
+      if (metaDescArWrap) metaDescArWrap.classList.remove('hidden');
+      if (metaDescEnWrap) metaDescEnWrap.classList.add('hidden');
       document.getElementById('wrap-content-ar').classList.remove('hidden');
       document.getElementById('wrap-content-en').classList.add('hidden');
       document.getElementById('wrap-btn-text-ar').classList.remove('hidden');
@@ -861,6 +881,10 @@ document.addEventListener('DOMContentLoaded', () => {
     setLocaleTab('en');
     setEditorContent('form-content-en', '');
     setEditorContent('form-content-ar', '');
+    if (formMetaTitleEn) formMetaTitleEn.value = '';
+    if (formMetaTitleAr) formMetaTitleAr.value = '';
+    if (formMetaDescEn) formMetaDescEn.value = '';
+    if (formMetaDescAr) formMetaDescAr.value = '';
     updateImagePreview('');
     repeaterItems = [];
     formSortOrder.value = allSections.length + 1;
@@ -881,6 +905,10 @@ document.addEventListener('DOMContentLoaded', () => {
       setLocaleTab('en');
       setEditorContent('form-content-en', '');
       setEditorContent('form-content-ar', '');
+      if (formMetaTitleEn) formMetaTitleEn.value = '';
+      if (formMetaTitleAr) formMetaTitleAr.value = '';
+      if (formMetaDescEn) formMetaDescEn.value = '';
+      if (formMetaDescAr) formMetaDescAr.value = '';
       updateImagePreview('');
       repeaterItems = [];
       formSortOrder.value = allSections.length + 1;
@@ -903,6 +931,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     formSubtitleEn.value = typeof sec.section_subtitle === 'object' ? (sec.section_subtitle.en || '') : (sec.section_subtitle || '');
     formSubtitleAr.value = typeof sec.section_subtitle === 'object' ? (sec.section_subtitle.ar || '') : '';
+
+    if (formMetaTitleEn) formMetaTitleEn.value = typeof sec.meta_title === 'object' ? (sec.meta_title?.en || '') : (sec.meta_title || '');
+    if (formMetaTitleAr) formMetaTitleAr.value = typeof sec.meta_title === 'object' ? (sec.meta_title?.ar || '') : '';
+
+    if (formMetaDescEn) formMetaDescEn.value = typeof sec.meta_description === 'object' ? (sec.meta_description?.en || '') : (sec.meta_description || '');
+    if (formMetaDescAr) formMetaDescAr.value = typeof sec.meta_description === 'object' ? (sec.meta_description?.ar || '') : '';
 
     const rawContentEn = typeof sec.content === 'object' ? (sec.content.en || '') : (sec.content || '');
     const rawContentAr = typeof sec.content === 'object' ? (sec.content.ar || '') : '';
@@ -987,6 +1021,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const subtitleEn = formSubtitleEn.value.trim();
     const subtitleAr = formSubtitleAr.value.trim() || subtitleEn;
 
+    const metaTitleEn = formMetaTitleEn ? formMetaTitleEn.value.trim() : '';
+    const metaTitleAr = formMetaTitleAr ? formMetaTitleAr.value.trim() : '';
+
+    const metaDescEn = formMetaDescEn ? formMetaDescEn.value.trim() : '';
+    const metaDescAr = formMetaDescAr ? formMetaDescAr.value.trim() : '';
+
     const contentEn = getEditorContent('form-content-en').trim();
     const contentAr = getEditorContent('form-content-ar').trim() || contentEn;
 
@@ -1015,6 +1055,8 @@ document.addEventListener('DOMContentLoaded', () => {
       section_type: sectionType,
       section_title: { en: titleEn, ar: titleAr },
       section_subtitle: { en: subtitleEn, ar: subtitleAr },
+      meta_title: { en: metaTitleEn, ar: metaTitleAr },
+      meta_description: { en: metaDescEn, ar: metaDescAr },
       content: { en: contentEn, ar: contentAr },
       image: formImageUrl.value.trim() || null,
       image_position: imgPos,
