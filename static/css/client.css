@@ -1841,6 +1841,113 @@ footer .tagline {
   text-decoration: underline;
 }
 
+/* Reviewed By Author / Expert Card */
+.reviewed-by-card {
+  margin: 36px 0 28px;
+  padding: 20px 24px;
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  box-shadow: 0 2px 12px rgba(14, 17, 8, 0.03);
+}
+
+.reviewed-by-badge-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0B6B38;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.reviewed-by-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.reviewed-by-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.reviewed-by-headings {
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewed-by-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  margin-bottom: 2px;
+}
+
+.reviewed-by-name {
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.reviewed-by-date-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  border-radius: 100px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #047857;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.reviewed-by-role {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0B6B38;
+  margin: 4px 0 6px;
+}
+
+.reviewed-by-bio {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #475569;
+  margin: 0;
+}
+
+@media(max-width: 540px) {
+  .reviewed-by-card {
+    padding: 16px 18px;
+    gap: 14px;
+  }
+  .reviewed-by-badge-avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 0.95rem;
+  }
+  .reviewed-by-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
 /* Article Prose Typography & Media Responsiveness */
 .article-prose {
   font-size: 1.05rem;

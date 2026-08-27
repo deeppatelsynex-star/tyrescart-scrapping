@@ -60,22 +60,6 @@
           <img src="{{ post.cover_image_url }}" alt="{{ post.title }}">
         </div>
 
-        <!-- Table of Contents ("In This Article" Box) -->
-        <div class="toc-box">
-          <div class="toc-header">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--green-deep);"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-            <span>{% if locale == 'ar' %}في هذا المقال{% else %}In This Article{% endif %}</span>
-          </div>
-          <ul class="toc-list">
-            <li><a href="#overview">{% if locale == 'ar' %}نظرة عامة وأهمية الموضوع{% else %}Overview &amp; Core Concepts{% endif %}</a></li>
-            <li><a href="#benefits">{% if locale == 'ar' %}أهم الفوائد والمميزات{% else %}Top Key Benefits &amp; Advantages{% endif %}</a></li>
-            <li><a href="#comparison">{% if locale == 'ar' %}مقارنة الأداء في حرارة الصيف{% else %}Performance in UAE Heat{% endif %}</a></li>
-            <li><a href="#recommendations">{% if locale == 'ar' %}نصائح واختيار الخبراء{% else %}Expert Recommendations{% endif %}</a></li>
-            <li><a href="#maintenance">{% if locale == 'ar' %}العناية والصيانة الوقائية{% else %}Preventive Care &amp; Maintenance{% endif %}</a></li>
-            <li><a href="#conclusion">{% if locale == 'ar' %}الخاتمة والتوصيات{% else %}Conclusion{% endif %}</a></li>
-          </ul>
-        </div>
-
         <!-- Article Prose Content -->
         <div class="article-prose">
           
@@ -143,6 +127,32 @@
             </p>
           {% endif %}
 
+        </div>
+
+        <!-- Reviewed By Author / Expert Box -->
+        <div class="reviewed-by-card">
+          <div class="reviewed-by-badge-avatar">
+            <span>SK</span>
+          </div>
+          <div class="reviewed-by-content">
+            <div class="reviewed-by-top">
+              <div class="reviewed-by-headings">
+                <span class="reviewed-by-label">{% if locale == 'ar' %}تمت المراجعة بواسطة{% else %}REVIEWED BY{% endif %}</span>
+                <h4 class="reviewed-by-name">{% if locale == 'ar' %}شارفيل كومار{% else %}Sharvil Kumar{% endif %}</h4>
+              </div>
+              <div class="reviewed-by-date-badge">
+                <span>{% if locale == 'ar' %}تمت المراجعة في {{ post.published_at }}{% else %}Reviewed on {{ post.published_at }}{% endif %}</span>
+              </div>
+            </div>
+            <p class="reviewed-by-role">{% if locale == 'ar' %}أخصائي اختيار الإطارات، تايرز كارت{% else %}Tyre Selection Specialist, TyresCart{% endif %}</p>
+            <p class="reviewed-by-bio">
+              {% if locale == 'ar' %}
+                يشرف شارفيل كومار على العمليات في تايرز كارت، لمساعدة العملاء في العثور على الإطارات المثالية التي تتطابق مع سياراتهم وميزانيتهم، مع ضمان تجربة شراء سلسة وخدمة تركيب معتمدة وموثوقة.
+              {% else %}
+                Sharvil Kumar oversees operations at TyresCart, helping customers find tyres that match their vehicle and budget. He ensures a smooth purchasing experience and trusted installation support.
+              {% endif %}
+            </p>
+          </div>
         </div>
 
         <!-- Social Share Row -->
