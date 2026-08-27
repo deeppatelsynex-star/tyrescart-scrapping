@@ -60,27 +60,8 @@
           <img src="{{ post.cover_image_url }}" alt="{{ post.title }}">
         </div>
 
-        <!-- Reviewed By Author / Expert Box (Directly Below Image) -->
-        {% if reviewer and reviewer.enabled %}
-        <div class="reviewed-by-card">
-          <div class="reviewed-by-badge-avatar">
-            <span>{{ reviewer.initials or 'SK' }}</span>
-          </div>
-          <div class="reviewed-by-content">
-            <div class="reviewed-by-top">
-              <div class="reviewed-by-headings">
-                <span class="reviewed-by-label">{% if locale == 'ar' %}تمت المراجعة بواسطة{% else %}REVIEWED BY{% endif %}</span>
-                <h4 class="reviewed-by-name">{{ reviewer.name }}</h4>
-              </div>
-              <div class="reviewed-by-date-badge">
-                <span>{% if locale == 'ar' %}تمت المراجعة في {{ post.reviewed_at }}{% else %}Reviewed on {{ post.reviewed_at }}{% endif %}</span>
-              </div>
-            </div>
-            <p class="reviewed-by-role">{{ reviewer.role }}</p>
-            <p class="reviewed-by-bio">{{ reviewer.bio }}</p>
-          </div>
-        </div>
-        {% endif %}
+        <!-- Reviewed By Author / Expert Box Container (Rendered dynamically via JS) -->
+        <div id="reviewed-by-container"></div>
 
         <!-- Article Prose Content -->
         <div class="article-prose">
@@ -151,38 +132,8 @@
 
         </div>
 
-        <!-- Blog FAQs Accordion Section (Only displayed when FAQs exist in DB) -->
-        {% if post.faqs and post.faqs | length > 0 %}
-        <div class="blog-faqs-wrap">
-          <div class="blog-faqs-head">
-            <h3 class="blog-faqs-title">
-              {% if locale == 'ar' %}الأسئلة الشائعة{% else %}Frequently Asked Questions{% endif %}
-            </h3>
-          </div>
-
-          <div class="blog-faqs-accordion">
-            {% for faq in post.faqs %}
-              {% if faq.question %}
-              <div class="faq-item {% if loop.first %}active{% endif %}">
-                <button type="button" class="faq-question-btn" aria-expanded="{% if loop.first %}true{% else %}false{% endif %}">
-                  <span class="faq-q-text">{{ faq.question }}</span>
-                  <span class="faq-chevron-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-                  </span>
-                </button>
-                <div class="faq-answer-panel">
-                  <div class="faq-answer-inner">
-                    <div class="faq-answer-content">
-                      {{ faq.answer }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {% endif %}
-            {% endfor %}
-          </div>
-        </div>
-        {% endif %}
+        <!-- Blog FAQs Accordion Container (Rendered dynamically via JS) -->
+        <div id="blog-faqs-container"></div>
 
         <!-- Social Share Row -->
         <div class="share-section">
@@ -312,35 +263,157 @@
   </div>
 </section>
 
-<!-- Blog FAQs Accordion Toggle Script -->
+<!-- ================= JSON DATA PAYLOADS & JAVASCRIPT RENDERING ================= -->
+<script type="application/json" id="detail-blog-data">
+  {{ post | tojson | safe }}
+</script>
+
+<script type="application/json" id="detail-reviewer-data">
+  {{ reviewer | tojson | safe }}
+</script>
+
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const faqItems = document.querySelectorAll('.blog-faqs-accordion .faq-item');
-    faqItems.forEach(item => {
-      const btn = item.querySelector('.faq-question-btn');
-      if (!btn) return;
+    const locale = '{{ locale }}';
 
-      btn.addEventListener('click', function() {
-        const isOpen = item.classList.contains('active');
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
 
-        // Close other items smoothly with CSS transition
-        faqItems.forEach(otherItem => {
-          if (otherItem !== item) {
-            otherItem.classList.remove('active');
-            const otherBtn = otherItem.querySelector('.faq-question-btn');
-            if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
-          }
-        });
+    // -------------------------------------------------------------
+    // 1. DYNAMIC REVIEWER CARD RENDERING VIA JS
+    // -------------------------------------------------------------
+    try {
+      const reviewerScript = document.getElementById('detail-reviewer-data');
+      const blogScript = document.getElementById('detail-blog-data');
+      const reviewerContainer = document.getElementById('reviewed-by-container');
 
-        if (isOpen) {
-          item.classList.remove('active');
-          btn.setAttribute('aria-expanded', 'false');
-        } else {
-          item.classList.add('active');
-          btn.setAttribute('aria-expanded', 'true');
+      if (reviewerScript && reviewerContainer) {
+        const reviewer = JSON.parse(reviewerScript.textContent || '{}');
+        const post = JSON.parse(blogScript ? blogScript.textContent : '{}');
+
+        if (reviewer && (reviewer.enabled === true || reviewer.enabled === 'true' || reviewer.enabled === 'Yes')) {
+          const initials = escapeHtml(reviewer.initials || 'SK');
+          const name = escapeHtml(reviewer.name || 'Sharvil Kumar');
+          const role = escapeHtml(reviewer.role || 'Tyre Selection Specialist, TyresCart');
+          const bio = escapeHtml(reviewer.bio || '');
+          const reviewedDate = escapeHtml(post.reviewed_at || post.published_at || '');
+
+          const labelText = locale === 'ar' ? 'تمت المراجعة بواسطة' : 'REVIEWED BY';
+          const dateText = locale === 'ar' ? `تمت المراجعة في ${reviewedDate}` : `Reviewed on ${reviewedDate}`;
+
+          reviewerContainer.innerHTML = `
+            <div class="reviewed-by-card">
+              <div class="reviewed-by-badge-avatar">
+                <span>${initials}</span>
+              </div>
+              <div class="reviewed-by-content">
+                <div class="reviewed-by-top">
+                  <div class="reviewed-by-headings">
+                    <span class="reviewed-by-label">${labelText}</span>
+                    <h4 class="reviewed-by-name">${name}</h4>
+                  </div>
+                  <div class="reviewed-by-date-badge">
+                    <span>${dateText}</span>
+                  </div>
+                </div>
+                <p class="reviewed-by-role">${role}</p>
+                <p class="reviewed-by-bio">${bio}</p>
+              </div>
+            </div>
+          `;
         }
-      });
-    });
+      }
+    } catch (err) {
+      console.error('Failed to render reviewer section via JS:', err);
+    }
+
+    // -------------------------------------------------------------
+    // 2. DYNAMIC FAQS ACCORDION RENDERING VIA JS
+    // -------------------------------------------------------------
+    try {
+      const blogScript = document.getElementById('detail-blog-data');
+      const faqsContainer = document.getElementById('blog-faqs-container');
+
+      if (blogScript && faqsContainer) {
+        const post = JSON.parse(blogScript.textContent || '{}');
+        const rawFaqs = Array.isArray(post.faqs) ? post.faqs : [];
+        const faqs = rawFaqs.filter(f => f && f.question && String(f.question).trim().length > 0);
+
+        if (faqs.length > 0) {
+          const sectionTitle = locale === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions';
+          
+          let itemsHtml = '';
+          faqs.forEach((faq, idx) => {
+            const isFirst = idx === 0;
+            const qText = escapeHtml(faq.question);
+            const aText = escapeHtml(faq.answer || '');
+
+            itemsHtml += `
+              <div class="faq-item ${isFirst ? 'active' : ''}">
+                <button type="button" class="faq-question-btn" aria-expanded="${isFirst ? 'true' : 'false'}">
+                  <span class="faq-q-text">${qText}</span>
+                  <span class="faq-chevron-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                  </span>
+                </button>
+                <div class="faq-answer-panel">
+                  <div class="faq-answer-inner">
+                    <div class="faq-answer-content">${aText}</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+
+          faqsContainer.innerHTML = `
+            <div class="blog-faqs-wrap">
+              <div class="blog-faqs-head">
+                <h3 class="blog-faqs-title">${sectionTitle}</h3>
+              </div>
+              <div class="blog-faqs-accordion">
+                ${itemsHtml}
+              </div>
+            </div>
+          `;
+
+          // Interactive Smooth Accordion Event Listeners
+          const faqItems = faqsContainer.querySelectorAll('.faq-item');
+          faqItems.forEach(item => {
+            const btn = item.querySelector('.faq-question-btn');
+            if (!btn) return;
+
+            btn.addEventListener('click', function() {
+              const isOpen = item.classList.contains('active');
+
+              faqItems.forEach(otherItem => {
+                if (otherItem !== item) {
+                  otherItem.classList.remove('active');
+                  const otherBtn = otherItem.querySelector('.faq-question-btn');
+                  if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+                }
+              });
+
+              if (isOpen) {
+                item.classList.remove('active');
+                btn.setAttribute('aria-expanded', 'false');
+              } else {
+                item.classList.add('active');
+                btn.setAttribute('aria-expanded', 'true');
+              }
+            });
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to render FAQs via JS:', err);
+    }
   });
 </script>
 {% endblock %}
