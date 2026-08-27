@@ -597,7 +597,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getSelectedType() {
     const checked = document.querySelector('input[name="section_type"]:checked');
-    return checked ? checked.value : 'hero';
+    return checked ? checked.value : 'content_image';
   }
 
   function setSelectedType(type) {
@@ -857,7 +857,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modalTitle.textContent = 'Add Predefined Section';
     sectionForm.reset();
     if (formPageSlug) formPageSlug.value = currentPageSlug;
-    setSelectedType('hero');
+    setSelectedType('content_image');
     setLocaleTab('en');
     setEditorContent('form-content-en', '');
     setEditorContent('form-content-ar', '');
@@ -872,7 +872,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Quick Add from Predefined Layouts Catalog
   document.querySelectorAll('.btn-quick-add-layout').forEach(btn => {
     btn.addEventListener('click', () => {
-      const type = btn.dataset.type || 'hero';
+      const type = btn.dataset.type || 'content_image';
       formSectionId.value = '';
       modalTitle.textContent = `Add Predefined Section (${TYPE_METADATA[type]?.label || type})`;
       sectionForm.reset();
