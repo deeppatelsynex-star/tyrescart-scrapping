@@ -367,7 +367,20 @@
     const homeLabel = isAr ? 'الرئيسية' : 'Home';
     const pageTitle = page?.title || (isAr ? 'من نحن' : 'About Us');
     const heroImage = page?.banner_image;
-    const metaDesc = page?.meta_description || '';
+    const bodyContent = page?.content || '';
+
+    // If bodyContent contains headers (<h1>, <h2>, <p>), render directly; otherwise wrap with title
+    let contentHtml = '';
+    if (bodyContent && (bodyContent.includes('<h1') || bodyContent.includes('<h2') || bodyContent.includes('<p>') || bodyContent.includes('<div'))) {
+      contentHtml = bodyContent;
+    } else {
+      contentHtml = `
+        <h1 style="color:#ffffff; font-size:clamp(2rem, 3.8vw, 2.75rem); font-weight:800; line-height:1.25; margin-bottom:16px;">
+          ${escapeHtml(pageTitle)}
+        </h1>
+        ${bodyContent ? `<div style="color:rgba(255,255,255,0.85); font-size:1.02rem; line-height:1.75;">${bodyContent}</div>` : ''}
+      `;
+    }
 
     return `
       <section class="about-hero-dark" id="page-hero-banner">
@@ -388,25 +401,12 @@
 
           <!-- Hero 2-Column Grid -->
           <div style="display:grid; grid-template-columns:1fr; gap:40px; align-items:center;" class="hero-2col-layout">
-            <!-- Left Content -->
-            <div>
-              <span class="eyebrow" style="color:var(--brand-glow, #34d399);">&mdash; ${isAr ? 'تايرز فيجن الإمارات' : 'TyresVision UAE'}</span>
-              <h1 style="color:#ffffff; font-size:clamp(2rem, 3.8vw, 2.8rem); font-weight:800; margin-top:8px; line-height:1.2;">
-                ${escapeHtml(pageTitle)}
-              </h1>
-              ${metaDesc ? `<p class="lead" style="margin-top:12px; color:rgba(255,255,255,0.75);">${escapeHtml(metaDesc)}</p>` : ''}
-
-              <div style="margin-top:24px;">
-                <a href="#why" class="about-hero-cta">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                  </svg>
-                  <span>${isAr ? 'اكتشف المزيد' : 'Explore More'}</span>
-                </a>
-              </div>
+            <!-- Left Dynamic Database Content -->
+            <div class="hero-db-content">
+              ${contentHtml}
             </div>
 
-            <!-- Right Hero Image -->
+            <!-- Right Dynamic Database Hero Image -->
             ${heroImage ? `
               <div style="border-radius:24px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.12); aspect-ratio:16/10; background:#11170D;">
                 <img src="${heroImage}" alt="${escapeHtml(pageTitle)}" style="width:100%; height:100%; object-fit:cover; display:block;" loading="eager" />
@@ -466,11 +466,12 @@
 
       let finalHtml = '';
 
-      // 1. If page has a hero banner image configured in Pages Admin, render the Hero Banner
+      // 1. If page has a hero banner image configured in Pages Admin, render the Hero Banner using database content
       if (page.banner_image) {
         finalHtml += renderPageHeroBanner(page, locale);
       } else {
         finalHtml += renderBreadcrumbBar(page, locale);
+        finalHtml += renderPageProseBody(page, locale);
       }
 
       // 2. Render all dynamic sub-sections created in Sections Admin
@@ -498,9 +499,6 @@
           }
         });
       }
-
-      // 3. Render page body rich prose if provided
-      finalHtml += renderPageProseBody(page, locale);
 
       root.innerHTML = finalHtml;
 
