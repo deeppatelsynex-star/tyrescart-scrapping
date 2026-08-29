@@ -3534,61 +3534,93 @@ footer .tagline {
   height: 2px;
   background: currentColor;
   border-radius: 2px;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  transform-origin: center;
 }
 
-/* Mobile Nav Drawer Backdrop (Hidden by default) */
+.mobile-menu-btn[aria-expanded="true"] .hamburger-bar:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.mobile-menu-btn[aria-expanded="true"] .hamburger-bar:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.mobile-menu-btn[aria-expanded="true"] .hamburger-bar:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* Mobile Nav Drawer Backdrop (Smooth Fade In / Out) */
 .mobile-nav-backdrop {
-  display: none !important;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(14, 17, 8, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 99998;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s ease;
+  will-change: opacity, visibility;
 }
 
 .mobile-nav-backdrop.open {
-  display: block !important;
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  background: rgba(14, 17, 8, 0.65) !important;
-  backdrop-filter: blur(4px) !important;
-  -webkit-backdrop-filter: blur(4px) !important;
-  z-index: 99998 !important;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
-/* Mobile Nav Drawer Panel (Hidden by default) */
+/* Mobile Nav Drawer Panel (Smooth Slide In / Out) */
 .mobile-nav-drawer {
-  display: none !important;
+  display: flex;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: auto;
+  width: 320px;
+  max-width: 85vw;
+  height: 100vh;
+  height: 100dvh;
+  background: #ffffff;
+  z-index: 99999;
+  flex-direction: column;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.15);
+  transform: translateX(-100%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s ease, box-shadow 0.35s ease;
+  will-change: transform, visibility;
+  overflow: hidden;
+}
+
+.mobile-nav-drawer.open {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.35);
+}
+
+/* In Arabic (RTL): Drawer is pinned to the RIGHT and slides in/out from the right */
+html[dir="rtl"] .mobile-nav-drawer,
+[dir="rtl"] .mobile-nav-drawer {
+  left: auto;
+  right: 0;
+  transform: translateX(100%);
+}
+
+html[dir="rtl"] .mobile-nav-drawer.open,
+[dir="rtl"] .mobile-nav-drawer.open {
+  transform: translateX(0);
 }
 
 @media (max-width: 979px) {
   .mobile-menu-btn {
     display: inline-flex;
-  }
-
-  .mobile-nav-drawer.open {
-    display: flex !important;
-    position: fixed !important;
-    top: 0 !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: auto !important;
-    width: 300px !important;
-    max-width: 85vw !important;
-    height: 100vh !important;
-    background: #ffffff !important;
-    z-index: 99999 !important;
-    flex-direction: column !important;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.3) !important;
-    overflow: hidden !important;
-  }
-
-  /* In Arabic / RTL: Drawer is firmly pinned on the RIGHT side */
-  html[dir="rtl"] .mobile-nav-drawer.open,
-  [dir="rtl"] .mobile-nav-drawer.open {
-    left: auto !important;
-    right: 0 !important;
   }
 }
 
@@ -3612,13 +3644,14 @@ footer .tagline {
   justify-content: center;
   cursor: pointer;
   color: var(--slate);
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .mobile-nav-close:hover {
   background: #fee2e2;
   border-color: #fca5a5;
   color: #ef4444;
+  transform: rotate(90deg);
 }
 
 .mobile-nav-body {
