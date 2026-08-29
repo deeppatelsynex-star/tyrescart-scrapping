@@ -96,7 +96,7 @@
             <td colspan="7" class="py-12 text-center text-slate-400 font-bold">
               <div class="inline-flex items-center gap-2">
                 <svg class="w-5 h-5 animate-spin text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
-                Loading customer enquiries from hdweb_enquiry...
+                Loading customer enquiries...
               </div>
             </td>
           </tr>
@@ -299,6 +299,35 @@
     if (tableBody) {
       tableBody.innerHTML = html;
       attachRowEvents();
+
+      if (window.jQuery && $.fn.DataTable) {
+        if ($.fn.DataTable.isDataTable('#enquiries-table')) {
+          $('#enquiries-table').DataTable().destroy();
+        }
+        $('#enquiries-table').DataTable({
+          responsive: true,
+          pageLength: 10,
+          lengthMenu: [10, 25, 50, 100],
+          pagingType: 'full_numbers',
+          autoWidth: false,
+          columnDefs: [
+            { orderable: false, targets: [6] }
+          ],
+          order: [[0, 'desc']],
+          language: {
+            search: '',
+            searchPlaceholder: 'Search leads...',
+            lengthMenu: 'Show _MENU_ per page',
+            info: 'Showing _START_ to _END_ of _TOTAL_ leads',
+            infoEmpty: 'No leads found',
+            infoFiltered: '(filtered from _MAX_ total)',
+            paginate: { first: 'First', last: 'Last', next: 'Next', previous: 'Previous' }
+          },
+          drawCallback: function() {
+            attachRowEvents();
+          }
+        });
+      }
     }
   }
 

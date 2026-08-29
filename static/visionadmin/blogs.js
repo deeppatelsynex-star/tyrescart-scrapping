@@ -255,6 +255,32 @@ document.addEventListener('DOMContentLoaded', () => {
         </tr>
       `;
     }).join('');
+
+    if (window.jQuery && $.fn.DataTable) {
+      if ($.fn.DataTable.isDataTable('#blogs-table')) {
+        $('#blogs-table').DataTable().destroy();
+      }
+      $('#blogs-table').DataTable({
+        responsive: true,
+        pageLength: 10,
+        lengthMenu: [10, 25, 50, 100],
+        pagingType: 'full_numbers',
+        autoWidth: false,
+        columnDefs: [
+          { orderable: false, targets: [2, 5] }
+        ],
+        order: [[4, 'desc']],
+        language: {
+          search: '',
+          searchPlaceholder: 'Search articles...',
+          lengthMenu: 'Show _MENU_ per page',
+          info: 'Showing _START_ to _END_ of _TOTAL_ articles',
+          infoEmpty: 'No articles to show',
+          infoFiltered: '(filtered from _MAX_ total)',
+          paginate: { first: 'First', last: 'Last', next: 'Next', previous: 'Previous' }
+        }
+      });
+    }
   }
 
   function escapeHtml(str) {
