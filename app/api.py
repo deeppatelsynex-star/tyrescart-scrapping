@@ -47,6 +47,7 @@ from auth import (
     require_csrf,
     role_required_api,
     serialize_user,
+    to_ist_12h,
     verify_password,
 )
 from db import get_connection
@@ -2073,6 +2074,172 @@ def register_visionadmin_api_routes(app):
             }
         })
 
+    # =========================================================================
+    # 7. ENQUIRIES / LEADS MANAGEMENT API (hdweb_enquiry table)
+    # =========================================================================
+
+    @app.route('/visionadmin/api/enquiries', methods=['GET'])
+    @app.route('/visionadmin/api/v1/enquiries', methods=['GET'])
+    def visionadmin_get_enquiries():
+        """
+        Fetches all enquiries from hdweb_enquiry with metrics, filtering, and search.
+        """
+        q = (request.args.get('q') or '').strip().lower()
+        status_filter = request.args.get('status')
+        form_type_filter = request.args.get('form_type')
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                sql = "SELECT * FROM hdweb_enquiry ORDER BY enquiry_id DESC"
+                cursor.execute(sql)
+                rows = cursor.fetchall() or []
+
+                total_count = len(rows)
+                new_count = 0
+                banner_count = 0
+                wa_count = 0
+
+                filtered = []
+                for r in rows:
+                    st = r.get('status', 0)
+                    ft = (r.get('form_type') or '').lower()
+
+                    if st == 0:
+                        new_count += 1
+                    if 'banner' in ft:
+                        banner_count += 1
+                    else:
+                        wa_count += 1
+
+                    if status_filter is not None and status_filter != '' and status_filter != 'all':
+                        try:
+                            if int(st) != int(status_filter):
+                                continue
+                        except (ValueError, TypeError):
+                            pass
+
+                    if form_type_filter and form_type_filter != 'all':
+                        if form_type_filter == 'banner' and 'banner' not in ft:
+                            continue
+                        elif form_type_filter == 'whatsapp' and 'banner' in ft:
+                            continue
+
+                    if q:
+                        haystack = " ".join(str(v or '') for v in [
+                            r.get('name'), r.get('email'), r.get('number'),
+                            r.get('vehicle'), r.get('make'), r.get('model'),
+                            r.get('tyre_size'), r.get('city'), r.get('message'),
+                            r.get('enquiry_for')
+                        ]).lower()
+                        if q not in haystack:
+                            continue
+
+                    dt = r.get('created_at')
+                    created_at_fmt = to_ist_12h(dt, with_seconds=False) if dt else None
+                    created_at_raw = dt.isoformat() + 'Z' if dt and hasattr(dt, 'isoformat') else None
+
+                    status_map = {0: 'New', 1: 'In Progress', 2: 'Resolved', 3: 'Closed'}
+                    st_val = r.get('status', 0)
+
+                    filtered.append({
+                        'enquiry_id': r.get('enquiry_id'),
+                        'name': r.get('name'),
+                        'email': r.get('email'),
+                        'number': r.get('number'),
+                        'enquiry_for': r.get('enquiry_for'),
+                        'message': r.get('message'),
+                        'status': st_val,
+                        'status_label': status_map.get(st_val, 'New'),
+                        'form_type': r.get('form_type'),
+                        'model': r.get('model'),
+                        'make': r.get('make'),
+                        'year': r.get('year'),
+                        'spec': r.get('spec'),
+                        'current_insurance': r.get('current_insurance'),
+                        'vehicle': r.get('vehicle'),
+                        'tyre_size': r.get('tyre_size'),
+                        'city': r.get('city'),
+                        'created_at': created_at_fmt,
+                        'created_at_raw': created_at_raw
+                    })
+
+                return jsonify({
+                    'success': True,
+                    'enquiries': filtered,
+                    'metrics': {
+                        'total': total_count,
+                        'new': new_count,
+                        'banner': banner_count,
+                        'whatsapp_direct': wa_count
+                    },
+                    'count': len(filtered)
+                })
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/enquiries/<int:enquiry_id>', methods=['GET'])
+    @app.route('/visionadmin/api/v1/enquiries/<int:enquiry_id>', methods=['GET'])
+    def visionadmin_get_single_enquiry(enquiry_id):
+        """Fetches detail of a single enquiry by enquiry_id."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM hdweb_enquiry WHERE enquiry_id = %s", (enquiry_id,))
+                row = cursor.fetchone()
+                if not row:
+                    return jsonify({'success': False, 'error': 'Enquiry not found'}), 404
+
+                dt = row.get('created_at')
+                created_at_fmt = to_ist_12h(dt, with_seconds=False) if dt else None
+                created_at_raw = dt.isoformat() + 'Z' if dt and hasattr(dt, 'isoformat') else None
+                status_map = {0: 'New', 1: 'In Progress', 2: 'Resolved', 3: 'Closed'}
+
+                item = {**row}
+                item['created_at'] = created_at_fmt
+                item['created_at_raw'] = created_at_raw
+                item['status_label'] = status_map.get(row.get('status', 0), 'New')
+
+                return jsonify({'success': True, 'enquiry': item})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/enquiries/<int:enquiry_id>/status', methods=['PUT', 'POST'])
+    @app.route('/visionadmin/api/v1/enquiries/<int:enquiry_id>/status', methods=['PUT', 'POST'])
+    def visionadmin_update_enquiry_status(enquiry_id):
+        """Updates the status of an enquiry."""
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+        new_status = data.get('status')
+        if new_status is None:
+            return jsonify({'success': False, 'error': 'Status is required'}), 400
+
+        try:
+            status_int = int(new_status)
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Invalid status value'}), 400
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("UPDATE hdweb_enquiry SET status = %s WHERE enquiry_id = %s", (status_int, enquiry_id))
+                conn.commit()
+                return jsonify({'success': True, 'message': 'Status updated successfully', 'status': status_int})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/enquiries/<int:enquiry_id>', methods=['DELETE'])
+    @app.route('/visionadmin/api/v1/enquiries/<int:enquiry_id>', methods=['DELETE'])
+    def visionadmin_delete_enquiry(enquiry_id):
+        """Deletes an enquiry from hdweb_enquiry."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM hdweb_enquiry WHERE enquiry_id = %s", (enquiry_id,))
+                conn.commit()
+                return jsonify({'success': True, 'message': 'Enquiry deleted successfully'})
+        finally:
+            conn.close()
+
 
 def register_client_api_routes(app):
     """Registers all public, un-prefixed /api/* endpoints for the client storefront."""
@@ -2250,6 +2417,143 @@ def register_client_api_routes(app):
             'sections': formatted,
             'count': len(formatted)
         })
+
+    # =========================================================================
+    # 3. ENQUIRY / WHATSAPP BANNER SUBMISSION API (hdweb_enquiry table)
+    # =========================================================================
+
+    @app.route('/api/enquiry', methods=['POST'])
+    @app.route('/api/v1/enquiry', methods=['POST'])
+    def api_create_enquiry():
+        """
+        Receives quote & WhatsApp requests and saves all fields directly
+        into the existing `hdweb_enquiry` table.
+        """
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+
+        tyre_size = (data.get('tyre_size') or data.get('tyreSize') or '').strip()
+        vehicle_raw = (data.get('vehicle') or data.get('carMake') or data.get('car_make') or '').strip()
+        city = (data.get('city') or data.get('emirate') or '').strip()
+        spec = (data.get('spec') or data.get('fitting') or '').strip()
+        name = (data.get('name') or '').strip() or None
+        email = (data.get('email') or '').strip() or None
+        number = (data.get('number') or data.get('phone') or data.get('mobile') or '').strip() or None
+        enquiry_for = (data.get('enquiry_for') or data.get('enquiryFor') or 'Tyre Quote (WhatsApp Home Banner)').strip()
+        form_type = (data.get('form_type') or 'home_banner_whatsapp').strip()
+        status = int(data.get('status', 0))
+
+        # Check logged-in user in session if name, email, or mobile is not explicitly supplied
+        if not name or not email or not number:
+            name = name or session.get('name') or session.get('user_name') or session.get('customer_name')
+            email = email or session.get('email') or session.get('user_email') or session.get('customer_email')
+            number = number or session.get('phone') or session.get('mobile') or session.get('number') or session.get('customer_phone')
+
+            sess_uid = session.get('user_id') or session.get('customer_id') or session.get('uid')
+            if sess_uid:
+                try:
+                    conn_lookup = get_connection()
+                    try:
+                        with conn_lookup.cursor() as cur_lookup:
+                            # 1. Check users table (e-commerce customer)
+                            cur_lookup.execute("SELECT name, email, phone FROM users WHERE id = %s", (sess_uid,))
+                            u_row = cur_lookup.fetchone()
+                            if u_row:
+                                name = name or u_row.get('name')
+                                email = email or u_row.get('email')
+                                number = number or u_row.get('phone')
+                            else:
+                                # 2. Check userTbl (system user)
+                                cur_lookup.execute("SELECT Name, Email FROM userTbl WHERE userid = %s", (sess_uid,))
+                                u_tbl = cur_lookup.fetchone()
+                                if u_tbl:
+                                    name = name or u_tbl.get('Name')
+                                    email = email or u_tbl.get('Email')
+                    finally:
+                        conn_lookup.close()
+                except Exception as ex:
+                    print("Session user lookup error in enquiry:", ex)
+
+        # Extract make, model, year if available in vehicle string
+        make = data.get('make')
+        model = data.get('model')
+        year = data.get('year')
+        if vehicle_raw and (not make or not model):
+            year_match = re.search(r'\b(19\d{2}|20\d{2})\b', vehicle_raw)
+            if year_match:
+                year = year or year_match.group(1)
+            clean_no_year = re.sub(r'\b(19\d{2}|20\d{2})\b', '', vehicle_raw).strip()
+            parts = [p for p in clean_no_year.split() if p]
+            if parts and not make:
+                make = parts[0].title()
+            if len(parts) > 1 and not model:
+                model = " ".join(parts[1:]).title()
+
+        # Build message summary
+        message = data.get('message')
+        if not message:
+            msg_parts = []
+            if tyre_size:
+                msg_parts.append(f"Tyre size: {tyre_size}")
+            if vehicle_raw:
+                msg_parts.append(f"Car: {vehicle_raw}")
+            if city:
+                msg_parts.append(f"Emirate: {city}")
+            if spec:
+                msg_parts.append(f"Fitting: {spec}")
+            if name or email or number:
+                user_info = []
+                if name: user_info.append(f"Name: {name}")
+                if email: user_info.append(f"Email: {email}")
+                if number: user_info.append(f"Phone: {number}")
+                msg_parts.append("User: " + ", ".join(user_info))
+            message = "\n".join(msg_parts) if msg_parts else "WhatsApp Tyre Quote Request"
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                sql = """
+                    INSERT INTO hdweb_enquiry (
+                        name, email, number, enquiry_for, message, status,
+                        form_type, model, make, year, spec, current_insurance,
+                        vehicle, tyre_size, city
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s
+                    )
+                """
+                cursor.execute(sql, (
+                    name,
+                    email,
+                    number,
+                    enquiry_for,
+                    message,
+                    status,
+                    form_type,
+                    model,
+                    make,
+                    str(year) if year else None,
+                    spec,
+                    data.get('current_insurance'),
+                    vehicle_raw or None,
+                    tyre_size or None,
+                    city or None
+                ))
+                conn.commit()
+                new_id = cursor.lastrowid
+
+            return jsonify({
+                'success': True,
+                'enquiry_id': new_id,
+                'message': 'Enquiry successfully recorded in hdweb_enquiry.'
+            }), 201
+        except Exception as err:
+            return jsonify({
+                'success': False,
+                'error': f"Failed to record enquiry: {str(err)}"
+            }), 500
+        finally:
+            conn.close()
 
 
 def register_api_routes(app):

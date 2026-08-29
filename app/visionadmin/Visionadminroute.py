@@ -48,3 +48,13 @@ def register_visionadmin_routes(app):
     def visionadmin_settings():
         return render_template('visionadmin/settings.html', page='settings')
 
+    @app.route('/visionadmin/enquiries', methods=['GET'])
+    @app.route('/visionadmin/enquiry', methods=['GET'])
+    @app.route('/visionadmin/leads', methods=['GET'])
+    @app.route('/visonadmin/enquiries', methods=['GET'])
+    @app.route('/visonadmin/enquiry', methods=['GET'])
+    @app.route('/admin/enquiries', methods=['GET'])
+    @app.route('/admin/enquiry', methods=['GET'])
+    def visionadmin_enquiries():
+        return render_template('visionadmin/enquiries.html', page='enquiries')
+

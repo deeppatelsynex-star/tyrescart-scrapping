@@ -13,211 +13,150 @@
   </div>
 
   <!-- Header & Primary Actions with Dynamic Page Switcher -->
-  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white rounded-3xl p-6 sm:p-8 border border-[#E8EDE4] shadow-[0_4px_20px_-2px_rgba(14,17,8,0.03)] relative overflow-hidden">
-    <!-- Ambient Background Accent Graphics -->
-    <div class="absolute -right-8 -top-8 w-72 h-72 bg-[#EAF7E2]/50 rounded-full blur-3xl pointer-events-none"></div>
-    
-    <!-- Subtle Geometric Puzzle Watermark Graphic -->
-    <div class="hidden xl:block absolute right-8 top-1/2 -translate-y-1/2 opacity-25 pointer-events-none">
-      <svg class="w-48 h-28 text-[#58B31B]" viewBox="0 0 180 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="10" y="10" width="45" height="35" rx="8" fill="#EAF7E2" stroke="#58B31B" stroke-width="1.5" stroke-dasharray="3 3"/>
-        <rect x="65" y="10" width="45" height="35" rx="8" fill="#FFFFFF" stroke="#58B31B" stroke-width="1.5"/>
-        <rect x="120" y="10" width="45" height="35" rx="8" fill="#EAF7E2" stroke="#58B31B" stroke-width="1.5"/>
-        <rect x="35" y="55" width="55" height="35" rx="8" fill="#FFFFFF" stroke="#58B31B" stroke-width="1.5"/>
-        <rect x="100" y="55" width="55" height="35" rx="8" fill="#EAF7E2" stroke="#58B31B" stroke-width="1.5" stroke-dasharray="3 3"/>
-      </svg>
-    </div>
-
-    <div class="space-y-2 relative z-10 max-w-xl">
-      <div class="flex items-center gap-2">
-        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]">Dynamic Page Builder</span>
-        <span id="badge-page-slug" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#0E1108] text-white font-mono">about-us</span>
-      </div>
-      <h1 id="page-sections-title" class="text-2xl sm:text-3xl font-black text-[#0E1108] tracking-tight">About Us &mdash; Sections</h1>
-      <p class="text-xs sm:text-sm text-slate-500 font-medium">Manage and reorder predefined dynamic sections for any page across the storefront.</p>
-    </div>
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+    <h1 id="page-sections-title" class="text-3xl sm:text-4xl font-black text-[#0E1108] tracking-tight">Page Sections</h1>
 
     <!-- Page Switcher and Action Buttons -->
-    <div class="flex flex-wrap items-center gap-3 shrink-0 relative z-10">
+    <div class="flex flex-wrap items-center gap-3 shrink-0">
       
       <!-- Target Page Dropdown Selector -->
-      <div class="relative min-w-[200px]">
-        <select id="select-target-page" class="w-full pl-3.5 pr-8 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-[#E8EDE4] text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#58B31B] cursor-pointer appearance-none shadow-2xs">
+      <div class="relative min-w-[210px]">
+        <select id="select-target-page" class="w-full pl-4 pr-10 py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-emerald-600/60 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#58B31B] cursor-pointer appearance-none shadow-2xs">
           <option value="about-us" selected>About Us (about-us)</option>
         </select>
-        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-emerald-600">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
 
       <!-- Live Page Link -->
-      <a href="/en/about-us" id="link-view-live-page" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-[#0E1108] text-xs font-bold border border-[#E8EDE4] shadow-2xs transition">
-        <svg class="w-4 h-4 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      <a href="/en/about-us" id="link-view-live-page" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-[#0E1108] text-xs font-bold border border-slate-300 shadow-2xs transition">
         <span>View Live Page</span>
       </a>
 
       <!-- Add Section Button -->
-      <button type="button" id="btn-add-section" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#58B31B] hover:bg-[#35760F] text-white text-xs sm:text-sm font-extrabold shadow-md shadow-[#58B31B]/20 hover:shadow-lg transition-all duration-200 cursor-pointer">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <button type="button" id="btn-add-section" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl bg-[#00A650] hover:bg-[#008f45] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all duration-200 cursor-pointer">
+        <span class="text-base font-black leading-none">+</span>
         <span>Add Section</span>
       </button>
     </div>
   </div>
 
-  <!-- Metric Overview Cards (4 Grid Cards Exactly Matching Image) -->
+  <!-- Metric Overview Cards (4 Grid Cards Matching Screenshot) -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <!-- 1. Total Sections -->
-    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between">
-      <div class="flex items-start gap-3.5">
-        <div class="w-10 h-10 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        </div>
-        <div>
-          <p class="text-xs font-bold text-slate-700">Total Sections</p>
-          <div id="stat-total-sections" class="text-3xl font-black text-[#0E1108] tracking-tight mt-0.5">3</div>
-        </div>
+    <div class="bg-[#F8FAF7] rounded-3xl p-4 sm:p-5 border border-[#E8EDE4] shadow-2xs flex items-center gap-4">
+      <div class="w-11 h-11 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       </div>
-      <p class="text-[11px] text-slate-400 font-medium mt-3">All sections created</p>
+      <div>
+        <p class="text-xs font-semibold text-slate-500">Total Sections</p>
+        <div id="stat-total-sections" class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">3</div>
+      </div>
     </div>
 
     <!-- 2. Active Sections -->
-    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between">
-      <div class="flex items-start gap-3.5">
-        <div class="w-10 h-10 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
-        </div>
-        <div>
-          <p class="text-xs font-bold text-slate-700">Active (Live)</p>
-          <div id="stat-active-sections" class="text-3xl font-black text-[#0E1108] tracking-tight mt-0.5">3</div>
-        </div>
+    <div class="bg-[#F8FAF7] rounded-3xl p-4 sm:p-5 border border-[#E8EDE4] shadow-2xs flex items-center gap-4">
+      <div class="w-11 h-11 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
-      <p class="text-[11px] text-slate-400 font-medium mt-3">Currently visible</p>
+      <div>
+        <p class="text-xs font-semibold text-slate-500">Active</p>
+        <div id="stat-active-sections" class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">3</div>
+      </div>
     </div>
 
     <!-- 3. Inactive Sections -->
-    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between">
-      <div class="flex items-start gap-3.5">
-        <div class="w-10 h-10 rounded-2xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center shrink-0">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-        </div>
-        <div>
-          <p class="text-xs font-bold text-slate-700">Disabled</p>
-          <div id="stat-inactive-sections" class="text-3xl font-black text-[#0E1108] tracking-tight mt-0.5">0</div>
-        </div>
+    <div class="bg-[#F8FAF7] rounded-3xl p-4 sm:p-5 border border-[#E8EDE4] shadow-2xs flex items-center gap-4">
+      <div class="w-11 h-11 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
       </div>
-      <p class="text-[11px] text-slate-400 font-medium mt-3">Hidden from view</p>
+      <div>
+        <p class="text-xs font-semibold text-slate-500">Disabled</p>
+        <div id="stat-inactive-sections" class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">0</div>
+      </div>
     </div>
 
     <!-- 4. Supported Layouts -->
-    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between">
-      <div class="flex items-start gap-3.5">
-        <div class="w-10 h-10 rounded-2xl bg-[#F3E8FF] text-[#9333EA] flex items-center justify-center shrink-0">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-        </div>
-        <div>
-          <p class="text-xs font-bold text-slate-700">Predefined Layouts</p>
-          <div class="text-3xl font-black text-[#0E1108] tracking-tight mt-0.5">5</div>
-        </div>
+    <div class="bg-[#F8FAF7] rounded-3xl p-4 sm:p-5 border border-[#E8EDE4] shadow-2xs flex items-center gap-4">
+      <div class="w-11 h-11 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       </div>
-      <p class="text-[11px] text-slate-400 font-medium mt-3">Ready to use</p>
+      <div>
+        <p class="text-xs font-semibold text-slate-500">Predefined Layouts</p>
+        <div class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">5</div>
+      </div>
     </div>
   </div>
 
-  <!-- Predefined Section Components Panel (5 Quick Add Cards Grid) -->
-  <div class="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8EDE4] shadow-[0_4px_20px_-2px_rgba(14,17,8,0.03)] space-y-5">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#F1F5F0]">
-      <div class="space-y-0.5">
-        <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-[#58B31B]"></span>
-          <h2 class="text-base sm:text-lg font-black text-[#0E1108] tracking-tight">Predefined Section Components</h2>
-        </div>
-        <p class="text-xs text-slate-500 font-medium">Click any predefined layout to add to your page.</p>
-      </div>
-      <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F8FAF7] border border-[#E8EDE4] text-xs font-bold text-slate-600 self-start sm:self-auto">
-        <span>Fixed Components</span>
-        <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-      </div>
-    </div>
-
+  <!-- Predefined Section Components -->
+  <div class="space-y-3">
+    <h2 class="text-base font-black text-[#0E1108]">Predefined Section Components</h2>
+    
     <!-- 5 Predefined Layout Cards Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
 
-      <!-- Card 01: Content + Image -->
-      <div class="bg-white rounded-2xl p-4 border border-[#E8EDE4] shadow-2xs hover:shadow-md hover:border-[#58B31B]/50 transition-all flex flex-col justify-between gap-4">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div class="w-8 h-8 rounded-xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            </div>
-            <span class="text-xs font-bold text-[#0E1108] truncate">Content + Image</span>
+      <!-- Card 01: Content + Image (Highlight Style) -->
+      <div class="bg-[#EAF7E2] rounded-2xl p-3.5 border border-[#58B31B]/40 shadow-xs flex flex-col justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-white text-[#35760F] flex items-center justify-center shrink-0 border border-[#58B31B]/20">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           </div>
-          <span class="px-1.5 py-0.5 rounded-md bg-[#F1F5F0] text-slate-500 font-mono text-[10px] font-bold">01</span>
+          <span class="text-xs font-bold text-[#0E1108]">Content + Image</span>
         </div>
-        <button type="button" class="btn-quick-add-layout w-full py-1.5 rounded-xl text-xs font-bold text-[#35760F] hover:bg-[#EAF7E2] transition cursor-pointer flex items-center justify-center gap-1.5" data-type="content_image">
+        <button type="button" class="btn-quick-add-layout w-full py-1.5 rounded-xl bg-white border border-[#58B31B]/40 text-xs font-extrabold text-[#35760F] hover:bg-[#58B31B] hover:text-white transition shadow-2xs cursor-pointer flex items-center justify-center gap-1" data-type="content_image">
           <span>+ Add</span>
         </button>
       </div>
 
       <!-- Card 02: Features / Pillars -->
-      <div class="bg-white rounded-2xl p-4 border border-[#E8EDE4] shadow-2xs hover:shadow-md hover:border-[#58B31B]/50 transition-all flex flex-col justify-between gap-4">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div class="w-8 h-8 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center shrink-0">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            </div>
-            <span class="text-xs font-bold text-[#0E1108] truncate">Features / Pillars</span>
+      <div class="bg-white rounded-2xl p-3.5 border border-[#E8EDE4] shadow-xs hover:border-[#58B31B]/40 transition flex flex-col justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           </div>
-          <span class="px-1.5 py-0.5 rounded-md bg-[#F1F5F0] text-slate-500 font-mono text-[10px] font-bold">02</span>
+          <span class="text-xs font-bold text-[#0E1108]">Features / Pillars</span>
         </div>
-        <button type="button" class="btn-quick-add-layout w-full py-1.5 rounded-xl text-xs font-bold text-[#35760F] hover:bg-[#EAF7E2] transition cursor-pointer flex items-center justify-center gap-1.5" data-type="features">
+        <button type="button" class="btn-quick-add-layout w-full py-1.5 rounded-xl bg-white border border-[#E8EDE4] text-xs font-extrabold text-[#35760F] hover:bg-[#EAF7E2] transition shadow-2xs cursor-pointer flex items-center justify-center gap-1" data-type="features">
           <span>+ Add</span>
         </button>
       </div>
 
       <!-- Card 03: Statistics Band -->
-      <div class="bg-white rounded-2xl p-4 border border-[#E8EDE4] shadow-2xs hover:shadow-md hover:border-[#58B31B]/50 transition-all flex flex-col justify-between gap-4">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div class="w-8 h-8 rounded-xl bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center shrink-0">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            </div>
-            <span class="text-xs font-bold text-[#0E1108] truncate">Statistics Band</span>
+      <div class="bg-white rounded-2xl p-3.5 border border-[#E8EDE4] shadow-xs hover:border-[#58B31B]/40 transition flex flex-col justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           </div>
-          <span class="px-1.5 py-0.5 rounded-md bg-[#F1F5F0] text-slate-500 font-mono text-[10px] font-bold">03</span>
+          <span class="text-xs font-bold text-[#0E1108]">Statistics Band</span>
         </div>
-        <button type="button" class="btn-quick-add-layout w-full py-1.5 rounded-xl text-xs font-bold text-[#35760F] hover:bg-[#EAF7E2] transition cursor-pointer flex items-center justify-center gap-1.5" data-type="stats">
+        <button type="button" class="btn-quick-add-layout w-full py-1.5 rounded-xl bg-white border border-[#E8EDE4] text-xs font-extrabold text-[#35760F] hover:bg-[#EAF7E2] transition shadow-2xs cursor-pointer flex items-center justify-center gap-1" data-type="stats">
           <span>+ Add</span>
         </button>
       </div>
 
       <!-- Card 04: Mission & Team -->
-      <div class="bg-white rounded-2xl p-4 border border-[#E8EDE4] shadow-2xs hover:shadow-md hover:border-[#58B31B]/50 transition-all flex flex-col justify-between gap-4">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div class="w-8 h-8 rounded-xl bg-[#DBEAFE] text-[#2563EB] flex items-center justify-center shrink-0">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <span class="text-xs font-bold text-[#0E1108] truncate">Mission &amp; Team</span>
+      <div class="bg-white rounded-2xl p-3.5 border border-[#E8EDE4] shadow-xs hover:border-[#58B31B]/40 transition flex flex-col justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
-          <span class="px-1.5 py-0.5 rounded-md bg-[#F1F5F0] text-slate-500 font-mono text-[10px] font-bold">04</span>
+          <span class="text-xs font-bold text-[#0E1108]">Mission &amp; Team</span>
         </div>
-        <button type="button" class="btn-quick-add-layout w-full py-1.5 rounded-xl text-xs font-bold text-[#35760F] hover:bg-[#EAF7E2] transition cursor-pointer flex items-center justify-center gap-1.5" data-type="mission_vision">
+        <button type="button" class="btn-quick-add-layout w-full py-1.5 rounded-xl bg-white border border-[#E8EDE4] text-xs font-extrabold text-[#35760F] hover:bg-[#EAF7E2] transition shadow-2xs cursor-pointer flex items-center justify-center gap-1" data-type="mission_vision">
           <span>+ Add</span>
         </button>
       </div>
 
       <!-- Card 05: CTA Action Box -->
-      <div class="bg-white rounded-2xl p-4 border border-[#E8EDE4] shadow-2xs hover:shadow-md hover:border-[#58B31B]/50 transition-all flex flex-col justify-between gap-4">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <div class="w-8 h-8 rounded-xl bg-[#FCE7F3] text-[#E11D48] flex items-center justify-center shrink-0">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg>
-            </div>
-            <span class="text-xs font-bold text-[#0E1108] truncate">CTA Action Box</span>
+      <div class="bg-white rounded-2xl p-3.5 border border-[#E8EDE4] shadow-xs hover:border-[#58B31B]/40 transition flex flex-col justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
           </div>
-          <span class="px-1.5 py-0.5 rounded-md bg-[#F1F5F0] text-slate-500 font-mono text-[10px] font-bold">05</span>
+          <span class="text-xs font-bold text-[#0E1108]">CTA Action Box</span>
         </div>
-        <button type="button" class="btn-quick-add-layout w-full py-1.5 rounded-xl text-xs font-bold text-[#35760F] hover:bg-[#EAF7E2] transition cursor-pointer flex items-center justify-center gap-1.5" data-type="cta">
+        <button type="button" class="btn-quick-add-layout w-full py-1.5 rounded-xl bg-white border border-[#E8EDE4] text-xs font-extrabold text-[#35760F] hover:bg-[#EAF7E2] transition shadow-2xs cursor-pointer flex items-center justify-center gap-1" data-type="cta">
           <span>+ Add</span>
         </button>
       </div>
@@ -225,27 +164,18 @@
     </div>
   </div>
 
-  <!-- Reorder Guidance Box & Section List Section Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-    <div class="space-y-0.5">
-      <div class="flex items-center gap-2">
-        <h2 class="text-lg font-black text-slate-950 tracking-tight">Active Page Sections</h2>
-        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">Live Sequence</span>
-      </div>
-      <p class="text-xs text-slate-500 font-medium">Reorder, enable/disable, or edit content for each section on this page.</p>
+  <!-- Active Page Sections List -->
+  <div class="space-y-3 pt-2">
+    <div class="flex items-center justify-between">
+      <h2 class="text-base font-black text-[#0E1108]">Active Page Sections</h2>
     </div>
-    <div class="flex items-center gap-2">
-      <span class="text-[11px] text-slate-400 font-bold">Reorder with:</span>
-      <span class="px-2 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-extrabold">▲ Move Up</span>
-      <span class="px-2 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-extrabold">▼ Move Down</span>
-    </div>
-  </div>
 
-  <!-- Sections List Container -->
-  <div id="sections-container" class="space-y-3">
-    <div class="p-12 text-center text-slate-400 font-semibold bg-white rounded-3xl border border-slate-200/80">
-      <div class="inline-block w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-      <p class="text-xs">Loading page sections…</p>
+    <!-- Sections List Container -->
+    <div id="sections-container" class="space-y-3">
+      <div class="p-12 text-center text-slate-400 font-semibold bg-white rounded-3xl border border-slate-200/80">
+        <div class="inline-block w-8 h-8 border-3 border-[#00A650] border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p class="text-xs">Loading page sections…</p>
+      </div>
     </div>
   </div>
 

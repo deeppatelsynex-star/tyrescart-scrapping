@@ -23,6 +23,31 @@
       if(emirate) lines.push("Emirate: " + emirate);
       if(fitting) lines.push("Fitting: " + fitting);
 
+      // Save enquiry record in existing hdweb_enquiry table
+      try {
+        fetch('/api/v1/enquiry', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            tyre_size: size,
+            vehicle: make,
+            city: emirate,
+            spec: fitting,
+            enquiry_for: 'Tyre Quote (WhatsApp Home Banner)',
+            form_type: 'home_banner_whatsapp',
+            message: lines.join("\n")
+          })
+        }).catch(function(err){
+          console.warn('Enquiry store error:', err);
+        });
+      } catch (err) {
+        console.warn(err);
+      }
+
+      // Open WhatsApp with pre-filled message
       window.open("https://wa.me/" + WA + "?text=" + encodeURIComponent(lines.join("\n")), "_blank", "noopener");
     });
 
@@ -148,6 +173,62 @@
       }
     });
   }
+
+  /* ---------- Global .btn-wa & WhatsApp Click Capture ---------- */
+  document.addEventListener('click', function(e) {
+    var target = e.target && e.target.closest ? e.target.closest('.btn-wa, .float-wa, a[href*="wa.me"], button[data-wa]') : null;
+    if (!target) return;
+
+    // If it's the submit button inside quoteForm, let the form submit event handle it with full input values
+    if (target.closest && target.closest('#quoteForm') && (target.type === 'submit' || target.tagName === 'BUTTON')) {
+      return;
+    }
+
+    var href = target.getAttribute('href') || '';
+    var ctaText = (target.textContent || '').trim();
+    var pageUrl = window.location.pathname || '/';
+
+    var messageText = 'Direct WhatsApp CTA Click';
+    if (href && href.indexOf('text=') !== -1) {
+      try {
+        var match = href.match(/text=([^&]+)/);
+        if (match && match[1]) {
+          messageText = decodeURIComponent(match[1]);
+        }
+      } catch (err) {}
+    } else if (ctaText) {
+      messageText = 'Clicked: ' + ctaText;
+    }
+
+    var formType = 'whatsapp_button_click';
+    if (target.classList && target.classList.contains('float-wa')) {
+      formType = 'floating_whatsapp_widget';
+    } else if (target.closest && target.closest('.nav-cta')) {
+      formType = 'header_nav_whatsapp';
+    } else if (target.closest && (target.closest('.mobile-sticky-cta') || target.closest('.mobile-nav-cta'))) {
+      formType = 'mobile_whatsapp_bar';
+    }
+
+    try {
+      fetch('/api/v1/enquiry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          enquiry_for: 'WhatsApp Lead (' + (ctaText || 'CTA Button') + ')',
+          form_type: formType,
+          message: messageText + '\nSource Page: ' + pageUrl,
+          city: 'UAE'
+        })
+      }).catch(function(err) {
+        console.warn('Enquiry tracking error:', err);
+      });
+    } catch (err) {
+      console.warn(err);
+    }
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initMobileNav);

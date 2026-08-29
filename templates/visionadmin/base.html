@@ -153,6 +153,22 @@
           {% endif %}
         </a>
 
+        <!-- Customer & WhatsApp Enquiries Link -->
+        <a href="/visionadmin/enquiries" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page in ['enquiries', 'enquiry', 'leads'] %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['enquiries', 'enquiry', 'leads'] %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/></svg>
+            </div>
+            <span>Enquiries</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full {% if page in ['enquiries', 'enquiry', 'leads'] %}bg-[#D1E7C4] text-[#35760F]{% else %}bg-slate-100 text-slate-500{% endif %}">Leads</span>
+            {% if page in ['enquiries', 'enquiry', 'leads'] %}
+            <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
+            {% endif %}
+          </div>
+        </a>
+
         <!-- Reviewer Settings Link -->
         <a href="/visionadmin/settings" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page in ['settings', 'config', 'reviewer-settings'] %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
           <div class="flex items-center gap-3">

@@ -203,9 +203,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (badgePageSlug) badgePageSlug.textContent = currentPageSlug.toUpperCase();
     if (formPageSlug) formPageSlug.value = currentPageSlug;
 
-    const formattedTitle = currentPageSlug.split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     if (pageSectionsTitle) {
-      pageSectionsTitle.innerHTML = `${formattedTitle} &mdash; Sections`;
+      pageSectionsTitle.textContent = 'Page Sections';
     }
     if (linkViewLivePage) {
       linkViewLivePage.href = `/en/${currentPageSlug}`;
@@ -350,139 +349,65 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       return `
-        <div class="group relative bg-white hover:bg-slate-50/40 rounded-3xl p-4 sm:p-5 border ${sec.is_active ? 'border-slate-200/90 shadow-2xs hover:shadow-md' : 'border-slate-200/60 bg-slate-50/50 opacity-75 shadow-none'} transition-all duration-200" data-id="${sec.id}">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div class="group relative bg-white hover:bg-slate-50/50 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-[#E8EDE4] shadow-2xs hover:shadow-md transition-all duration-200" data-id="${sec.id}">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             
-            <!-- Left Area: Sequence + Media + Content Details -->
-            <div class="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+            <!-- Left Area: Media Preview + Meta + Content -->
+            <div class="flex items-center gap-3.5 sm:gap-5 min-w-0 flex-1">
               
-              <!-- 1. Sequence & Order Controls -->
-              <div class="flex flex-col items-center justify-center shrink-0 pt-0.5">
-                <span class="w-7 h-7 rounded-xl bg-slate-100 text-slate-700 font-mono font-black text-xs flex items-center justify-center border border-slate-200/80 shadow-2xs">${seqNum}</span>
-                <div class="flex flex-col gap-0.5 mt-1.5">
-                  <button type="button" class="btn-move-up p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition ${isFirst ? 'opacity-25 cursor-not-allowed' : 'cursor-pointer active:scale-90'}" data-id="${sec.id}" ${isFirst ? 'disabled' : ''} title="Move Up">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-                  </button>
-                  <button type="button" class="btn-move-down p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition ${isLast ? 'opacity-25 cursor-not-allowed' : 'cursor-pointer active:scale-90'}" data-id="${sec.id}" ${isLast ? 'disabled' : ''} title="Move Down">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- 2. Visual Media Thumbnail / Layout Visualizer (Strict Fixed Size!) -->
-              <div class="relative shrink-0 w-28 h-20 sm:w-36 sm:h-24 md:w-44 md:h-28 rounded-2xl overflow-hidden bg-slate-950 border border-slate-200/90 shadow-2xs group/media">
+              <!-- 1. Visual Thumbnail Preview -->
+              <div class="relative shrink-0 w-28 h-20 sm:w-36 sm:h-24 rounded-2xl overflow-hidden bg-slate-900 border border-slate-100 shadow-2xs">
                 ${sec.image ? `
-                  <img src="${sec.image}" alt="Preview" class="w-full h-full object-cover group-hover/media:scale-105 transition-transform duration-500" loading="lazy" />
-                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent pointer-events-none"></div>
-                  <!-- Layout Tag Overlaid -->
-                  <div class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-slate-950/85 backdrop-blur-xs text-white text-[9px] font-black border border-white/15 shadow-xs flex items-center gap-1">
-                    <span>${meta.emoji}</span>
-                    <span class="truncate max-w-[75px]">${meta.shortLabel}</span>
-                  </div>
-                  <!-- Alignment pill -->
-                  ${sec.image_position ? `
-                    <div class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-slate-900/90 backdrop-blur-xs text-slate-200 text-[9px] font-extrabold border border-white/10 shadow-xs">
-                      ${sec.image_position === 'left' ? '◧ Left' : '◨ Right'}
-                    </div>
-                  ` : ''}
+                  <img src="${sec.image}" alt="Preview" class="w-full h-full object-cover" loading="lazy" />
                 ` : `
-                  <!-- No Image Gradient Placeholder -->
-                  <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white p-2 text-center relative overflow-hidden">
-                    <span class="text-2xl mb-0.5 filter drop-shadow">${meta.emoji}</span>
-                    <span class="text-[9px] font-black text-slate-200 uppercase tracking-wider">${meta.shortLabel}</span>
+                  <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950 text-white p-2 text-center">
+                    <span class="text-xl mb-0.5">${meta.emoji}</span>
+                    <span class="text-[9px] font-bold text-slate-300 uppercase">${meta.shortLabel}</span>
                   </div>
                 `}
               </div>
 
-              <!-- 3. Rich Content & Bilingual Typography Body -->
-              <div class="min-w-0 flex-1 space-y-1.5">
+              <!-- 2. Typography Body -->
+              <div class="min-w-0 flex-1 space-y-1">
                 
-                <!-- Meta Badges Line -->
-                <div class="flex flex-wrap items-center gap-1.5">
-                  <!-- Type Badge -->
-                  <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${meta.badgeBg}">
-                    ${meta.label}
-                  </span>
-
-                  <!-- Status Badge -->
+                <!-- Type + Live Badge -->
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-extrabold text-[#0E1108]">${meta.label}</span>
                   ${sec.is_active 
-                    ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200/80"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Live</span>'
-                    : '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-slate-100 text-slate-500 border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Disabled</span>'
+                    ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EAF7E2] text-[#35760F]">Live</span>'
+                    : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">Disabled</span>'
                   }
-
-                  <!-- Structured Items Count -->
-                  ${itemsCount > 0 ? `
-                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center gap-1">
-                      <svg class="w-3 h-3 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                      <span>${itemsCount} ${sec.section_type === 'stats' ? 'Metrics' : (sec.section_type === 'hero' ? 'Pillars' : 'Cards')}</span>
-                    </span>
-                  ` : ''}
-
-                  <!-- CTA Button Badge -->
-                  ${btnText ? `
-                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/70 truncate max-w-[180px] flex items-center gap-1">
-                      <span>🔗</span>
-                      <span class="truncate">${btnText}</span>
-                    </span>
-                  ` : ''}
                 </div>
 
-                <!-- Subtitle Eyebrow (if available) -->
-                ${(subtitleEn || subtitleAr) ? `
-                  <div class="text-[10px] font-black uppercase tracking-widest text-emerald-600 truncate">
-                    ${subtitleEn || subtitleAr}
-                  </div>
-                ` : ''}
+                <!-- Main Section Title -->
+                <h3 class="text-sm sm:text-base font-black text-[#0E1108] tracking-tight truncate">
+                  ${titleEn || 'Untitled Section'}
+                </h3>
 
-                <!-- Main Headlines (EN & AR) -->
-                <div>
-                  <h3 class="text-sm sm:text-base font-black text-slate-950 tracking-tight leading-snug truncate">
-                    ${titleEn || 'Untitled Section'}
-                  </h3>
-                  ${titleAr ? `
-                    <p class="text-xs font-semibold text-slate-400 mt-0.5 truncate" dir="rtl">${titleAr}</p>
-                  ` : ''}
-                </div>
-
-                <!-- Description Snippet (if available) -->
-                ${(stripHtml(contentEn) || stripHtml(contentAr)) ? `
-                  <p class="text-xs text-slate-600 font-normal leading-relaxed line-clamp-2 bg-slate-50/80 p-2 sm:p-2.5 rounded-xl border border-slate-100/90">
-                    ${stripHtml(contentEn) || stripHtml(contentAr)}
-                  </p>
-                ` : ''}
-
-                <!-- Mini Structured Chips Preview (if available) -->
-                ${renderedItemsChips ? `
-                  <div class="flex flex-wrap items-center gap-1 pt-0.5">
-                    ${renderedItemsChips}
-                  </div>
-                ` : ''}
+                <!-- Summary Description -->
+                <p class="text-xs text-slate-500 font-medium line-clamp-2 leading-relaxed max-w-3xl">
+                  ${stripHtml(contentEn) || stripHtml(subtitleEn) || 'TyresVision dynamic responsive layout component.'}
+                </p>
 
               </div>
             </div>
 
-            <!-- Right Area: Actions Group -->
-            <div class="flex sm:flex-row lg:flex-col items-center justify-end gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-              
-              <!-- Enable / Disable Toggle -->
-              <button type="button" class="btn-toggle-active w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${sec.is_active ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'}" data-id="${sec.id}">
-                <span class="w-2 h-2 rounded-full ${sec.is_active ? 'bg-emerald-500' : 'bg-slate-400'}"></span>
-                <span>${sec.is_active ? 'Active' : 'Disabled'}</span>
+            <!-- Right Area: Status Badge + Edit + Delete -->
+            <div class="flex items-center gap-3 shrink-0 self-end md:self-center">
+              <span class="px-3 py-1 rounded-full text-xs font-bold ${sec.is_active ? 'bg-[#EAF7E2] text-[#35760F]' : 'bg-slate-100 text-slate-500'}">
+                ${sec.is_active ? 'Active' : 'Disabled'}
+              </span>
+
+              <!-- Edit Button -->
+              <button type="button" class="btn-edit-section inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#00A650] hover:bg-[#008f45] text-white text-xs font-bold shadow-xs hover:shadow transition active:scale-95 cursor-pointer" data-id="${sec.id}">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                <span>Edit</span>
               </button>
 
-              <div class="flex items-center gap-1.5 w-full sm:w-auto">
-                <!-- Edit Button -->
-                <button type="button" class="btn-edit-section flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-black shadow-2xs hover:shadow-xs transition active:scale-95 cursor-pointer" data-id="${sec.id}">
-                  <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  <span>Edit</span>
-                </button>
-
-                <!-- Delete Button -->
-                <button type="button" class="btn-delete-section p-2 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition cursor-pointer" data-id="${sec.id}" title="Delete Section">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                </button>
-              </div>
-
+              <!-- Delete Button -->
+              <button type="button" class="btn-delete-section w-8 h-8 rounded-xl border border-rose-200 hover:border-rose-300 text-rose-500 hover:bg-rose-50 flex items-center justify-center transition cursor-pointer" data-id="${sec.id}" title="Delete Section">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
             </div>
 
           </div>
