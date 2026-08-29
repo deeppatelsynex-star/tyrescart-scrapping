@@ -151,11 +151,59 @@
             <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </div>
 
-          <select id="enquiry-type-filter" class="px-3 py-2 rounded-xl bg-[#F6F8F3] border border-[#E3E7DE] text-xs font-bold text-slate-700 focus:bg-white focus:border-[#58B31B] outline-hidden cursor-pointer">
-            <option value="all">All Sources</option>
-            <option value="banner">Home Banner Quotes</option>
-            <option value="whatsapp">WhatsApp Direct CTAs</option>
-          </select>
+          <!-- Custom Source Filter Dropdown -->
+          <div class="relative" id="source-filter-dropdown-container">
+            <input type="hidden" id="enquiry-type-filter" value="all" />
+            
+            <button 
+              type="button" 
+              id="source-filter-btn" 
+              class="flex items-center justify-between gap-2.5 px-3.5 py-2 rounded-xl bg-[#F6F8F3] hover:bg-white border border-[#E3E7DE] hover:border-[#58B31B] text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer select-none"
+              aria-expanded="false"
+            >
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                <span id="source-filter-label">All Sources</span>
+              </div>
+              <svg id="source-filter-chevron" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            <!-- Floating Custom Dropdown Card -->
+            <div 
+              id="source-filter-menu" 
+              class="hidden absolute right-0 mt-1.5 w-52 rounded-2xl bg-white border border-[#E3E7DE] shadow-xl p-1.5 z-30 space-y-0.5 transform origin-top-right transition-all duration-200"
+            >
+              <button 
+                type="button" 
+                class="source-option-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#EAF7E2] hover:text-[#35760F] transition cursor-pointer text-left"
+                data-value="all"
+                data-label="All Sources"
+              >
+                <span>All Sources</span>
+                <svg class="w-3.5 h-3.5 text-[#58B31B] opacity-100 option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <button 
+                type="button" 
+                class="source-option-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#EAF7E2] hover:text-[#35760F] transition cursor-pointer text-left"
+                data-value="banner"
+                data-label="Home Banner Quotes"
+              >
+                <span>Home Banner Quotes</span>
+                <svg class="w-3.5 h-3.5 text-[#58B31B] opacity-0 option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <button 
+                type="button" 
+                class="source-option-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-[#EAF7E2] hover:text-[#35760F] transition cursor-pointer text-left"
+                data-value="whatsapp"
+                data-label="WhatsApp Direct CTAs"
+              >
+                <span>WhatsApp Direct CTAs</span>
+                <svg class="w-3.5 h-3.5 text-[#58B31B] opacity-0 option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+          </div>
         </div>
 
       </div>

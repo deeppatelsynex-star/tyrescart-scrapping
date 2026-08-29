@@ -467,11 +467,58 @@
     });
   }
 
-  // Type Filter
-  if (typeFilter) {
-    typeFilter.addEventListener('change', (e) => {
-      currentTypeFilter = e.target.value;
-      renderTable();
+  // Type Filter (Custom Styled Dropdown)
+  const sourceFilterBtn = document.getElementById('source-filter-btn');
+  const sourceFilterMenu = document.getElementById('source-filter-menu');
+  const sourceFilterChevron = document.getElementById('source-filter-chevron');
+  const sourceFilterLabel = document.getElementById('source-filter-label');
+  const optionButtons = document.querySelectorAll('.source-option-btn');
+
+  if (sourceFilterBtn && sourceFilterMenu) {
+    sourceFilterBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = sourceFilterMenu.classList.contains('hidden');
+      if (isHidden) {
+        sourceFilterMenu.classList.remove('hidden');
+        if (sourceFilterChevron) sourceFilterChevron.classList.add('rotate-180');
+        sourceFilterBtn.setAttribute('aria-expanded', 'true');
+      } else {
+        sourceFilterMenu.classList.add('hidden');
+        if (sourceFilterChevron) sourceFilterChevron.classList.remove('rotate-180');
+        sourceFilterBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!sourceFilterMenu.contains(e.target) && !sourceFilterBtn.contains(e.target)) {
+        sourceFilterMenu.classList.add('hidden');
+        if (sourceFilterChevron) sourceFilterChevron.classList.remove('rotate-180');
+        sourceFilterBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    optionButtons.forEach((optBtn) => {
+      optBtn.addEventListener('click', () => {
+        const val = optBtn.getAttribute('data-value') || 'all';
+        const label = optBtn.getAttribute('data-label') || 'All Sources';
+
+        if (sourceFilterLabel) sourceFilterLabel.textContent = label;
+        if (typeFilter) typeFilter.value = val;
+
+        optionButtons.forEach((b) => {
+          const check = b.querySelector('.option-check');
+          if (check) check.classList.add('opacity-0');
+        });
+        const currentCheck = optBtn.querySelector('.option-check');
+        if (currentCheck) currentCheck.classList.remove('opacity-0');
+
+        sourceFilterMenu.classList.add('hidden');
+        if (sourceFilterChevron) sourceFilterChevron.classList.remove('rotate-180');
+        sourceFilterBtn.setAttribute('aria-expanded', 'false');
+
+        currentTypeFilter = val;
+        renderTable();
+      });
     });
   }
 
