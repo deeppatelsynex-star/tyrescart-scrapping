@@ -484,6 +484,124 @@
     </div>
   </div>
 
+  <!-- View Profile Modal -->
+  <div id="view-profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
+      <button type="button" data-close-modal class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
+      <div class="flex flex-col items-center text-center gap-2">
+        <span id="vp-avatar" class="w-16 h-16 rounded-full bg-[#EAF7E2] text-[#35760F] flex items-center justify-center text-2xl font-semibold overflow-hidden">?</span>
+        <h3 id="vp-name" class="text-base font-bold text-slate-900">—</h3>
+        <p id="vp-email" class="text-xs text-slate-500">—</p>
+      </div>
+      <dl class="mt-5 space-y-2 text-sm">
+        <div class="flex justify-between">
+          <dt class="text-slate-500">Role</dt>
+          <dd id="vp-role" class="font-medium text-slate-800">—</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-slate-500">Status</dt>
+          <dd id="vp-status" class="font-medium text-slate-800">—</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-slate-500">Last Updated</dt>
+          <dd id="vp-updated" class="font-medium text-slate-800">—</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Change Profile Modal -->
+  <div id="change-profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
+      <button type="button" data-close-modal class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
+      <h3 class="text-base font-bold text-slate-900 mb-4">Change Profile</h3>
+      <div id="cp-error" class="hidden mb-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs px-3 py-2"></div>
+      <div id="cp-success" class="hidden mb-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs px-3 py-2"></div>
+      <form id="change-profile-form" class="space-y-3">
+        <div class="flex flex-col items-center gap-2 mb-2">
+          <span id="cp-avatar-preview" class="w-14 h-14 rounded-full bg-[#EAF7E2] text-[#35760F] flex items-center justify-center text-xl font-semibold overflow-hidden">?</span>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Full Name</label>
+          <input id="cp-name" type="text" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#58B31B]" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Email</label>
+          <input id="cp-email" type="email" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#58B31B]" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Avatar Image URL</label>
+          <input id="cp-avatar-url" type="text" placeholder="https://…" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#58B31B]" />
+          <button type="button" id="cp-remove-avatar" class="mt-1 text-xs text-rose-600 hover:underline cursor-pointer">Remove avatar</button>
+        </div>
+        <button type="submit" id="cp-submit" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#58B31B] hover:bg-[#35760F] px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+          <span id="cp-submit-label">Save Changes</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div id="change-password-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
+      <button type="button" data-close-modal class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
+      <h3 class="text-base font-bold text-slate-900 mb-4">Change Password</h3>
+      <div id="pw-error" class="hidden mb-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs px-3 py-2"></div>
+      <div id="pw-success" class="hidden mb-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs px-3 py-2"></div>
+      <form id="change-password-form" class="space-y-3">
+        <input type="text" name="username" value="{{ session.get('email', '') }}" autocomplete="username" class="hidden" style="display:none;" />
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Current Password</label>
+          <div class="relative">
+            <input id="pw-current" type="password" required autocomplete="current-password" class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#58B31B]" />
+            <button type="button" data-toggle-password="pw-current" tabindex="-1" class="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 hover:text-slate-600 cursor-pointer">
+              <svg class="icon-eye-open w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+              <svg class="icon-eye-closed hidden w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">New Password</label>
+          <div class="relative">
+            <input id="pw-new" type="password" required minlength="8" autocomplete="new-password" class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#58B31B]" />
+            <button type="button" data-toggle-password="pw-new" tabindex="-1" class="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 hover:text-slate-600 cursor-pointer">
+              <svg class="icon-eye-open w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+              <svg class="icon-eye-closed hidden w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Confirm New Password</label>
+          <div class="relative">
+            <input id="pw-confirm" type="password" required minlength="8" autocomplete="new-password" class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#58B31B]" />
+            <button type="button" data-toggle-password="pw-confirm" tabindex="-1" class="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 hover:text-slate-600 cursor-pointer">
+              <svg class="icon-eye-open w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+              <svg class="icon-eye-closed hidden w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" id="pw-submit" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#58B31B] hover:bg-[#35760F] px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+          <span id="pw-submit-label">Change Password</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <script>
     const sidebar = document.getElementById('va-sidebar');
     const backdrop = document.getElementById('va-sidebar-backdrop');
@@ -731,6 +849,9 @@
 
   <!-- Global Search Component Script -->
   <script src="/static/visionadmin/global-search.js?v={{ range(10000, 99999) | random }}"></script>
+
+  <!-- User Profile & Password Change Manager -->
+  <script src="/static/profile.js"></script>
 
   {% block scripts %}{% endblock %}
   {% block extra_scripts %}{% endblock %}

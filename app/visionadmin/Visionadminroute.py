@@ -6,10 +6,29 @@ Protected by session-based authentication & role-based authorization (SuperAdmin
 """
 
 import functools
+import re
 import secrets
 from flask import jsonify, redirect, render_template, request, session
 
-from auth import bit_to_bool, get_user_by_email, verify_password
+from auth import (
+    bit_to_bool,
+    check_forgot_password_rate_limit,
+    check_login_rate_limit,
+    check_reset_password_rate_limit,
+    clear_login_failures,
+    create_password_reset_token,
+    get_user_by_email,
+    get_user_by_id,
+    record_forgot_password_request,
+    record_login_failure,
+    record_reset_password_attempt,
+    update_user_password,
+    verify_and_consume_reset_token,
+    verify_password,
+)
+from mailer import send_email
+
+EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
 
 def login_required_visionadmin(view):
@@ -64,8 +83,13 @@ def register_visionadmin_routes(app):
         if not email or not password:
             return jsonify({'error': 'Email and password are required.'}), 400
 
+        is_locked, seconds_remaining, msg = check_login_rate_limit(email)
+        if is_locked:
+            return jsonify({'error': msg}), 429
+
         user = get_user_by_email(email)
         if not user or bit_to_bool(user['IsDeleted']) or not verify_password(password, user['password']):
+            record_login_failure(email)
             return jsonify({'error': 'Invalid email or password.'}), 401
 
         if not bit_to_bool(user['Status']):
@@ -73,6 +97,8 @@ def register_visionadmin_routes(app):
 
         if user.get('Role') not in ('SuperAdmin', 'Admin'):
             return jsonify({'error': 'Access denied. Administrator privileges required.'}), 403
+
+        clear_login_failures(email)
 
         session.clear()
         session.permanent = remember
@@ -103,6 +129,91 @@ def register_visionadmin_routes(app):
         if request.method == 'GET' or not (request.is_json or (request.headers.get('Accept') and 'application/json' in request.headers.get('Accept'))):
             return redirect('/visionadmin/login')
         return jsonify({'success': True, 'redirect': '/visionadmin/login'})
+
+    @app.route('/visionadmin/forgot-password', methods=['GET', 'POST'])
+    @app.route('/visonadmin/forgot-password', methods=['GET', 'POST'])
+    def visionadmin_forgot_password():
+        """Handles password reset requests for VisionAdmin administrators."""
+        if request.method == 'GET':
+            return render_template('forgot_password.html')
+
+        data = request.get_json(silent=True) or request.form or {}
+        email = (data.get('email') or '').strip().lower()
+
+        if not email or not EMAIL_RE.match(email):
+            return jsonify({'error': 'Please enter a valid email address.'}), 400
+
+        is_limited, seconds_remaining, msg = check_forgot_password_rate_limit(email)
+        if is_limited:
+            return jsonify({'error': msg}), 429
+
+        record_forgot_password_request(email)
+
+        user = get_user_by_email(email)
+        if user and bit_to_bool(user.get('Status')) and not bit_to_bool(user.get('IsDeleted')):
+            try:
+                token = create_password_reset_token(user['userid'])
+                reset_link = f"{request.host_url.rstrip('/')}/visionadmin/reset-password?token={token}"
+                html_body = render_template(
+                    'emails/reset_password.html',
+                    user_name=user.get('Name') or 'there',
+                    user_email=user.get('Email') or email,
+                    reset_link=reset_link,
+                    expires_minutes=30,
+                )
+                send_email(user['Email'], 'Reset your TyresVision Admin password', html_body)
+            except Exception as e:
+                app.logger.error(f'Error sending password reset email: {e}')
+                return jsonify({'error': f'Failed to send email: {str(e)}'}), 500
+
+        return jsonify({
+            'success': True,
+            'message': 'If an administrator account exists with that email, a password reset link has been sent.',
+        })
+
+    @app.route('/visionadmin/reset-password', methods=['GET', 'POST'])
+    @app.route('/visonadmin/reset-password', methods=['GET', 'POST'])
+    def visionadmin_reset_password():
+        """Handles password reset token consumption for VisionAdmin administrators."""
+        if request.method == 'GET':
+            return render_template('reset_password.html')
+
+        data = request.get_json(silent=True) or request.form or {}
+        token = (data.get('token') or '').strip()
+        new_password = data.get('new_password') or ''
+        confirm_password = data.get('confirm_password') or ''
+
+        is_limited, seconds_remaining, msg = check_reset_password_rate_limit()
+        if is_limited:
+            return jsonify({'error': msg}), 429
+
+        record_reset_password_attempt()
+
+        if not token:
+            return jsonify({'error': 'Reset token is required.'}), 400
+
+        if not new_password or not confirm_password:
+            return jsonify({'error': 'Both password fields are required.'}), 400
+
+        if new_password != confirm_password:
+            return jsonify({'error': 'Passwords do not match.'}), 400
+
+        if len(new_password) < 8:
+            return jsonify({'error': 'Password must be at least 8 characters long.'}), 400
+
+        user_id = verify_and_consume_reset_token(token)
+        if not user_id:
+            return jsonify({'error': 'Invalid or expired reset link. Please request a new one.'}), 400
+
+        user = get_user_by_id(user_id)
+        if not user or not bit_to_bool(user.get('Status')) or bit_to_bool(user.get('IsDeleted')):
+            return jsonify({'error': 'Account not found or inactive.'}), 404
+
+        update_user_password(user_id, new_password)
+        return jsonify({
+            'success': True,
+            'message': 'Your password has been reset successfully. You can now sign in to VisionAdmin.',
+        })
 
     # ========================================================================
     # 2. VISIONADMIN CMS STUDIO PAGES (PROTECTED)

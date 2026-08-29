@@ -18,10 +18,18 @@ from flask import jsonify, redirect, render_template, request, session
 import job_manager
 from auth import (
     bit_to_bool,
+    check_forgot_password_rate_limit,
+    check_login_rate_limit,
+    check_reset_password_rate_limit,
+    clear_login_failures,
     create_password_reset_token,
+    get_client_ip,
     get_user_by_email,
     get_user_by_id,
     login_required_page,
+    record_forgot_password_request,
+    record_login_failure,
+    record_reset_password_attempt,
     role_required_page,
     update_user_password,
     verify_and_consume_reset_token,
@@ -31,46 +39,6 @@ from db import get_connection
 from mailer import send_email
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-
-LOGIN_MAX_ATTEMPTS = 5
-LOGIN_LOCKOUT_SECONDS = 15 * 60
-
-_login_attempts = {}
-_login_attempts_lock = threading.Lock()
-
-
-def _login_lockout_remaining(email):
-    with _login_attempts_lock:
-        info = _login_attempts.get(email)
-        if not info:
-            return None
-        attempts, first_failed_at = info
-        if attempts < LOGIN_MAX_ATTEMPTS:
-            return None
-        elapsed = time.time() - first_failed_at
-        if elapsed >= LOGIN_LOCKOUT_SECONDS:
-            del _login_attempts[email]
-            return None
-        return LOGIN_LOCKOUT_SECONDS - elapsed
-
-
-def _record_login_failure(email):
-    with _login_attempts_lock:
-        now = time.time()
-        info = _login_attempts.get(email)
-        if not info:
-            _login_attempts[email] = (1, now)
-        else:
-            attempts, first_failed_at = info
-            if now - first_failed_at >= LOGIN_LOCKOUT_SECONDS:
-                _login_attempts[email] = (1, now)
-            else:
-                _login_attempts[email] = (attempts + 1, first_failed_at)
-
-
-def _clear_login_failures(email):
-    with _login_attempts_lock:
-        _login_attempts.pop(email, None)
 
 
 def register_tcsadmin_routes(app):
@@ -167,20 +135,19 @@ def register_tcsadmin_routes(app):
         if not email or not password:
             return jsonify({'error': 'Email and password are required.'}), 400
 
-        remaining = _login_lockout_remaining(email)
-        if remaining is not None:
-            minutes = max(1, round(remaining / 60))
-            return jsonify({'error': f'Too many failed attempts. Try again in {minutes} minute(s).'}), 429
+        is_locked, seconds_remaining, msg = check_login_rate_limit(email)
+        if is_locked:
+            return jsonify({'error': msg}), 429
 
         user = get_user_by_email(email)
         if not user or bit_to_bool(user['IsDeleted']) or not verify_password(password, user['password']):
-            _record_login_failure(email)
+            record_login_failure(email)
             return jsonify({'error': 'Invalid email or password.'}), 401
 
         if not bit_to_bool(user['Status']):
             return jsonify({'error': 'This account has been disabled. Contact an administrator.'}), 403
 
-        _clear_login_failures(email)
+        clear_login_failures(email)
 
         session.clear()
         session.permanent = remember
@@ -212,6 +179,12 @@ def register_tcsadmin_routes(app):
 
         if not email or not EMAIL_RE.match(email):
             return jsonify({'error': 'Please enter a valid email address.'}), 400
+
+        is_limited, seconds_remaining, msg = check_forgot_password_rate_limit(email)
+        if is_limited:
+            return jsonify({'error': msg}), 429
+
+        record_forgot_password_request(email)
 
         user = get_user_by_email(email)
         if user and bit_to_bool(user.get('Status')) and not bit_to_bool(user.get('IsDeleted')):
@@ -245,6 +218,12 @@ def register_tcsadmin_routes(app):
         token = (data.get('token') or '').strip()
         new_password = data.get('new_password') or ''
         confirm_password = data.get('confirm_password') or ''
+
+        is_limited, seconds_remaining, msg = check_reset_password_rate_limit()
+        if is_limited:
+            return jsonify({'error': msg}), 429
+
+        record_reset_password_attempt()
 
         if not token:
             return jsonify({'error': 'Reset token is required.'}), 400

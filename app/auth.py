@@ -203,9 +203,169 @@ def require_csrf(view):
 
 
 import threading
+import time
 
 _reset_tokens = {}
 _reset_lock = threading.Lock()
+
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_LOCKOUT_SECONDS = 15 * 60
+
+FORGOT_PASSWORD_MAX_PER_EMAIL = 3
+FORGOT_PASSWORD_COOLDOWN_SECONDS = 60
+FORGOT_PASSWORD_MAX_PER_IP = 10
+FORGOT_PASSWORD_WINDOW_SECONDS = 15 * 60
+
+RESET_PASSWORD_MAX_PER_IP = 5
+RESET_PASSWORD_WINDOW_SECONDS = 15 * 60
+
+_rate_limit_lock = threading.Lock()
+_login_failed_attempts = {}       # key: "email:<email>" or "ip:<ip>" -> [timestamp, timestamp, ...]
+_forgot_pwd_requests = {}        # key: "email:<email>" or "ip:<ip>" -> [timestamp, timestamp, ...]
+_reset_pwd_attempts = {}         # key: "ip:<ip>" -> [timestamp, timestamp, ...]
+
+
+def get_client_ip():
+    """Safely gets the real client IP address from proxy headers or remote_addr."""
+    forwarded = request.headers.get('X-Forwarded-For')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.remote_addr or '127.0.0.1'
+
+
+def check_login_rate_limit(email, ip=None):
+    """
+    Checks if login attempts are currently locked out for this email or IP.
+    Returns (is_locked, seconds_remaining, message) or (False, 0, None).
+    """
+    now = time.time()
+    ip = ip or get_client_ip()
+    email_key = f"email:{(email or '').strip().lower()}"
+    ip_key = f"ip:{ip}"
+
+    with _rate_limit_lock:
+        for key, max_attempts in [(email_key, LOGIN_MAX_ATTEMPTS), (ip_key, LOGIN_MAX_ATTEMPTS * 2)]:
+            attempts = _login_failed_attempts.get(key, [])
+            valid_attempts = [t for t in attempts if now - t < LOGIN_LOCKOUT_SECONDS]
+            _login_failed_attempts[key] = valid_attempts
+
+            if len(valid_attempts) >= max_attempts:
+                oldest_in_window = valid_attempts[0]
+                elapsed = now - oldest_in_window
+                remaining = max(1, int(LOGIN_LOCKOUT_SECONDS - elapsed))
+                minutes = max(1, round(remaining / 60))
+                return True, remaining, f"Too many failed login attempts. Please try again in {minutes} minute(s)."
+
+    return False, 0, None
+
+
+def record_login_failure(email, ip=None):
+    """Records a failed login attempt for the given email and IP."""
+    now = time.time()
+    ip = ip or get_client_ip()
+    email_key = f"email:{(email or '').strip().lower()}"
+    ip_key = f"ip:{ip}"
+
+    with _rate_limit_lock:
+        for key in [email_key, ip_key]:
+            attempts = _login_failed_attempts.get(key, [])
+            valid_attempts = [t for t in attempts if now - t < LOGIN_LOCKOUT_SECONDS]
+            valid_attempts.append(now)
+            _login_failed_attempts[key] = valid_attempts
+
+
+def clear_login_failures(email, ip=None):
+    """Clears failed login attempts after successful authentication."""
+    ip = ip or get_client_ip()
+    email_key = f"email:{(email or '').strip().lower()}"
+    ip_key = f"ip:{ip}"
+
+    with _rate_limit_lock:
+        _login_failed_attempts.pop(email_key, None)
+        _login_failed_attempts.pop(ip_key, None)
+
+
+def check_forgot_password_rate_limit(email, ip=None):
+    """
+    Checks rate limits for forgot password requests:
+    - Minimum 60s cooldown between requests for same email
+    - Max 3 requests per 10 minutes per email
+    - Max 10 requests per 15 minutes per IP
+    """
+    now = time.time()
+    ip = ip or get_client_ip()
+    email_key = f"email:{(email or '').strip().lower()}"
+    ip_key = f"ip:{ip}"
+
+    with _rate_limit_lock:
+        # Check email cooldown & frequency
+        email_attempts = _forgot_pwd_requests.get(email_key, [])
+        valid_email_attempts = [t for t in email_attempts if now - t < 600]
+        _forgot_pwd_requests[email_key] = valid_email_attempts
+
+        if valid_email_attempts:
+            last_attempt = valid_email_attempts[-1]
+            if now - last_attempt < FORGOT_PASSWORD_COOLDOWN_SECONDS:
+                remaining_cooldown = int(FORGOT_PASSWORD_COOLDOWN_SECONDS - (now - last_attempt))
+                return True, remaining_cooldown, f"Please wait {remaining_cooldown} seconds before requesting another reset link."
+
+            if len(valid_email_attempts) >= FORGOT_PASSWORD_MAX_PER_EMAIL:
+                return True, 600, "Too many password reset requests for this email. Please try again in 10 minutes."
+
+        # Check IP frequency
+        ip_attempts = _forgot_pwd_requests.get(ip_key, [])
+        valid_ip_attempts = [t for t in ip_attempts if now - t < FORGOT_PASSWORD_WINDOW_SECONDS]
+        _forgot_pwd_requests[ip_key] = valid_ip_attempts
+
+        if len(valid_ip_attempts) >= FORGOT_PASSWORD_MAX_PER_IP:
+            return True, FORGOT_PASSWORD_WINDOW_SECONDS, "Too many requests from your network. Please try again later."
+
+    return False, 0, None
+
+
+def record_forgot_password_request(email, ip=None):
+    """Records a password reset request timestamp for email and IP."""
+    now = time.time()
+    ip = ip or get_client_ip()
+    email_key = f"email:{(email or '').strip().lower()}"
+    ip_key = f"ip:{ip}"
+
+    with _rate_limit_lock:
+        for key, window in [(email_key, 600), (ip_key, FORGOT_PASSWORD_WINDOW_SECONDS)]:
+            attempts = _forgot_pwd_requests.get(key, [])
+            valid_attempts = [t for t in attempts if now - t < window]
+            valid_attempts.append(now)
+            _forgot_pwd_requests[key] = valid_attempts
+
+
+def check_reset_password_rate_limit(ip=None):
+    """Checks rate limits for password reset token submission."""
+    now = time.time()
+    ip = ip or get_client_ip()
+    ip_key = f"ip:{ip}"
+
+    with _rate_limit_lock:
+        attempts = _reset_pwd_attempts.get(ip_key, [])
+        valid_attempts = [t for t in attempts if now - t < RESET_PASSWORD_WINDOW_SECONDS]
+        _reset_pwd_attempts[ip_key] = valid_attempts
+
+        if len(valid_attempts) >= RESET_PASSWORD_MAX_PER_IP:
+            return True, RESET_PASSWORD_WINDOW_SECONDS, "Too many password reset attempts. Please try again in 15 minutes."
+
+    return False, 0, None
+
+
+def record_reset_password_attempt(ip=None):
+    """Records a password reset token submission attempt."""
+    now = time.time()
+    ip = ip or get_client_ip()
+    ip_key = f"ip:{ip}"
+
+    with _rate_limit_lock:
+        attempts = _reset_pwd_attempts.get(ip_key, [])
+        valid_attempts = [t for t in attempts if now - t < RESET_PASSWORD_WINDOW_SECONDS]
+        valid_attempts.append(now)
+        _reset_pwd_attempts[ip_key] = valid_attempts
 
 
 def create_password_reset_token(user_id):
@@ -250,5 +410,3 @@ def update_user_password(user_id, new_password):
             )
     finally:
         conn.close()
-
-#updated

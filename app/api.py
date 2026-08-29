@@ -270,6 +270,7 @@ def register_tcsadmin_api_routes(app):
     # 1. User, Profile & Authentication APIs
     # ==========================================================================
 
+    @app.route('/visionadmin/api/me')
     @app.route('/tcsadmin/api/me')
     @app.route('/api/me')
     @login_required_api
@@ -280,6 +281,7 @@ def register_tcsadmin_api_routes(app):
             return jsonify({'error': 'Authentication required.'}), 401
         return jsonify({'user': serialize_user(user), 'csrfToken': session.get('csrf_token')})
 
+    @app.route('/visionadmin/api/profile', methods=['PUT'])
     @app.route('/tcsadmin/api/profile', methods=['PUT'])
     @app.route('/api/profile', methods=['PUT'])
     @login_required_api
@@ -318,6 +320,7 @@ def register_tcsadmin_api_routes(app):
         user = get_user_by_id(session['user_id'])
         return jsonify({'user': serialize_user(user)})
 
+    @app.route('/visionadmin/api/profile/avatar', methods=['DELETE'])
     @app.route('/tcsadmin/api/profile/avatar', methods=['DELETE'])
     @app.route('/api/profile/avatar', methods=['DELETE'])
     @login_required_api
@@ -333,6 +336,8 @@ def register_tcsadmin_api_routes(app):
         user = get_user_by_id(session['user_id'])
         return jsonify({'user': serialize_user(user)})
 
+    @app.route('/visionadmin/api/change-password', methods=['POST'])
+    @app.route('/visonadmin/api/change-password', methods=['POST'])
     @app.route('/tcsadmin/api/change-password', methods=['POST'])
     @app.route('/api/change-password', methods=['POST'])
     @login_required_api
