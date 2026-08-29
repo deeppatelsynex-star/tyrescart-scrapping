@@ -135,7 +135,7 @@ def register_visionadmin_routes(app):
     def visionadmin_forgot_password():
         """Handles password reset requests for VisionAdmin administrators."""
         if request.method == 'GET':
-            return render_template('forgot_password.html')
+            return render_template('visionadmin/forgot_password.html')
 
         data = request.get_json(silent=True) or request.form or {}
         email = (data.get('email') or '').strip().lower()
@@ -155,13 +155,13 @@ def register_visionadmin_routes(app):
                 token = create_password_reset_token(user['userid'])
                 reset_link = f"{request.host_url.rstrip('/')}/visionadmin/reset-password?token={token}"
                 html_body = render_template(
-                    'emails/reset_password.html',
+                    'emails/vison_forgotpass.html',
                     user_name=user.get('Name') or 'there',
                     user_email=user.get('Email') or email,
                     reset_link=reset_link,
                     expires_minutes=30,
                 )
-                send_email(user['Email'], 'Reset your TyresVision Admin password', html_body)
+                send_email(user['Email'], 'Reset Your VisionAdmin Password', html_body)
             except Exception as e:
                 app.logger.error(f'Error sending password reset email: {e}')
                 return jsonify({'error': f'Failed to send email: {str(e)}'}), 500
@@ -176,7 +176,7 @@ def register_visionadmin_routes(app):
     def visionadmin_reset_password():
         """Handles password reset token consumption for VisionAdmin administrators."""
         if request.method == 'GET':
-            return render_template('reset_password.html')
+            return render_template('visionadmin/reset_password.html', token=request.args.get('token', ''))
 
         data = request.get_json(silent=True) or request.form or {}
         token = (data.get('token') or '').strip()
@@ -213,6 +213,7 @@ def register_visionadmin_routes(app):
         return jsonify({
             'success': True,
             'message': 'Your password has been reset successfully. You can now sign in to VisionAdmin.',
+            'redirect': '/visionadmin/login'
         })
 
     # ========================================================================
