@@ -1333,6 +1333,17 @@ def register_tcsadmin_api_routes(app):
 def register_visionadmin_api_routes(app):
     """Registers all /visionadmin/api JSON endpoints (uploads, pages, blogs, sections CRUD)."""
 
+    @app.before_request
+    def visionadmin_api_auth_guard():
+        """Protects all /visionadmin/api/ endpoints with session auth and RBAC."""
+        if request.path.startswith('/visionadmin/api/'):
+            user_id = session.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Authentication required. Please sign in to VisionAdmin.'}), 401
+            role = session.get('role')
+            if role not in ('SuperAdmin', 'Admin'):
+                return jsonify({'error': 'Unauthorized. VisionAdmin access requires administrator privileges.'}), 403
+
     # =========================================================================
     # 1. FILE UPLOAD ENDPOINTS
     # =========================================================================

@@ -299,16 +299,70 @@
           <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#58B31B] ring-2 ring-white"></span>
         </button>
 
-        <!-- User Profile Avatar Pill -->
-        <div class="flex items-center gap-3 pl-2 border-l border-[#E8EDE4]">
-          <div class="w-9 h-9 rounded-full bg-[#0E1108] text-white flex items-center justify-center text-xs font-extrabold shadow-sm">
-            {{ (session.get('name') or 'Admin')[:1] | upper }}
+        <!-- User Profile Dropdown Component -->
+        <div class="relative" id="va-user-dropdown-container">
+          <button 
+            type="button" 
+            id="va-user-dropdown-btn" 
+            class="flex items-center gap-3 pl-2 pr-2 py-1.5 rounded-2xl border border-transparent hover:border-[#E8EDE4] hover:bg-[#F8FAF7] transition cursor-pointer select-none"
+            aria-expanded="false"
+            aria-haspopup="true"
+          >
+            <div class="w-9 h-9 rounded-full bg-[#0E1108] text-white flex items-center justify-center text-xs font-black shadow-sm shrink-0">
+              {{ (session.get('name') or 'Admin')[:1] | upper }}
+            </div>
+            <div class="hidden md:block text-left">
+              <p class="text-xs font-black text-[#0E1108] leading-tight">{{ session.get('name') or 'Admin User' }}</p>
+              <div class="flex items-center gap-1 mt-0.5">
+                <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#58B31B]"></span>
+                <p class="text-[10px] text-slate-500 font-bold leading-tight">{{ session.get('role') or 'SuperAdmin' }}</p>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-slate-400 hidden md:block transition-transform duration-200" id="va-user-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+
+          <!-- Floating Dropdown Menu -->
+          <div 
+            id="va-user-dropdown-menu" 
+            class="hidden absolute right-0 mt-2 w-64 bg-white rounded-3xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-[#E8EDE4] py-2 z-50 transform origin-top-right transition-all duration-200 text-[#0E1108]"
+          >
+            <!-- User Header Summary -->
+            <div class="px-4 py-3 border-b border-[#F1F5F0]">
+              <p class="text-xs font-black text-[#0E1108] truncate">{{ session.get('name') or 'Administrator' }}</p>
+              <p class="text-[11px] text-slate-500 font-semibold truncate mt-0.5">{{ session.get('email') or 'admin@tyresvision.com' }}</p>
+              <div class="mt-2">
+                <span class="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-md bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]">
+                  {{ session.get('role') or 'SuperAdmin' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="py-1">
+              <a href="/visionadmin/settings" class="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-[#F8FAF7] hover:text-[#0E1108] transition">
+                <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Studio Settings</span>
+              </a>
+              {% if session.get('role') in ['SuperAdmin', 'Admin'] %}
+              <a href="/tcsadmin/Admin" class="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-[#F8FAF7] hover:text-[#0E1108] transition">
+                <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>User Management</span>
+              </a>
+              {% endif %}
+              <a href="/tcsadmin/docs/scraper" class="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-[#F8FAF7] hover:text-[#0E1108] transition">
+                <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <span>Scraper Admin</span>
+              </a>
+            </div>
+
+            <!-- Sign Out Action -->
+            <div class="pt-1 border-t border-[#F1F5F0]">
+              <a href="/visionadmin/logout" class="flex items-center gap-2.5 px-4 py-2.5 text-xs font-black text-rose-600 hover:bg-rose-50 transition">
+                <svg class="w-4 h-4 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span>Sign Out</span>
+              </a>
+            </div>
           </div>
-          <div class="hidden md:block text-left">
-            <p class="text-xs font-black text-[#0E1108] leading-tight">{{ session.get('name') or 'Admin User' }}</p>
-            <p class="text-[10px] text-slate-400 font-bold leading-tight mt-0.5">{{ session.get('role') or 'Super Admin' }}</p>
-          </div>
-          <svg class="w-4 h-4 text-slate-400 hidden md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
     </header>
@@ -632,8 +686,32 @@
           backToTopBtn.classList.add('opacity-0', 'translate-y-6', 'pointer-events-none');
         }
       });
-      backToTopBtn.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    // User Profile Dropdown Toggle Logic
+    const userDropdownBtn = document.getElementById('va-user-dropdown-btn');
+    const userDropdownMenu = document.getElementById('va-user-dropdown-menu');
+    const userChevron = document.getElementById('va-user-chevron');
+
+    if (userDropdownBtn && userDropdownMenu) {
+      userDropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = !userDropdownMenu.classList.contains('hidden');
+        if (isOpen) {
+          userDropdownMenu.classList.add('hidden');
+          if (userChevron) userChevron.classList.remove('rotate-180');
+          userDropdownBtn.setAttribute('aria-expanded', 'false');
+        } else {
+          userDropdownMenu.classList.remove('hidden');
+          if (userChevron) userChevron.classList.add('rotate-180');
+          userDropdownBtn.setAttribute('aria-expanded', 'true');
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!userDropdownMenu.contains(e.target) && !userDropdownBtn.contains(e.target)) {
+          userDropdownMenu.classList.add('hidden');
+          if (userChevron) userChevron.classList.remove('rotate-180');
+          userDropdownBtn.setAttribute('aria-expanded', 'false');
+        }
       });
     }
   </script>
