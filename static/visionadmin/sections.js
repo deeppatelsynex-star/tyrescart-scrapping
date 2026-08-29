@@ -534,11 +534,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (radio) {
       radio.checked = true;
       document.querySelectorAll('.type-card').forEach(c => {
-        c.className = 'type-card flex items-center gap-2.5 p-3 rounded-2xl border-2 border-slate-200 bg-white hover:bg-slate-50 cursor-pointer transition';
+        c.className = 'type-card flex items-center gap-2.5 p-3 rounded-2xl border-2 border-[#E8EDE4] bg-white hover:bg-[#F8FAF7] cursor-pointer transition';
       });
       const card = radio.closest('.type-card');
       if (card) {
-        card.className = 'type-card flex items-center gap-2.5 p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/40 cursor-pointer transition';
+        card.className = 'type-card flex items-center gap-2.5 p-3 rounded-2xl border-2 border-[#58B31B] bg-[#EAF7E2]/50 cursor-pointer transition';
       }
       applyTypeFormRules(type);
     }
@@ -590,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderRepeaterItems() {
     const type = getSelectedType();
     if (repeaterItems.length === 0) {
-      repeaterList.innerHTML = '<div class="p-4 text-center text-slate-400 bg-white rounded-xl border border-dashed border-slate-200 text-xs">No structured items added yet. Click "+ Add Item" above.</div>';
+      repeaterList.innerHTML = '<div class="p-4 text-center text-slate-400 bg-white rounded-xl border border-dashed border-[#E8EDE4] text-xs">No structured items added yet. Click "+ Add Item" above.</div>';
       return;
     }
 
@@ -625,10 +625,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (type === 'stats') {
         return `
-          <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-3">
-            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-              <span class="text-[11px] font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
+              <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
                 <span>Statistic Metric #${i + 1}</span>
               </span>
               <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
@@ -638,11 +638,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Metric Number / Stat *</label>
-                <input type="text" placeholder="e.g. 10K+ or 24/7 or 100%" class="rep-num w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-black bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500" value="${item.number || ''}" />
+                <input type="text" placeholder="e.g. 10K+ or 24/7 or 100%" class="rep-num w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition" value="${item.number || ''}" />
               </div>
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Select Icon *</label>
-                <select class="rep-icon w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                <select class="rep-icon w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition">
                   ${ICON_CHOICES.map(opt => `<option value="${opt.val}" ${matchedIcon === opt.val ? 'selected' : ''}>${opt.label}</option>`).join('')}
                 </select>
               </div>
@@ -652,11 +652,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Heading / Label (English) *</label>
-                <input type="text" placeholder="e.g. Tyres Available" class="rep-head-en w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-emerald-500" value="${typeof item.heading === 'object' ? (item.heading.en || '') : (item.heading || '')}" />
+                <input type="text" placeholder="e.g. Tyres Available" class="rep-head-en w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition" value="${typeof item.heading === 'object' ? (item.heading.en || '') : (item.heading || '')}" />
               </div>
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Heading / Label (Arabic) *</label>
-                <input type="text" dir="rtl" placeholder="مثال: إطارات متوفرة" class="rep-head-ar w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-right focus:ring-2 focus:ring-emerald-500" value="${typeof item.heading === 'object' ? (item.heading.ar || '') : ''}" />
+                <input type="text" dir="rtl" placeholder="مثال: إطارات متوفرة" class="rep-head-ar w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-right bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition" value="${typeof item.heading === 'object' ? (item.heading.ar || '') : ''}" />
               </div>
             </div>
 
@@ -664,21 +664,21 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Subtext / Description (English)</label>
-                <input type="text" placeholder="e.g. Quality options for different vehicles" class="rep-sub-en w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500" value="${typeof item.subtext === 'object' ? (item.subtext.en || '') : (item.subtext || '')}" />
+                <input type="text" placeholder="e.g. Quality options for different vehicles" class="rep-sub-en w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-medium bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition" value="${typeof item.subtext === 'object' ? (item.subtext.en || '') : (item.subtext || '')}" />
               </div>
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Subtext / Description (Arabic)</label>
-                <input type="text" dir="rtl" placeholder="مثال: خيارات عالية الجودة لكافة المركبات" class="rep-sub-ar w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-right focus:ring-2 focus:ring-emerald-500" value="${typeof item.subtext === 'object' ? (item.subtext.ar || '') : ''}" />
+                <input type="text" dir="rtl" placeholder="مثال: خيارات عالية الجودة لكافة المركبات" class="rep-sub-ar w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-medium text-right bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition" value="${typeof item.subtext === 'object' ? (item.subtext.ar || '') : ''}" />
               </div>
             </div>
           </div>
         `;
       } else {
         return `
-          <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-3">
-            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-              <span class="text-[11px] font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
+              <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
                 <span>Card Item #${i + 1}</span>
               </span>
               <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
@@ -688,17 +688,17 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Select Icon *</label>
-                <select class="rep-icon w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500">
+                <select class="rep-icon w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition">
                   ${ICON_CHOICES.map(opt => `<option value="${opt.val}" ${matchedIcon === opt.val ? 'selected' : ''}>${opt.label}</option>`).join('')}
                 </select>
               </div>
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Card Title (English) *</label>
-                <input type="text" placeholder="e.g. Genuine Tyres" class="rep-title-en w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-emerald-500" value="${typeof item.title === 'object' ? (item.title.en || '') : (item.title || '')}" />
+                <input type="text" placeholder="e.g. Genuine Tyres" class="rep-title-en w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition" value="${typeof item.title === 'object' ? (item.title.en || '') : (item.title || '')}" />
               </div>
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Card Title (Arabic) *</label>
-                <input type="text" dir="rtl" placeholder="مثال: إطارات أصلية معتمدة" class="rep-title-ar w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-right focus:ring-2 focus:ring-emerald-500" value="${typeof item.title === 'object' ? (item.title.ar || '') : ''}" />
+                <input type="text" dir="rtl" placeholder="مثال: إطارات أصلية معتمدة" class="rep-title-ar w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-right bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition" value="${typeof item.title === 'object' ? (item.title.ar || '') : ''}" />
               </div>
             </div>
 
@@ -706,11 +706,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Description (English)</label>
-                <input type="text" placeholder="e.g. 100% certified authentic tyre brands" class="rep-desc-en w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500" value="${typeof item.desc === 'object' ? (item.desc.en || '') : (item.desc || item.sub || '')}" />
+                <input type="text" placeholder="e.g. 100% certified authentic tyre brands" class="rep-desc-en w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-medium bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition" value="${typeof item.desc === 'object' ? (item.desc.en || '') : (item.desc || item.sub || '')}" />
               </div>
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Description (Arabic)</label>
-                <input type="text" dir="rtl" placeholder="مثال: إطارات مضمونة وموثوقة لجميع الطرقات" class="rep-desc-ar w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-right focus:ring-2 focus:ring-emerald-500" value="${typeof item.desc === 'object' ? (item.desc.ar || '') : ''}" />
+                <input type="text" dir="rtl" placeholder="مثال: إطارات مضمونة وموثوقة لجميع الطرقات" class="rep-desc-ar w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-medium text-right bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition" value="${typeof item.desc === 'object' ? (item.desc.ar || '') : ''}" />
               </div>
             </div>
           </div>
@@ -740,7 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function collectRepeaterItems() {
     const type = getSelectedType();
     const items = [];
-    const rows = repeaterList.querySelectorAll('.p-3.bg-white');
+    const rows = repeaterList.querySelectorAll('.bg-white');
 
     rows.forEach(row => {
       if (type === 'stats') {
@@ -779,8 +779,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function setLocaleTab(locale) {
     currentLocaleTab = locale;
     if (locale === 'en') {
-      tabEn.className = 'px-3 py-1 rounded-lg bg-white text-slate-950 shadow-2xs transition';
-      tabAr.className = 'px-3 py-1 rounded-lg text-slate-500 hover:text-slate-950 transition';
+      tabEn.className = 'px-3 py-1 rounded-lg bg-white text-[#0E1108] shadow-2xs transition';
+      tabAr.className = 'px-3 py-1 rounded-lg text-slate-500 hover:text-[#0E1108] transition';
 
       document.getElementById('wrap-title-en').classList.remove('hidden');
       document.getElementById('wrap-title-ar').classList.add('hidden');
@@ -799,8 +799,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('wrap-btn-text-en').classList.remove('hidden');
       document.getElementById('wrap-btn-text-ar').classList.add('hidden');
     } else {
-      tabAr.className = 'px-3 py-1 rounded-lg bg-white text-slate-950 shadow-2xs transition';
-      tabEn.className = 'px-3 py-1 rounded-lg text-slate-500 hover:text-slate-950 transition';
+      tabAr.className = 'px-3 py-1 rounded-lg bg-white text-[#0E1108] shadow-2xs transition';
+      tabEn.className = 'px-3 py-1 rounded-lg text-slate-500 hover:text-[#0E1108] transition';
 
       document.getElementById('wrap-title-ar').classList.remove('hidden');
       document.getElementById('wrap-title-en').classList.add('hidden');
