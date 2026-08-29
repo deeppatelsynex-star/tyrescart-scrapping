@@ -286,6 +286,10 @@
           } else if (action === 'change-password') {
             resetChangePasswordForm();
             openModal('change-password-modal');
+          } else if (action === 'delete-account') {
+            const daError = document.getElementById('da-error');
+            if (daError) daError.classList.add('hidden');
+            openModal('delete-account-modal');
           }
         });
       });
@@ -296,6 +300,65 @@
         closeModal(btn.closest('.fixed'));
       });
     });
+
+    // Delete Account Confirmation Action (Soft Delete)
+    const daConfirmBtn = document.getElementById('da-confirm-btn');
+    if (daConfirmBtn) {
+      daConfirmBtn.addEventListener('click', async () => {
+        const daError = document.getElementById('da-error');
+        const daBtnText = document.getElementById('da-btn-text');
+        const daBtnSpinner = document.getElementById('da-btn-spinner');
+
+        if (daError) daError.classList.add('hidden');
+        daConfirmBtn.disabled = true;
+        if (daBtnText) daBtnText.textContent = 'Deleting Account…';
+        if (daBtnSpinner) daBtnSpinner.classList.remove('hidden');
+
+        try {
+          const response = await fetch('/tcsadmin/api/profile/delete-account', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': csrfToken
+            }
+          });
+
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            const msg = data.error || 'Failed to delete account. Please try again.';
+            if (daError) {
+              daError.textContent = msg;
+              daError.classList.remove('hidden');
+            }
+            if (window.AdminShared) {
+              window.AdminShared.showToast(msg, 'error');
+            }
+            daConfirmBtn.disabled = false;
+            if (daBtnText) daBtnText.textContent = 'Yes, Delete My Account';
+            if (daBtnSpinner) daBtnSpinner.classList.add('hidden');
+            return;
+          }
+
+          if (window.AdminShared) {
+            window.AdminShared.showToast('Your account has been deleted.', 'info');
+          }
+
+          setTimeout(() => {
+            window.location.href = data.redirect || '/tcsadmin/login';
+          }, 400);
+
+        } catch (err) {
+          if (daError) {
+            daError.textContent = 'Network error. Please try again.';
+            daError.classList.remove('hidden');
+          }
+          daConfirmBtn.disabled = false;
+          if (daBtnText) daBtnText.textContent = 'Yes, Delete My Account';
+          if (daBtnSpinner) daBtnSpinner.classList.add('hidden');
+        }
+      });
+    }
 
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {

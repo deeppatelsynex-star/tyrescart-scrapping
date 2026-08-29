@@ -379,6 +379,41 @@ def register_tcsadmin_api_routes(app):
 
         return jsonify({'message': 'Password changed successfully.'})
 
+    @app.route('/tcsadmin/api/profile/delete-account', methods=['POST', 'DELETE'])
+    @app.route('/api/profile/delete-account', methods=['POST', 'DELETE'])
+    @app.route('/visionadmin/api/profile/delete-account', methods=['POST', 'DELETE'])
+    @app.route('/api/profile/delete', methods=['POST', 'DELETE'])
+    @login_required_api
+    @require_csrf
+    def api_self_delete_account():
+        """Allows an authenticated user to delete (soft-delete) their own account."""
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Authentication required.'}), 401
+
+        user = get_user_by_id(user_id)
+        if not user:
+            session.clear()
+            return jsonify({'error': 'User not found.'}), 404
+
+        # Soft delete: update IsDeleted=1 and deleted_at to current timestamp. Never hard delete.
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    'UPDATE userTbl SET IsDeleted = 1, deleted_at = UTC_TIMESTAMP() WHERE userid = %s',
+                    (user_id,),
+                )
+        finally:
+            conn.close()
+
+        session.clear()
+        return jsonify({
+            'success': True,
+            'message': 'Your account has been deleted successfully.',
+            'redirect': '/tcsadmin/login'
+        })
+
     # ==========================================================================
     # 2. Admin User Management APIs
     # ==========================================================================
@@ -510,10 +545,8 @@ def register_tcsadmin_api_routes(app):
         if not target:
             return jsonify({'error': 'User not found.'}), 404
 
-        if target['Role'] == 'SuperAdmin':
-            return jsonify({'error': 'SuperAdmin accounts can never be deleted.'}), 403
-        if user_id == session.get('user_id'):
-            return jsonify({'error': 'You cannot delete your own account.'}), 403
+        if target['Role'] == 'SuperAdmin' and user_id != session.get('user_id'):
+            return jsonify({'error': 'SuperAdmin accounts can only be deleted by the account owner.'}), 403
 
         conn = get_connection()
         try:
@@ -524,6 +557,11 @@ def register_tcsadmin_api_routes(app):
                 )
         finally:
             conn.close()
+
+        is_self = (user_id == session.get('user_id'))
+        if is_self:
+            session.clear()
+            return jsonify({'message': 'Your account has been deleted.', 'selfDeleted': True, 'redirect': '/tcsadmin/login'})
 
         return jsonify({'message': 'User deleted.'})
 
