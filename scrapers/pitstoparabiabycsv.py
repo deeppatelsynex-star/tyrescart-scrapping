@@ -1,5 +1,6 @@
 import csv
 import os
+import random
 import re
 import sys
 import time
@@ -62,7 +63,7 @@ def get_sel_text(selector_list):
 
 
 class PitstopArabiaScraper:
-    def __init__(self, output_file, input_csv, max_workers=5):
+    def __init__(self, output_file, input_csv, max_workers=3):
         self.output_file = output_file
         self.input_csv = input_csv
         self.max_workers = max_workers
@@ -70,10 +71,17 @@ class PitstopArabiaScraper:
         self.seen_product_keys = set()
         self.scraped_items = []
 
-    def fetch(self, url, referer=None, retries=3):
+    def fetch(self, url, referer=None, retries=5):
         headers = HEADERS.copy()
         if referer:
             headers['Referer'] = referer
+
+        # Small randomized delay before every request (not just retries) so a
+        # burst of concurrently-submitted product fetches doesn't all land on
+        # the server in the same instant, which is what trips its rate-based
+        # bot detection even though curl_cffi's TLS impersonation otherwise
+        # passes its fingerprint checks fine.
+        time.sleep(random.uniform(0.2, 0.6))
 
         for attempt in range(retries):
             impersonate = 'chrome131' if attempt % 2 == 0 else 'safari17_0'
@@ -90,11 +98,15 @@ class PitstopArabiaScraper:
                 if resp.status_code == 200:
                     return resp
                 elif resp.status_code == 403:
-                    time.sleep(1.5 * (attempt + 1))
+                    # Exponential backoff with jitter, capped at 12s, so a
+                    # transient rate-limit block gets enough cool-down time
+                    # before the next attempt instead of hammering again fast.
+                    delay = min(2.0 * (attempt + 1) + random.uniform(0, 1.5), 12.0)
+                    time.sleep(delay)
                 else:
-                    time.sleep(1.0)
+                    time.sleep(1.0 + random.uniform(0, 0.5))
             except Exception:
-                time.sleep(1.5 * (attempt + 1))
+                time.sleep(1.5 * (attempt + 1) + random.uniform(0, 1.0))
         return None
 
     def parse_product_detail(self, url, html, source_url):

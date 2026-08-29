@@ -4,110 +4,157 @@
 {% block content %}
 <div class="space-y-6">
 
-  <!-- Header & Primary Action with Animated Button -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div class="space-y-1">
-      <div class="flex items-center gap-2">
-        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">CMS Editorial Studio</span>
-      </div>
-      <h1 class="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">Blogs &amp; Articles</h1>
-      <p class="text-xs sm:text-sm text-slate-500 font-medium">Publish tyre guides, seasonal maintenance tips, news, and multilingual articles.</p>
+  <!-- Breadcrumb (Matching Reference) -->
+  <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+    <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    <span class="hover:text-slate-700">VisionAdmin</span>
+    <span class="text-slate-300">&gt;</span>
+    <span class="text-[#0E1108] font-extrabold">Blogs &amp; Articles</span>
+  </div>
+
+  <!-- Hero Banner Card -->
+  <div class="relative bg-white rounded-3xl p-6 sm:p-8 border border-[#E8EDE4] shadow-[0_4px_20px_-2px_rgba(14,17,8,0.03)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden">
+    <div class="absolute -right-8 -top-8 w-64 h-64 bg-[#EAF7E2]/50 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="space-y-2 max-w-xl relative z-10">
+      <h1 class="text-2xl sm:text-3xl font-black text-[#0E1108] tracking-tight">Blogs &amp; Articles</h1>
+      <p class="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">Publish tyre guides, seasonal maintenance tips, news, and multilingual articles.</p>
     </div>
-    <div class="flex items-center gap-2 shrink-0">
-      <button type="button" id="btn-create-blog" class="group inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-slate-950 hover:bg-slate-800 active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer">
-        <div class="w-5 h-5 rounded-lg bg-white/15 flex items-center justify-center group-hover:rotate-90 transition-transform duration-300">
-          <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </div>
+
+    <!-- Right Actions -->
+    <div class="flex items-center gap-3 shrink-0 relative z-10 w-full md:w-auto justify-start md:justify-end">
+      <a href="/en/blog" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-[#E8EDE4] text-xs font-bold text-[#0E1108] shadow-2xs hover:shadow-xs transition-all duration-200">
+        <span>View Live Blog</span>
+        <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+
+      <button type="button" id="btn-create-blog" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#58B31B] hover:bg-[#35760F] text-white text-xs sm:text-sm font-extrabold shadow-md shadow-[#58B31B]/20 hover:shadow-lg transition-all duration-200 cursor-pointer">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span>Create New Article</span>
       </button>
     </div>
   </div>
 
-  <!-- Metric Overview Cards with Animated Icons on Hover -->
-  <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
+  <!-- Metric Overview Cards with Mini Sparkline Curves -->
+  <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
     
     <!-- Total Posts Card -->
-    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-      <div class="flex items-center justify-between">
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Total Posts</p>
-        <div class="w-9 h-9 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-slate-950 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-2xs">
+    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         </div>
+        <div>
+          <p class="text-[11px] font-bold text-slate-600">Total Posts</p>
+          <div id="stat-total" class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">--</div>
+        </div>
       </div>
-      <div id="stat-total" class="text-3xl font-black text-slate-950 tracking-tight mt-2">--</div>
+      <div class="flex items-end justify-between mt-3 pt-2">
+        <span class="text-[10px] text-slate-400 font-medium">All articles</span>
+        <svg class="w-16 h-5 text-[#58B31B]" viewBox="0 0 80 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M0 20 C 20 18, 30 22, 45 12 C 55 5, 65 14, 80 2"/></svg>
+      </div>
     </div>
 
     <!-- Published Card -->
-    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-      <div class="flex items-center justify-between">
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-600">Published</p>
-        <div class="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-2xs">
+    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         </div>
+        <div>
+          <p class="text-[11px] font-bold text-slate-600">Published</p>
+          <div id="stat-published" class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">--</div>
+        </div>
       </div>
-      <div id="stat-published" class="text-3xl font-black text-emerald-600 tracking-tight mt-2">--</div>
+      <div class="flex items-end justify-between mt-3 pt-2">
+        <span class="text-[10px] text-slate-400 font-medium">Live</span>
+        <svg class="w-16 h-5 text-[#58B31B]" viewBox="0 0 80 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M0 22 C 25 20, 35 15, 50 18 C 65 20, 70 8, 80 4"/></svg>
+      </div>
     </div>
 
     <!-- Drafts Card -->
-    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-      <div class="flex items-center justify-between">
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-amber-600">Drafts</p>
-        <div class="w-9 h-9 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100 group-hover:bg-amber-500 group-hover:text-white group-hover:scale-110 group-hover:-rotate-6 transition-all duration-300 shadow-2xs">
+    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-2xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center shrink-0">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
+        <div>
+          <p class="text-[11px] font-bold text-slate-600">Drafts</p>
+          <div id="stat-draft" class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">--</div>
+        </div>
       </div>
-      <div id="stat-draft" class="text-3xl font-black text-amber-600 tracking-tight mt-2">--</div>
+      <div class="flex items-end justify-between mt-3 pt-2">
+        <span class="text-[10px] text-slate-400 font-medium">Unpublished</span>
+        <svg class="w-16 h-5 text-[#D97706]" viewBox="0 0 80 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M0 18 C 20 22, 35 18, 50 20 C 65 22, 70 12, 80 8"/></svg>
+      </div>
     </div>
 
     <!-- Archived Card -->
-    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-      <div class="flex items-center justify-between">
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600">Archived</p>
-        <div class="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-2xs">
+    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-2xl bg-[#F1F5F9] text-slate-600 flex items-center justify-center shrink-0">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
         </div>
+        <div>
+          <p class="text-[11px] font-bold text-slate-600">Archived</p>
+          <div id="stat-archived" class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">--</div>
+        </div>
       </div>
-      <div id="stat-archived" class="text-3xl font-black text-indigo-600 tracking-tight mt-2">--</div>
+      <div class="flex items-end justify-between mt-3 pt-2">
+        <span class="text-[10px] text-slate-400 font-medium">Stored</span>
+        <svg class="w-16 h-5 text-slate-500" viewBox="0 0 80 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M0 20 C 25 15, 45 22, 60 16 C 70 12, 75 14, 80 10"/></svg>
+      </div>
     </div>
 
     <!-- Trash Card -->
-    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-      <div class="flex items-center justify-between">
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-rose-600">Trash</p>
-        <div class="w-9 h-9 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 group-hover:bg-rose-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-2xs">
+    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-2xl bg-[#FFE4E6] text-[#E11D48] flex items-center justify-center shrink-0">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </div>
+        <div>
+          <p class="text-[11px] font-bold text-slate-600">Trash</p>
+          <div id="stat-trash" class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">--</div>
+        </div>
       </div>
-      <div id="stat-trash" class="text-3xl font-black text-rose-600 tracking-tight mt-2">--</div>
+      <div class="flex items-end justify-between mt-3 pt-2">
+        <span class="text-[10px] text-slate-400 font-medium">Deleted</span>
+        <svg class="w-16 h-5 text-[#E11D48]" viewBox="0 0 80 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M0 22 C 25 22, 40 20, 55 18 C 65 16, 70 12, 80 6"/></svg>
+      </div>
     </div>
 
   </div>
 
-  <!-- Filter & Search Bar in Luminous White -->
-  <div class="bg-white rounded-3xl p-3 sm:p-4 border border-slate-200/80 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3">
+  <!-- Filter Tabs & Search Bar -->
+  <div class="flex flex-col md:flex-row items-center justify-between gap-4">
     
-    <!-- Status Tabs -->
-    <div class="flex items-center gap-1 bg-slate-100/90 p-1.5 rounded-2xl w-full md:w-auto text-xs font-extrabold">
-      <button type="button" class="tab-filter px-4 py-2 rounded-xl bg-white shadow-xs text-slate-950 transition" data-status="all">All</button>
-      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-white/60 transition" data-status="published">Published</button>
-      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-white/60 transition" data-status="draft">Drafts</button>
-      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-white/60 transition" data-status="archived">Archived</button>
-      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-white/60 transition" data-status="trash">Trash</button>
+    <!-- Status Filter Pills -->
+    <div class="flex items-center gap-1.5 p-1 bg-white border border-[#E8EDE4] rounded-2xl shadow-2xs w-full md:w-auto text-xs font-bold">
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl bg-[#EAF7E2] text-[#35760F] transition cursor-pointer" data-status="all">All</button>
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer" data-status="published">Published</button>
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer" data-status="draft">Drafts</button>
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer" data-status="archived">Archived</button>
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer" data-status="trash">Trash</button>
     </div>
 
-    <!-- Search Input -->
-    <div class="relative w-full md:w-80">
-      <input type="text" id="blogs-search-input" placeholder="Search title, excerpt or slug…" class="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50/50 hover:bg-white focus:bg-white transition placeholder:text-slate-400 shadow-inner" />
-      <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <!-- Search Input & Settings Button -->
+    <div class="flex items-center gap-2 w-full md:w-auto">
+      <div class="relative w-full md:w-96">
+        <input type="text" id="blogs-search-input" placeholder="Search title, excerpt or slug…" class="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#E8EDE4] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#58B31B] focus:border-[#58B31B] bg-white transition placeholder:text-slate-400 shadow-2xs" />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <button type="button" class="p-2.5 rounded-2xl border border-[#E8EDE4] bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition shadow-2xs cursor-pointer" title="Filter Options">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+      </button>
     </div>
 
   </div>
 
-  <!-- Blogs Table Card in Pure White -->
-  <div class="bg-white rounded-3xl border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] overflow-hidden">
+  <!-- Blogs Table Card -->
+  <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-[0_4px_20px_-2px_rgba(14,17,8,0.03)] overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs sm:text-sm">
-        <thead class="bg-slate-50/70 border-b border-slate-200 text-slate-400 uppercase tracking-widest text-[10px] font-black">
+        <thead class="bg-[#F8FAF7] border-b border-[#E8EDE4] text-slate-400 uppercase tracking-widest text-[10px] font-black">
           <tr>
             <th class="py-4 px-4 sm:px-6">Article &amp; Route</th>
             <th class="py-4 px-4">Category</th>
@@ -117,10 +164,10 @@
             <th class="py-4 px-4 sm:px-6 text-right">Quick Actions</th>
           </tr>
         </thead>
-        <tbody id="blogs-table-body" class="divide-y divide-slate-100 text-slate-700">
+        <tbody id="blogs-table-body" class="divide-y divide-[#F1F5F0] text-slate-700">
           <tr>
             <td colspan="6" class="py-14 text-center text-slate-400">
-              <div class="inline-block animate-spin w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full mb-3"></div>
+              <div class="inline-block animate-spin w-7 h-7 border-2 border-[#58B31B] border-t-transparent rounded-full mb-3"></div>
               <p class="font-bold text-xs">Loading blog articles…</p>
             </td>
           </tr>
@@ -333,23 +380,37 @@
 <script>
   window.addEventListener('DOMContentLoaded', () => {
     if (window.CKEDITOR) {
-      CKEDITOR.replace('blog_content_en', {
-        minHeight: 200,
-        height: 250,
-        extraPlugins: 'codesnippet,sourcearea',
-        codeSnippet_theme: 'monokai_sublime',
-        removeButtons: 'About',
-        versionCheck: false
-      });
-      CKEDITOR.replace('blog_content_ar', {
-        minHeight: 200,
-        height: 250,
-        extraPlugins: 'codesnippet,sourcearea',
-        codeSnippet_theme: 'monokai_sublime',
-        contentsLangDirection: 'rtl',
-        removeButtons: 'About',
-        versionCheck: false
-      });
+      CKEDITOR.config.removePlugins = 'exportpdf,cloudservices,easyimage';
+      CKEDITOR.config.versionCheck = false;
+
+      if (document.getElementById('blog_content_en') && !CKEDITOR.instances['blog_content_en']) {
+        try {
+          CKEDITOR.replace('blog_content_en', {
+            minHeight: 200,
+            height: 250,
+            removePlugins: 'exportpdf,cloudservices,easyimage',
+            removeButtons: 'About',
+            versionCheck: false
+          });
+        } catch (e) {
+          console.warn('CKEditor blog_content_en init:', e);
+        }
+      }
+
+      if (document.getElementById('blog_content_ar') && !CKEDITOR.instances['blog_content_ar']) {
+        try {
+          CKEDITOR.replace('blog_content_ar', {
+            minHeight: 200,
+            height: 250,
+            removePlugins: 'exportpdf,cloudservices,easyimage',
+            contentsLangDirection: 'rtl',
+            removeButtons: 'About',
+            versionCheck: false
+          });
+        } catch (e) {
+          console.warn('CKEditor blog_content_ar init:', e);
+        }
+      }
     }
   });
 </script>

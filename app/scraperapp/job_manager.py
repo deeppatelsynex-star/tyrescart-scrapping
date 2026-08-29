@@ -58,12 +58,30 @@ def _push_sse_event(job_id, event_data):
         for q in _sse_queues.get(job_id, []):
             try:
                 q.put_nowait(event_data)
+            except queue.Full:
+                # A large crawl (500+ URLs, each emitting pending/running/
+                # done events) can fill the queue faster than the client
+                # can drain it. Drop the OLDEST queued event to make room
+                # for the newest rather than silently dropping the newest
+                # one -- otherwise the final completion event can itself
+                # get dropped, the client's SSE stream never sees `done`,
+                # and the dashboard is left frozen on a stale mid-run
+                # snapshot (e.g. showing "Completed 0" forever) even
+                # though the job actually finished successfully server-side.
+                try:
+                    q.get_nowait()
+                    q.put_nowait(event_data)
+                except Exception:
+                    pass
             except Exception:
                 pass
 
 
 def subscribe_sse(job_id):
-    q = queue.Queue(maxsize=500)
+    # Sized generously above what even a large crawl (thousands of URLs,
+    # each emitting a few events) produces, so the eviction path above is
+    # only ever a last-resort safety net, not the normal path.
+    q = queue.Queue(maxsize=5000)
     with _sse_lock:
         _sse_queues.setdefault(job_id, []).append(q)
     return q

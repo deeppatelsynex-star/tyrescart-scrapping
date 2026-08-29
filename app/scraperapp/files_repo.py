@@ -19,9 +19,10 @@ from cache_manager import cache, invalidate_scraper_cache
 FILE_COLUMNS = 'file_id, logo, site_name, python_file_path, urls_json, working, is_deleted, deleted_at, created_by, create_date, update_date'
 FILE_SELECT_FIELDS = 'f.file_id, f.logo, f.site_name, f.python_file_path, f.urls_json, f.working, f.is_deleted, f.deleted_at, f.created_by, f.create_date, f.update_date, u.Name AS created_by_name, u.Email AS created_by_email'
 
-# scrapers/ lives at the project root, one level up from app/ (this file's
-# own directory) -- same BASE_DIR anchoring app.py already uses.
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# scrapers/ lives at the project root. This file is app/scraperapp/files_repo.py,
+# so the project root is two directories up from this file's own directory
+# (scraperapp -> app -> root) -- same BASE_DIR anchoring app.py already uses.
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SCRAPERS_DIR = os.path.join(BASE_DIR, 'scrapers')
 
 # Helper/config modules in scrapers/ that aren't standalone runnable spiders,
@@ -159,7 +160,7 @@ def to_ist_12h(dt, with_seconds=False):
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     ist_dt = dt.astimezone(IST)
-    fmt = '%d %b %Y %I:%M:%S %p' if with_seconds else '%d %b %Y %I:%M %p'
+    fmt = '%d-%m-%Y %I:%M:%S %p' if with_seconds else '%d-%m-%Y %I:%M %p'
     return ist_dt.strftime(fmt)
 
 

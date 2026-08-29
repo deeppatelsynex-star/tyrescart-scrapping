@@ -166,9 +166,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!pages.length) {
       tableBody.innerHTML = `
         <tr>
-          <td colspan="5" class="py-12 text-center text-slate-400">
-            <svg class="w-8 h-8 mx-auto text-slate-300 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <p class="font-bold text-sm text-slate-600">No static pages found</p>
+          <td colspan="5" class="py-14 text-center text-slate-400">
+            <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p class="font-bold text-sm text-[#0E1108]">No static pages found</p>
             <p class="text-xs text-slate-400 mt-0.5">${currentFilter === 'trash' ? 'Trash is empty.' : 'Click "+ Create New Page" to add one.'}</p>
           </td>
         </tr>
@@ -181,66 +181,98 @@ document.addEventListener('DOMContentLoaded', () => {
       const arTitle = (typeof p.title === 'object' ? p.title?.ar : '') || '';
 
       const statusBadge = p.is_active 
-        ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold va-badge-published">Active (Live)</span>'
-        : '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold va-badge-draft">Inactive</span>';
+        ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8] inline-flex items-center gap-1.5">
+             <span class="w-1.5 h-1.5 rounded-full bg-[#58B31B]"></span>
+             <span>Active (Live)</span>
+           </span>`
+        : `<span class="px-3 py-1 rounded-full text-xs font-bold bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A] inline-flex items-center gap-1.5">
+             <span class="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span>
+             <span>Inactive</span>
+           </span>`;
 
       const isTrash = currentFilter === 'trash';
-      const updatedDate = p.updated_at ? p.updated_at.split('T')[0] : (p.created_at ? p.created_at.split('T')[0] : '—');
+      const rawDate = p.updated_at || p.created_at || '';
+      let displayDate = '—';
+      let displayTime = '';
+      if (rawDate) {
+        const d = new Date(rawDate);
+        if (!isNaN(d.getTime())) {
+          displayDate = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          displayTime = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        } else {
+          displayDate = rawDate.split('T')[0];
+        }
+      }
 
       return `
-        <tr class="hover:bg-slate-50/70 transition">
-          <td class="py-3.5 px-4 sm:px-6">
-            <div class="space-y-0.5">
+        <tr class="hover:bg-[#F8FAF7]/80 transition">
+          <!-- 1. Page Title & Route -->
+          <td class="py-4 px-4 sm:px-6">
+            <div class="space-y-1">
               <div class="flex items-center gap-2">
-                <span class="font-bold text-slate-900">${escapeHtml(enTitle)}</span>
+                <span class="font-black text-sm text-[#0E1108]">${escapeHtml(enTitle)}</span>
                 ${arTitle ? `<span class="text-xs text-slate-400" dir="rtl">(${escapeHtml(arTitle)})</span>` : ''}
               </div>
               <div class="flex items-center gap-2 text-xs">
-                <a href="/${p.slug}" target="_blank" class="text-emerald-600 font-mono hover:underline inline-flex items-center gap-1">
+                <a href="/${p.slug}" target="_blank" class="text-[#58B31B] font-semibold hover:underline inline-flex items-center gap-1">
                   <span>/${p.slug}</span>
-                  <svg class="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  <svg class="w-3 h-3 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               </div>
             </div>
           </td>
-          <td class="py-3.5 px-4">
+
+          <!-- 2. Banner Asset -->
+          <td class="py-4 px-4">
             ${p.banner_image ? `
-              <div class="flex items-center gap-2">
-                <img src="${escapeHtml(p.banner_image)}" alt="Banner" class="w-9 h-6 object-cover rounded-md border border-slate-200 shadow-2xs shrink-0" />
-                <a href="${escapeHtml(p.banner_image)}" target="_blank" class="text-[11px] text-indigo-600 font-bold hover:underline truncate max-w-[120px]">View</a>
+              <div class="flex items-center gap-2.5">
+                <img src="${escapeHtml(p.banner_image)}" alt="Banner" class="w-10 h-7 object-cover rounded-lg border border-[#E8EDE4] shadow-2xs shrink-0" />
+                <a href="${escapeHtml(p.banner_image)}" target="_blank" class="px-3 py-1 rounded-xl bg-white hover:bg-slate-50 border border-[#E8EDE4] text-xs font-bold text-slate-700 hover:text-[#35760F] hover:border-[#58B31B] shadow-2xs transition">View</a>
               </div>
-            ` : '<span class="text-xs text-slate-400">None</span>'}
+            ` : '<span class="text-xs text-slate-400 font-medium">None</span>'}
           </td>
-          <td class="py-3.5 px-4">
+
+          <!-- 3. Live Status -->
+          <td class="py-4 px-4">
             ${statusBadge}
           </td>
-          <td class="py-3.5 px-4 font-mono text-xs text-slate-500">
-            ${updatedDate}
+
+          <!-- 4. Last Updated -->
+          <td class="py-4 px-4 text-xs">
+            <p class="font-bold text-[#0E1108]">${displayDate}</p>
+            ${displayTime ? `<p class="text-[11px] text-slate-400 font-medium">${displayTime}</p>` : ''}
           </td>
-          <td class="py-3.5 px-4 sm:px-6 text-right space-x-1.5 whitespace-nowrap">
-            ${!isTrash ? `
-              <a href="/visionadmin/sections?page=${encodeURIComponent(p.slug)}" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-950 text-white text-xs font-bold shadow-2xs transition">
-                <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-                <span>Sections</span>
-              </a>
-              <button type="button" onclick="window.editPage(${p.id})" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 text-xs font-bold shadow-2xs hover:shadow-xs transition cursor-pointer">
-                <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 group-hover:-rotate-12 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                <span>Edit</span>
-              </button>
-              <button type="button" onclick="window.deletePage(${p.id}, '${escapeHtml(enTitle)}', false)" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50/80 hover:bg-rose-100/90 border border-rose-200/70 text-rose-700 text-xs font-bold transition cursor-pointer">
-                <svg class="w-3.5 h-3.5 text-rose-500 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                <span>Trash</span>
-              </button>
-            ` : `
-              <button type="button" onclick="window.restorePage(${p.id})" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 text-emerald-700 text-xs font-bold transition cursor-pointer">
-                <svg class="w-3.5 h-3.5 text-emerald-600 group-hover:rotate-180 transition-transform duration-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                <span>Restore</span>
-              </button>
-              <button type="button" onclick="window.deletePage(${p.id}, '${escapeHtml(enTitle)}', true)" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-extrabold shadow-sm hover:shadow-md transition cursor-pointer">
-                <svg class="w-3.5 h-3.5 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                <span>Delete Permanently</span>
-              </button>
-            `}
+
+          <!-- 5. Quick Actions (Matching Image) -->
+          <td class="py-4 px-4 sm:px-6 text-right whitespace-nowrap">
+            <div class="inline-flex items-center gap-2">
+              ${!isTrash ? `
+                <a href="/visionadmin/sections?page=${encodeURIComponent(p.slug)}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#D1E7C4] bg-white hover:bg-[#EAF7E2] text-[#35760F] text-xs font-bold shadow-2xs transition">
+                  <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                  <span>Sections</span>
+                </a>
+                <button type="button" onclick="window.editPage(${p.id})" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-[#E8EDE4] text-slate-700 text-xs font-bold shadow-2xs transition cursor-pointer">
+                  <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <span>Edit</span>
+                </button>
+                <button type="button" onclick="window.deletePage(${p.id}, '${escapeHtml(enTitle)}', false)" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#FFF1F2] border border-[#FECDD3] text-[#E11D48] text-xs font-bold shadow-2xs transition cursor-pointer">
+                  <svg class="w-3.5 h-3.5 text-[#E11D48]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  <span>Trash</span>
+                </button>
+                <button type="button" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition" title="More options">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                </button>
+              ` : `
+                <button type="button" onclick="window.restorePage(${p.id})" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#EAF7E2] hover:bg-[#D1E7C4] border border-[#C8E8B8] text-[#35760F] text-xs font-bold transition cursor-pointer">
+                  <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                  <span>Restore</span>
+                </button>
+                <button type="button" onclick="window.deletePage(${p.id}, '${escapeHtml(enTitle)}', true)" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-extrabold shadow-sm hover:shadow-md transition cursor-pointer">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  <span>Delete Permanently</span>
+                </button>
+              `}
+            </div>
           </td>
         </tr>
       `;
@@ -258,9 +290,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab-filter').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-filter').forEach(b => {
-        b.className = 'tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition';
+        b.className = 'tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer';
       });
-      btn.className = 'tab-filter px-3 py-1.5 rounded-lg bg-white shadow-xs text-slate-900 transition font-bold';
+      btn.className = 'tab-filter px-4 py-2 rounded-xl bg-[#EAF7E2] text-[#35760F] font-bold transition cursor-pointer';
       currentFilter = btn.dataset.status;
       loadPages();
     });

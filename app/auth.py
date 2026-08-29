@@ -69,7 +69,7 @@ def to_ist_12h(dt, with_seconds=False):
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     ist_dt = dt.astimezone(IST)
-    fmt = '%d %b %Y %I:%M:%S %p' if with_seconds else '%d %b %Y %I:%M %p'
+    fmt = '%d-%m-%Y %I:%M:%S %p' if with_seconds else '%d-%m-%Y %I:%M %p'
     return ist_dt.strftime(fmt)
 
 

@@ -4,98 +4,196 @@
 {% block content %}
 <div class="space-y-6">
 
-  <!-- Header & Primary Action with Animated Button -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div class="space-y-1">
-      <div class="flex items-center gap-2">
-        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">CMS Static Content</span>
-      </div>
-      <h1 class="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">Pages &amp; Policies</h1>
-      <p class="text-xs sm:text-sm text-slate-500 font-medium">Manage legal, company, and static storefront pages (About Us, Terms &amp; Conditions, Privacy Policy).</p>
+  <!-- Breadcrumb (Matching Reference) -->
+  <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+    <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <span class="hover:text-slate-700">VisionAdmin</span>
+    <span class="text-slate-300">&gt;</span>
+    <span class="text-[#0E1108] font-extrabold">Pages &amp; Policies</span>
+  </div>
+
+  <!-- Hero Banner Card (Matches Image Exactly) -->
+  <div class="relative bg-white rounded-3xl p-6 sm:p-8 border border-[#E8EDE4] shadow-[0_4px_20px_-2px_rgba(14,17,8,0.03)] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 overflow-hidden">
+    <!-- Ambient Background Accent Graphics -->
+    <div class="absolute -right-8 -top-8 w-64 h-64 bg-[#EAF7E2]/50 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="space-y-2 max-w-xl relative z-10">
+      <h1 class="text-2xl sm:text-3xl font-black text-[#0E1108] tracking-tight">Pages &amp; Policies</h1>
+      <p class="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">Manage legal, company, and static storefront pages (About Us, Terms &amp; Conditions, Privacy Policy).</p>
     </div>
-    <div class="flex items-center gap-2 shrink-0">
-      <button type="button" id="btn-create-page" class="group inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-slate-950 hover:bg-slate-800 active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer">
-        <div class="w-5 h-5 rounded-lg bg-white/15 flex items-center justify-center group-hover:rotate-90 transition-transform duration-300">
-          <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </div>
+
+    <!-- Center/Right 3D Vector Graphic: Floating Documents + Green Shield + Botanical Leaves -->
+    <div class="hidden xl:flex items-center justify-center shrink-0 w-44 h-24 relative z-10 pointer-events-none">
+      <svg class="w-full h-full" viewBox="0 0 160 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Ambient Glow -->
+        <circle cx="80" cy="50" r="40" fill="#EAF7E2" filter="blur(8px)" />
+        
+        <!-- Back Leaf -->
+        <path d="M25 65 C20 40, 45 25, 60 30 C55 50, 40 65, 25 65 Z" fill="#9CD877" opacity="0.6"/>
+        
+        <!-- Document 1 (Back tilt) -->
+        <rect x="50" y="15" width="55" height="70" rx="8" fill="#E2EDDC" transform="rotate(-8 50 15)" stroke="#C8DCC0" stroke-width="1.5"/>
+        <line x1="60" y1="32" x2="88" y2="28" stroke="#A8C49E" stroke-width="2" stroke-linecap="round"/>
+        <line x1="58" y1="42" x2="92" y2="37" stroke="#A8C49E" stroke-width="2" stroke-linecap="round"/>
+        <line x1="56" y1="52" x2="85" y2="46" stroke="#A8C49E" stroke-width="2" stroke-linecap="round"/>
+
+        <!-- Document 2 (Front) -->
+        <rect x="62" y="10" width="55" height="72" rx="8" fill="#FFFFFF" stroke="#D1E7C4" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(88,179,27,0.12))"/>
+        <line x1="72" y1="26" x2="105" y2="26" stroke="#58B31B" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="72" y1="36" x2="105" y2="36" stroke="#E2EADE" stroke-width="2" stroke-linecap="round"/>
+        <line x1="72" y1="44" x2="100" y2="44" stroke="#E2EADE" stroke-width="2" stroke-linecap="round"/>
+        <line x1="72" y1="52" x2="105" y2="52" stroke="#E2EADE" stroke-width="2" stroke-linecap="round"/>
+        <line x1="72" y1="60" x2="94" y2="60" stroke="#E2EADE" stroke-width="2" stroke-linecap="round"/>
+
+        <!-- Green Shield Badge -->
+        <g transform="translate(108, 12)">
+          <path d="M14 0 C22 0, 28 4, 28 12 C28 22, 14 28, 14 28 C14 28, 0 22, 0 12 C0 4, 6 0, 14 0 Z" fill="#58B31B" stroke="#FFFFFF" stroke-width="2" filter="drop-shadow(0 2px 6px rgba(0,0,0,0.15))"/>
+          <path d="M8 12 L12 16 L20 8" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+
+        <!-- Front Floating Leaf -->
+        <path d="M120 65 C135 48, 155 55, 150 72 C135 78, 122 72, 120 65 Z" fill="#58B31B" opacity="0.8"/>
+        <path d="M15 75 C10 60, 25 50, 35 55 C32 68, 22 76, 15 75 Z" fill="#58B31B" opacity="0.7"/>
+      </svg>
+    </div>
+
+    <!-- Right Actions -->
+    <div class="flex items-center gap-3 shrink-0 relative z-10 w-full lg:w-auto justify-start lg:justify-end">
+      <!-- Storefront Action Button -->
+      <a href="/" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-[#E8EDE4] text-xs font-bold text-[#0E1108] shadow-2xs hover:shadow-xs transition-all duration-200">
+        <span>View Storefront</span>
+        <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+
+      <!-- Primary Action Button (Brand Green) -->
+      <button type="button" id="btn-create-page" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#58B31B] hover:bg-[#35760F] text-white text-xs sm:text-sm font-extrabold shadow-md shadow-[#58B31B]/20 hover:shadow-lg transition-all duration-200 cursor-pointer">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span>Create New Page</span>
       </button>
     </div>
   </div>
 
-  <!-- Metric Overview Cards with Animated Icons on Hover -->
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+  <!-- Metric Overview Cards with Mini Sparkline Curves -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     
-    <!-- Total Pages Card -->
-    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-      <div class="flex items-center justify-between">
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Total Pages</p>
-        <div class="w-9 h-9 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-slate-950 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-2xs">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <!-- 1. Total Pages Card -->
+    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-start gap-3.5">
+        <div class="w-10 h-10 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-slate-700">Total Pages</p>
+          <div id="stat-total" class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">--</div>
         </div>
       </div>
-      <div id="stat-total" class="text-3xl font-black text-slate-950 tracking-tight mt-2">--</div>
+      <div class="flex items-end justify-between mt-3 pt-2">
+        <span class="text-[11px] text-slate-400 font-medium">All time</span>
+        <!-- Sparkline Curve SVG -->
+        <svg class="w-20 h-6 text-[#58B31B]" viewBox="0 0 80 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M0 20 C 20 18, 30 22, 45 12 C 55 5, 65 14, 80 2" />
+        </svg>
+      </div>
     </div>
 
-    <!-- Active Card -->
-    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-      <div class="flex items-center justify-between">
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-600">Active (Live)</p>
-        <div class="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-2xs">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <!-- 2. Active (Live) Card -->
+    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-start gap-3.5">
+        <div class="w-10 h-10 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-slate-700">Active (Live)</p>
+          <div id="stat-active" class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">--</div>
         </div>
       </div>
-      <div id="stat-active" class="text-3xl font-black text-emerald-600 tracking-tight mt-2">--</div>
+      <div class="flex items-end justify-between mt-3 pt-2">
+        <span class="text-[11px] text-slate-400 font-medium">Currently published</span>
+        <!-- Sparkline Curve SVG -->
+        <svg class="w-20 h-6 text-[#58B31B]" viewBox="0 0 80 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M0 22 C 25 20, 35 15, 50 18 C 65 20, 70 8, 80 4" />
+        </svg>
+      </div>
     </div>
 
-    <!-- Inactive Card -->
-    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-      <div class="flex items-center justify-between">
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-amber-600">Inactive</p>
-        <div class="w-9 h-9 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100 group-hover:bg-amber-500 group-hover:text-white group-hover:scale-110 group-hover:-rotate-6 transition-all duration-300 shadow-2xs">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+    <!-- 3. Inactive Card -->
+    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-start gap-3.5">
+        <div class="w-10 h-10 rounded-2xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-slate-700">Inactive</p>
+          <div id="stat-inactive" class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">--</div>
         </div>
       </div>
-      <div id="stat-inactive" class="text-3xl font-black text-amber-600 tracking-tight mt-2">--</div>
+      <div class="flex items-end justify-between mt-3 pt-2">
+        <span class="text-[11px] text-slate-400 font-medium">Not published</span>
+        <!-- Sparkline Curve SVG -->
+        <svg class="w-20 h-6 text-[#D97706]" viewBox="0 0 80 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M0 18 C 20 22, 35 18, 50 20 C 65 22, 70 12, 80 8" />
+        </svg>
+      </div>
     </div>
 
-    <!-- Trash Card -->
-    <div class="group bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-      <div class="flex items-center justify-between">
-        <p class="text-[11px] font-extrabold uppercase tracking-wider text-rose-600">Trash</p>
-        <div class="w-9 h-9 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 group-hover:bg-rose-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-2xs">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    <!-- 4. Trash Card -->
+    <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-[0_4px_16px_rgba(14,17,8,0.02)] flex flex-col justify-between relative overflow-hidden">
+      <div class="flex items-start gap-3.5">
+        <div class="w-10 h-10 rounded-2xl bg-[#FFE4E6] text-[#E11D48] flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-slate-700">Trash</p>
+          <div id="stat-trash" class="text-2xl font-black text-[#0E1108] tracking-tight mt-0.5">--</div>
         </div>
       </div>
-      <div id="stat-trash" class="text-3xl font-black text-rose-600 tracking-tight mt-2">--</div>
+      <div class="flex items-end justify-between mt-3 pt-2">
+        <span class="text-[11px] text-slate-400 font-medium">Moved to trash</span>
+        <!-- Sparkline Curve SVG -->
+        <svg class="w-20 h-6 text-[#E11D48]" viewBox="0 0 80 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M0 22 C 25 22, 40 20, 55 18 C 65 16, 70 12, 80 6" />
+        </svg>
+      </div>
     </div>
 
   </div>
 
-  <!-- Filter & Search Bar in Luminous White -->
-  <div class="bg-white rounded-3xl p-3 sm:p-4 border border-slate-200/80 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3">
+  <!-- Filter Tabs & Search Bar (Matching Reference) -->
+  <div class="flex flex-col md:flex-row items-center justify-between gap-4">
     
-    <!-- Status Tabs -->
-    <div class="flex items-center gap-1 bg-slate-100/90 p-1.5 rounded-2xl w-full md:w-auto text-xs font-extrabold">
-      <button type="button" class="tab-filter px-4 py-2 rounded-xl bg-white shadow-xs text-slate-950 transition" data-status="all">All Pages</button>
-      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-white/60 transition" data-status="active">Active</button>
-      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-white/60 transition" data-status="inactive">Inactive</button>
-      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-white/60 transition" data-status="trash">Trash</button>
+    <!-- Status Filter Pills -->
+    <div class="flex items-center gap-1.5 p-1 bg-white border border-[#E8EDE4] rounded-2xl shadow-2xs w-full md:w-auto text-xs font-bold">
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl bg-[#EAF7E2] text-[#35760F] transition cursor-pointer" data-status="all">All Pages</button>
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer" data-status="active">Active</button>
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer" data-status="inactive">Inactive</button>
+      <button type="button" class="tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer" data-status="trash">Trash</button>
     </div>
 
-    <!-- Search Input -->
-    <div class="relative w-full md:w-80">
-      <input type="text" id="pages-search-input" placeholder="Search page title, content, or slug…" class="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50/50 hover:bg-white focus:bg-white transition placeholder:text-slate-400 shadow-inner" />
-      <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <!-- Search Input & Settings Filter Button -->
+    <div class="flex items-center gap-2 w-full md:w-auto">
+      <div class="relative w-full md:w-96">
+        <input 
+          type="text" 
+          id="pages-search-input" 
+          placeholder="Search by title, content, or slug..." 
+          class="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#E8EDE4] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#58B31B] focus:border-[#58B31B] bg-white transition placeholder:text-slate-400 shadow-2xs" 
+        />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+
+      <!-- Settings / Filter icon button -->
+      <button type="button" class="p-2.5 rounded-2xl border border-[#E8EDE4] bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition shadow-2xs cursor-pointer" title="Advanced Filter Options">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+      </button>
     </div>
 
   </div>
 
-  <!-- Pages Table Card in Pure White -->
-  <div class="bg-white rounded-3xl border border-slate-200/80 shadow-[0_10px_25px_-8px_rgba(0,0,0,0.04),0_0_0_1px_rgba(241,245,249,0.9)] overflow-hidden">
+  <!-- Pages Table Card in Clean White -->
+  <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-[0_4px_20px_-2px_rgba(14,17,8,0.03)] overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs sm:text-sm">
-        <thead class="bg-slate-50/70 border-b border-slate-200 text-slate-400 uppercase tracking-widest text-[10px] font-black">
+        <thead class="bg-[#F8FAF7] border-b border-[#E8EDE4] text-slate-400 uppercase tracking-widest text-[10px] font-black">
           <tr>
             <th class="py-4 px-4 sm:px-6">Page Title &amp; Route</th>
             <th class="py-4 px-4">Banner Asset</th>
@@ -104,10 +202,10 @@
             <th class="py-4 px-4 sm:px-6 text-right">Quick Actions</th>
           </tr>
         </thead>
-        <tbody id="pages-table-body" class="divide-y divide-slate-100 text-slate-700">
+        <tbody id="pages-table-body" class="divide-y divide-[#F1F5F0] text-slate-700">
           <tr>
             <td colspan="5" class="py-14 text-center text-slate-400">
-              <div class="inline-block animate-spin w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full mb-3"></div>
+              <div class="inline-block animate-spin w-7 h-7 border-2 border-[#58B31B] border-t-transparent rounded-full mb-3"></div>
               <p class="font-bold text-xs">Loading studio pages…</p>
             </td>
           </tr>
@@ -295,23 +393,37 @@
 <script>
   window.addEventListener('DOMContentLoaded', () => {
     if (window.CKEDITOR) {
-      CKEDITOR.replace('content_en', {
-        minHeight: 200,
-        height: 250,
-        extraPlugins: 'codesnippet,sourcearea',
-        codeSnippet_theme: 'monokai_sublime',
-        removeButtons: 'About',
-        versionCheck: false
-      });
-      CKEDITOR.replace('content_ar', {
-        minHeight: 200,
-        height: 250,
-        extraPlugins: 'codesnippet,sourcearea',
-        codeSnippet_theme: 'monokai_sublime',
-        contentsLangDirection: 'rtl',
-        removeButtons: 'About',
-        versionCheck: false
-      });
+      CKEDITOR.config.removePlugins = 'exportpdf,cloudservices,easyimage';
+      CKEDITOR.config.versionCheck = false;
+      
+      if (document.getElementById('content_en') && !CKEDITOR.instances['content_en']) {
+        try {
+          CKEDITOR.replace('content_en', {
+            minHeight: 200,
+            height: 250,
+            removePlugins: 'exportpdf,cloudservices,easyimage',
+            removeButtons: 'About',
+            versionCheck: false
+          });
+        } catch (e) {
+          console.warn('CKEditor content_en init:', e);
+        }
+      }
+
+      if (document.getElementById('content_ar') && !CKEDITOR.instances['content_ar']) {
+        try {
+          CKEDITOR.replace('content_ar', {
+            minHeight: 200,
+            height: 250,
+            removePlugins: 'exportpdf,cloudservices,easyimage',
+            contentsLangDirection: 'rtl',
+            removeButtons: 'About',
+            versionCheck: false
+          });
+        } catch (e) {
+          console.warn('CKEditor content_ar init:', e);
+        }
+      }
     }
   });
 </script>

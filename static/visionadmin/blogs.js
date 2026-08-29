@@ -268,9 +268,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab-filter').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-filter').forEach(b => {
-        b.className = 'tab-filter px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition';
+        b.className = 'tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer';
       });
-      btn.className = 'tab-filter px-3 py-1.5 rounded-lg bg-white shadow-xs text-slate-900 transition font-bold';
+      btn.className = 'tab-filter px-4 py-2 rounded-xl bg-[#EAF7E2] text-[#35760F] font-bold transition cursor-pointer';
       currentFilter = btn.dataset.status;
       loadBlogs();
     });

@@ -17,13 +17,15 @@ Trash
 <div class="content flex-1 overflow-auto p-6">
   <div class="space-y-6 min-h-full">
     <section class="bg-white shadow-sm border border-slate-200 rounded-[1.5rem] overflow-hidden">
-      
 
-      <div id="trash-error" class="hidden m-6 mb-0 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3"></div>
+
+      <div id="trash-error"
+        class="hidden m-6 mb-0 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3"></div>
 
       <div class="overflow-x-auto p-6">
         <div class="relative">
-          <div id="trash-loading" class="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-white/90 py-14 text-sm text-slate-400">
+          <div id="trash-loading"
+            class="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-white/90 py-14 text-sm text-slate-400">
             <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -31,17 +33,17 @@ Trash
             <span>Loading trash…</span>
           </div>
           <table id="trash-table" class="w-full text-sm" style="width:100%">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Deleted Status</th>
-              <th>Deleted Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Deleted Status</th>
+                <th>Deleted Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
           </table>
         </div>
       </div>
@@ -52,17 +54,31 @@ Trash
 <!-- View user modal (shared markup/ids with admin.html's; admin.js drives whichever is present) -->
 <div id="admin-view-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
-    <button type="button" data-close-modal class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
+    <button type="button" data-close-modal
+      class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
     <div class="flex flex-col items-center text-center gap-2">
-      <span id="admin-view-avatar" class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-semibold overflow-hidden">?</span>
+      <span id="admin-view-avatar"
+        class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-semibold overflow-hidden">?</span>
       <h3 id="admin-view-name" class="text-base font-bold text-slate-900">—</h3>
       <p id="admin-view-email" class="text-xs text-slate-500">—</p>
     </div>
     <dl class="mt-5 space-y-2 text-sm">
-      <div class="flex justify-between"><dt class="text-slate-500">Role</dt><dd id="admin-view-role" class="font-medium text-slate-800">—</dd></div>
-      <div class="flex justify-between"><dt class="text-slate-500">Status</dt><dd id="admin-view-status" class="font-medium text-slate-800">—</dd></div>
-      <div class="flex justify-between"><dt class="text-slate-500">Created</dt><dd id="admin-view-created" class="font-medium text-slate-800">—</dd></div>
-      <div id="admin-view-deleted-row" class="hidden flex justify-between"><dt class="text-slate-500">Deleted</dt><dd id="admin-view-deleted" class="font-medium text-slate-800">—</dd></div>
+      <div class="flex justify-between">
+        <dt class="text-slate-500">Role</dt>
+        <dd id="admin-view-role" class="font-medium text-slate-800">—</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-slate-500">Status</dt>
+        <dd id="admin-view-status" class="font-medium text-slate-800">—</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-slate-500">Created</dt>
+        <dd id="admin-view-created" class="font-medium text-slate-800">—</dd>
+      </div>
+      <div id="admin-view-deleted-row" class="hidden flex justify-between">
+        <dt class="text-slate-500">Deleted</dt>
+        <dd id="admin-view-deleted" class="font-medium text-slate-800">—</dd>
+      </div>
     </dl>
   </div>
 </div>
@@ -70,10 +86,12 @@ Trash
 <!-- Restore confirmation modal -->
 <div id="trash-restore-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
-    <button type="button" data-close-modal class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
+    <button type="button" data-close-modal
+      class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
     <h3 class="text-base font-bold text-slate-900 mb-2">Restore user?</h3>
     <p id="trash-restore-text" class="text-sm text-slate-500 mb-4">This account will be able to log in again.</p>
-    <div id="trash-restore-error" class="hidden mb-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs px-3 py-2"></div>
+    <div id="trash-restore-error"
+      class="hidden mb-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs px-3 py-2"></div>
     <div class="flex gap-2">
       <button type="button" data-close-modal
         class="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">Cancel</button>

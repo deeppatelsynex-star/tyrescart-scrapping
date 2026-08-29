@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateTargetPageUI(slug) {
     currentPageSlug = slug || 'about-us';
-    if (badgePageSlug) badgePageSlug.textContent = currentPageSlug;
+    if (badgePageSlug) badgePageSlug.textContent = currentPageSlug.toUpperCase();
     if (formPageSlug) formPageSlug.value = currentPageSlug;
 
     const formattedTitle = currentPageSlug.split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');

@@ -217,8 +217,11 @@ window.AdminShared = (function () {
     if (!isoString) return null;
     const d = new Date(isoString);
     if (isNaN(d.getTime())) return null;
+    // en-GB with numeric day/month/year yields "DD/MM/YYYY" -- swap the
+    // slashes for dashes to match the DD-MM-YYYY convention used everywhere.
+    const dmy = d.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata', day: '2-digit', month: '2-digit', year: 'numeric' });
     return {
-      datePart: d.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }),
+      datePart: dmy.replace(/\//g, '-'),
       timePart: d.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }),
     };
   }

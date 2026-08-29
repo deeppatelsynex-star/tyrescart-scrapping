@@ -12,6 +12,25 @@
   <link rel="apple-touch-icon" href="/static/assets/images/favicon-color.webp" />
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    if (typeof tailwind !== 'undefined') {
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                green: '#58B31B',
+                bright: '#68C927',
+                deep: '#35760F',
+                tint: '#EFF9E6',
+                ink: '#0E1108'
+              }
+            }
+          }
+        }
+      };
+    }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -19,9 +38,8 @@
   <style>
     body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
     .va-nav-active {
-      background-color: #0f172a;
-      color: #ffffff;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+      background-color: #EAF7E2;
+      color: #0E1108;
     }
     .cke_contents {
       min-height: 200px !important;
@@ -40,21 +58,28 @@
   <div id="va-sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity"></div>
 
   <!-- Left Minimal Sidebar Navigation -->
-  <aside id="va-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-xl border-r border-slate-200/80 flex flex-col justify-between -translate-x-full lg:translate-x-0 transition-all duration-300 ease-out shadow-xs">
+  <aside id="va-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-[#E8EDE4] flex flex-col justify-between -translate-x-full lg:translate-x-0 transition-all duration-300 ease-out shadow-xs">
     
     <!-- Top Brand & Navigation Section -->
     <div class="p-5 space-y-6 overflow-y-auto">
       
-      <!-- Brand Logo Header -->
-      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+      <!-- Brand Logo Header (Matches Reference) -->
+      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
         <a href="/visionadmin/pages" class="flex items-center gap-3 group">
-          <div class="w-10 h-10 rounded-2xl bg-white p-2 flex items-center justify-center shadow-md shadow-slate-200/60 border border-slate-100 group-hover:scale-105 group-hover:shadow-emerald-500/20 group-hover:border-emerald-200 transition-all duration-300 shrink-0">
-            <img src="/static/assets/images/favicon-color.webp" alt="VisionAdmin Icon" class="w-full h-full object-contain group-hover:rotate-3 transition-transform duration-300" />
+          <div class="w-10 h-10 rounded-2xl bg-[#58B31B] text-white p-2 flex items-center justify-center shadow-md shadow-[#58B31B]/20 group-hover:scale-105 transition-all duration-300 shrink-0">
+            <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/>
+              <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/>
+              <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/>
+              <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>
+            </svg>
           </div>
           <div>
             <div class="flex items-center gap-1.5">
-              <span class="text-base font-black text-slate-950 tracking-tight leading-none">Vision<span class="text-emerald-600">Admin</span></span>
-              <span class="px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/80">CMS</span>
+              <span class="text-base font-black text-[#0E1108] tracking-tight leading-none">Vision<span class="text-[#58B31B]">Admin</span></span>
+              <span class="px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-md bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]">CMS</span>
             </div>
             <p class="text-[11px] text-slate-400 font-bold mt-0.5">Content Studio</p>
           </div>
@@ -71,92 +96,85 @@
         <!-- Pages Tree Structure (Parent: pages, Children: page list, Sections list) -->
         <div class="space-y-1">
           <!-- Parent: Pages Toggle Header -->
-          <button type="button" id="va-pages-tree-toggle" class="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer select-none {% if page in ['pages', 'sections'] %}bg-slate-900 text-white shadow-md shadow-slate-950/15{% else %}text-slate-700 hover:text-slate-950 hover:bg-slate-100/80{% endif %}">
+          <button type="button" id="va-pages-tree-toggle" class="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-300 cursor-pointer select-none active:scale-[0.98] {% if page in ['pages', 'sections'] %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
             <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['pages', 'sections'] %}bg-white/15 text-emerald-400{% else %}bg-slate-100 text-slate-500 group-hover:bg-emerald-50 group-hover:text-emerald-600{% endif %} transition-all duration-300 group-hover:scale-110">
+              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['pages', 'sections'] %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
               </div>
-              <span class="font-bold tracking-tight">pages</span>
+              <span class="font-bold tracking-tight">Pages</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <span class="text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md {% if page in ['pages', 'sections'] %}bg-white/20 text-white{% else %}bg-slate-100 text-slate-500{% endif %}">2</span>
-              <svg id="va-pages-tree-chevron" class="w-4 h-4 transition-transform duration-300 {% if page in ['pages', 'sections'] %}rotate-180 text-white/80{% else %}text-slate-400 group-hover:text-slate-700{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full {% if page in ['pages', 'sections'] %}bg-[#D1E7C4] text-[#35760F]{% else %}bg-slate-100 text-slate-500{% endif %}">1</span>
+              <svg id="va-pages-tree-chevron" class="w-4 h-4 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] {% if page in ['pages', 'sections'] %}rotate-180 text-[#35760F]{% else %}text-slate-400 group-hover:text-slate-700{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
           </button>
 
-          <!-- Tree Branch Container -->
-          <div id="va-pages-tree-branch" class="pl-4 pr-1 py-1 space-y-1 relative transition-all duration-300 ease-in-out {% if page not in ['pages', 'sections'] %}hidden{% endif %}">
-            
-            <!-- Continuous Tree Vertical Line -->
-            <div class="absolute left-6 top-0 bottom-4 w-px bg-slate-200"></div>
+          <!-- Smooth Animated Tree Branch Container (CSS Grid 0fr -> 1fr) -->
+          <div id="va-pages-tree-wrapper" class="grid transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] {% if page in ['pages', 'sections'] %}grid-rows-[1fr] opacity-100{% else %}grid-rows-[0fr] opacity-0 pointer-events-none{% endif %}">
+            <div class="overflow-hidden">
+              <div id="va-pages-tree-branch" class="pl-3 pr-1 py-1 space-y-1 relative">
+                
+                <!-- Child 1: Page List -->
+                <a href="/visionadmin/pages" class="group flex items-center justify-between pl-6 pr-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 relative {% if page == 'pages' %}text-[#35760F] font-black{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+                  <div class="flex items-center gap-2.5">
+                    <svg class="w-4 h-4 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <span class="truncate">Page List</span>
+                  </div>
+                  {% if page == 'pages' %}
+                  <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
+                  {% endif %}
+                </a>
 
-            <!-- Child 1: page list (├── page list) -->
-            <a href="/visionadmin/pages" class="group flex items-center justify-between pl-7 pr-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 relative {% if page == 'pages' %}bg-slate-950 text-white shadow-xs font-black{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-100/90{% endif %}">
-              <!-- Tree Horizontal Branch Connector -->
-              <span class="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-px bg-slate-200 group-hover:bg-emerald-400 transition-colors"></span>
-              
-              <div class="flex items-center gap-2 relative z-10">
-                <div class="w-2 h-2 rounded-full transition-all duration-200 {% if page == 'pages' %}bg-emerald-400 ring-4 ring-emerald-400/20 scale-110{% else %}bg-slate-300 group-hover:bg-emerald-500 group-hover:scale-125{% endif %}"></div>
-                <span class="truncate">page list</span>
+                <!-- Child 2: Sections List -->
+                <a href="/visionadmin/sections" class="group flex items-center justify-between pl-6 pr-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 relative {% if page == 'sections' %}text-[#35760F] font-black{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+                  <div class="flex items-center gap-2.5">
+                    <svg class="w-4 h-4 text-slate-400 group-hover:text-[#58B31B] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <span class="truncate">Sections List</span>
+                  </div>
+                  {% if page == 'sections' %}
+                  <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
+                  {% endif %}
+                </a>
               </div>
-
-              {% if page == 'pages' %}
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              {% endif %}
-            </a>
-
-            <!-- Child 2: Sections list (└── Sections list) -->
-            <a href="/visionadmin/sections" class="group flex items-center justify-between pl-7 pr-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 relative {% if page == 'sections' %}bg-slate-950 text-white shadow-xs font-black{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-100/90{% endif %}">
-              <!-- Tree Curve Corner Connector -->
-              <span class="absolute left-6 top-0 h-1/2 w-4 border-b border-l border-slate-200 rounded-bl-lg group-hover:border-emerald-400 transition-colors"></span>
-              
-              <div class="flex items-center gap-2 relative z-10">
-                <div class="w-2 h-2 rounded-full transition-all duration-200 {% if page == 'sections' %}bg-emerald-400 ring-4 ring-emerald-400/20 scale-110{% else %}bg-slate-300 group-hover:bg-emerald-500 group-hover:scale-125{% endif %}"></div>
-                <span class="truncate">Sections list</span>
-              </div>
-
-              {% if page == 'sections' %}
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              {% endif %}
-            </a>
+            </div>
           </div>
         </div>
 
-        <!-- Blogs Link with Animated Hover Icon -->
-        <a href="/visionadmin/blogs" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'blogs' %}bg-slate-950 text-white shadow-md shadow-slate-950/15{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-100/80{% endif %}">
+        <!-- Blogs & Articles Link -->
+        <a href="/visionadmin/blogs" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'blogs' %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
           <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'blogs' %}bg-white/15 text-emerald-400{% else %}bg-slate-100 text-slate-500 group-hover:bg-emerald-50 group-hover:text-emerald-600{% endif %} transition-all duration-300 group-hover:scale-110 group-hover:-rotate-6">
-              <svg class="w-4 h-4 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="6" x2="16" y2="6"/><line x1="9" y1="10" x2="16" y2="10"/></svg>
+            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'blogs' %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="6" x2="16" y2="6"/><line x1="9" y1="10" x2="16" y2="10"/></svg>
             </div>
             <span>Blogs &amp; Articles</span>
           </div>
           {% if page == 'blogs' %}
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 ring-4 ring-emerald-400/20"></span>
+          <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
           {% endif %}
         </a>
 
-        <!-- Reviewer Settings Navigation Link -->
-        <a href="/visionadmin/settings" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page in ['settings', 'config', 'reviewer-settings'] %}bg-slate-950 text-white shadow-md shadow-slate-950/15{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-100/80{% endif %}">
+        <!-- Reviewer Settings Link -->
+        <a href="/visionadmin/settings" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page in ['settings', 'config', 'reviewer-settings'] %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
           <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['settings', 'config', 'reviewer-settings'] %}bg-white/15 text-emerald-400{% else %}bg-slate-100 text-slate-500 group-hover:bg-emerald-50 group-hover:text-emerald-600{% endif %} transition-all duration-300 group-hover:scale-110 group-hover:rotate-45">
-              <svg class="w-4 h-4 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['settings', 'config', 'reviewer-settings'] %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
             </div>
             <span>Reviewer Settings</span>
           </div>
           {% if page in ['settings', 'config', 'reviewer-settings'] %}
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 ring-4 ring-emerald-400/20"></span>
+          <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
           {% endif %}
         </a>
       </div>
 
       <!-- Quick Platform Links with Animated Hover Icons -->
-      <div class="space-y-1.5 pt-4 border-t border-slate-100">
+      <div class="space-y-1.5 pt-4 border-t border-[#F1F5F0]">
         <span class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-2">Shortcuts</span>
         
         <!-- Live Storefront Link -->
-        <a href="/" target="_blank" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100/80 hover:text-emerald-700 transition-all duration-200">
+        <a href="/" target="_blank" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-[#35760F] transition-all duration-200">
           <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-600 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+            <div class="w-7 h-7 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center group-hover:bg-[#EAF7E2] group-hover:text-[#35760F] transition-all duration-300">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             </div>
             <span>Live Storefront</span>
@@ -165,82 +183,133 @@
         </a>
 
         <!-- Switch to Scraper Admin -->
-        <a href="/tcsadmin/docs/scraper" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+        <a href="/tcsadmin/docs/scraper" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200">
           <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center group-hover:bg-slate-200 group-hover:text-slate-900 group-hover:scale-110 group-hover:-rotate-12 transition-all duration-300">
+            <div class="w-7 h-7 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center group-hover:bg-slate-200 group-hover:text-slate-900 transition-all duration-300">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             </div>
             <span>Scraper Admin</span>
           </div>
-          <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">Ops</span>
+          <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">OPS</span>
         </a>
       </div>
     </div>
 
-    <!-- Bottom Minimal User Status Bar -->
-    <div class="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
+    <!-- Bottom Minimal User Status Card -->
+    <div class="p-3.5 m-3 border border-[#E8EDE4] rounded-2xl bg-white flex items-center justify-between gap-3 shadow-2xs">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-8 h-8 rounded-xl bg-slate-950 p-1.5 flex items-center justify-center shrink-0 shadow-xs">
-          <img src="/static/assets/images/favicon-color.webp" alt="Favicon" class="w-full h-full object-contain" />
+        <div class="w-8 h-8 rounded-xl bg-[#0E1108] p-1.5 flex items-center justify-center shrink-0 shadow-xs text-white">
+          <svg class="w-4 h-4 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
         </div>
         <div class="min-w-0">
-          <p class="text-xs font-black text-slate-900 truncate leading-tight">{{ session.get('name') or 'VisionAdmin' }}</p>
+          <p class="text-xs font-black text-[#0E1108] truncate leading-tight">VisionAdmin</p>
           <div class="flex items-center gap-1.5 mt-0.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-[#58B31B]"></span>
             <span class="text-[10px] text-slate-400 font-bold truncate">Online Studio</span>
           </div>
         </div>
       </div>
-      <a href="/" title="Visit Storefront" class="group p-2 text-slate-400 hover:text-emerald-700 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 shadow-none hover:shadow-2xs transition-all duration-200 shrink-0 cursor-pointer">
-        <svg class="w-4 h-4 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-      </a>
+      <button type="button" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition" title="Collapse sidebar">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+      </button>
     </div>
   </aside>
 
   <!-- Right Main Viewport Area -->
   <div class="flex-1 lg:pl-64 flex flex-col min-h-screen">
     
-    <!-- Top Utility Header (Minimal Luminous Glass) -->
-    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center gap-3">
+    <!-- Top Utility Header (Matching Screenshot) -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-[#E8EDE4] h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 shadow-[0_1px_3px_rgba(14,17,8,0.02)]">
+      <div class="flex items-center gap-4 flex-1 max-w-xl">
         <!-- Mobile Toggle Button -->
-        <button type="button" id="va-open-sidebar-btn" class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition cursor-pointer" aria-label="Open sidebar">
+        <button type="button" id="va-open-sidebar-btn" class="p-2 rounded-xl text-slate-600 hover:bg-slate-100 border border-slate-200/80 transition cursor-pointer" aria-label="Toggle sidebar">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
 
-        <!-- Current Breadcrumb Title -->
-        <div class="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700">
-          <div class="w-6 h-6 rounded-lg bg-emerald-50 border border-emerald-200/80 flex items-center justify-center p-1">
-            <img src="/static/assets/images/favicon-color.webp" alt="Favicon" class="w-full h-full object-contain" />
+        <!-- Top Global Search Component with Autocomplete (Ctrl + K) -->
+        <div id="va-global-search-container" class="va-search-container flex-1 max-w-[420px]">
+          <div class="relative flex items-center">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--slate)] pointer-events-none flex items-center justify-center">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
+            <input 
+              id="va-global-search-input"
+              type="text" 
+              autocomplete="off"
+              placeholder="Search (Ctrl + K)" 
+              class="va-search-input" 
+            />
+            <!-- Clear Button -->
+            <button 
+              id="va-global-search-clear" 
+              type="button" 
+              class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-xs transition cursor-pointer"
+              title="Clear search"
+            >
+              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
-          <span class="text-slate-400 font-semibold">VisionAdmin</span>
-          <span class="text-slate-300">/</span>
-          <span class="text-slate-900 font-extrabold capitalize">{{ page or 'Pages' }}</span>
+
+          <!-- Autocomplete Dropdown Panel -->
+          <div 
+            id="va-global-search-dropdown" 
+            class="va-search-dropdown hidden"
+          >
+            <!-- Dropdown Results Box -->
+            <div id="va-global-search-results" class="max-h-[380px] overflow-y-auto overscroll-contain"></div>
+            
+            <!-- Dropdown Footer -->
+            <div id="va-global-search-footer" class="hidden border-t border-[var(--line)] px-4 py-3 bg-[var(--bg)] hover:bg-[var(--bg-soft)] transition cursor-pointer select-none">
+              <div class="flex items-center justify-between text-xs font-bold text-[var(--ink)]">
+                <div class="flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5 text-[var(--slate)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <span id="va-global-search-footer-text">View all results for &ldquo;...&rdquo;</span>
+                </div>
+                <svg class="w-3.5 h-3.5 text-[var(--slate)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Header Action Utilities -->
-      <div class="flex items-center gap-2.5">
-        <a href="/" target="_blank" class="group inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200/90 hover:border-emerald-500 bg-white hover:bg-emerald-50/30 text-xs font-bold text-slate-700 hover:text-emerald-800 shadow-2xs hover:shadow-xs transition-all duration-200">
-          <svg class="w-3.5 h-3.5 text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          <span class="hidden sm:inline">View Storefront</span>
-        </a>
+      <!-- Header Action Utilities & User Avatar Pill -->
+      <div class="flex items-center gap-3">
+        <!-- Notification Bell -->
+        <button type="button" class="relative p-2.5 rounded-xl border border-[#E8EDE4] text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition cursor-pointer" aria-label="Notifications">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#58B31B] ring-2 ring-white"></span>
+        </button>
+
+        <!-- User Profile Avatar Pill -->
+        <div class="flex items-center gap-3 pl-2 border-l border-[#E8EDE4]">
+          <div class="w-9 h-9 rounded-full bg-[#0E1108] text-white flex items-center justify-center text-xs font-extrabold shadow-sm">
+            {{ (session.get('name') or 'Admin')[:1] | upper }}
+          </div>
+          <div class="hidden md:block text-left">
+            <p class="text-xs font-black text-[#0E1108] leading-tight">{{ session.get('name') or 'Admin User' }}</p>
+            <p class="text-[10px] text-slate-400 font-bold leading-tight mt-0.5">{{ session.get('role') or 'Super Admin' }}</p>
+          </div>
+          <svg class="w-4 h-4 text-slate-400 hidden md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
       </div>
     </header>
 
     <!-- Page Content Viewport -->
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
       {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-200/80 bg-white/80 py-4 px-4 sm:px-6 lg:px-8 text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2 mt-auto">
+    <footer class="border-t border-[#E8EDE4] bg-white py-4 px-4 sm:px-6 lg:px-8 text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2 mt-auto">
       <div class="flex items-center gap-2">
-        <img src="/static/assets/images/favicon-color.webp" alt="Favicon" class="w-3.5 h-3.5 object-contain" />
+        <span class="text-[#58B31B] text-sm">🌿</span>
         <p>&copy; 2026 TyresCart.ae VisionAdmin CMS. Executive Content Studio.</p>
       </div>
       <div class="flex items-center gap-4 font-semibold">
-        <a href="/" target="_blank" class="hover:underline text-slate-500 hover:text-emerald-600 transition">Live Website</a>
+        <a href="/" target="_blank" class="hover:underline text-slate-500 hover:text-[#58B31B] transition">Live Website</a>
         <a href="/tcsadmin/docs/scraper" class="hover:underline text-slate-500 hover:text-slate-800 transition">Scraper Admin</a>
       </div>
     </footer>
@@ -354,20 +423,32 @@
     if (closeBtn) closeBtn.addEventListener('click', () => toggleSidebar(false));
     if (backdrop) backdrop.addEventListener('click', () => toggleSidebar(false));
 
-    // Pages Tree Accordion Toggle
+    // Pages Tree Accordion Toggle (Smooth Spring Animation)
     const pagesTreeToggle = document.getElementById('va-pages-tree-toggle');
-    const pagesTreeBranch = document.getElementById('va-pages-tree-branch');
+    const pagesTreeWrapper = document.getElementById('va-pages-tree-wrapper');
     const pagesTreeChevron = document.getElementById('va-pages-tree-chevron');
 
-    if (pagesTreeToggle && pagesTreeBranch) {
+    if (pagesTreeToggle && pagesTreeWrapper) {
       pagesTreeToggle.addEventListener('click', () => {
-        const isHidden = pagesTreeBranch.classList.contains('hidden');
-        if (isHidden) {
-          pagesTreeBranch.classList.remove('hidden');
-          if (pagesTreeChevron) pagesTreeChevron.classList.add('rotate-180');
+        const isOpen = pagesTreeWrapper.classList.contains('grid-rows-[1fr]');
+        if (isOpen) {
+          pagesTreeWrapper.classList.remove('grid-rows-[1fr]', 'opacity-100');
+          pagesTreeWrapper.classList.add('grid-rows-[0fr]', 'opacity-0', 'pointer-events-none');
+          if (pagesTreeChevron) {
+            pagesTreeChevron.classList.remove('rotate-180', 'text-[#35760F]');
+            pagesTreeChevron.classList.add('text-slate-400');
+          }
+          pagesTreeToggle.classList.remove('bg-[#EAF7E2]', 'text-[#0E1108]');
+          pagesTreeToggle.classList.add('text-slate-600');
         } else {
-          pagesTreeBranch.classList.add('hidden');
-          if (pagesTreeChevron) pagesTreeChevron.classList.remove('rotate-180');
+          pagesTreeWrapper.classList.remove('grid-rows-[0fr]', 'opacity-0', 'pointer-events-none');
+          pagesTreeWrapper.classList.add('grid-rows-[1fr]', 'opacity-100');
+          if (pagesTreeChevron) {
+            pagesTreeChevron.classList.add('rotate-180', 'text-[#35760F]');
+            pagesTreeChevron.classList.remove('text-slate-400');
+          }
+          pagesTreeToggle.classList.add('bg-[#EAF7E2]', 'text-[#0E1108]');
+          pagesTreeToggle.classList.remove('text-slate-600');
         }
       });
     }
@@ -540,6 +621,9 @@
       });
     }
   </script>
+
+  <!-- Global Search Component Script -->
+  <script src="/static/visionadmin/global-search.js?v={{ range(10000, 99999) | random }}"></script>
 
   {% block scripts %}{% endblock %}
   {% block extra_scripts %}{% endblock %}

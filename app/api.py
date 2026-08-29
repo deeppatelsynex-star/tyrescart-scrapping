@@ -1393,10 +1393,11 @@ def register_visionadmin_api_routes(app):
         })
 
     # =========================================================================
-    # 2. PAGES JSON API ENDPOINTS (/visionadmin/api/pages)
+    # 2. PAGES JSON API ENDPOINTS (/visionadmin/api/pages & /visionadmin/api/v1/pages)
     # =========================================================================
 
     @app.route('/visionadmin/api/pages', methods=['GET'])
+    @app.route('/visionadmin/api/v1/pages', methods=['GET'])
     def visionadmin_get_pages():
         locale = request.args.get('locale')
         include_deleted = request.args.get('trash') == '1'
@@ -1440,6 +1441,7 @@ def register_visionadmin_api_routes(app):
         })
 
     @app.route('/visionadmin/api/pages/<int:page_id>', methods=['GET'])
+    @app.route('/visionadmin/api/v1/pages/<int:page_id>', methods=['GET'])
     def visionadmin_get_page(page_id):
         page = Page.find_by_id(page_id)
         if not page:
@@ -1447,6 +1449,7 @@ def register_visionadmin_api_routes(app):
         return jsonify({'success': True, 'page': page.to_dict()})
 
     @app.route('/visionadmin/api/pages', methods=['POST'])
+    @app.route('/visionadmin/api/v1/pages', methods=['POST'])
     def visionadmin_create_page():
         data = request.get_json(silent=True) or {}
 
@@ -1546,17 +1549,20 @@ def register_visionadmin_api_routes(app):
         })
 
     # =========================================================================
-    # 3. BLOGS JSON API ENDPOINTS (/visionadmin/api/blogs)
+    # 3. BLOGS JSON API ENDPOINTS (/visionadmin/api/blogs & /visionadmin/api/v1/blogs)
     # =========================================================================
 
     @app.route('/visionadmin/api/categories', methods=['GET'])
+    @app.route('/visionadmin/api/v1/categories', methods=['GET'])
     @app.route('/visionadmin/api/blog-categories', methods=['GET'])
+    @app.route('/visionadmin/api/v1/blog-categories', methods=['GET'])
     def visionadmin_get_categories():
         """Returns all distinct category names from existing blogs table."""
         categories = Blog.distinct_categories()
         return jsonify({'success': True, 'categories': categories})
 
     @app.route('/visionadmin/api/blogs', methods=['GET'])
+    @app.route('/visionadmin/api/v1/blogs', methods=['GET'])
     def visionadmin_get_blogs():
         locale = request.args.get('locale')
         include_deleted = request.args.get('trash') == '1'
@@ -1601,6 +1607,7 @@ def register_visionadmin_api_routes(app):
         })
 
     @app.route('/visionadmin/api/blogs/<int:blog_id>', methods=['GET'])
+    @app.route('/visionadmin/api/v1/blogs/<int:blog_id>', methods=['GET'])
     def visionadmin_get_blog(blog_id):
         blog = Blog.find_by_id(blog_id)
         if not blog:
@@ -1608,6 +1615,7 @@ def register_visionadmin_api_routes(app):
         return jsonify({'success': True, 'blog': blog.to_dict()})
 
     @app.route('/visionadmin/api/blogs', methods=['POST'])
+    @app.route('/visionadmin/api/v1/blogs', methods=['POST'])
     def visionadmin_create_blog():
         data = request.get_json(silent=True) or {}
 
@@ -1712,10 +1720,11 @@ def register_visionadmin_api_routes(app):
         })
 
     # =========================================================================
-    # 4. PAGE SECTIONS CRUD & REORDER API (About Us, etc.)
+    # 4. PAGE SECTIONS CRUD & REORDER API (/visionadmin/api/sections & /visionadmin/api/v1/sections)
     # =========================================================================
 
     @app.route('/visionadmin/api/sections', methods=['GET'])
+    @app.route('/visionadmin/api/v1/sections', methods=['GET'])
     def visionadmin_get_sections():
         """Returns all sections for a page (including inactive) ordered by sort_order."""
         page_slug = request.args.get('page') or request.args.get('page_slug') or 'about-us'
@@ -1727,6 +1736,7 @@ def register_visionadmin_api_routes(app):
         })
 
     @app.route('/visionadmin/api/sections/<int:section_id>', methods=['GET'])
+    @app.route('/visionadmin/api/v1/sections/<int:section_id>', methods=['GET'])
     def visionadmin_get_section_detail(section_id):
         """Returns a single section by id."""
         sec = PageSection.find_by_id(section_id)
@@ -1735,6 +1745,7 @@ def register_visionadmin_api_routes(app):
         return jsonify({'section': sec})
 
     @app.route('/visionadmin/api/sections', methods=['POST'])
+    @app.route('/visionadmin/api/v1/sections', methods=['POST'])
     def visionadmin_create_section():
         """Creates a new section."""
         data = request.get_json(silent=True) or request.form.to_dict()
@@ -1826,7 +1837,9 @@ def register_visionadmin_api_routes(app):
     # =========================================================================
 
     @app.route('/visionadmin/api/settings/reviewer', methods=['GET'])
+    @app.route('/visionadmin/api/v1/settings/reviewer', methods=['GET'])
     @app.route('/visionadmin/api/reviewer-settings', methods=['GET'])
+    @app.route('/visionadmin/api/v1/reviewer-settings', methods=['GET'])
     def visionadmin_get_reviewer_settings():
         from models.setting import Setting
         settings = Setting.get_reviewer_settings()
@@ -1836,7 +1849,9 @@ def register_visionadmin_api_routes(app):
         })
 
     @app.route('/visionadmin/api/settings/reviewer', methods=['POST', 'PUT'])
+    @app.route('/visionadmin/api/v1/settings/reviewer', methods=['POST', 'PUT'])
     @app.route('/visionadmin/api/reviewer-settings', methods=['POST', 'PUT'])
+    @app.route('/visionadmin/api/v1/reviewer-settings', methods=['POST', 'PUT'])
     def visionadmin_save_reviewer_settings():
         from models.setting import Setting
         data = request.get_json(silent=True) or request.form.to_dict() or {}
@@ -1872,6 +1887,192 @@ def register_visionadmin_api_routes(app):
             'message': 'Reviewer settings saved successfully.'
         })
 
+    # =========================================================================
+    # 6. UNIFIED GLOBAL SEARCH API (Deep search across all CMS content & sections)
+    # =========================================================================
+
+    @app.route('/visionadmin/api/global-search', methods=['GET'])
+    @app.route('/visionadmin/api/v1/global-search', methods=['GET'])
+    def visionadmin_global_search():
+        """
+        Deep content search across:
+        1. Pages (title, slug, content HTML/prose, meta_description, seo_title)
+        2. Page Sections (section_title, section_subtitle, content, page_slug, section_type)
+        3. Blogs & Articles (title, content, slug, category, short_description)
+        """
+        query = (request.args.get('q') or '').strip()
+        if not query:
+            return jsonify({
+                'success': True,
+                'query': '',
+                'total': 0,
+                'results': {'pages': [], 'sections': [], 'blogs': []}
+            })
+
+        q_lower = query.lower()
+
+        def clean_html(text):
+            if not text:
+                return ''
+            clean = re.sub(r'<[^>]+>', ' ', str(text))
+            return ' '.join(clean.split())
+
+        def make_snippet(text, q, max_len=110):
+            cleaned = clean_html(text)
+            idx = cleaned.lower().find(q)
+            if idx == -1:
+                return cleaned[:max_len] + ('...' if len(cleaned) > max_len else '')
+            start = max(0, idx - 25)
+            end = min(len(cleaned), idx + len(q) + 55)
+            snippet = cleaned[start:end]
+            if start > 0:
+                snippet = '...' + snippet
+            if end < len(cleaned):
+                snippet = snippet + '...'
+            return snippet
+
+        # 1. Search Pages
+        all_pages = [p for p in Page.all(include_deleted=False) if p.deleted_at is None]
+        matched_pages = []
+        for p in all_pages:
+            title_en = p.get_title('en')
+            title_ar = p.get_title('ar')
+            slug = p.slug or ''
+            content_en = clean_html(p.get_content('en'))
+            content_ar = clean_html(p.get_content('ar'))
+            meta_desc = clean_html(p.get_meta_desc('en'))
+
+            match_found = False
+            snippet = ''
+            if q_lower in title_en.lower() or q_lower in title_ar.lower():
+                match_found = True
+                snippet = title_en
+            elif q_lower in slug.lower():
+                match_found = True
+                snippet = f"/{slug.lstrip('/')}"
+            elif q_lower in content_en.lower():
+                match_found = True
+                snippet = make_snippet(content_en, q_lower)
+            elif q_lower in content_ar.lower():
+                match_found = True
+                snippet = make_snippet(content_ar, q_lower)
+            elif q_lower in meta_desc.lower():
+                match_found = True
+                snippet = make_snippet(meta_desc, q_lower)
+
+            if match_found:
+                matched_pages.append({
+                    'id': p.id,
+                    'type': 'page',
+                    'title': title_en or slug,
+                    'slug': f"/{slug.lstrip('/')}",
+                    'snippet': snippet,
+                    'is_active': bool(p.is_active),
+                    'url': f"/visionadmin/pages#page-{p.id}"
+                })
+
+        # 2. Search Page Sections
+        conn = get_connection()
+        matched_sections = []
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT id, page_slug, section_type, section_title, section_subtitle, content, is_active
+                    FROM page_sections
+                    WHERE deleted_at IS NULL
+                    ORDER BY sort_order ASC, id ASC
+                """)
+                sec_rows = cursor.fetchall() or []
+                for row in sec_rows:
+                    sec_id = row.get('id')
+                    page_slug = row.get('page_slug') or 'about-us'
+                    sec_type = row.get('section_type') or 'section'
+                    sec_title_raw = PageSection._parse_json(row.get('section_title'))
+                    sec_title_en = sec_title_raw.get('en') if isinstance(sec_title_raw, dict) else str(sec_title_raw or '')
+                    sec_sub_raw = PageSection._parse_json(row.get('section_subtitle'))
+                    sec_sub_en = sec_sub_raw.get('en') if isinstance(sec_sub_raw, dict) else str(sec_sub_raw or '')
+                    sec_content_raw = PageSection._parse_json(row.get('content'))
+                    sec_content_en = clean_html(sec_content_raw.get('en') if isinstance(sec_content_raw, dict) else str(sec_content_raw or ''))
+
+                    match_found = False
+                    snippet = ''
+                    if q_lower in sec_title_en.lower():
+                        match_found = True
+                        snippet = sec_title_en
+                    elif q_lower in sec_sub_en.lower():
+                        match_found = True
+                        snippet = sec_sub_en
+                    elif q_lower in sec_content_en.lower():
+                        match_found = True
+                        snippet = make_snippet(sec_content_en, q_lower)
+                    elif q_lower in page_slug.lower() or q_lower in sec_type.lower():
+                        match_found = True
+                        snippet = f"Page: {page_slug} ({sec_type})"
+
+                    if match_found:
+                        display_title = sec_title_en or f"{page_slug.replace('-', ' ').title()} {sec_type.title()} Section"
+                        matched_sections.append({
+                            'id': sec_id,
+                            'type': 'section',
+                            'title': display_title,
+                            'slug': f"/en/{page_slug.lstrip('/')} ({sec_type})",
+                            'page_slug': page_slug,
+                            'section_type': sec_type,
+                            'snippet': snippet,
+                            'is_active': bool(row.get('is_active', 1)),
+                            'url': f"/visionadmin/sections?page={page_slug}#section-{sec_id}"
+                        })
+        finally:
+            conn.close()
+
+        # 3. Search Blogs & Articles
+        all_blogs = [b for b in Blog.all(include_deleted=False) if b.deleted_at is None]
+        matched_blogs = []
+        for b in all_blogs:
+            title_en = b.get_title('en')
+            slug = b.slug or ''
+            content_en = clean_html(b.get_content('en'))
+            cat_name = b.category_name or ''
+
+            match_found = False
+            snippet = ''
+            if q_lower in title_en.lower():
+                match_found = True
+                snippet = title_en
+            elif q_lower in slug.lower():
+                match_found = True
+                snippet = f"/blog/{slug}"
+            elif q_lower in cat_name.lower():
+                match_found = True
+                snippet = f"Category: {cat_name}"
+            elif q_lower in content_en.lower():
+                match_found = True
+                snippet = make_snippet(content_en, q_lower)
+
+            if match_found:
+                matched_blogs.append({
+                    'id': b.id,
+                    'type': 'blog',
+                    'title': title_en or slug,
+                    'slug': f"/blog/{slug.lstrip('/')}",
+                    'category': cat_name,
+                    'snippet': snippet,
+                    'is_active': b.status == 'published',
+                    'url': f"/visionadmin/blogs#blog-{b.id}"
+                })
+
+        total = len(matched_pages) + len(matched_sections) + len(matched_blogs)
+        return jsonify({
+            'success': True,
+            'query': query,
+            'total': total,
+            'results': {
+                'pages': matched_pages[:5],
+                'sections': matched_sections[:5],
+                'blogs': matched_blogs[:5]
+            }
+        })
+
 
 def register_client_api_routes(app):
     """Registers all public, un-prefixed /api/* endpoints for the client storefront."""
@@ -1881,7 +2082,9 @@ def register_client_api_routes(app):
     # =========================================================================
 
     @app.route('/api/blogs', methods=['GET'])
+    @app.route('/api/v1/blogs', methods=['GET'])
     @app.route('/api/blog', methods=['GET'])
+    @app.route('/api/v1/blog', methods=['GET'])
     def api_get_blogs():
         """
         Public JSON API: Fetch published blogs with pagination, locale,
@@ -1981,7 +2184,9 @@ def register_client_api_routes(app):
         })
 
     @app.route('/api/blogs/<slug>', methods=['GET'])
+    @app.route('/api/v1/blogs/<slug>', methods=['GET'])
     @app.route('/api/blog/<slug>', methods=['GET'])
+    @app.route('/api/v1/blog/<slug>', methods=['GET'])
     def api_get_blog_detail(slug):
         """
         Public JSON API: Fetch a single blog article by slug.
@@ -2016,9 +2221,13 @@ def register_client_api_routes(app):
     # =========================================================================
 
     @app.route('/api/pages/<slug>/sections', methods=['GET'])
+    @app.route('/api/v1/pages/<slug>/sections', methods=['GET'])
     @app.route('/api/sections/<slug>', methods=['GET'])
+    @app.route('/api/v1/sections/<slug>', methods=['GET'])
     @app.route('/api/sections', methods=['GET'])
+    @app.route('/api/v1/sections', methods=['GET'])
     @app.route('/api/pages/about-us/sections', methods=['GET'])
+    @app.route('/api/v1/pages/about-us/sections', methods=['GET'])
     def public_get_page_sections(slug=None):
         """Public API returning active sections and page metadata for a page ordered by sort_order."""
         target_slug = request.args.get('page') or slug or 'about-us'

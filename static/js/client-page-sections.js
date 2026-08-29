@@ -274,7 +274,7 @@
               <div class="about-stat-number" style="text-align: center; width: 100%; font-size: clamp(2rem, 3.8vw, 3rem); font-weight: 800; color: #ffffff; margin-bottom: 6px; letter-spacing: -0.02em;">${escapeHtml(stat.number || '')}</div>
               <div class="about-stat-heading" style="text-align: center; width: 100%; font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 4px;">${escapeHtml(stat.heading || stat.label || '')}</div>
               <div class="about-stat-subtext" style="text-align: center; width: 100%; font-size: 0.85rem; color: rgba(255, 255, 255, 0.75); line-height: 1.5; max-width: 250px; margin: 0 auto;">${escapeHtml(stat.subtext || stat.sub || '')}</div>
-            </div>
+              </div>
           `).join('')}
         </div>
       `;

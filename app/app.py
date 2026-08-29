@@ -22,6 +22,7 @@ from scraperapp.tcsadmin import register_tcsadmin_routes
 from visionadmin import register_visionadmin_routes
 from siteapp import site_bp
 from api import register_api_routes
+from api_versioning import inject_api_version_headers, register_version_endpoints
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE_DIR, 'scrapers'))
@@ -91,25 +92,27 @@ def inject_i18n():
 
 @app.after_request
 def add_performance_headers(response):
-    """Adds caching headers for static assets and enables keep-alive."""
+    """Adds caching headers for static assets, enables keep-alive, and injects API version headers."""
     if request.path.startswith('/static/'):
         response.headers['Cache-Control'] = 'public, max-age=604800, stale-while-revalidate=86400'
-    return response
+    return inject_api_version_headers(response)
 
 
 # ============================================================================
-# REGISTER PAGE ROUTES + CENTRALIZED API LAYER
+# REGISTER PAGE ROUTES + CENTRALIZED API LAYER + VERSION CONTROL
 #
 #   tcsadmin.py            -> /tcsadmin/*   page routes (scraper admin)
 #   Visionadminroute.py    -> /visionadmin/* page routes (CMS)
 #   clientroute.py         -> /             page routes (public storefront)
 #   api.py                 -> /tcsadmin/api/*, /visionadmin/api/*, /api/*
+#   api_versioning.py      -> /api/v1/version, /visionadmin/api/v1/version
 # ============================================================================
 
 register_tcsadmin_routes(app)
 register_visionadmin_routes(app)
 app.register_blueprint(site_bp)
 register_api_routes(app)
+register_version_endpoints(app)
 
 
 # ============================================================================

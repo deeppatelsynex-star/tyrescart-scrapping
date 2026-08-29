@@ -90,9 +90,7 @@ DB_USER=tyrescart_user
 DB_PASSWORD=YourPleskDatabasePasswordHere
 DB_NAME=pitstop_scraper
 
-# Email Service (Password Reset & Notifications)
-RESEND_API_KEY=re_your_resend_api_key
-MAIL_DEFAULT_SENDER=notifications@yourdomain.com
+# App URL
 APP_URL=https://scraper.yourdomain.com
 
 # Server Port (Used by local Waitress WSGI)
