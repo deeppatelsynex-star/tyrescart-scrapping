@@ -170,41 +170,104 @@
               {% block HeaderActions %}{% endblock HeaderActions %}
               <div class="relative" id="profile-menu-root">
                 <button id="profile-trigger" type="button"
-                  class="shell-profile-trigger flex items-center gap-1.5 sm:gap-2 rounded-lg px-1.5 sm:px-2 py-1.5 transition-colors cursor-pointer">
-                  <span id="profile-avatar-header"
-                    class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-semibold overflow-hidden">?</span>
-                  <span id="profile-name-header"
-                    class="shell-profile-name hidden sm:inline-block text-sm font-semibold max-w-[120px] truncate">Account</span>
-                  <svg class="w-3.5 h-3.5" style="color: var(--text-subtle);" xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                      d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                      clip-rule="evenodd" />
+                  class="flex items-center gap-2.5 pl-2 pr-2.5 py-1.5 rounded-2xl border border-transparent hover:border-slate-200 hover:bg-slate-100 transition cursor-pointer select-none"
+                  aria-expanded="false"
+                  aria-haspopup="true">
+                  <div id="profile-avatar-header"
+                    class="w-9 h-9 rounded-full bg-[#0E1108] text-white flex items-center justify-center text-xs font-black shadow-sm shrink-0 overflow-hidden">
+                    {{ (session.get('name') or 'Super Admin')[:1] | upper }}
+                  </div>
+                  <div class="hidden sm:block text-left">
+                    <p id="profile-name-header" class="text-xs font-bold text-[#0E1108] leading-tight">{{ session.get('name') or 'Super Admin' }}</p>
+                    <div class="flex items-center gap-1.5 mt-0.5">
+                      <span class="inline-block w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                      <p class="text-[11px] text-slate-500 font-semibold leading-tight">{{ session.get('role') or 'SuperAdmin' }}</p>
+                    </div>
+                  </div>
+                  <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" id="profile-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="6 9 12 15 18 9"/>
                   </svg>
                 </button>
+
+                <!-- Floating Dropdown Menu Card (Matching Reference Image 1) -->
                 <div id="profile-dropdown"
-                  class="shell-dropdown hidden absolute right-0 mt-2 w-64 rounded-2xl shadow-lg z-50 overflow-hidden">
-                  <div class="shell-dropdown-header p-4 flex flex-col items-center gap-1">
-                    <span id="profile-avatar-dropdown"
-                      class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg font-semibold overflow-hidden">?</span>
-                    <span id="profile-name-dropdown" class="shell-dropdown-name text-sm font-semibold">—</span>
-                    <span id="profile-email-dropdown" class="shell-dropdown-email text-xs">—</span>
+                  class="hidden absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-[0_12px_40px_-8px_rgba(0,0,0,0.15)] border border-slate-100 p-3 z-50 transform origin-top-right transition-all duration-200 text-[#0E1108]">
+                  <!-- User Header Summary -->
+                  <div class="flex items-center justify-between gap-3 p-2">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <div id="profile-avatar-dropdown"
+                        class="w-10 h-10 rounded-full ring-2 ring-[#388E3C] ring-offset-2 bg-[#0E1108] text-white flex items-center justify-center text-sm font-black shrink-0 overflow-hidden">
+                        {{ (session.get('name') or 'Super Admin')[:1] | upper }}
+                      </div>
+                      <div class="min-w-0">
+                        <p id="profile-name-dropdown" class="text-sm font-bold text-[#0E1108] truncate leading-tight">{{ session.get('name') or 'Super Admin' }}</p>
+                        <p id="profile-email-dropdown" class="text-xs text-slate-500 truncate mt-0.5">{{ session.get('email') or 'superadmin@tyresvision.com' }}</p>
+                      </div>
+                    </div>
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-lg bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+                      {{ 'Pro' if session.get('role') == 'User' else session.get('role') or 'SuperAdmin' }}
+                    </span>
                   </div>
-                  <button type="button" data-action="view-profile"
-                    class="shell-dropdown-item w-full flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer">View
-                    Profile</button>
-                  <button type="button" data-action="change-profile"
-                    class="shell-dropdown-item w-full flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer">Change
-                    Profile</button>
-                  <button type="button" data-action="change-password"
-                    class="shell-dropdown-item w-full flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer">Change
-                    Password</button>
-                  <button type="button" data-action="delete-account"
-                    class="shell-dropdown-item w-full flex items-center gap-2 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 cursor-pointer">Delete
-                    Account</button>
-                  <div class="shell-dropdown-divider">
+
+                  <!-- Divider -->
+                  <div class="my-2 border-t border-slate-100"></div>
+
+                  <!-- Navigation Links -->
+                  <div class="space-y-0.5">
+                    <!-- Item 1: My Profile -->
+                    <button type="button" data-action="view-profile" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition group cursor-pointer text-left">
+                      <svg class="w-4 h-4 text-slate-400 group-hover:text-[#388E3C] transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                      <span>My Profile</span>
+                    </button>
+
+                    <!-- Item 2: My Account (with chevron >) -->
+                    <button type="button" data-action="change-profile" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition group cursor-pointer text-left">
+                      <div class="flex items-center gap-3">
+                        <svg class="w-4 h-4 text-slate-400 group-hover:text-[#388E3C] transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="3"/>
+                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        <span>My Account</span>
+                      </div>
+                      <svg class="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"/>
+                      </svg>
+                    </button>
+
+                    {% if session.get('role') in ['SuperAdmin', 'Admin'] %}
+                    <a href="/tcsadmin/Admin" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition group">
+                      <svg class="w-4 h-4 text-slate-400 group-hover:text-[#388E3C] transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                      </svg>
+                      <span>User Management</span>
+                    </a>
+                    {% endif %}
+
+                    <a href="/visionadmin/pages" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition group">
+                      <svg class="w-4 h-4 text-slate-400 group-hover:text-[#388E3C] transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/>
+                        <line x1="12" y1="17" x2="12" y2="21"/>
+                      </svg>
+                      <span>VisionAdmin CMS</span>
+                    </a>
+                  </div>
+
+                  <!-- Divider -->
+                  <div class="my-2 border-t border-slate-100"></div>
+
+                  <!-- Log out Button (Exact Match Image 1) -->
+                  <div class="p-1">
                     <a href="/tcsadmin/logout" id="logout-btn"
-                      class="shell-dropdown-danger w-full flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer">Logout</a>
+                      class="block w-full py-2.5 px-4 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-xs sm:text-sm font-bold text-slate-700 hover:text-rose-600 text-center shadow-2xs transition cursor-pointer">
+                      Log out
+                    </a>
                   </div>
                 </div>
               </div>

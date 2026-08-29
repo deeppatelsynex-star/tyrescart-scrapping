@@ -258,19 +258,35 @@
 
     const trigger = document.getElementById('profile-trigger');
     const dropdown = document.getElementById('profile-dropdown');
+    const chevron = document.getElementById('profile-chevron');
 
     if (trigger && dropdown) {
       trigger.addEventListener('click', (event) => {
         event.stopPropagation();
-        dropdown.classList.toggle('hidden');
+        const isHidden = dropdown.classList.contains('hidden');
+        if (isHidden) {
+          dropdown.classList.remove('hidden');
+          if (chevron) chevron.classList.add('rotate-180');
+          trigger.setAttribute('aria-expanded', 'true');
+        } else {
+          dropdown.classList.add('hidden');
+          if (chevron) chevron.classList.remove('rotate-180');
+          trigger.setAttribute('aria-expanded', 'false');
+        }
       });
       document.addEventListener('click', (event) => {
         if (!dropdown.contains(event.target) && !trigger.contains(event.target)) {
           dropdown.classList.add('hidden');
+          if (chevron) chevron.classList.remove('rotate-180');
+          trigger.setAttribute('aria-expanded', 'false');
         }
       });
       document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') dropdown.classList.add('hidden');
+        if (event.key === 'Escape') {
+          dropdown.classList.add('hidden');
+          if (chevron) chevron.classList.remove('rotate-180');
+          trigger.setAttribute('aria-expanded', 'false');
+        }
       });
 
       dropdown.querySelectorAll('[data-action]').forEach((btn) => {
