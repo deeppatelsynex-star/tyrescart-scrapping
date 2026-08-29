@@ -1,630 +1,504 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <title>Login - TyresVision</title>
+  <link rel="icon" type="image/webp" href="/static/assets/images/favicon-color.webp" />
+  <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/webp" />
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    if (typeof tailwind !== 'undefined') {
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                green: '#388E3C',
+                bright: '#43A047',
+                deep: '#2E7D32',
+                tint: '#EAF7E2',
+                border: '#C8E8B8',
+                ink: '#0E1108'
+              }
+            }
+          }
+        }
+      };
+    }
+  </script>
+
+  <!-- Google Fonts: Plus Jakarta Sans / Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Quicksand:wght@300..700&display=swap"
-    rel="stylesheet" />
-  <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/x-icon" />
-  <title>Login - TyresCart</title>
-  <link rel="stylesheet" href="/static/internal.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
   <style>
-    .font-display {
-      font-family: 'Poppins', sans-serif;
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    
+    /* Background left panel matching reference */
+    .left-panel-bg {
+      background-color: #EDF3EA;
+      background-image: 
+        radial-gradient(ellipse at 85% 65%, rgba(67, 160, 71, 0.18) 0%, transparent 50%),
+        radial-gradient(circle at 10% 20%, rgba(234, 247, 226, 0.9) 0%, transparent 60%);
     }
 
-    /* ---- right-panel ambience ---- */
-    .console-panel {
-      background: #0a1120;
-      background-image:
-        radial-gradient(560px 420px at 18% 8%, rgba(16, 185, 129, 0.16), transparent 60%),
-        radial-gradient(620px 480px at 88% 92%, rgba(56, 189, 248, 0.16), transparent 60%),
-        linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
-      background-size: auto, auto, 44px 44px, 44px 44px;
+    /* Floating Tyre & Tread Wave Antigravity Motion */
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(0.5deg); }
+    }
+    .animate-float-slow {
+      animation: floatSlow 6s ease-in-out infinite;
     }
 
-    .glass-card {
-      background: rgba(16, 25, 43, 0.72);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.6);
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.35; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.05); }
+    }
+    .animate-glow {
+      animation: pulseGlow 4s ease-in-out infinite;
     }
 
-    .particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: rgba(56, 189, 248, 0.55);
-      animation: drift 7s ease-in-out infinite;
-    }
-
-    .tyre-ring {
-      animation: spin-slow 3.2s linear infinite;
-    }
-
-    .float-a {
-      animation: float-a 6s ease-in-out infinite;
-    }
-
-    .float-b {
-      animation: float-b 6.5s ease-in-out infinite;
-    }
-
-    .pipeline-dot {
-      animation: pipeline-move 3.6s ease-in-out infinite;
-    }
-
-    @keyframes spin-slow {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    @keyframes float-a {
-
-      0%,
-      100% {
-        transform: translateY(0);
-      }
-
-      50% {
-        transform: translateY(-9px);
-      }
-    }
-
-    @keyframes float-b {
-
-      0%,
-      100% {
-        transform: translateY(0);
-      }
-
-      50% {
-        transform: translateY(10px);
-      }
-    }
-
-    @keyframes drift {
-
-      0%,
-      100% {
-        transform: translate(0, 0);
-        opacity: 0.3;
-      }
-
-      50% {
-        transform: translate(8px, -16px);
-        opacity: 0.9;
-      }
-    }
-
-    @keyframes pipeline-move {
-      0% {
-        left: 0%;
-        opacity: 0;
-      }
-
-      8% {
-        opacity: 1;
-      }
-
-      92% {
-        opacity: 1;
-      }
-
-      100% {
-        left: 100%;
-        opacity: 0;
-      }
+    /* Custom Checkbox */
+    .custom-checkbox:checked {
+      background-color: #388E3C;
+      border-color: #388E3C;
+      background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
     }
 
     @media (prefers-reduced-motion: reduce) {
-
-      .tyre-ring,
-      .float-a,
-      .float-b,
-      .pipeline-dot,
-      .particle,
-      #progress-bar,
-      #stat-scraped,
-      #stat-products,
-      #stat-completed,
-      #stat-running,
-      #stat-failed {
+      .animate-float-slow, .animate-glow {
         animation: none !important;
-        transition: none !important;
-      }
-
-      .data-cube {
-        animation: none !important;
-        transform: rotateX(-18deg) rotateY(28deg);
-      }
-    }
-
-    /* Ambient rotating "data block" behind the form on phone/tablet, where
-       the live console panel (which already does this job on desktop) is
-       hidden -- a translucent white glass cube standing in for a chunk of
-       scraped data, turning slowly in the background. */
-    .data-cube-scene {
-      perspective: 900px;
-    }
-
-    .data-cube {
-      width: 148px;
-      height: 148px;
-      position: relative;
-      transform-style: preserve-3d;
-      animation: cube-spin 16s linear infinite;
-    }
-
-    .data-cube__face {
-      position: absolute;
-      inset: 0;
-      border: 1px solid rgba(255, 255, 255, 0.85);
-      background: rgba(255, 255, 255, 0.4);
-      box-shadow: 0 0 30px rgba(148, 163, 184, 0.35);
-    }
-
-    .data-cube__face--front {
-      transform: translateZ(74px);
-    }
-
-    .data-cube__face--back {
-      transform: rotateY(180deg) translateZ(74px);
-    }
-
-    .data-cube__face--right {
-      transform: rotateY(90deg) translateZ(74px);
-    }
-
-    .data-cube__face--left {
-      transform: rotateY(-90deg) translateZ(74px);
-    }
-
-    .data-cube__face--top {
-      transform: rotateX(90deg) translateZ(74px);
-    }
-
-    .data-cube__face--bottom {
-      transform: rotateX(-90deg) translateZ(74px);
-    }
-
-    @keyframes cube-spin {
-      from {
-        transform: rotateX(0deg) rotateY(0deg);
-      }
-
-      to {
-        transform: rotateX(360deg) rotateY(360deg);
-      }
-    }
-
-    /* Below the desktop breakpoint (lg) the auth column is the only thing on
-       screen -- phone and tablet alike -- so it gets the ambient pattern too;
-       on desktop the console panel fills the rest, so that one stays plain
-       white. */
-    .auth-bg {
-      background-color: #ffffff;
-    }
-
-    @media (max-width: 1023px) {
-      .auth-bg {
-        background-image:
-          radial-gradient(480px 360px at 8% 0%, rgba(16, 185, 129, 0.05), transparent 60%),
-          radial-gradient(520px 400px at 100% 100%, rgba(56, 189, 248, 0.05), transparent 60%),
-          linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
-        background-size: auto, auto, 44px 44px, 44px 44px;
       }
     }
   </style>
 </head>
+<body class="min-h-screen bg-[#F0F4EF] flex items-center justify-center p-0 sm:p-4 lg:p-6 text-slate-900 selection:bg-[#388E3C] selection:text-white">
 
-<body class="font-quicksand h-screen w-screen overflow-hidden auth-bg text-slate-900 antialiased">
-  <div class="flex h-full w-full">
+  <!-- Main Split-Screen Container -->
+  <div class="w-full max-w-[1440px] min-h-screen sm:min-h-[780px] lg:h-[90vh] lg:max-h-[920px] bg-white sm:rounded-[36px] lg:rounded-[44px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.12)] border border-slate-200/80 overflow-hidden flex flex-col lg:flex-row relative">
 
-    <!-- ================= LEFT: authentication ================= -->
-    <div class="w-full lg:w-[44%] h-full flex flex-col overflow-y-auto relative">
+    <!-- ========================================================================= -->
+    <!-- LEFT SIDE: BRAND SHOWCASE & ATMOSPHERIC ARTWORK (100% Match Reference) -->
+    <!-- ========================================================================= -->
+    <div class="w-full lg:w-[54%] xl:w-[56%] left-panel-bg relative flex flex-col justify-between p-6 sm:p-10 lg:p-14 overflow-hidden shrink-0">
+      
+      <!-- Background Atmospheric Landscape Artwork -->
+      <div class="absolute inset-0 z-0 pointer-events-none opacity-85">
+        <img 
+          src="/static/assets/images/login-ref-artwork.png" 
+          alt="TyresVision Road Landscape" 
+          class="w-full h-full object-cover object-left-bottom"
+          loading="eager"
+        />
+        <!-- Soft Gradient Overlays for High Legibility -->
+        <div class="absolute inset-0 bg-gradient-to-r from-[#F0F5EE]/95 via-[#F0F5EE]/75 to-transparent w-full lg:w-[85%]"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-[#F0F5EE]/90 via-transparent to-[#F0F5EE]/40"></div>
+      </div>
 
-      <!-- Ambient rotating data cube, phone/tablet only -->
-      <div class="lg:hidden absolute inset-0 overflow-hidden pointer-events-none select-none z-0" aria-hidden="true">
-        <div class="data-cube-scene absolute left-1/2 top-[46%] -translate-x-1/2 -translate-y-1/2">
-          <div class="data-cube">
-            <div class="data-cube__face data-cube__face--front"></div>
-            <div class="data-cube__face data-cube__face--back"></div>
-            <div class="data-cube__face data-cube__face--right"></div>
-            <div class="data-cube__face data-cube__face--left"></div>
-            <div class="data-cube__face data-cube__face--top"></div>
-            <div class="data-cube__face data-cube__face--bottom"></div>
-          </div>
+      <!-- Left Top: TyresVision Official Logo -->
+      <div class="relative z-10 flex items-center gap-3">
+        <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white p-2 shadow-sm border border-slate-200/80 flex items-center justify-center shrink-0">
+          <svg class="w-7 h-7 text-[#388E3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="4"/>
+            <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/>
+            <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/>
+            <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/>
+            <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>
+          </svg>
+        </div>
+        <div>
+          <span class="text-xl sm:text-2xl font-black tracking-tight text-[#0E1108] leading-none block">
+            TYRES<span class="text-[#388E3C]">VISION</span>
+          </span>
+          <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-600 block mt-0.5">
+            DRIVEN BY TRUST, BUILT FOR EVERY JOURNEY
+          </span>
         </div>
       </div>
 
-      <div class="relative z-10 flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-16 py-10">
-        <div class="w-full max-w-[420px] mx-auto">
-
-          <div class="flex items-center gap-3 mb-10">
-            <img src="/static/assets/images/favicon-color.webp" alt="TyresCart"
-              class="w-10 h-10 rounded-xl shadow-sm" />
-            <div>
-              <p class="font-display font-bold text-slate-900 tracking-tight leading-none">TyresCart</p>
-              <p class="text-xs text-slate-400 tracking-wide">Scraper Console</p>
-            </div>
-          </div>
-
-          <h1 class="font-display text-2xl sm:text-[28px] font-bold text-slate-900 tracking-tight mb-2">Welcome back
+      <!-- Left Center: Main Slogan, Value Pillars -->
+      <div class="relative z-10 my-8 lg:my-auto max-w-lg space-y-6">
+        
+        <!-- Slogan Heading -->
+        <div class="space-y-3">
+          <h1 class="text-3xl sm:text-4xl xl:text-5xl font-black text-[#0E1108] tracking-tight leading-[1.15]">
+            Driven by Trust,<br />
+            <span class="text-[#388E3C]">Built for Every Journey</span>
           </h1>
-          <p class="text-sm text-slate-500 mb-8">Sign in to continue managing your scraping jobs and data.</p>
+          <div class="w-12 h-1 bg-[#388E3C] rounded-full"></div>
+          <p class="text-sm sm:text-base text-slate-600 font-medium leading-relaxed max-w-md pt-1">
+            Your trusted partner for premium car tyres. Quality, safety, and performance you can rely on.
+          </p>
+        </div>
 
-          <div id="form-error"
-            class="hidden mb-5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3"
-            role="alert"></div>
-
-          <form id="login-form" novalidate>
-            <div class="mb-5">
-              <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">Email address</label>
-              <input type="email" id="email" name="email" autocomplete="username" required
-                class="w-full h-[50px] rounded-xl border border-slate-300 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="you@example.com" />
-              <p class="field-error hidden mt-1.5 text-xs text-rose-600"></p>
-            </div>
-
-            <div class="mb-5">
-              <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
-              <div class="relative">
-                <input type="password" id="password" name="password" autocomplete="current-password" required
-                  class="w-full h-[50px] rounded-xl border border-slate-300 px-4 pr-11 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="••••••••" />
-                <button type="button" id="toggle-password" tabindex="-1" aria-label="Show password"
-                  class="absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400 hover:text-slate-600 cursor-pointer">
-                  <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                    stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                  </svg>
-                  <svg id="eye-closed" class="hidden w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
-                  </svg>
-                </button>
-              </div>
-              <p class="field-error hidden mt-1.5 text-xs text-rose-600"></p>
-            </div>
-
-            <div class="flex items-center justify-between mb-7">
-              <label class="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                <input type="checkbox" id="remember" name="remember"
-                  class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-                Remember me
-              </label>
-              <a href="/tcsadmin/forgot-password"
-                class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Forgot password?</a>
-            </div>
-
-            <button type="submit" id="submit-btn"
-              class="w-full h-[50px] inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white transition-all hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
-              <svg id="spinner" class="hidden w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none"
-                viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        <!-- 3 Feature Bullet Badges -->
+        <div class="space-y-4 pt-2">
+          
+          <!-- Feature 1: Trusted Quality -->
+          <div class="flex items-center gap-3.5 group">
+            <div class="w-11 h-11 rounded-full bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8] flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform duration-200">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <polyline points="9 12 11 14 15 10"/>
               </svg>
-              <span id="submit-label">Sign in</span>
-            </button>
-          </form>
+            </div>
+            <div>
+              <h4 class="text-sm font-extrabold text-[#0E1108] leading-tight">Trusted Quality</h4>
+              <p class="text-xs text-slate-500 font-medium mt-0.5">100% genuine tyres from top brands</p>
+            </div>
+          </div>
+
+          <!-- Feature 2: Safe & Reliable -->
+          <div class="flex items-center gap-3.5 group">
+            <div class="w-11 h-11 rounded-full bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8] flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform duration-200">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 3v5m0 8v5M3 12h5m8 0h5"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-sm font-extrabold text-[#0E1108] leading-tight">Safe & Reliable</h4>
+              <p class="text-xs text-slate-500 font-medium mt-0.5">Engineered for safety and performance</p>
+            </div>
+          </div>
+
+          <!-- Feature 3: Fast Delivery -->
+          <div class="flex items-center gap-3.5 group">
+            <div class="w-11 h-11 rounded-full bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8] flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform duration-200">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="3" width="15" height="13"/>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                <circle cx="5.5" cy="18.5" r="2.5"/>
+                <circle cx="18.5" cy="18.5" r="2.5"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-sm font-extrabold text-[#0E1108] leading-tight">Fast Delivery</h4>
+              <p class="text-xs text-slate-500 font-medium mt-0.5">Quick and reliable delivery to your door</p>
+            </div>
+          </div>
 
         </div>
+
       </div>
-      <p class="relative z-10 pb-6 text-center text-xs text-slate-400">© TyresCart. All rights reserved.</p>
+
+      <!-- Left Bottom Subtle Footer -->
+      <div class="relative z-10 pt-4 text-xs text-slate-500 font-medium">
+        <span>&copy; 2026 TyresVision. All Rights Reserved.</span>
+      </div>
+
     </div>
 
-    <!-- ================= RIGHT: live console ================= -->
-    <div
-      class="console-panel hidden lg:flex w-[56%] h-full relative overflow-hidden items-center justify-center px-14 py-12"
-      aria-hidden="true">
 
-      <span class="particle" style="top:12%; left:22%; animation-delay:0s;"></span>
-      <span class="particle" style="top:24%; left:74%; animation-delay:1.1s;"></span>
-      <span class="particle" style="top:66%; left:12%; animation-delay:2.4s;"></span>
-      <span class="particle" style="top:78%; left:64%; animation-delay:0.6s;"></span>
-      <span class="particle" style="top:44%; left:88%; animation-delay:3s;"></span>
-      <span class="particle" style="top:8%; left:52%; animation-delay:1.8s;"></span>
-
-      <div class="relative w-full max-w-[460px]">
-
-        <p class="font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-300/80 mb-4">Live scraper console</p>
-
+    <!-- ========================================================================= -->
+    <!-- RIGHT SIDE: CLEAN FORM PANEL (100% Match Reference) -->
+    <!-- ========================================================================= -->
+    <div class="w-full lg:w-[46%] xl:w-[44%] bg-white lg:rounded-l-[40px] shadow-[-15px_0_40px_rgba(0,0,0,0.03)] p-6 sm:p-10 lg:p-14 flex flex-col justify-between relative z-20">
+      
+      <!-- Top Utility: Language Switcher Dropdown (Matching Reference Top-Right) -->
+      <div class="flex items-center justify-end w-full">
         <div class="relative">
-          <!-- floating: url in progress -->
-          <div class="float-a absolute -top-6 right-2 w-[196px] glass-card backdrop-blur-xl rounded-2xl p-3.5 z-20">
-            <div class="flex items-center gap-2 mb-1.5">
-              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
-              <p class="text-[11px] font-mono text-slate-300 truncate">TyresCart</p>
-            </div>
-            <p class="text-[10px] text-slate-500 mb-2">Scraping product listings…</p>
-            <div class="h-1.5 rounded-full bg-white/10 overflow-hidden">
-              <div class="h-full w-[82%] rounded-full bg-cyan-400"></div>
-            </div>
-          </div>
+          <button 
+            type="button" 
+            id="btn-lang-toggle"
+            class="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-2xs transition cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5 text-[#388E3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            <span>English</span>
+            <svg class="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+      </div>
 
-          <!-- main card -->
-          <div class="glass-card backdrop-blur-xl rounded-[28px] p-6 relative z-10">
-            <div class="flex items-center justify-between mb-1">
-              <h2 class="font-display font-semibold text-white text-base tracking-tight">Scraper activity</h2>
-              <div
-                class="flex items-center gap-1.5 rounded-full bg-emerald-400/10 border border-emerald-400/25 px-2.5 py-1">
-                <svg class="tyre-ring w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2">
-                  <circle cx="12" cy="12" r="8" />
-                  <path d="M12 4v3M12 17v3M4 12h3M17 12h3M6.5 6.5l2 2M15.5 15.5l2 2M6.5 17.5l2-2M15.5 8.5l2-2" />
-                </svg>
-                <span class="text-[10px] font-mono uppercase tracking-widest text-emerald-400">Live</span>
-              </div>
-            </div>
-            <p class="text-xs text-slate-500 font-mono mb-5">job #a83f21 · sequential run</p>
-
-            <!-- pipeline -->
-            <div class="relative flex items-center justify-between mb-6 px-0.5">
-              <div class="absolute top-1/2 left-0 right-0 h-px bg-white/10"></div>
-              <span
-                class="pipeline-dot absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-cyan-300 shadow-[0_0_8px_2px_rgba(56,189,248,0.7)]"></span>
-              <div class="relative z-10 flex flex-col items-center gap-1.5 bg-[#101b2d] px-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span class="text-[9px] font-mono uppercase tracking-wider text-slate-500">URL</span>
-              </div>
-              <div class="relative z-10 flex flex-col items-center gap-1.5 bg-[#101b2d] px-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span class="text-[9px] font-mono uppercase tracking-wider text-slate-500">Scrape</span>
-              </div>
-              <div class="relative z-10 flex flex-col items-center gap-1.5 bg-[#101b2d] px-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
-                <span class="text-[9px] font-mono uppercase tracking-wider text-slate-500">Parse</span>
-              </div>
-              <div class="relative z-10 flex flex-col items-center gap-1.5 bg-[#101b2d] px-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
-                <span class="text-[9px] font-mono uppercase tracking-wider text-slate-500">Excel</span>
-              </div>
-              <div class="relative z-10 flex flex-col items-center gap-1.5 bg-[#101b2d] px-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
-                <span class="text-[9px] font-mono uppercase tracking-wider text-slate-500">Done</span>
-              </div>
-            </div>
-
-            <div class="flex items-baseline justify-between mb-2">
-              <span class="text-[11px] font-mono uppercase tracking-wider text-slate-400">URLs scraped</span>
-            </div>
-            <div class="flex items-end gap-1.5 mb-3">
-              <span id="stat-scraped" class="text-white text-3xl font-display font-bold tabular-nums">1,284</span>
-              <span class="text-slate-500 text-sm font-mono pb-0.5">/ <span id="stat-total">1,500</span></span>
-            </div>
-            <div class="h-2 rounded-full bg-white/10 overflow-hidden mb-5">
-              <div id="progress-bar"
-                class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-[width] duration-700 ease-out"
-                style="width:85.6%"></div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div class="rounded-xl bg-white/[0.03] border border-white/5 px-3 py-2.5">
-                <p class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Products found</p>
-                <p id="stat-products" class="text-lg font-semibold text-white mt-0.5 tabular-nums">8,492</p>
-              </div>
-              <div class="rounded-xl bg-white/[0.03] border border-white/5 px-3 py-2.5">
-                <p class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Completed</p>
-                <p id="stat-completed" class="text-lg font-semibold text-emerald-400 mt-0.5 tabular-nums">1,284</p>
-              </div>
-              <div class="rounded-xl bg-white/[0.03] border border-white/5 px-3 py-2.5">
-                <p class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Running</p>
-                <p id="stat-running" class="text-lg font-semibold text-cyan-300 mt-0.5 tabular-nums">42</p>
-              </div>
-              <div class="rounded-xl bg-white/[0.03] border border-white/5 px-3 py-2.5">
-                <p class="text-[10px] font-mono uppercase tracking-wider text-slate-500">Failed</p>
-                <p id="stat-failed" class="text-lg font-semibold text-rose-400 mt-0.5 tabular-nums">12</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- floating: batch saved -->
-          <div
-            class="float-b absolute -bottom-7 -left-8 w-[188px] glass-card backdrop-blur-xl rounded-2xl p-3.5 z-20 flex items-center gap-2.5">
-            <span
-              class="flex-none w-7 h-7 rounded-full bg-emerald-400/15 text-emerald-400 flex items-center justify-center text-sm">✓</span>
-            <div>
-              <p class="text-xs font-medium text-white leading-tight">Batch saved</p>
-              <p class="text-[10px] font-mono text-slate-500">248 rows → .xlsx</p>
-            </div>
-          </div>
+      <!-- Center Form Wrapper -->
+      <div class="my-auto py-6 max-w-md w-full mx-auto space-y-6">
+        
+        <!-- Form Header -->
+        <div class="space-y-2">
+          <h2 class="text-2xl sm:text-3xl font-black text-[#0E1108] tracking-tight">
+            Welcome Back
+          </h2>
+          <div class="w-12 h-1 bg-[#388E3C] rounded-full"></div>
+          <p class="text-xs sm:text-sm text-slate-500 font-medium">
+            Login to your account to continue
+          </p>
         </div>
 
-        <!-- data table -->
-        <div class="w-full mt-10 rounded-2xl glass-card backdrop-blur-xl overflow-hidden">
-          <div class="px-4 py-3 border-b border-white/5 flex items-center justify-between">
-            <p class="text-xs font-semibold text-white">Scraped products</p>
-            <p class="text-[10px] font-mono text-slate-500">live feed</p>
+        <!-- Error Notification Alert -->
+        <div id="login-error-alert" class="hidden p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2.5">
+          <svg class="w-4 h-4 shrink-0 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="login-error-text">Invalid email or password.</span>
+        </div>
+
+        <!-- Success Notification Alert -->
+        <div id="login-success-alert" class="hidden p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[#2E7D32] text-xs font-bold flex items-center gap-2.5">
+          <svg class="w-4 h-4 shrink-0 text-[#388E3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span>Welcome back! Redirecting...</span>
+        </div>
+
+        <!-- Form Elements -->
+        <form id="login-form" class="space-y-4" novalidate>
+          
+          <!-- Email Address Input -->
+          <div class="space-y-1.5">
+            <label for="email" class="block text-xs font-bold text-slate-700">
+              Email Address
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <input 
+                type="email" 
+                id="email" 
+                name="email" 
+                required 
+                autocomplete="email" 
+                placeholder="Enter your email" 
+                class="w-full pl-10 pr-4 py-3 sm:py-3.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#388E3C] focus:ring-2 focus:ring-[#388E3C]/20 transition shadow-2xs"
+              />
+            </div>
           </div>
-          <table class="w-full text-xs font-mono">
-            <tbody id="scrape-table-body">
-              <tr class="border-b border-white/5" data-row="0">
-                <td class="px-4 py-2.5 text-slate-300">Michelin Primacy 4 205/55R16</td>
-                <td class="px-2 py-2.5 text-slate-500 whitespace-nowrap">SAR 429</td>
-                <td class="px-4 py-2.5 text-right status-cell"></td>
-              </tr>
-              <tr class="border-b border-white/5" data-row="1">
-                <td class="px-4 py-2.5 text-slate-300">Bridgestone Turanza T005 225/45R17</td>
-                <td class="px-2 py-2.5 text-slate-500 whitespace-nowrap">SAR 512</td>
-                <td class="px-4 py-2.5 text-right status-cell"></td>
-              </tr>
-              <tr class="border-b border-white/5" data-row="2">
-                <td class="px-4 py-2.5 text-slate-300">Continental EcoContact 6 195/65R15</td>
-                <td class="px-2 py-2.5 text-slate-500 whitespace-nowrap">SAR 368</td>
-                <td class="px-4 py-2.5 text-right status-cell"></td>
-              </tr>
-              <tr data-row="3">
-                <td class="px-4 py-2.5 text-slate-300">Pirelli Cinturato P7 215/55R17</td>
-                <td class="px-2 py-2.5 text-slate-500 whitespace-nowrap">SAR 486</td>
-                <td class="px-4 py-2.5 text-right status-cell"></td>
-              </tr>
-            </tbody>
-          </table>
+
+          <!-- Password Input -->
+          <div class="space-y-1.5">
+            <label for="password" class="block text-xs font-bold text-slate-700">
+              Password
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                required 
+                autocomplete="current-password" 
+                placeholder="Enter your password" 
+                class="w-full pl-10 pr-10 py-3 sm:py-3.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#388E3C] focus:ring-2 focus:ring-[#388E3C]/20 transition shadow-2xs"
+              />
+              <!-- Show/Hide Password Toggle -->
+              <button 
+                type="button" 
+                id="btn-toggle-pwd" 
+                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                title="Toggle password visibility"
+              >
+                <svg id="icon-eye" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg id="icon-eye-off" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Options Row: Remember Me & Forgot Password -->
+          <div class="flex items-center justify-between pt-1">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input 
+                type="checkbox" 
+                id="remember" 
+                name="remember" 
+                class="custom-checkbox w-4 h-4 rounded border-slate-300 text-[#388E3C] focus:ring-[#388E3C]/20 transition cursor-pointer" 
+              />
+              <span class="text-xs font-semibold text-slate-600">Remember Me</span>
+            </label>
+            <a href="/tcsadmin/forgot-password" class="text-xs font-bold text-[#388E3C] hover:text-[#2E7D32] hover:underline transition">
+              Forgot Password?
+            </a>
+          </div>
+
+          <!-- Primary Login CTA Button (Matching Reference) -->
+          <div class="pt-2">
+            <button 
+              type="submit" 
+              id="btn-submit"
+              class="w-full py-3.5 px-6 rounded-xl bg-[#388E3C] hover:bg-[#2E7D32] text-white text-sm sm:text-base font-bold shadow-md shadow-[#388E3C]/25 hover:shadow-lg hover:shadow-[#2E7D32]/35 active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span id="btn-submit-text">Login</span>
+              <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+              <svg id="btn-submit-spinner" class="w-4 h-4 animate-spin hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+
+        </form>
+
+        <!-- Social Login Section -->
+        <div class="space-y-4 pt-1">
+          
+          <!-- Divider: or continue with -->
+          <div class="relative flex items-center justify-center">
+            <div class="border-t border-slate-200 w-full"></div>
+            <span class="bg-white px-3 text-[11px] font-semibold text-slate-400 tracking-wider lowercase">
+              or continue with
+            </span>
+            <div class="border-t border-slate-200 w-full"></div>
+          </div>
+
+          <!-- Social Buttons: Google & Apple -->
+          <div class="grid grid-cols-2 gap-3">
+            
+            <!-- Google Login Button -->
+            <button 
+              type="button" 
+              class="py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center justify-center gap-2.5 transition shadow-2xs cursor-pointer hover:border-slate-300 active:scale-95"
+            >
+              <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Google</span>
+            </button>
+
+            <!-- Apple Login Button -->
+            <button 
+              type="button" 
+              class="py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center justify-center gap-2.5 transition shadow-2xs cursor-pointer hover:border-slate-300 active:scale-95"
+            >
+              <svg class="w-4 h-4 shrink-0 text-black fill-current" viewBox="0 0 24 24">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 0.92-2.85-.9.04-2 .6-2.65 1.35-.58.67-.99 1.74-.86 2.76 1.01.08 1.99-.51 2.59-1.26z"/>
+              </svg>
+              <span>Apple</span>
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- Footer Sign Up Note -->
+        <div class="text-center pt-2">
+          <p class="text-xs text-slate-500 font-medium">
+            Don't have an account? 
+            <a href="/tcsadmin/forgot-password" class="font-extrabold text-[#388E3C] hover:text-[#2E7D32] hover:underline transition">
+              Sign Up
+            </a>
+          </p>
         </div>
 
       </div>
+
+      <!-- Right Bottom Subtle Footer -->
+      <div class="text-center lg:text-right pt-4 text-xs text-slate-400 font-medium">
+        <a href="/visionadmin/login" class="text-slate-400 hover:text-[#388E3C] transition">VisionAdmin CMS Portal &rarr;</a>
+      </div>
+
     </div>
 
   </div>
 
   <script>
-    const form = document.getElementById('login-form');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const togglePasswordBtn = document.getElementById('toggle-password');
-    const eyeOpen = document.getElementById('eye-open');
-    const eyeClosed = document.getElementById('eye-closed');
-    const submitBtn = document.getElementById('submit-btn');
-    const submitLabel = document.getElementById('submit-label');
-    const spinner = document.getElementById('spinner');
-    const formError = document.getElementById('form-error');
+    // Show/Hide Password Logic
+    const pwdInput = document.getElementById('password');
+    const toggleBtn = document.getElementById('btn-toggle-pwd');
+    const eyeIcon = document.getElementById('icon-eye');
+    const eyeOffIcon = document.getElementById('icon-eye-off');
 
-    togglePasswordBtn.addEventListener('click', () => {
-      const showing = passwordInput.type === 'text';
-      passwordInput.type = showing ? 'password' : 'text';
-      eyeOpen.classList.toggle('hidden', !showing);
-      eyeClosed.classList.toggle('hidden', showing);
-      togglePasswordBtn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
-    });
-
-    function clearErrors() {
-      formError.classList.add('hidden');
-      formError.textContent = '';
-      document.querySelectorAll('.field-error').forEach((el) => {
-        el.classList.add('hidden');
-        el.textContent = '';
+    if (toggleBtn && pwdInput) {
+      toggleBtn.addEventListener('click', () => {
+        if (pwdInput.type === 'password') {
+          pwdInput.type = 'text';
+          eyeIcon.classList.add('hidden');
+          eyeOffIcon.classList.remove('hidden');
+        } else {
+          pwdInput.type = 'password';
+          eyeIcon.classList.remove('hidden');
+          eyeOffIcon.classList.add('hidden');
+        }
       });
     }
 
-    function showFieldError(input, message) {
-      const wrapper = input.closest('div.mb-5');
-      const el = wrapper ? wrapper.querySelector('.field-error') : null;
-      if (el) {
-        el.textContent = message;
-        el.classList.remove('hidden');
-      }
-    }
+    // Form Submission Logic
+    const form = document.getElementById('login-form');
+    const submitBtn = document.getElementById('btn-submit');
+    const btnText = document.getElementById('btn-submit-text');
+    const btnSpinner = document.getElementById('btn-submit-spinner');
+    const errAlert = document.getElementById('login-error-alert');
+    const errText = document.getElementById('login-error-text');
+    const successAlert = document.getElementById('login-success-alert');
 
-    function setLoading(isLoading) {
-      submitBtn.disabled = isLoading;
-      spinner.classList.toggle('hidden', !isLoading);
-      submitLabel.textContent = isLoading ? 'Signing in…' : 'Sign in';
-    }
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errAlert.classList.add('hidden');
+        successAlert.classList.add('hidden');
 
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      clearErrors();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const remember = document.getElementById('remember').checked;
 
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      let hasError = false;
-
-      if (!email) {
-        showFieldError(emailInput, 'Email is required.');
-        hasError = true;
-      }
-      if (!password) {
-        showFieldError(passwordInput, 'Password is required.');
-        hasError = true;
-      }
-      if (hasError) return;
-
-      setLoading(true);
-      try {
-        const response = await fetch('/tcsadmin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            password,
-            remember: document.getElementById('remember').checked,
-          }),
-        });
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          formError.textContent = data.error || 'Unable to sign in. Please try again.';
-          formError.classList.remove('hidden');
-          setLoading(false);
+        if (!email || !password) {
+          errText.textContent = 'Please enter both your email address and password.';
+          errAlert.classList.remove('hidden');
           return;
         }
 
-        window.location.href = data.redirect || '/tcsadmin/docs/scraper';
-      } catch (err) {
-        formError.textContent = 'Network error. Please try again.';
-        formError.classList.remove('hidden');
-        setLoading(false);
-      }
-    });
+        submitBtn.disabled = true;
+        btnText.textContent = 'Authenticating...';
+        btnSpinner.classList.remove('hidden');
 
-    // ---- decorative right-panel telemetry (purely cosmetic, no network calls) ----
-    (function () {
-      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const statScraped = document.getElementById('stat-scraped');
-      const statProducts = document.getElementById('stat-products');
-      const statCompleted = document.getElementById('stat-completed');
-      const statRunning = document.getElementById('stat-running');
-      const statFailed = document.getElementById('stat-failed');
-      const progressBar = document.getElementById('progress-bar');
-      if (!statScraped || reduceMotion) return;
+        try {
+          const res = await fetch('/tcsadmin/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email, password, remember })
+          });
 
-      const TOTAL = 1500;
-      let scraped = 1284;
-      let products = 8492;
-      let failed = 12;
+          const data = await res.json().catch(() => ({}));
 
-      const STATUS_MARKUP = {
-        pending: '<span class="inline-flex items-center gap-1.5 text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>Pending</span>',
-        running: '<span class="inline-flex items-center gap-1.5 text-cyan-300"><svg class="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9" stroke-linecap="round"/></svg>Scraping</span>',
-        completed: '<span class="inline-flex items-center gap-1.5 text-emerald-400">✓ Completed</span>',
-      };
-      const rows = Array.from(document.querySelectorAll('#scrape-table-body tr'));
-      let rowStates = ['completed', 'running', 'pending', 'pending'];
+          if (!res.ok) {
+            errText.textContent = data.error || 'Invalid email or password.';
+            errAlert.classList.remove('hidden');
+            submitBtn.disabled = false;
+            btnText.textContent = 'Login';
+            btnSpinner.classList.add('hidden');
+            return;
+          }
 
-      function renderRows() {
-        rows.forEach((row, i) => {
-          const cell = row.querySelector('.status-cell');
-          if (cell) cell.innerHTML = STATUS_MARKUP[rowStates[i]];
-        });
-      }
-      renderRows();
+          successAlert.classList.remove('hidden');
+          btnText.textContent = 'Success!';
 
-      function fmt(n) {
-        return n.toLocaleString('en-US');
-      }
+          const urlParams = new URLSearchParams(window.location.search);
+          const nextUrl = urlParams.get('next') || data.redirect || '/tcsadmin/docs/scraper';
 
-      function tick() {
-        scraped = scraped >= TOTAL ? 1180 : Math.min(TOTAL, scraped + Math.floor(Math.random() * 5) + 1);
-        products += Math.floor(Math.random() * 9) + 2;
-        if (Math.random() < 0.06) failed += 1;
+          setTimeout(() => {
+            window.location.href = nextUrl;
+          }, 350);
 
-        statScraped.textContent = fmt(scraped);
-        statProducts.textContent = fmt(products);
-        statRunning.textContent = String(rowStates.filter((s) => s === 'running').length + 40 + Math.floor(Math.random() * 4));
-        statCompleted.textContent = fmt(scraped);
-        statFailed.textContent = fmt(failed);
-        if (progressBar) progressBar.style.width = ((scraped / TOTAL) * 100).toFixed(1) + '%';
-
-        // rotate row states like a conveyor: oldest completed row recycles to pending
-        rowStates = rowStates.map((s) => (s === 'running' ? 'completed' : s === 'pending' ? (Math.random() < 0.5 ? 'running' : 'pending') : 'pending'));
-        renderRows();
-      }
-
-      setInterval(tick, 2400);
-    })();
+        } catch (err) {
+          errText.textContent = 'Network or server error. Please try again.';
+          errAlert.classList.remove('hidden');
+          submitBtn.disabled = false;
+          btnText.textContent = 'Login';
+          btnSpinner.classList.add('hidden');
+        }
+      });
+    }
   </script>
 </body>
-
 </html>
