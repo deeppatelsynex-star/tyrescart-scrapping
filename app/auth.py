@@ -224,7 +224,7 @@ def role_required_page(*roles):
     def decorator(view):
         @functools.wraps(view)
         def wrapped(*args, **kwargs):
-            user_role = str(session.get('role') or '').strip().lower().replace('-', '_').replace(' ', '_')
+            user_role = str(session.get('role') or session.get('admin_role') or '').strip().lower().replace('-', '_').replace(' ', '_')
             allowed_norm = {r.strip().lower().replace('-', '_').replace(' ', '_') for r in roles}
             if 'superadmin' in allowed_norm or 'super_admin' in allowed_norm:
                 allowed_norm.update({'super_admin', 'superadmin'})
@@ -233,7 +233,7 @@ def role_required_page(*roles):
             if 'user' in allowed_norm or 'support' in allowed_norm:
                 allowed_norm.update({'user', 'support'})
 
-            if user_role not in allowed_norm and session.get('role') not in roles:
+            if user_role not in allowed_norm and session.get('role') not in roles and session.get('admin_role') not in roles:
                 return redirect('/visionadmin/pages')
             return view(*args, **kwargs)
         return wrapped
@@ -245,7 +245,7 @@ def role_required_api(*roles):
     def decorator(view):
         @functools.wraps(view)
         def wrapped(*args, **kwargs):
-            user_role = str(session.get('role') or '').strip().lower().replace('-', '_').replace(' ', '_')
+            user_role = str(session.get('role') or session.get('admin_role') or '').strip().lower().replace('-', '_').replace(' ', '_')
             allowed_norm = {r.strip().lower().replace('-', '_').replace(' ', '_') for r in roles}
             if 'superadmin' in allowed_norm or 'super_admin' in allowed_norm:
                 allowed_norm.update({'super_admin', 'superadmin'})
@@ -254,7 +254,7 @@ def role_required_api(*roles):
             if 'user' in allowed_norm or 'support' in allowed_norm:
                 allowed_norm.update({'user', 'support'})
 
-            if user_role not in allowed_norm and session.get('role') not in roles:
+            if user_role not in allowed_norm and session.get('role') not in roles and session.get('admin_role') not in roles:
                 return jsonify({'error': 'Forbidden. Administrator privileges required.'}), 403
             return view(*args, **kwargs)
         return wrapped

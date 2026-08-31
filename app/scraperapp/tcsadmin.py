@@ -101,7 +101,7 @@ def register_tcsadmin_routes(app):
     @app.route('/tcsadmin/scraper-runs')
     @app.route('/tcsadmin/logs')
     @login_required_page
-    @role_required_page('SuperAdmin', 'super_admin')
+    @role_required_page('SuperAdmin', 'super_admin', 'Admin', 'manager')
     def reports_page():
         return render_template('reports.html', page='reports')
 

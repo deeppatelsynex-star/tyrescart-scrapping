@@ -1152,7 +1152,7 @@ def register_tcsadmin_api_routes(app):
     @app.route('/tcsadmin/api/reports')
     @app.route('/api/reports')
     @login_required_api
-    @role_required_api('SuperAdmin')
+    @role_required_api('SuperAdmin', 'super_admin', 'Admin', 'manager')
     def api_list_reports():
         search = request.args.get('search', '').strip() or None
         status = request.args.get('status', '').strip() or None
@@ -1189,7 +1189,7 @@ def register_tcsadmin_api_routes(app):
     @app.route('/tcsadmin/api/reports/<int:report_id>/download')
     @app.route('/api/reports/<int:report_id>/download')
     @login_required_api
-    @role_required_api('SuperAdmin')
+    @role_required_api('SuperAdmin', 'super_admin', 'Admin', 'manager')
     def api_download_report_output(report_id):
         conn = get_connection()
         try:
