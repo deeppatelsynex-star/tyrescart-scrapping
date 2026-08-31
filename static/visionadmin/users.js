@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     tableBody.innerHTML = filtered.map(u => {
-      const initial = (u.name || u.email || 'A')[:1].toUpperCase();
+      const initial = (u.name || u.email || 'A').charAt(0).toUpperCase();
       
       // Role pill styles
       let roleBadge = '';
