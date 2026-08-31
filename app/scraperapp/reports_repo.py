@@ -10,7 +10,7 @@ LOG_SELECT_FIELDS = (
     'l.id, l.scraper, l.file_id, l.user_id, l.start_time, l.end_time, '
     'l.no_of_url_found, l.total_success_url, l.total_block_url, l.data_scraped, '
     'l.status, l.output_file_path, l.error_message, l.created_at, '
-    'u.Name AS user_name, u.Email AS user_email, u.Role AS user_role, u.avatar AS user_avatar, '
+    'u.name AS user_name, u.email AS user_email, u.role AS user_role, NULL AS user_avatar, '
     'f.site_name, f.python_file_path, f.logo AS file_logo'
 )
 
@@ -317,7 +317,7 @@ def list_logs(search=None, status=None, user_id=None, file_id=None, page=1, per_
             if search:
                 like = f'%{search}%'
                 where_clauses.append(
-                    '(l.scraper LIKE %s OR u.Name LIKE %s OR u.Email LIKE %s OR f.site_name LIKE %s)'
+                    '(l.scraper LIKE %s OR u.name LIKE %s OR u.email LIKE %s OR f.site_name LIKE %s)'
                 )
                 params.extend([like, like, like, like])
 
@@ -325,7 +325,7 @@ def list_logs(search=None, status=None, user_id=None, file_id=None, page=1, per_
 
             count_query = (
                 f"SELECT COUNT(*) AS total FROM logTbl l "
-                f"LEFT JOIN userTbl u ON l.user_id = u.userid "
+                f"LEFT JOIN admin_users u ON l.user_id = u.id "
                 f"LEFT JOIN fileTbl f ON l.file_id = f.file_id "
                 f"{where_str}"
             )
@@ -334,7 +334,7 @@ def list_logs(search=None, status=None, user_id=None, file_id=None, page=1, per_
 
             select_query = (
                 f"SELECT {LOG_SELECT_FIELDS} FROM logTbl l "
-                f"LEFT JOIN userTbl u ON l.user_id = u.userid "
+                f"LEFT JOIN admin_users u ON l.user_id = u.id "
                 f"LEFT JOIN fileTbl f ON l.file_id = f.file_id "
                 f"{where_str} "
                 f"ORDER BY l.id DESC LIMIT %s OFFSET %s"

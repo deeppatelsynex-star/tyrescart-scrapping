@@ -106,7 +106,6 @@ CREATE TABLE IF NOT EXISTS logTbl (
     error_message TEXT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     process_id INT NULL,
-    FOREIGN KEY (user_id) REFERENCES userTbl(userid) ON DELETE CASCADE,
     INDEX idx_log_user_id (user_id),
     INDEX idx_log_file_id (file_id),
     INDEX idx_log_start_time (start_time),
@@ -217,8 +216,6 @@ PERFORMANCE_INDEXES = [
     ("fileTbl", "idx_file_deleted_id", "(is_deleted, file_id)"),
     ("fileTbl", "idx_file_site_name", "(site_name)"),
     ("fileTbl", "idx_file_working", "(working)"),
-    ("userTbl", "idx_user_deleted_id", "(IsDeleted, userid)"),
-    ("userTbl", "idx_user_role", "(Role)"),
 ]
 
 
@@ -482,7 +479,7 @@ def main():
             update_legacy_stopped_logs(cursor)
             seed_default_about_us_sections(cursor)
         conn.commit()
-        print("Schema verified: admin_users, password_reset_tokens, userTbl, fileTbl, logTbl, pages, page_sections, blogs are ready.")
+        print("Schema verified: admin_users, password_reset_tokens, fileTbl, logTbl, pages, page_sections, blogs are ready.")
     finally:
         conn.close()
 

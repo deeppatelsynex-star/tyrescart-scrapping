@@ -308,3 +308,20 @@ def register_visionadmin_routes(app):
                 notifications=[]
             ), 403
         return render_template('visionadmin/users.html', page='users')
+
+    @app.route('/visionadmin/scrapers', methods=['GET'])
+    @app.route('/visionadmin/scraper', methods=['GET'])
+    @app.route('/visionadmin/scraper-dashboard', methods=['GET'])
+    @app.route('/visionadmin/files', methods=['GET'])
+    @app.route('/visonadmin/scrapers', methods=['GET'])
+    @app.route('/visonadmin/scraper', methods=['GET'])
+    @app.route('/visonadmin/files', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_scrapers():
+        return redirect('/tcsadmin/files')
+
+    @app.route('/visionadmin/reports', methods=['GET'])
+    @app.route('/visonadmin/reports', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_reports():
+        return redirect('/tcsadmin/reports')

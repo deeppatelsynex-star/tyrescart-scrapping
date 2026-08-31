@@ -17,7 +17,7 @@ from db import get_connection
 from cache_manager import cache, invalidate_scraper_cache
 
 FILE_COLUMNS = 'file_id, logo, site_name, python_file_path, urls_json, working, is_deleted, deleted_at, created_by, create_date, update_date'
-FILE_SELECT_FIELDS = 'f.file_id, f.logo, f.site_name, f.python_file_path, f.urls_json, f.working, f.is_deleted, f.deleted_at, f.created_by, f.create_date, f.update_date, u.Name AS created_by_name, u.Email AS created_by_email'
+FILE_SELECT_FIELDS = 'f.file_id, f.logo, f.site_name, f.python_file_path, f.urls_json, f.working, f.is_deleted, f.deleted_at, f.created_by, f.create_date, f.update_date, u.name AS created_by_name, u.email AS created_by_email'
 
 # scrapers/ lives at the project root. This file is app/scraperapp/files_repo.py,
 # so the project root is two directories up from this file's own directory
@@ -219,18 +219,18 @@ def list_files(search=None, is_deleted=None, page=1, per_page=20):
 
             if search:
                 like = f'%{search}%'
-                where_clauses.append('(f.site_name LIKE %s OR f.python_file_path LIKE %s OR u.Name LIKE %s)')
+                where_clauses.append('(f.site_name LIKE %s OR f.python_file_path LIKE %s OR u.name LIKE %s)')
                 params.extend([like, like, like])
 
             where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
-            count_query = f"SELECT COUNT(*) AS total FROM fileTbl f LEFT JOIN userTbl u ON f.created_by = u.userid {where_str}"
+            count_query = f"SELECT COUNT(*) AS total FROM fileTbl f LEFT JOIN admin_users u ON f.created_by = u.id {where_str}"
             cursor.execute(count_query, tuple(params))
             total = cursor.fetchone()['total']
 
             select_query = (
                 f"SELECT {FILE_SELECT_FIELDS} FROM fileTbl f "
-                f"LEFT JOIN userTbl u ON f.created_by = u.userid "
+                f"LEFT JOIN admin_users u ON f.created_by = u.id "
                 f"{where_str} "
                 f"ORDER BY f.file_id DESC LIMIT %s OFFSET %s"
             )
@@ -254,7 +254,7 @@ def get_file(file_id):
         with conn.cursor() as cursor:
             cursor.execute(
                 f'SELECT {FILE_SELECT_FIELDS} FROM fileTbl f '
-                'LEFT JOIN userTbl u ON f.created_by = u.userid '
+                'LEFT JOIN admin_users u ON f.created_by = u.id '
                 'WHERE f.file_id = %s',
                 (file_id,),
             )
@@ -276,7 +276,7 @@ def get_file_by_path(python_file_path):
         with conn.cursor() as cursor:
             cursor.execute(
                 f'SELECT {FILE_SELECT_FIELDS} FROM fileTbl f '
-                'LEFT JOIN userTbl u ON f.created_by = u.userid '
+                'LEFT JOIN admin_users u ON f.created_by = u.id '
                 'WHERE f.python_file_path = %s',
                 (python_file_path,),
             )

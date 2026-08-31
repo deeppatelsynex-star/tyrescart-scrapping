@@ -29,16 +29,18 @@ def bit_to_bool(value):
     return bool(value)
 
 
-USER_COLUMNS = 'userid, Name, Email, password, Status, IsDeleted, Role, avatar, updated_at, created_at, deleted_at'
+USER_COLUMNS = 'id AS userid, id, name AS Name, name, email AS Email, email, password, is_active AS Status, is_active, role AS Role, role, NULL AS avatar, created_at, updated_at, NULL AS deleted_at, 0 AS IsDeleted'
 
 
 def get_user_by_email(email):
+    if not email:
+        return None
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute(
-                f'SELECT {USER_COLUMNS} FROM userTbl WHERE Email = %s',
-                (email,),
+                f'SELECT {USER_COLUMNS} FROM `admin_users` WHERE LOWER(TRIM(email)) = %s LIMIT 1',
+                (email.strip().lower(),),
             )
             return cursor.fetchone()
     finally:
@@ -46,11 +48,13 @@ def get_user_by_email(email):
 
 
 def get_user_by_id(user_id):
+    if not user_id:
+        return None
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute(
-                f'SELECT {USER_COLUMNS} FROM userTbl WHERE userid = %s',
+                f'SELECT {USER_COLUMNS} FROM `admin_users` WHERE id = %s LIMIT 1',
                 (user_id,),
             )
             return cursor.fetchone()
@@ -74,19 +78,42 @@ def to_ist_12h(dt, with_seconds=False):
 
 
 def serialize_user(user):
+    if not user:
+        return {}
+    u_id = user.get('id') or user.get('userid')
+    u_name = user.get('name') or user.get('Name') or ''
+    u_email = user.get('email') or user.get('Email') or ''
+    raw_role = user.get('role') or user.get('Role') or 'manager'
+    
+    role_display = 'SuperAdmin' if raw_role in ('super_admin', 'SuperAdmin') else ('Admin' if raw_role in ('manager', 'Admin') else 'User')
+    is_active = bool(user.get('is_active', 1)) if 'is_active' in user else bit_to_bool(user.get('Status', 1))
+    is_deleted = bool(user.get('is_deleted', 0)) if 'is_deleted' in user else bit_to_bool(user.get('IsDeleted', 0))
+    
+    created_at = user.get('created_at')
+    updated_at = user.get('updated_at')
+    deleted_at = user.get('deleted_at')
+
     return {
-        'userId': user['userid'],
-        'name': user['Name'],
-        'email': user['Email'],
-        'role': user['Role'],
-        'status': bit_to_bool(user['Status']),
-        'isDeleted': bit_to_bool(user['IsDeleted']),
+        'userId': u_id,
+        'userid': u_id,
+        'id': u_id,
+        'name': u_name,
+        'Name': u_name,
+        'email': u_email,
+        'Email': u_email,
+        'role': role_display,
+        'Role': role_display,
+        'raw_role': raw_role,
+        'status': is_active,
+        'Status': 1 if is_active else 0,
+        'isDeleted': is_deleted,
+        'IsDeleted': 1 if is_deleted else 0,
         'avatar': user.get('avatar'),
-        'updatedAt': to_ist_12h(user.get('updated_at')),
-        'createdAt': to_ist_12h(user.get('created_at')),
-        'createdAtRaw': user['created_at'].isoformat() + 'Z' if user.get('created_at') else None,
-        'deletedAt': to_ist_12h(user.get('deleted_at')),
-        'deletedAtRaw': user['deleted_at'].isoformat() + 'Z' if user.get('deleted_at') else None,
+        'updatedAt': to_ist_12h(updated_at),
+        'createdAt': to_ist_12h(created_at),
+        'createdAtRaw': created_at.isoformat() + 'Z' if created_at and hasattr(created_at, 'isoformat') else None,
+        'deletedAt': to_ist_12h(deleted_at),
+        'deletedAtRaw': deleted_at.isoformat() + 'Z' if deleted_at and hasattr(deleted_at, 'isoformat') else None,
     }
 
 
@@ -94,63 +121,107 @@ def list_users():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute(f'SELECT {USER_COLUMNS} FROM userTbl ORDER BY userid')
+            cursor.execute(f'SELECT {USER_COLUMNS} FROM `admin_users` ORDER BY id ASC')
             return cursor.fetchall()
     finally:
         conn.close()
 
 
 def list_active_users():
-    """Users for the main User Management table -- never includes soft-deleted rows."""
+    """Users for the main User Management table -- active admin users."""
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute(f'SELECT {USER_COLUMNS} FROM userTbl WHERE IsDeleted = 0 ORDER BY userid')
+            cursor.execute(f'SELECT {USER_COLUMNS} FROM `admin_users` WHERE is_active = 1 ORDER BY id ASC')
             return cursor.fetchall()
     finally:
         conn.close()
 
 
 def list_deleted_users():
-    """Users for the Trash table -- only soft-deleted rows."""
+    """Users for the Trash table -- inactive/disabled admin users."""
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute(f'SELECT {USER_COLUMNS} FROM userTbl WHERE IsDeleted = 1 ORDER BY deleted_at DESC')
+            cursor.execute(f'SELECT {USER_COLUMNS} FROM `admin_users` WHERE is_active = 0 ORDER BY updated_at DESC')
             return cursor.fetchall()
     finally:
         conn.close()
 
 
 def has_superadmin():
-    """Whether a SuperAdmin already exists -- caps the system to exactly one."""
+    """Whether a SuperAdmin already exists in admin_users."""
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT 1 FROM userTbl WHERE Role = 'SuperAdmin' AND IsDeleted = 0 LIMIT 1")
+            cursor.execute("SELECT 1 FROM `admin_users` WHERE (`role` = 'super_admin' OR `role` = 'SuperAdmin') AND `is_active` = 1 LIMIT 1")
             return cursor.fetchone() is not None
     finally:
         conn.close()
 
 
 def login_required_page(view):
-    """Protects a page route: renders 404 when unauthenticated."""
+    """Protects a page route: redirects to VisionAdmin login when unauthenticated."""
     @functools.wraps(view)
     def wrapped(*args, **kwargs):
-        if 'user_id' not in session:
-            return render_template(
-                '404.html',
-                page='404',
-                requested_path=request.path,
-                user_name=session.get('name'),
-                user_email=session.get('email'),
-                user_role=session.get('role'),
-                user_avatar=session.get('avatar'),
-                unread_notifications=0,
-                notifications=[]
-            ), 404
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        if not user_id:
+            return redirect(f"/visionadmin/login?next={request.path}")
         return view(*args, **kwargs)
     return wrapped
+
+
+def login_required_api(view):
+    """Protects a JSON/API route: returns 401 instead of redirecting."""
+    @functools.wraps(view)
+    def wrapped(*args, **kwargs):
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Authentication required. Please sign in to VisionAdmin.'}), 401
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def role_required_page(*roles):
+    """Protects a page route: checks normalized user role."""
+    def decorator(view):
+        @functools.wraps(view)
+        def wrapped(*args, **kwargs):
+            user_role = str(session.get('role') or '').strip().lower().replace('-', '_').replace(' ', '_')
+            allowed_norm = {r.strip().lower().replace('-', '_').replace(' ', '_') for r in roles}
+            if 'superadmin' in allowed_norm or 'super_admin' in allowed_norm:
+                allowed_norm.update({'super_admin', 'superadmin'})
+            if 'admin' in allowed_norm or 'manager' in allowed_norm:
+                allowed_norm.update({'admin', 'manager'})
+            if 'user' in allowed_norm or 'support' in allowed_norm:
+                allowed_norm.update({'user', 'support'})
+
+            if user_role not in allowed_norm and session.get('role') not in roles:
+                return redirect('/visionadmin/pages')
+            return view(*args, **kwargs)
+        return wrapped
+    return decorator
+
+
+def role_required_api(*roles):
+    """Protects a JSON/API route: returns 403 for unauthorized roles."""
+    def decorator(view):
+        @functools.wraps(view)
+        def wrapped(*args, **kwargs):
+            user_role = str(session.get('role') or '').strip().lower().replace('-', '_').replace(' ', '_')
+            allowed_norm = {r.strip().lower().replace('-', '_').replace(' ', '_') for r in roles}
+            if 'superadmin' in allowed_norm or 'super_admin' in allowed_norm:
+                allowed_norm.update({'super_admin', 'superadmin'})
+            if 'admin' in allowed_norm or 'manager' in allowed_norm:
+                allowed_norm.update({'admin', 'manager'})
+            if 'user' in allowed_norm or 'support' in allowed_norm:
+                allowed_norm.update({'user', 'support'})
+
+            if user_role not in allowed_norm and session.get('role') not in roles:
+                return jsonify({'error': 'Forbidden. Administrator privileges required.'}), 403
+            return view(*args, **kwargs)
+        return wrapped
+    return decorator
 
 
 def login_required_api(view):
@@ -405,8 +476,9 @@ def update_user_password(user_id, new_password):
     try:
         with conn.cursor() as cursor:
             cursor.execute(
-                'UPDATE userTbl SET password = %s, updated_at = CURRENT_TIMESTAMP WHERE userid = %s',
+                'UPDATE `admin_users` SET `password` = %s, `updated_at` = NOW() WHERE `id` = %s',
                 (hashed, user_id),
             )
+            conn.commit()
     finally:
         conn.close()

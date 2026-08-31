@@ -267,7 +267,8 @@ def register_tcsadmin_api_routes(app):
     """Registers all REST, JSON, and Scraper execution APIs under /tcsadmin/api (and bare /api aliases)."""
 
     # ==========================================================================
-    # 1. User, Profile & Authentication APIs (Supports both userTbl & admin_users)
+    # ==========================================================================
+    # 1. User, Profile & Authentication APIs (admin_users table)
     # ==========================================================================
 
     @app.route('/visionadmin/api/me')
@@ -278,32 +279,26 @@ def register_tcsadmin_api_routes(app):
         if not user_id:
             return jsonify({'error': 'Authentication required.'}), 401
 
-        # 1. Check VisionAdmin admin_users table if visionadmin session
-        if session.get('is_visionadmin') or session.get('admin_user_id'):
-            from visionadmin.admin_auth import get_admin_user_by_id
-            admin_u = get_admin_user_by_id(user_id)
-            if admin_u:
-                return jsonify({
-                    'user': {
-                        'userid': admin_u['id'],
-                        'id': admin_u['id'],
-                        'name': admin_u['name'],
-                        'Name': admin_u['name'],
-                        'email': admin_u['email'],
-                        'Email': admin_u['email'],
-                        'role': admin_u['role'],
-                        'Role': admin_u['role'],
-                        'status': bool(admin_u.get('is_active', 1)),
-                        'avatar': None,
-                    },
-                    'csrfToken': session.get('csrf_token')
-                })
-
-        # 2. Check TCSAdmin userTbl
-        user = get_user_by_id(user_id)
-        if not user:
+        from visionadmin.admin_auth import get_admin_user_by_id, serialize_admin_user
+        admin_u = get_admin_user_by_id(user_id)
+        if not admin_u:
             return jsonify({'error': 'Authentication required.'}), 401
-        return jsonify({'user': serialize_user(user), 'csrfToken': session.get('csrf_token')})
+
+        return jsonify({
+            'user': {
+                'userid': admin_u['id'],
+                'id': admin_u['id'],
+                'name': admin_u['name'],
+                'Name': admin_u['name'],
+                'email': admin_u['email'],
+                'Email': admin_u['email'],
+                'role': admin_u['role'],
+                'Role': admin_u['role'],
+                'status': bool(admin_u.get('is_active', 1)),
+                'avatar': None,
+            },
+            'csrfToken': session.get('csrf_token')
+        })
 
     @app.route('/visionadmin/api/profile', methods=['PUT'])
     @app.route('/tcsadmin/api/profile', methods=['PUT'])
@@ -317,31 +312,20 @@ def register_tcsadmin_api_routes(app):
         data = request.get_json(silent=True) or {}
         name = (data.get('name') or '').strip()
         email = (data.get('email') or '').strip().lower()
-        avatar = data.get('avatar')
-        avatar = avatar.strip() if isinstance(avatar, str) else None
-        avatar = avatar or None
 
         if not name:
             return jsonify({'error': 'Name is required.'}), 400
         if not email or not EMAIL_RE.match(email):
             return jsonify({'error': 'A valid email is required.'}), 400
-        if avatar and len(avatar) > 500:
-            return jsonify({'error': 'Avatar URL is too long.'}), 400
 
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 try:
-                    if session.get('is_visionadmin') or session.get('admin_user_id'):
-                        cursor.execute(
-                            'UPDATE `admin_users` SET `name` = %s, `email` = %s, `updated_at` = NOW() WHERE `id` = %s',
-                            (name, email, user_id),
-                        )
-                    else:
-                        cursor.execute(
-                            'UPDATE userTbl SET Name = %s, Email = %s, avatar = %s WHERE userid = %s',
-                            (name, email, avatar, user_id),
-                        )
+                    cursor.execute(
+                        'UPDATE `admin_users` SET `name` = %s, `email` = %s, `updated_at` = NOW() WHERE `id` = %s',
+                        (name, email, user_id),
+                    )
                     conn.commit()
                 except pymysql.err.IntegrityError:
                     return jsonify({'error': 'That email is already in use.'}), 409
@@ -351,38 +335,24 @@ def register_tcsadmin_api_routes(app):
         session['name'] = name
         session['email'] = email
 
-        if session.get('is_visionadmin') or session.get('admin_user_id'):
-            return jsonify({
-                'user': {
-                    'id': user_id,
-                    'name': name,
-                    'email': email,
-                    'role': session.get('role')
-                }
-            })
-        user = get_user_by_id(user_id)
-        return jsonify({'user': serialize_user(user)})
+        return jsonify({
+            'user': {
+                'id': user_id,
+                'userid': user_id,
+                'name': name,
+                'Name': name,
+                'email': email,
+                'Email': email,
+                'role': session.get('role'),
+                'Role': session.get('role')
+            }
+        })
 
     @app.route('/visionadmin/api/profile/avatar', methods=['DELETE'])
     @app.route('/tcsadmin/api/profile/avatar', methods=['DELETE'])
     @app.route('/api/profile/avatar', methods=['DELETE'])
     @require_csrf
     def api_delete_avatar():
-        user_id = session.get('admin_user_id') or session.get('user_id')
-        if not user_id:
-            return jsonify({'error': 'Authentication required.'}), 401
-
-        if not (session.get('is_visionadmin') or session.get('admin_user_id')):
-            conn = get_connection()
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute('UPDATE userTbl SET avatar = NULL WHERE userid = %s', (user_id,))
-                    conn.commit()
-            finally:
-                conn.close()
-
-            user = get_user_by_id(user_id)
-            return jsonify({'user': serialize_user(user)})
         return jsonify({'success': True})
 
     @app.route('/visionadmin/api/change-password', methods=['POST'])
@@ -411,34 +381,13 @@ def register_tcsadmin_api_routes(app):
         if len(new_password) < 8:
             return jsonify({'error': 'New password must be at least 8 characters.'}), 400
 
-        # 1. VisionAdmin check
-        if session.get('is_visionadmin') or session.get('admin_user_id'):
-            from visionadmin.admin_auth import get_admin_user_by_id, verify_admin_password, update_admin_user_password
-            admin_u = get_admin_user_by_id(user_id)
-            if not admin_u or not verify_admin_password(current_password, admin_u.get('password', '')):
-                session['pwd_fail_count'] = fail_count + 1
-                return jsonify({'error': 'Current password is incorrect.'}), 400
-            update_admin_user_password(user_id, new_password)
-            session['pwd_fail_count'] = 0
-            return jsonify({'message': 'Password updated successfully.'})
-
-        # 2. TCSAdmin check
-        user = get_user_by_id(user_id)
-        if not user or not verify_password(current_password, user['password']):
+        from visionadmin.admin_auth import get_admin_user_by_id, verify_admin_password, update_admin_user_password
+        admin_u = get_admin_user_by_id(user_id)
+        if not admin_u or not verify_admin_password(current_password, admin_u.get('password', '')):
             session['pwd_fail_count'] = fail_count + 1
             return jsonify({'error': 'Current password is incorrect.'}), 400
 
-        conn = get_connection()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    'UPDATE userTbl SET password = %s WHERE userid = %s',
-                    (hash_password(new_password), user_id),
-                )
-                conn.commit()
-        finally:
-            conn.close()
-
+        update_admin_user_password(user_id, new_password)
         session['pwd_fail_count'] = 0
         return jsonify({'message': 'Password updated successfully.'})
 
@@ -449,49 +398,49 @@ def register_tcsadmin_api_routes(app):
     @login_required_api
     @require_csrf
     def api_self_delete_account():
-        """Allows an authenticated user to delete (soft-delete) their own account."""
-        user_id = session.get('user_id')
+        user_id = session.get('admin_user_id') or session.get('user_id')
         if not user_id:
             return jsonify({'error': 'Authentication required.'}), 401
 
-        user = get_user_by_id(user_id)
-        if not user:
+        from visionadmin.admin_auth import toggle_admin_user_status, count_super_admins, get_admin_user_by_id
+        target = get_admin_user_by_id(user_id)
+        if not target:
             session.clear()
             return jsonify({'error': 'User not found.'}), 404
 
-        # Soft delete: update IsDeleted=1 and deleted_at to current timestamp. Never hard delete.
+        if target.get('role') == 'super_admin' and count_super_admins() <= 1:
+            return jsonify({'error': 'Cannot delete the only remaining Super Administrator.'}), 400
+
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    'UPDATE userTbl SET IsDeleted = 1, deleted_at = UTC_TIMESTAMP() WHERE userid = %s',
-                    (user_id,),
-                )
+                cursor.execute('UPDATE `admin_users` SET `is_active` = 0, `updated_at` = NOW() WHERE `id` = %s', (user_id,))
+                conn.commit()
         finally:
             conn.close()
 
         session.clear()
         return jsonify({
             'success': True,
-            'message': 'Your account has been deleted successfully.',
-            'redirect': '/tcsadmin/login'
+            'message': 'Your account has been deactivated successfully.',
+            'redirect': '/visionadmin/login'
         })
 
     # ==========================================================================
-    # 2. Admin User Management APIs
+    # 2. Admin User Management APIs (Alias to admin_users table)
     # ==========================================================================
 
     @app.route('/tcsadmin/api/admin/users', methods=['GET'])
     @app.route('/api/admin/users', methods=['GET'])
     @login_required_api
-    @role_required_api('SuperAdmin', 'Admin')
+    @role_required_api('SuperAdmin', 'Admin', 'super_admin', 'manager')
     def api_admin_list_users():
         return jsonify({'users': [serialize_user(u) for u in list_active_users()]})
 
     @app.route('/tcsadmin/api/admin/users/trash', methods=['GET'])
     @app.route('/api/admin/users/trash', methods=['GET'])
     @login_required_api
-    @role_required_api('SuperAdmin', 'Admin')
+    @role_required_api('SuperAdmin', 'Admin', 'super_admin', 'manager')
     def api_admin_list_trash():
         return jsonify({'users': [serialize_user(u) for u in list_deleted_users()]})
 
@@ -2747,8 +2696,8 @@ def register_client_api_routes(app):
                                 email = email or u_row.get('email')
                                 number = number or u_row.get('phone')
                             else:
-                                # 2. Check userTbl (system user)
-                                cur_lookup.execute("SELECT Name, Email FROM userTbl WHERE userid = %s", (sess_uid,))
+                                # 2. Check admin_users (administrator user)
+                                cur_lookup.execute("SELECT name AS Name, email AS Email FROM admin_users WHERE id = %s", (sess_uid,))
                                 u_tbl = cur_lookup.fetchone()
                                 if u_tbl:
                                     name = name or u_tbl.get('Name')
