@@ -2381,13 +2381,9 @@ def register_visionadmin_api_routes(app):
             try:
                 from mailer import send_email
                 from visionadmin.admin_auth import create_admin_password_reset_token
-                import base64
 
-                logo_b64 = ''
                 logo_file = os.path.join(app.static_folder or 'static', 'assets', 'images', 'tyresvision-email-logo.png')
-                if os.path.isfile(logo_file):
-                    with open(logo_file, 'rb') as f:
-                        logo_b64 = base64.b64encode(f.read()).decode('utf-8')
+                inline_imgs = {'tyresvision_logo': logo_file} if os.path.isfile(logo_file) else None
                 
                 token = create_admin_password_reset_token(email)
                 reset_link = f"{request.host_url.rstrip('/')}/visionadmin/reset-password?token={token}"
@@ -2401,10 +2397,15 @@ def register_visionadmin_api_routes(app):
                     user_role=role,
                     reset_link=reset_link,
                     login_link=login_link,
-                    logo_b64=logo_b64,
+                    logo_cid='tyresvision_logo' if inline_imgs else None,
                     logo_url=logo_url,
                 )
-                send_email(email, 'Welcome to TyresVision! Your Account Details', html_body)
+                send_email(
+                    email,
+                    'Welcome to TyresVision! Your Account Details',
+                    html_body,
+                    inline_images=inline_imgs,
+                )
             except Exception as mail_err:
                 app.logger.warning(f"Failed to send welcome email to {email}: {mail_err}")
 

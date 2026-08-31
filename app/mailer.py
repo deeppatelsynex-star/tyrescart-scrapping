@@ -1,4 +1,6 @@
+import os
 import smtplib
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -17,17 +19,47 @@ SMTP_PORT_TLS = 587
 MAIL_FROM = GMAIL_USER
 
 
-def send_email(to_address, subject, html_body, text_body=None):
-    """Sends an HTML email via Gmail SMTP with dual SSL 465 and TLS 587 support."""
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = GMAIL_USER
-    msg['To'] = to_address
+def send_email(to_address, subject, html_body, text_body=None, inline_images=None):
+    """
+    Sends an HTML email via Gmail SMTP with dual SSL 465 and TLS 587 support.
+    Supports inline CID images (e.g. {'tyresvision_logo': 'path/to/logo.png'})
+    for bulletproof cross-client image rendering without external image blocking.
+    """
+    if inline_images:
+        msg = MIMEMultipart('related')
+        msg['Subject'] = subject
+        msg['From'] = GMAIL_USER
+        msg['To'] = to_address
 
-    if text_body:
-        msg.attach(MIMEText(text_body, 'plain', 'utf-8'))
-    if html_body:
-        msg.attach(MIMEText(html_body, 'html', 'utf-8'))
+        msg_alt = MIMEMultipart('alternative')
+        msg.attach(msg_alt)
+
+        if text_body:
+            msg_alt.attach(MIMEText(text_body, 'plain', 'utf-8'))
+        if html_body:
+            msg_alt.attach(MIMEText(html_body, 'html', 'utf-8'))
+
+        for cid_name, img_path in inline_images.items():
+            if img_path and os.path.isfile(img_path):
+                try:
+                    with open(img_path, 'rb') as f:
+                        img_data = f.read()
+                    mime_img = MIMEImage(img_data)
+                    mime_img.add_header('Content-ID', f'<{cid_name}>')
+                    mime_img.add_header('Content-Disposition', 'inline', filename=os.path.basename(img_path))
+                    msg.attach(mime_img)
+                except Exception as img_err:
+                    print(f"Warning: Failed to attach inline image {cid_name}: {img_err}")
+    else:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = GMAIL_USER
+        msg['To'] = to_address
+
+        if text_body:
+            msg.attach(MIMEText(text_body, 'plain', 'utf-8'))
+        if html_body:
+            msg.attach(MIMEText(html_body, 'html', 'utf-8'))
 
     errors = []
 
@@ -53,5 +85,3 @@ def send_email(to_address, subject, html_body, text_body=None):
         errors.append(f'TLS 587 failed: {e}')
 
     raise RuntimeError(f"Failed to send email via Gmail SMTP: {'; '.join(errors)}")
-
-#update 12:58 
