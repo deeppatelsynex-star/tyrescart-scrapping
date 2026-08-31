@@ -3,299 +3,313 @@
 {% block content %}
 <span id="top"></span>
 
-<!-- ================= HERO ================= -->
-<section class="hero">
-  <div class="wrap hero-grid">
-    <div>
-      <span class="eyebrow">Dubai &middot; Abu Dhabi &middot; Sharjah &middot; Ajman</span>
-      <h1>Buy tyres online.<br><em>Fitted locally</em> across the UAE.</h1>
-      <p class="lead">TyresVision is an online tyre shop for the UAE. Genuine, date-fresh tyres from 60+ brands at the lowest prices &mdash; delivered free to a fitting centre near you, or fitted at your home or office by our mobile vans.</p>
+{% if sections and sections|length > 0 %}
+  {% for sec in sections %}
+    {% if sec.section_type == 'hero' %}
+      <!-- ================= 1. HERO ================= -->
+      <section class="hero" id="section-{{ sec.id }}">
+        <div class="wrap hero-grid">
+          <div>
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h1>{{ sec.section_title | safe | replace('\n', '<br>') }}</h1>
+            {% if sec.content %}<p class="lead">{{ sec.content }}</p>{% endif %}
 
-      <div class="cta-row">
-        <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-          WhatsApp for a quote
-        </a>
-        <a class="btn btn-ghost-light" href="tel:+971505069575">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-          +971 50 506 9575
-        </a>
-      </div>
+            <div class="cta-row">
+              <a class="btn btn-wa" href="{{ sec.button_url or 'https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote.' }}" target="_blank" rel="noopener">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+                {{ sec.button_text or ('اطلب عرض سعر عبر واتساب' if locale == 'ar' else 'WhatsApp for a quote') }}
+              </a>
+              <a class="btn btn-ghost-light" href="tel:{{ (sec.section_data and sec.section_data.phone) or '+971505069575' }}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                {{ (sec.section_data and sec.section_data.phone_display) or '+971 50 506 9575' }}
+              </a>
+            </div>
 
-      <div class="hero-badges">
-        <span class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> Lowest price guaranteed</span>
-        <span class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> Warranty on eligible tyres</span>
-        <span class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> Free delivery to fitter</span>
-      </div>
-    </div>
-
-    <div class="quote-card">
-      <h3>Get your tyre price in minutes</h3>
-      <p class="sub">Send us your size &mdash; we&rsquo;ll reply on WhatsApp with options and prices.</p>
-      <form id="quoteForm" novalidate>
-        <div class="field">
-          <label for="tyreSize">Tyre size (e.g. 235/55 R19)</label>
-          <input id="tyreSize" name="tyreSize" type="text" placeholder="235/55 R19" autocomplete="off" required>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="carMake">Car Details</label>
-            <input id="carMake" name="carMake" type="text" placeholder="Nissan Patrol 2024" autocomplete="off">
+            {% set badges = sec.section_data.badges if sec.section_data and sec.section_data.badges else [] %}
+            {% if badges %}
+            <div class="hero-badges">
+              {% for b in badges %}
+              <span class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> {{ b.text if b.text else b }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
           </div>
-          <div class="field">
-            <label for="emirate">Emirate</label>
-            <select id="emirate" name="emirate">
-              <option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option>
-              <option>Ajman</option><option>Ras Al Khaimah</option><option>Fujairah</option><option>Umm Al Quwain</option>
-            </select>
+
+          {% set qc = sec.section_data.quote_card if sec.section_data and sec.section_data.quote_card else {} %}
+          <div class="quote-card">
+            <h3>{{ qc.title or ('احصل على سعر إطاراتك في دقائق' if locale == 'ar' else 'Get your tyre price in minutes') }}</h3>
+            <p class="sub">{{ qc.subtitle or ('أرسل لنا مقاس إطاراتك — وسنرد عليك عبر واتساب بالخيارات والأسعار.' if locale == 'ar' else 'Send us your size — we’ll reply on WhatsApp with options and prices.') }}</p>
+            <form id="quoteForm" novalidate>
+              <div class="field">
+                <label for="tyreSize">{% if locale == 'ar' %}مقاس الإطار (مثال: 235/55 R19){% else %}Tyre size (e.g. 235/55 R19){% endif %}</label>
+                <input id="tyreSize" name="tyreSize" type="text" placeholder="235/55 R19" autocomplete="off" required>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label for="carMake">{% if locale == 'ar' %}تفاصيل السيارة{% else %}Car Details{% endif %}</label>
+                  <input id="carMake" name="carMake" type="text" placeholder="Nissan Patrol 2024" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label for="emirate">{% if locale == 'ar' %}الإمارة{% else %}Emirate{% endif %}</label>
+                  <select id="emirate" name="emirate">
+                    <option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option>
+                    <option>Ajman</option><option>Ras Al Khaimah</option><option>Fujairah</option><option>Umm Al Quwain</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="fitting">{% if locale == 'ar' %}طريقة التركيب{% else %}Fitting preference{% endif %}</label>
+                <select id="fitting" name="fitting">
+                  <option>{% if locale == 'ar' %}تركيب في مركز قريب{% else %}Fit at a nearby centre{% endif %}</option>
+                  <option>{% if locale == 'ar' %}تركيب متنقل عند موقعي{% else %}Mobile fitting at my location{% endif %}</option>
+                  <option>{% if locale == 'ar' %}توصيل فقط{% else %}Delivery only{% endif %}</option>
+                </select>
+              </div>
+              <button class="btn btn-wa" type="submit">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+                {{ qc.button_text or ('إرسال عبر واتساب' if locale == 'ar' else 'Send on WhatsApp') }}
+              </button>
+              <p class="form-note">{{ qc.note or ('يفتح واتساب مع ملء بياناتك مسبقاً. لا يلزم إنشاء حساب.' if locale == 'ar' else 'Opens WhatsApp with your details pre-filled. No account needed.') }}</p>
+            </form>
           </div>
         </div>
-        <div class="field">
-          <label for="fitting">Fitting preference</label>
-          <select id="fitting" name="fitting">
-            <option>Fit at a nearby centre</option>
-            <option>Mobile fitting at my location</option>
-            <option>Delivery only</option>
-          </select>
+      </section>
+
+    {% elif sec.section_type == 'stats' %}
+      <!-- ================= 2. STATS ================= -->
+      <section class="stats" id="section-{{ sec.id }}" style="padding-top:34px;padding-bottom:34px">
+        <div class="wrap">
+          <div class="stats-inner">
+            {% set metrics = sec.section_data.metrics if sec.section_data and sec.section_data.metrics else [] %}
+            {% for m in metrics %}
+            <div class="stat"><b>{{ m.number }}</b><span>{{ m.label or m.heading }}</span></div>
+            {% endfor %}
+          </div>
         </div>
-        <button class="btn btn-wa" type="submit">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-          Send on WhatsApp
-        </button>
-        <p class="form-note">Opens WhatsApp with your details pre-filled. No account needed.</p>
-      </form>
-    </div>
-  </div>
-</section>
+      </section>
 
-<!-- ================= STATS ================= -->
-<section class="stats" style="padding-top:34px;padding-bottom:34px">
-  <div class="wrap">
-    <div class="stats-inner">
-      <div class="stat"><b>60+</b><span>Tyre brands</span></div>
-      <div class="stat"><b>7,000+</b><span>Products in stock</span></div>
-      <div class="stat"><b>25+</b><span>Fitting locations</span></div>
-      <div class="stat"><b>10+</b><span>Mobile Van Fitting</span></div>
-    </div>
-  </div>
-</section>
+    {% elif sec.section_type == 'features' or sec.section_type == 'why' %}
+      <!-- ================= 3. WHY / FEATURES ================= -->
+      <section id="why" class="why-section">
+        <div class="wrap">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+            {% if sec.content %}<p class="lead">{{ sec.content }}</p>{% endif %}
+          </div>
 
-<!-- ================= WHY ================= -->
-<section id="why">
-  <div class="wrap">
-    <div class="center">
-      <span class="eyebrow">Why TyresVision?</span>
-      <h2>Everything a tyre shop should be &mdash; without the runaround</h2>
-      <p class="lead">No haggling, no upselling, no waiting around. Pick your tyres, pick where you want them fitted, and get on with your day.</p>
-    </div>
+          {% set cards = sec.section_data.cards if sec.section_data and sec.section_data.cards else [] %}
+          {% if cards %}
+          <div class="grid g3" style="margin-top:44px">
+            {% for c in cards %}
+            <div class="card">
+              <div class="icon" aria-hidden="true">
+                {% if c.icon == 'shield' or 'warrant' in (c.icon|string|lower) %}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 15l-4-4 1.41-1.41L11 13.17l4.59-4.58L17 10l-6 6z"/></svg>
+                {% elif c.icon == 'dollar' or 'price' in (c.icon|string|lower) %}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 10.9 12 11.5 12 13h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26A1.5 1.5 0 0012 5.5 1.5 1.5 0 0010.5 7h-2A3.5 3.5 0 1112 10.5c.42-.42.79-.79 1.07-1.25z"/></svg>
+                {% elif c.icon == 'truck' or 'deliver' in (c.icon|string|lower) or 'van' in (c.icon|string|lower) %}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20 8h-3V4H3a2 2 0 00-2 2v11h2a3 3 0 006 0h6a3 3 0 006 0h2v-5l-3-4zM6 18.5A1.5 1.5 0 116 15.5a1.5 1.5 0 010 3zm12 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM17 12V9.5h2.5L21.46 12H17z"/></svg>
+                {% elif c.icon == 'clock' or 'time' in (c.icon|string|lower) %}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                {% elif c.icon == 'award' or 'brand' in (c.icon|string|lower) or 'quality' in (c.icon|string|lower) %}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-2 12H7v-2h10v2zm0-4H7V9h10v2zm-3-4H7V5h7v2z"/></svg>
+                {% else %}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                {% endif %}
+              </div>
+              <h3>{{ c.title }}</h3>
+              <p>{{ c.description or c.desc }}</p>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
 
-    <div class="grid g3" style="margin-top:44px">
-      <div class="card">
-        <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 15l-4-4 1.41-1.41L11 13.17l4.59-4.58L17 10l-6 6z"/></svg></div>
-        <h3>Genuine tyres only</h3>
-        <p>Sourced through authorised channels with manufacturer-backed warranty on eligible tyres. Fresh manufacturing dates &mdash; never old stock.</p>
-      </div>
-      <div class="card">
-        <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 10.9 12 11.5 12 13h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26A1.5 1.5 0 0012 5.5 1.5 1.5 0 0010.5 7h-2A3.5 3.5 0 1112 10.5c.42-.42.79-.79 1.07-1.25z"/></svg></div>
-        <h3>Lowest price, guaranteed</h3>
-        <p>Found the same tyre cheaper elsewhere in the UAE? Send us the quote on WhatsApp and we&rsquo;ll match or beat it.</p>
-      </div>
-      <div class="card">
-        <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20 8h-3V4H3a2 2 0 00-2 2v11h2a3 3 0 006 0h6a3 3 0 006 0h2v-5l-3-4zM6 18.5A1.5 1.5 0 116 15.5a1.5 1.5 0 010 3zm12 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM17 12V9.5h2.5L21.46 12H17z"/></svg></div>
-        <h3>We come to you</h3>
-        <p>Mobile fitting vans across the UAE will change your tyres at home, at the office, or in the mall car park while you&rsquo;re inside.</p>
-      </div>
-      <div class="card">
-        <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg></div>
-        <h3>Fast turnaround</h3>
-        <p>Most popular sizes are in stock and ready to go, so fitting can usually be arranged within the same day across Dubai and Sharjah.</p>
-      </div>
-      <div class="card">
-        <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-2 12H7v-2h10v2zm0-4H7V9h10v2zm-3-4H7V5h7v2z"/></svg></div>
-        <h3>Warranty handled for you</h3>
-        <p>Every purchase is logged against your vehicle, so warranty questions and claims come to us &mdash; no chasing the manufacturer yourself.</p>
-      </div>
-      <div class="card">
-        <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-        <h3>Built for UAE roads</h3>
-        <p>Advice tuned to Gulf heat and long highway runs &mdash; the right compound and load rating for how you actually drive.</p>
-      </div>
-    </div>
+          {% set cta_row = sec.section_data.cta_row if sec.section_data and sec.section_data.cta_row else {} %}
+          <div class="cta-row center" style="justify-content:center">
+            <a class="btn btn-wa" href="{{ cta_row.wa_url or 'https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote.' }}" target="_blank" rel="noopener">{{ cta_row.wa_text or ('تحدث معنا عبر واتساب' if locale == 'ar' else 'Chat on WhatsApp') }}</a>
+            <a class="btn btn-ghost" href="{{ cta_row.call_url or 'tel:+971505069575' }}">{{ cta_row.call_text or ('اتصل بنا: 9575 506 50 971+' if locale == 'ar' else 'Call +971 50 506 9575') }}</a>
+          </div>
+        </div>
+      </section>
 
-    <div class="cta-row center" style="justify-content:center">
-      <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">Chat on WhatsApp</a>
-      <a class="btn btn-ghost" href="tel:+971505069575">Call +971 50 506 9575</a>
-    </div>
-  </div>
-</section>
+    {% elif sec.section_type == 'services' %}
+      <!-- ================= 4. SERVICES ================= -->
+      <section id="services" class="services">
+        <div class="wrap">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+            {% if sec.content %}<p class="lead">{{ sec.content }}</p>{% endif %}
+          </div>
+          {% set svcs = sec.section_data.services if sec.section_data and sec.section_data.services else [] %}
+          <div class="svc-grid">
+            {% for s in svcs %}
+            <div class="svc"><span class="dot" aria-hidden="true"></span>{{ s.name if s.name else s }}</div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
 
-<!-- ================= SERVICES ================= -->
-<section id="services" class="services">
-  <div class="wrap">
-    <div class="center">
-      <span class="eyebrow">Full car care</span>
-      <h2>More than tyres</h2>
-      <p class="lead">Book any of these alongside your tyre fitting and save a second trip.</p>
-    </div>
-    <div class="svc-grid">
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Tyre fitting</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Wheel alignment</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Wheel balancing</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Tyre rotation</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Nitrogen fill</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Car batteries</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Oil change</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>AC repair</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Service &amp; repair</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Car spa &amp; detailing</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Window tinting</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Car recovery</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Car insurance</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Puncture repair</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Fleet servicing</div>
-      <div class="svc"><span class="dot" aria-hidden="true"></span>Mobile van visit</div>
-    </div>
-  </div>
-</section>
+    {% elif sec.section_type == 'how_it_works' or sec.section_type == 'how' %}
+      <!-- ================= 5. HOW IT WORKS ================= -->
+      <section id="how">
+        <div class="wrap">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+          </div>
+          {% set steps = sec.section_data.steps if sec.section_data and sec.section_data.steps else [] %}
+          {% if steps %}
+          <div class="steps">
+            {% for st in steps %}
+            <div class="step">
+              <span class="step-num" aria-hidden="true">{{ loop.index }}</span>
+              <div class="icon" aria-hidden="true">
+                {% if loop.index == 1 %}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+                {% elif loop.index == 2 %}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.59 13.41L11 3.83V3H4v7h.83l9.58 9.59a2 2 0 002.83 0l3.35-3.35a2 2 0 000-2.83zM6.5 8A1.5 1.5 0 118 6.5 1.5 1.5 0 016.5 8z"/></svg>
+                {% elif loop.index == 3 %}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1114.5 9 2.5 2.5 0 0112 11.5z"/></svg>
+                {% else %}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8a1 1 0 001 1h1a1 1 0 001-1v-1h12v1a1 1 0 001 1h1a1 1 0 001-1v-8l-2.08-5.99zM6.5 16A1.5 1.5 0 118 14.5 1.5 1.5 0 016.5 16zm11 0a1.5 1.5 0 111.5-1.5A1.5 1.5 0 0117.5 16zM5 11l1.5-4.5h11L19 11z"/></svg>
+                {% endif %}
+              </div>
+              <h3>{{ st.title }}</h3>
+              <p>{{ st.description or st.desc }}</p>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% set cta_row = sec.section_data.cta_row if sec.section_data and sec.section_data.cta_row else {} %}
+          <div class="cta-row center" style="justify-content:center">
+            <a class="btn btn-wa" href="{{ cta_row.wa_url or 'https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote.' }}" target="_blank" rel="noopener">{{ cta_row.wa_text or ('ابدأ الآن عبر واتساب' if locale == 'ar' else 'Start on WhatsApp') }}</a>
+            <a class="btn btn-ghost" href="{{ cta_row.call_url or 'tel:+971505069575' }}">{{ cta_row.call_text or ('تفضل الاتصال؟ اتصل بنا' if locale == 'ar' else 'Prefer to talk? Call us') }}</a>
+          </div>
+        </div>
+      </section>
 
-<!-- ================= HOW ================= -->
-<section id="how">
-  <div class="wrap">
-    <div class="center">
-      <span class="eyebrow">How it works</span>
-      <h2>Four steps, one afternoon</h2>
-    </div>
-    <div class="steps">
-      <div class="step">
-        <span class="step-num" aria-hidden="true">1</span>
-        <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg></div>
-        <h3>Send your size</h3>
-        <p>WhatsApp us the numbers on your tyre sidewall, or just your car model and year.</p>
-      </div>
-      <div class="step">
-        <span class="step-num" aria-hidden="true">2</span>
-        <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.59 13.41L11 3.83V3H4v7h.83l9.58 9.59a2 2 0 002.83 0l3.35-3.35a2 2 0 000-2.83zM6.5 8A1.5 1.5 0 118 6.5 1.5 1.5 0 016.5 8z"/></svg></div>
-        <h3>Get options &amp; prices</h3>
-        <p>We reply with best-value, mid-range and premium options &mdash; all in stock.</p>
-      </div>
-      <div class="step">
-        <span class="step-num" aria-hidden="true">3</span>
-        <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1114.5 9 2.5 2.5 0 0112 11.5z"/></svg></div>
-        <h3>Pick your fitter</h3>
-        <p>Choose a centre near you, or book a mobile van to your address.</p>
-      </div>
-      <div class="step">
-        <span class="step-num" aria-hidden="true">4</span>
-        <div class="icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8a1 1 0 001 1h1a1 1 0 001-1v-1h12v1a1 1 0 001 1h1a1 1 0 001-1v-8l-2.08-5.99zM6.5 16A1.5 1.5 0 118 14.5 1.5 1.5 0 016.5 16zm11 0a1.5 1.5 0 111.5-1.5A1.5 1.5 0 0117.5 16zM5 11l1.5-4.5h11L19 11z"/></svg></div>
-        <h3>Drive away</h3>
-        <p>Fitting, balancing and disposal of the old tyres are handled. Warranty is logged for you.</p>
-      </div>
-    </div>
-    <div class="cta-row center" style="justify-content:center">
-      <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">Start on WhatsApp</a>
-      <a class="btn btn-ghost" href="tel:+971505069575">Prefer to talk? Call us</a>
-    </div>
-  </div>
-</section>
+    {% elif sec.section_type == 'brands' %}
+      <!-- ================= 6. BRANDS ================= -->
+      <section id="brands" class="brands">
+        <div class="wrap center">
+          {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+          <h2>{{ sec.section_title }}</h2>
+          {% set b_list = sec.section_data.brands if sec.section_data and sec.section_data.brands else [] %}
+          <div class="brand-list">
+            {% for b in b_list %}
+            <span class="brand {% if '+' in (b|string) %}more{% endif %}">{{ b }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
 
-<!-- ================= BRANDS ================= -->
-<section id="brands" class="brands">
-  <div class="wrap center">
-    <span class="eyebrow">60+ brands in stock</span>
-    <h2>The names you trust, the prices you don&rsquo;t expect</h2>
-    <div class="brand-list">
-      <span class="brand">Michelin</span><span class="brand">Bridgestone</span><span class="brand">Goodyear</span>
-      <span class="brand">Continental</span><span class="brand">Pirelli</span><span class="brand">Dunlop</span>
-      <span class="brand">Hankook</span><span class="brand">Yokohama</span><span class="brand">Toyo</span>
-      <span class="brand">Falken</span><span class="brand">Nexen</span><span class="brand">Kumho</span>
-      <span class="brand">BFGoodrich</span><span class="brand">Cooper</span><span class="brand">Nitto</span>
-      <span class="brand">Vredestein</span><span class="brand">Giti</span><span class="brand">Laufenn</span>
-      <span class="brand">Sumitomo</span><span class="brand">Zeetex</span><span class="brand more">+40 more</span>
-    </div>
-  </div>
-</section>
+    {% elif sec.section_type == 'testimonials' or sec.section_type == 'reviews' %}
+      <!-- ================= 7. REVIEWS ================= -->
+      <section>
+        <div class="wrap">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+          </div>
+          {% set revs = sec.section_data.reviews if sec.section_data and sec.section_data.reviews else [] %}
+          {% if revs %}
+          <div class="grid g3" style="margin-top:40px">
+            {% for r in revs %}
+            <div class="quote">
+              <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
+              <blockquote>&ldquo;{{ r.quote }}&rdquo;</blockquote>
+              <div class="who"><span class="avatar" aria-hidden="true">{{ loop.index }}</span><span><b>{{ r.author or ('عميل موثوق' if locale == 'ar' else 'Verified customer') }}</b><span>{{ r.location or ('دبي' if locale == 'ar' else 'Dubai') }}</span></span></div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </section>
 
-<!-- ================= REVIEWS =================
-     PLACEHOLDER COPY — swap for real TyresVision reviews before publishing.
-     ============================================ -->
-<section>
-  <div class="wrap">
-    <div class="center">
-      <span class="eyebrow">Customer reviews</span>
-      <h2>What UAE drivers say</h2>
-    </div>
-    <div class="grid g3" style="margin-top:40px">
-      <div class="quote">
-        <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-        <blockquote>&ldquo;Sent my tyre size in the morning, had a price back in minutes and the car was done the same afternoon.&rdquo;</blockquote>
-        <div class="who"><span class="avatar" aria-hidden="true">1</span><span><b>Verified customer</b><span>Dubai</span></span></div>
-      </div>
-      <div class="quote">
-        <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-        <blockquote>&ldquo;Straight answers, no upselling, and the price was better than the two shops I&rsquo;d already called.&rdquo;</blockquote>
-        <div class="who"><span class="avatar" aria-hidden="true">2</span><span><b>Verified customer</b><span>Sharjah</span></span></div>
-      </div>
-      <div class="quote">
-        <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-        <blockquote>&ldquo;The mobile van came to my building&rsquo;s car park. I didn&rsquo;t have to take time off work at all.&rdquo;</blockquote>
-        <div class="who"><span class="avatar" aria-hidden="true">3</span><span><b>Verified customer</b><span>Abu Dhabi</span></span></div>
-      </div>
-    </div>
-  </div>
-</section>
+    {% elif sec.section_type == 'faq' %}
+      <!-- ================= 8. FAQ ================= -->
+      <section id="faq" class="faq">
+        <div class="wrap" style="max-width:840px">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+          </div>
+          {% set faqs = sec.section_data.faqs if sec.section_data and sec.section_data.faqs else [] %}
+          <div style="margin-top:36px">
+            {% for f in faqs %}
+            <details {% if loop.first %}open{% endif %}>
+              <summary>{{ f.question }}</summary>
+              <div class="body"><p>{{ f.answer | safe }}</p></div>
+            </details>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
 
-<!-- ================= FAQ ================= -->
-<section id="faq" class="faq">
-  <div class="wrap" style="max-width:840px">
-    <div class="center">
-      <span class="eyebrow">Questions</span>
-      <h2>Good to know</h2>
-    </div>
-    <div style="margin-top:36px">
-      <details open>
-        <summary>How do I find my tyre size?</summary>
-        <div class="body"><p>It&rsquo;s printed on the sidewall of your current tyre &mdash; something like <strong>235/55 R19 105W</strong>. Send a photo on WhatsApp if you&rsquo;re not sure, or share your car&rsquo;s make, model and year and TyresVision will look it up.</p></div>
-      </details>
-      <details>
-        <summary>Is fitting included in the price?</summary>
-        <div class="body"><p>Delivery to your chosen fitting centre is free and fitting is arranged for you. Mobile fitting at your own location and extras such as alignment are quoted upfront &mdash; no surprises at the till.</p></div>
-      </details>
-      <details>
-        <summary>Are the tyres new and date-fresh?</summary>
-        <div class="body"><p>Yes. Every tyre is brand new with a recent manufacturing date, sourced through authorised channels, and eligible tyres carry manufacturer-backed warranty.</p></div>
-      </details>
-      <details>
-        <summary>Which emirates does TyresVision cover?</summary>
-        <div class="body"><p>Dubai, Abu Dhabi, Sharjah, Ajman and the rest of the UAE, through a network of fitting centres and mobile vans.</p></div>
-      </details>
-      <details>
-        <summary>Can TyresVision handle a company fleet?</summary>
-        <div class="body"><p>Yes &mdash; fleet pricing, consolidated invoicing and scheduled on-site visits are available. Call and ask for the fleet desk.</p></div>
-      </details>
-      <details>
-        <summary>What if I need help right now?</summary>
-        <div class="body"><p>Message TyresVision on WhatsApp at <a href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">+971 50 506 9575</a> or call the same number.</p></div>
-      </details>
-    </div>
-  </div>
-</section>
+    {% elif sec.section_type == 'cta' %}
+      <!-- ================= 9. FINAL CTA ================= -->
+      <section class="final">
+        <div class="wrap">
+          <h2>{{ sec.section_title }}</h2>
+          {% if sec.content %}<p>{{ sec.content }}</p>{% endif %}
+          <div class="cta-row" style="justify-content:center">
+            <a class="btn btn-wa" href="{{ sec.button_url or 'https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote.' }}" target="_blank" rel="noopener">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+              {{ sec.button_text or ('راسلنا على واتساب' if locale == 'ar' else 'WhatsApp us') }}
+            </a>
+            <a class="btn btn-white" href="{{ (sec.section_data and sec.section_data.call_button_url) or 'tel:+971505069575' }}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+              {{ (sec.section_data and sec.section_data.call_button_text) or ('اتصل بنا: 9575 506 50 971+' if locale == 'ar' else 'Call +971 50 506 9575') }}
+            </a>
+          </div>
+          <p class="hours">{{ (sec.section_data and sec.section_data.footer_note) or ('مفتوح يومياً — اتصل أو راسلنا في أي وقت وسنرد عليك بسرعة فائقة.' if locale == 'ar' else 'Open daily — call or message any time and we’ll come back to you fast.') }}</p>
+        </div>
+      </section>
 
-<!-- ================= FINAL CTA ================= -->
-<section class="final">
-  <div class="wrap">
-    <h2>Ready for a fresh set of tyres?</h2>
-    <p>Send your tyre size on WhatsApp for a price in minutes &mdash; or call and we&rsquo;ll sort it out on the phone.</p>
-    <div class="cta-row" style="justify-content:center">
-      <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
-        WhatsApp us
-      </a>
-      <a class="btn btn-white" href="tel:+971505069575">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-        Call +971 50 506 9575
-      </a>
+    {% elif sec.section_type == 'content_image' %}
+      <!-- ================= CONTENT + IMAGE ================= -->
+      <section class="content-image-section" id="section-{{ sec.id }}">
+        <div class="wrap">
+          <div class="grid g2" style="align-items: center; gap: 40px;">
+            {% if sec.image_position == 'left' and sec.image %}
+            <div><img src="{{ sec.image }}" alt="{{ sec.section_title }}" style="width:100%; border-radius:18px; display:block;" /></div>
+            {% endif %}
+            <div>
+              {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+              <h2>{{ sec.section_title }}</h2>
+              {% if sec.content %}<div class="lead">{{ sec.content | safe }}</div>{% endif %}
+              {% if sec.button_text and sec.button_url %}
+              <div style="margin-top:24px;">
+                <a class="btn btn-wa" href="{{ sec.button_url }}">{{ sec.button_text }}</a>
+              </div>
+              {% endif %}
+            </div>
+            {% if sec.image_position != 'left' and sec.image %}
+            <div><img src="{{ sec.image }}" alt="{{ sec.section_title }}" style="width:100%; border-radius:18px; display:block;" /></div>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+    {% endif %}
+  {% endfor %}
+
+{% else %}
+  <!-- Fallback static sections in case database returns empty -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">Dubai &middot; Abu Dhabi &middot; Sharjah &middot; Ajman</span>
+        <h1>Buy tyres online.<br><em>Fitted locally</em> across the UAE.</h1>
+        <p class="lead">TyresVision is an online tyre shop for the UAE. Genuine, date-fresh tyres from 60+ brands at the lowest prices &mdash; delivered free to a fitting centre near you, or fitted at your home or office by our mobile vans.</p>
+        <div class="cta-row">
+          <a class="btn btn-wa" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">WhatsApp for a quote</a>
+          <a class="btn btn-ghost-light" href="tel:+971505069575">+971 50 506 9575</a>
+        </div>
+      </div>
     </div>
-    <p class="hours">Open daily &mdash; call or message any time and we&rsquo;ll come back to you fast.</p>
-  </div>
-</section>
+  </section>
+{% endif %}
+
 {% endblock %}

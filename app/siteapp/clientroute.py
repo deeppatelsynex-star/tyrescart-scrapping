@@ -5,14 +5,35 @@
 # live in this file (/api/blogs, /api/blogs/<slug>) now live in the unified
 # app/api.py alongside the tcsadmin and visionadmin APIs.
 import json
+import os
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, request, session, abort, redirect, make_response
+from flask import Blueprint, render_template, request, session, abort, redirect, make_response, send_from_directory
 from models.blog import Blog
 from models.page import Page
 from models.page_section import PageSection
 from models.setting import Setting
 
 site_bp = Blueprint('site', __name__)
+
+# This file is app/siteapp/clientroute.py, so the project root (where
+# robots.txt/sitemap.xml live, alongside app/, scrapers/, templates/) is
+# two directories up (siteapp -> app -> root).
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+# --- SEO: robots.txt / sitemap.xml ---
+# These are plain files sitting at the project root (not under static/), so
+# without an explicit route the catch-all page_detail('/<slug>') route below
+# intercepts /robots.txt and /sitemap.xml first, finds no matching CMS page
+# or blog, and 404s -- even though the files exist on disk.
+@site_bp.route('/robots.txt')
+def robots_txt():
+    return send_from_directory(BASE_DIR, 'robots.txt', mimetype='text/plain')
+
+
+@site_bp.route('/sitemap.xml')
+def sitemap_xml():
+    return send_from_directory(BASE_DIR, 'sitemap.xml', mimetype='application/xml')
 
 
 def _get_locale():
@@ -34,12 +55,24 @@ def _get_locale():
 # ============================================================================
 
 # --- HOME ROUTES ---
+def _get_home_sections(locale: str = 'en'):
+    """Helper to fetch and localize all active home page sections from DB."""
+    try:
+        from models.page_section import PageSection
+        raw_sections = PageSection.all_for_page('home', include_inactive=False)
+        return [PageSection.to_localized_dict(s, locale=locale) for s in raw_sections]
+    except Exception as err:
+        current_app.logger.warning(f"Error fetching home page sections from DB: {err}")
+        return []
+
+
 @site_bp.route('/')
 @site_bp.route('/home')
 def home():
     """Client storefront home landing page (default/session locale)."""
     locale = _get_locale()
-    return render_template('Client/Home.html', locale=locale)
+    sections = _get_home_sections(locale)
+    return render_template('Client/Home.html', sections=sections, locale=locale)
 
 
 @site_bp.route('/en')
@@ -48,7 +81,8 @@ def home():
 def home_en():
     """Client storefront home landing page in English."""
     session['site_locale'] = 'en'
-    resp = make_response(render_template('Client/Home.html', locale='en'))
+    sections = _get_home_sections('en')
+    resp = make_response(render_template('Client/Home.html', sections=sections, locale='en'))
     resp.set_cookie('site_locale', 'en', max_age=31536000, path='/')
     return resp
 
@@ -59,7 +93,8 @@ def home_en():
 def home_ar():
     """Client storefront home landing page in Arabic."""
     session['site_locale'] = 'ar'
-    resp = make_response(render_template('Client/Home.html', locale='ar'))
+    sections = _get_home_sections('ar')
+    resp = make_response(render_template('Client/Home.html', sections=sections, locale='ar'))
     resp.set_cookie('site_locale', 'ar', max_age=31536000, path='/')
     return resp
 
