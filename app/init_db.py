@@ -1,5 +1,33 @@
 from db import get_connection
 
+CREATE_ADMIN_USERS_TBL = """
+CREATE TABLE IF NOT EXISTS admin_users (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('super_admin', 'manager', 'support') NOT NULL DEFAULT 'super_admin',
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    last_login_at TIMESTAMP NULL DEFAULT NULL,
+    remember_token VARCHAR(100) NULL DEFAULT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_admin_email (email),
+    INDEX idx_admin_role (role),
+    INDEX idx_admin_active (is_active)
+)
+"""
+
+CREATE_PASSWORD_RESET_TOKENS_TBL = """
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    email VARCHAR(255) NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_reset_token (token),
+    INDEX idx_reset_email (email)
+)
+"""
+
 CREATE_USER_TBL = """
 CREATE TABLE IF NOT EXISTS userTbl (
     userid INT AUTO_INCREMENT PRIMARY KEY,
@@ -440,6 +468,8 @@ def main():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            cursor.execute(CREATE_ADMIN_USERS_TBL)
+            cursor.execute(CREATE_PASSWORD_RESET_TOKENS_TBL)
             cursor.execute(CREATE_USER_TBL)
             cursor.execute(CREATE_FILE_TBL)
             cursor.execute(CREATE_LOG_TBL)
@@ -452,7 +482,7 @@ def main():
             update_legacy_stopped_logs(cursor)
             seed_default_about_us_sections(cursor)
         conn.commit()
-        print("Schema verified: userTbl, fileTbl, logTbl, pages, page_sections, blogs are ready.")
+        print("Schema verified: admin_users, password_reset_tokens, userTbl, fileTbl, logTbl, pages, page_sections, blogs are ready.")
     finally:
         conn.close()
 
