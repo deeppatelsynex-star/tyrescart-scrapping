@@ -58,12 +58,12 @@
 
           <!-- ================= 2. HERO WELCOME BANNER ================= -->
           <tr>
-            <td class="content-cell" style="padding: 10px 36px 24px 36px;">
+            <td class="content-cell" style="padding: 10px 36px 20px 36px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <!-- Left: Welcome Text -->
                   <td class="stack-col stack-col-left" valign="middle" style="padding-right: 14px;">
-                    <h1 class="hero-title" style="margin: 0 0 8px 0; font-size: 30px; font-weight: 900; line-height: 1.15; color: #0E1108; letter-spacing: -0.03em;">
+                    <h1 class="hero-title" style="margin: 0 0 8px 0; font-size: 32px; font-weight: 900; line-height: 1.15; color: #0E1108; letter-spacing: -0.03em;">
                       Welcome to<br />
                       <span style="color: #388E3C;">TyresVision!</span>
                     </h1>
@@ -74,14 +74,14 @@
                   </td>
 
                   <!-- Right: Shield Visual -->
-                  <td class="stack-col" width="110" align="center" valign="middle" style="padding-top: 10px;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
-                      <tr>
-                        <td align="center" valign="middle" style="width: 76px; height: 76px; border-radius: 50%; background-color: #EAF7E2; border: 2.5px solid #B8E2A2; text-align: center;">
-                          <div style="font-size: 36px; line-height: 76px; color: #2E7D32;">&#10004;</div>
-                        </td>
-                      </tr>
-                    </table>
+                  <td class="stack-col" width="120" align="center" valign="middle" style="padding-top: 6px;">
+                    {% if hero_shield_cid %}
+                    <img src="cid:{{ hero_shield_cid }}" alt="Verified" width="96" height="96" style="display: block; width: 96px; height: 96px; border: 0; margin: 0 auto;" />
+                    {% elif hero_shield_url %}
+                    <img src="{{ hero_shield_url }}" alt="Verified" width="96" height="96" style="display: block; width: 96px; height: 96px; border: 0; margin: 0 auto;" />
+                    {% else %}
+                    <img src="cid:hero_shield_badge" alt="Verified" width="96" height="96" style="display: block; width: 96px; height: 96px; border: 0; margin: 0 auto;" />
+                    {% endif %}
                   </td>
                 </tr>
               </table>
@@ -99,10 +99,14 @@
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr>
                         <!-- Green User Badge -->
-                        <td width="46" valign="top" style="padding-right: 14px;">
-                          <div style="width: 42px; height: 42px; border-radius: 50%; background-color: #EAF7E2; border: 1.5px solid #C8E8B8; text-align: center; line-height: 42px; font-size: 20px; color: #2E7D32;">
-                            &#128100;
-                          </div>
+                        <td width="52" valign="top" style="padding-right: 14px; padding-top: 2px;">
+                          {% if badge_user_cid %}
+                          <img src="cid:{{ badge_user_cid }}" alt="User" width="46" height="46" style="display: block; width: 46px; height: 46px; border: 0;" />
+                          {% elif badge_user_url %}
+                          <img src="{{ badge_user_url }}" alt="User" width="46" height="46" style="display: block; width: 46px; height: 46px; border: 0;" />
+                          {% else %}
+                          <img src="cid:badge_user" alt="User" width="46" height="46" style="display: block; width: 46px; height: 46px; border: 0;" />
+                          {% endif %}
                         </td>
                         <!-- Greeting and Subtitle -->
                         <td valign="top">
@@ -139,10 +143,16 @@
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F8FAF7; border: 1px solid #E8EDE4; border-radius: 14px;">
                       <!-- Row 1: User Name -->
                       <tr>
-                        <td width="36" valign="middle" style="padding: 10px 0 10px 14px; font-size: 16px; color: #64748B;">
-                          &#128100;
+                        <td width="42" align="center" valign="middle" style="padding: 10px 0 10px 14px;">
+                          {% if row_user_cid %}
+                          <img src="cid:{{ row_user_cid }}" alt="User" width="28" height="28" style="display: block; width: 28px; height: 28px; border: 0;" />
+                          {% elif row_user_url %}
+                          <img src="{{ row_user_url }}" alt="User" width="28" height="28" style="display: block; width: 28px; height: 28px; border: 0;" />
+                          {% else %}
+                          <img src="cid:row_user" alt="User" width="28" height="28" style="display: block; width: 28px; height: 28px; border: 0;" />
+                          {% endif %}
                         </td>
-                        <td width="110" valign="middle" style="padding: 10px 0; font-size: 13px; font-weight: 700; color: #334155;">
+                        <td width="110" valign="middle" style="padding: 10px 0 10px 8px; font-size: 13px; font-weight: 700; color: #334155;">
                           User Name
                         </td>
                         <td width="16" align="center" valign="middle" style="padding: 10px 0; font-size: 13px; font-weight: 800; color: #64748B;">
@@ -154,10 +164,16 @@
                       </tr>
                       <!-- Row 2: Email Address -->
                       <tr>
-                        <td width="36" valign="middle" style="padding: 10px 0 10px 14px; font-size: 16px; color: #64748B; border-top: 1px solid #EEF2EB;">
-                          &#9993;&#65039;
+                        <td width="42" align="center" valign="middle" style="padding: 10px 0 10px 14px; border-top: 1px solid #EEF2EB;">
+                          {% if row_email_cid %}
+                          <img src="cid:{{ row_email_cid }}" alt="Email" width="28" height="28" style="display: block; width: 28px; height: 28px; border: 0;" />
+                          {% elif row_email_url %}
+                          <img src="{{ row_email_url }}" alt="Email" width="28" height="28" style="display: block; width: 28px; height: 28px; border: 0;" />
+                          {% else %}
+                          <img src="cid:row_email" alt="Email" width="28" height="28" style="display: block; width: 28px; height: 28px; border: 0;" />
+                          {% endif %}
                         </td>
-                        <td width="110" valign="middle" style="padding: 10px 0; font-size: 13px; font-weight: 700; color: #334155; border-top: 1px solid #EEF2EB;">
+                        <td width="110" valign="middle" style="padding: 10px 0 10px 8px; font-size: 13px; font-weight: 700; color: #334155; border-top: 1px solid #EEF2EB;">
                           Email Address
                         </td>
                         <td width="16" align="center" valign="middle" style="padding: 10px 0; font-size: 13px; font-weight: 800; color: #64748B; border-top: 1px solid #EEF2EB;">
@@ -184,10 +200,14 @@
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr>
                         <!-- Green Lock Badge -->
-                        <td width="46" valign="top" style="padding-right: 14px;">
-                          <div style="width: 42px; height: 42px; border-radius: 50%; background-color: #EAF7E2; border: 1.5px solid #C8E8B8; text-align: center; line-height: 42px; font-size: 20px; color: #2E7D32;">
-                            &#128274;
-                          </div>
+                        <td width="52" valign="top" style="padding-right: 14px; padding-top: 2px;">
+                          {% if badge_lock_cid %}
+                          <img src="cid:{{ badge_lock_cid }}" alt="Lock" width="46" height="46" style="display: block; width: 46px; height: 46px; border: 0;" />
+                          {% elif badge_lock_url %}
+                          <img src="{{ badge_lock_url }}" alt="Lock" width="46" height="46" style="display: block; width: 46px; height: 46px; border: 0;" />
+                          {% else %}
+                          <img src="cid:badge_lock" alt="Lock" width="46" height="46" style="display: block; width: 46px; height: 46px; border: 0;" />
+                          {% endif %}
                         </td>
                         <!-- Instructions & Button -->
                         <td valign="top">
@@ -222,10 +242,14 @@
                         <td style="padding: 14px 16px;">
                           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                             <tr>
-                              <td width="34" valign="top" style="padding-right: 10px;">
-                                <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #FFFFFF; border: 1.5px solid #C8E8B8; text-align: center; line-height: 28px; font-size: 14px; color: #2E7D32;">
-                                  &#10004;
-                                </div>
+                              <td width="40" valign="middle" style="padding-right: 12px;">
+                                {% if badge_tip_cid %}
+                                <img src="cid:{{ badge_tip_cid }}" alt="Security" width="34" height="34" style="display: block; width: 34px; height: 34px; border: 0;" />
+                                {% elif badge_tip_url %}
+                                <img src="{{ badge_tip_url }}" alt="Security" width="34" height="34" style="display: block; width: 34px; height: 34px; border: 0;" />
+                                {% else %}
+                                <img src="cid:badge_tip" alt="Security" width="34" height="34" style="display: block; width: 34px; height: 34px; border: 0;" />
+                                {% endif %}
                               </td>
                               <td valign="middle">
                                 <p style="margin: 0 0 2px 0; font-size: 13px; font-weight: 800; color: #2E7D32;">
@@ -286,25 +310,33 @@
                     </div>
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td style="padding-right: 5px;">
-                          <div style="width: 26px; height: 26px; border-radius: 50%; background-color: #F1F5F0; border: 1px solid #D5E2D0; text-align: center; line-height: 26px; font-size: 12px; font-weight: 900; color: #2E7D32;">
-                            f
-                          </div>
+                        <td style="padding-right: 6px;">
+                          {% if social_fb_cid %}
+                          <img src="cid:{{ social_fb_cid }}" alt="f" width="26" height="26" style="display: block; width: 26px; height: 26px; border: 0;" />
+                          {% else %}
+                          <img src="cid:social_fb" alt="f" width="26" height="26" style="display: block; width: 26px; height: 26px; border: 0;" />
+                          {% endif %}
                         </td>
-                        <td style="padding-right: 5px;">
-                          <div style="width: 26px; height: 26px; border-radius: 50%; background-color: #F1F5F0; border: 1px solid #D5E2D0; text-align: center; line-height: 26px; font-size: 11px; font-weight: 900; color: #2E7D32;">
-                            in
-                          </div>
+                        <td style="padding-right: 6px;">
+                          {% if social_in_cid %}
+                          <img src="cid:{{ social_in_cid }}" alt="in" width="26" height="26" style="display: block; width: 26px; height: 26px; border: 0;" />
+                          {% else %}
+                          <img src="cid:social_in" alt="in" width="26" height="26" style="display: block; width: 26px; height: 26px; border: 0;" />
+                          {% endif %}
                         </td>
-                        <td style="padding-right: 5px;">
-                          <div style="width: 26px; height: 26px; border-radius: 50%; background-color: #F1F5F0; border: 1px solid #D5E2D0; text-align: center; line-height: 26px; font-size: 12px; font-weight: 900; color: #2E7D32;">
-                            &#128247;
-                          </div>
+                        <td style="padding-right: 6px;">
+                          {% if social_ig_cid %}
+                          <img src="cid:{{ social_ig_cid }}" alt="ig" width="26" height="26" style="display: block; width: 26px; height: 26px; border: 0;" />
+                          {% else %}
+                          <img src="cid:social_ig" alt="ig" width="26" height="26" style="display: block; width: 26px; height: 26px; border: 0;" />
+                          {% endif %}
                         </td>
                         <td>
-                          <div style="width: 26px; height: 26px; border-radius: 50%; background-color: #F1F5F0; border: 1px solid #D5E2D0; text-align: center; line-height: 26px; font-size: 11px; font-weight: 900; color: #2E7D32;">
-                            &#9658;
-                          </div>
+                          {% if social_yt_cid %}
+                          <img src="cid:{{ social_yt_cid }}" alt="yt" width="26" height="26" style="display: block; width: 26px; height: 26px; border: 0;" />
+                          {% else %}
+                          <img src="cid:social_yt" alt="yt" width="26" height="26" style="display: block; width: 26px; height: 26px; border: 0;" />
+                          {% endif %}
                         </td>
                       </tr>
                     </table>
