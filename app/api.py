@@ -2661,11 +2661,119 @@ def register_visionadmin_api_routes(app):
         websites = StoreContext.get_all_websites(include_inactive=True)
         return jsonify({'websites': websites, 'count': len(websites)})
 
+    @app.route('/visionadmin/api/websites', methods=['POST'])
+    def visionadmin_api_create_website():
+        data = request.get_json() or {}
+        code = (data.get('code') or '').strip().lower()
+        name = (data.get('name') or '').strip()
+        domain = (data.get('domain') or '').strip()
+        is_default = 1 if data.get('is_default') else 0
+        status = data.get('status', 'active')
+        user_id = session.get('admin_user_id') or session.get('user_id')
+
+        if not code or not name:
+            return jsonify({'error': 'Website code and name are required.'}), 400
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO websites (code, name, domain, is_default, status, sort_order, created_by)
+                    VALUES (%s, %s, %s, %s, %s, 10, %s)
+                """, (code, name, domain, is_default, status, user_id))
+                conn.commit()
+                new_id = cursor.lastrowid
+                log_activity('create', 'website', new_id, {'code': code, 'name': name}, actor_user_id=user_id)
+                return jsonify({'success': True, 'id': new_id, 'message': 'Website created successfully.'}), 201
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/websites/<int:web_id>', methods=['PUT'])
+    def visionadmin_api_update_website(web_id):
+        data = request.get_json() or {}
+        name = data.get('name')
+        domain = data.get('domain')
+        is_default = 1 if data.get('is_default') else 0
+        status = data.get('status', 'active')
+        user_id = session.get('admin_user_id') or session.get('user_id')
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE websites 
+                    SET name = COALESCE(%s, name), domain = COALESCE(%s, domain),
+                        is_default = %s, status = %s, updated_by = %s
+                    WHERE id = %s
+                """, (name, domain, is_default, status, user_id, web_id))
+                conn.commit()
+                log_activity('update', 'website', web_id, {'name': name, 'domain': domain}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': 'Website updated successfully.'})
+        finally:
+            conn.close()
+
     @app.route('/visionadmin/api/stores', methods=['GET'])
     def visionadmin_api_list_stores():
         website_id = request.args.get('website_id')
         stores = StoreContext.get_all_stores(website_id=website_id, include_inactive=True)
         return jsonify({'stores': stores, 'count': len(stores)})
+
+    @app.route('/visionadmin/api/stores', methods=['POST'])
+    def visionadmin_api_create_store():
+        data = request.get_json() or {}
+        website_id = data.get('website_id') or 1
+        code = (data.get('code') or '').strip().lower()
+        name = data.get('name') or ''
+        emirate = data.get('emirate') or 'Dubai'
+        phone = data.get('phone') or '+971 50 506 9575'
+        email = data.get('email') or ''
+        is_active = 1 if data.get('is_active', 1) else 0
+        user_id = session.get('admin_user_id') or session.get('user_id')
+
+        if not code or not name:
+            return jsonify({'error': 'Store code and name are required.'}), 400
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO stores (website_id, code, name, emirate, phone, email, is_active, sort_order)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, 10)
+                """, (website_id, code, name, emirate, phone, email, is_active))
+                conn.commit()
+                new_id = cursor.lastrowid
+                log_activity('create', 'store', new_id, {'code': code, 'name': name}, actor_user_id=user_id)
+                return jsonify({'success': True, 'id': new_id, 'message': 'Store hub created successfully.'}), 201
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/stores/<int:store_id>', methods=['PUT'])
+    def visionadmin_api_update_store(store_id):
+        data = request.get_json() or {}
+        website_id = data.get('website_id') or 1
+        code = data.get('code')
+        name = data.get('name')
+        emirate = data.get('emirate')
+        phone = data.get('phone')
+        email = data.get('email')
+        is_active = 1 if data.get('is_active', 1) else 0
+        user_id = session.get('admin_user_id') or session.get('user_id')
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE stores 
+                    SET website_id = %s, code = COALESCE(%s, code), name = COALESCE(%s, name),
+                        emirate = COALESCE(%s, emirate), phone = COALESCE(%s, phone),
+                        email = COALESCE(%s, email), is_active = %s
+                    WHERE id = %s
+                """, (website_id, code, name, emirate, phone, email, is_active, store_id))
+                conn.commit()
+                log_activity('update', 'store', store_id, {'code': code, 'name': name}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': 'Store hub updated successfully.'})
+        finally:
+            conn.close()
 
     # =========================================================================
     # 8. DYNAMIC ATTRIBUTES & ATTRIBUTE SETS API

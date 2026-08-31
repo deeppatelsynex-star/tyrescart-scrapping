@@ -346,6 +346,13 @@ def register_visionadmin_routes(app):
     def visionadmin_attributes():
         return render_template('visionadmin/attributes.html', page='attributes')
 
+    @app.route('/visionadmin/stores', methods=['GET'])
+    @app.route('/visionadmin/websites', methods=['GET'])
+    @app.route('/visionadmin/settings/stores', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_stores():
+        return render_template('visionadmin/stores.html', page='stores')
+
     @app.route('/visionadmin/audit-logs', methods=['GET'])
     @app.route('/visionadmin/activity-logs', methods=['GET'])
     @login_required_visionadmin

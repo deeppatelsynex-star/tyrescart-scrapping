@@ -191,6 +191,19 @@
         <div class="space-y-1">
           <span class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-1">Administration</span>
 
+          <!-- Stores & Channels Link -->
+          <a href="/visionadmin/stores" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'stores' %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+            <div class="flex items-center gap-3">
+              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'stores' %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              </div>
+              <span>Stores &amp; Channels</span>
+            </div>
+            {% if page == 'stores' %}
+            <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
+            {% endif %}
+          </a>
+
           <!-- Admin Users Link -->
           <a href="/visionadmin/users" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'users' %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
             <div class="flex items-center gap-3">
