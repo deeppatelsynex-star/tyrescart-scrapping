@@ -116,7 +116,7 @@
                 <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700" x-text="web.code">base</span>
               </td>
               <td class="py-3.5 px-4">
-                <div class="font-extrabold text-[#0E1108]" x-text="web.name">TyresVision UAE</div>
+                <div class="font-extrabold text-[#0E1108]" x-text="formatWebsiteName(web)">TyresVision UAE</div>
                 <div class="text-[10px] text-slate-400" x-text="web.domain">www.tyresvision.com</div>
               </td>
               <td class="py-3.5 px-4 font-bold text-slate-700" x-text="web.domain">www.tyresvision.com</td>
@@ -339,13 +339,29 @@ function storesStudio() {
 
     formatStoreName(rawName) {
       if (!rawName) return '';
+      if (typeof rawName === 'object' && rawName !== null) {
+        return rawName.en || rawName.ar || '';
+      }
       try {
-        if (typeof rawName === 'string' && rawName.startsWith('{')) {
+        if (typeof rawName === 'string' && rawName.trim().startsWith('{')) {
           const parsed = JSON.parse(rawName);
           return parsed.en || parsed.ar || rawName;
         }
       } catch (e) {}
       return rawName;
+    },
+
+    formatWebsiteName(web) {
+      if (!web) return '';
+      const raw = web.name;
+      if (typeof raw === 'object' && raw !== null) return raw.en || raw.ar || web.code;
+      if (typeof raw === 'string' && raw.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(raw);
+          return parsed.en || parsed.ar || raw;
+        } catch (e) {}
+      }
+      return raw || web.code;
     },
 
     openAddWebsiteModal() {

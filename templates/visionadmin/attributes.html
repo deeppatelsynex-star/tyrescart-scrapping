@@ -276,7 +276,7 @@
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showDetailModal = false">
       <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
         <div>
-          <h3 class="text-base font-black text-[#0E1108]" x-text="selectedAttr ? selectedAttr.name_en || selectedAttr.name : 'Attribute Details'"></h3>
+          <h3 class="text-base font-black text-[#0E1108]" x-text="selectedAttr ? formatAttrName(selectedAttr) : 'Attribute Details'"></h3>
           <p class="text-xs font-mono text-slate-400" x-text="selectedAttr ? `Code: ${selectedAttr.code}` : ''"></p>
         </div>
         <button type="button" @click="showDetailModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>

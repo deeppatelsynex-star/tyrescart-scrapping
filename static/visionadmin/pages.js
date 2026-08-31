@@ -181,8 +181,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     tableBody.innerHTML = pages.map(p => {
-      const enTitle = (typeof p.title === 'object' ? p.title?.en : p.title) || 'Untitled';
-      const arTitle = (typeof p.title === 'object' ? p.title?.ar : '') || '';
+      let enTitle = 'Untitled';
+      let arTitle = '';
+      if (typeof p.title === 'object' && p.title !== null) {
+        enTitle = p.title.en || p.title.ar || 'Untitled';
+        arTitle = p.title.ar || '';
+      } else if (typeof p.title === 'string') {
+        if (p.title.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(p.title);
+            enTitle = parsed.en || parsed.ar || p.title;
+            arTitle = parsed.ar || '';
+          } catch (e) {
+            enTitle = p.title;
+          }
+        } else {
+          enTitle = p.title;
+        }
+      }
 
       const statusBadge = p.is_active 
         ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8] inline-flex items-center gap-1.5">

@@ -401,10 +401,56 @@ document.addEventListener('DOMContentLoaded', () => {
         desc: '' 
       };
 
-      const titleEn = typeof sec.section_title === 'object' ? (sec.section_title.en || sec.section_title.ar || '') : (sec.section_title || '');
-      const titleAr = typeof sec.section_title === 'object' ? (sec.section_title.ar || '') : '';
-      const subtitleEn = typeof sec.section_subtitle === 'object' ? (sec.section_subtitle.en || sec.section_subtitle.ar || '') : (sec.section_subtitle || '');
-      const contentEn = typeof sec.content === 'object' ? (sec.content.en || sec.content.ar || '') : (sec.content || '');
+      let titleEn = '';
+      let titleAr = '';
+      if (typeof sec.section_title === 'object' && sec.section_title !== null) {
+        titleEn = sec.section_title.en || sec.section_title.ar || '';
+        titleAr = sec.section_title.ar || '';
+      } else if (typeof sec.section_title === 'string') {
+        if (sec.section_title.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(sec.section_title);
+            titleEn = parsed.en || parsed.ar || sec.section_title;
+            titleAr = parsed.ar || '';
+          } catch (e) {
+            titleEn = sec.section_title;
+          }
+        } else {
+          titleEn = sec.section_title;
+        }
+      }
+
+      let subtitleEn = '';
+      if (typeof sec.section_subtitle === 'object' && sec.section_subtitle !== null) {
+        subtitleEn = sec.section_subtitle.en || sec.section_subtitle.ar || '';
+      } else if (typeof sec.section_subtitle === 'string') {
+        if (sec.section_subtitle.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(sec.section_subtitle);
+            subtitleEn = parsed.en || parsed.ar || sec.section_subtitle;
+          } catch (e) {
+            subtitleEn = sec.section_subtitle;
+          }
+        } else {
+          subtitleEn = sec.section_subtitle;
+        }
+      }
+
+      let contentEn = '';
+      if (typeof sec.content === 'object' && sec.content !== null) {
+        contentEn = sec.content.en || sec.content.ar || '';
+      } else if (typeof sec.content === 'string') {
+        if (sec.content.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(sec.content);
+            contentEn = parsed.en || parsed.ar || sec.content;
+          } catch (e) {
+            contentEn = sec.content;
+          }
+        } else {
+          contentEn = sec.content;
+        }
+      }
 
       const seqNum = String(idx + 1).padStart(2, '0');
       const isFirst = idx === 0;

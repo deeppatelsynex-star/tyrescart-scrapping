@@ -183,8 +183,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     tableBody.innerHTML = blogs.map(b => {
-      const enTitle = (typeof b.title === 'object' ? b.title?.en : b.title) || 'Untitled Article';
-      const arTitle = (typeof b.title === 'object' ? b.title?.ar : '') || '';
+      let enTitle = 'Untitled Article';
+      let arTitle = '';
+      if (typeof b.title === 'object' && b.title !== null) {
+        enTitle = b.title.en || b.title.ar || 'Untitled Article';
+        arTitle = b.title.ar || '';
+      } else if (typeof b.title === 'string') {
+        if (b.title.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(b.title);
+            enTitle = parsed.en || parsed.ar || b.title;
+            arTitle = parsed.ar || '';
+          } catch (e) {
+            enTitle = b.title;
+          }
+        } else {
+          enTitle = b.title;
+        }
+      }
 
       let statusBadge = '';
       if (b.status === 'published') {
