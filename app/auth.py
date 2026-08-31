@@ -165,8 +165,27 @@ def login_required_page(view):
     @functools.wraps(view)
     def wrapped(*args, **kwargs):
         user_id = session.get('admin_user_id') or session.get('user_id')
-        if not user_id:
+        email = session.get('email')
+        if not user_id and not email:
             return redirect(f"/visionadmin/login?next={request.path}")
+
+        u = None
+        if user_id:
+            u = get_user_by_id(user_id)
+        if not u and email:
+            u = get_user_by_email(email)
+            if u:
+                session['admin_user_id'] = u['id']
+                session['user_id'] = u['id']
+                session['name'] = u['name']
+                session['email'] = u['email']
+                session['role'] = u['role']
+                session['is_visionadmin'] = True
+
+        if not u:
+            session.clear()
+            return redirect(f"/visionadmin/login?next={request.path}")
+
         return view(*args, **kwargs)
     return wrapped
 
@@ -176,8 +195,26 @@ def login_required_api(view):
     @functools.wraps(view)
     def wrapped(*args, **kwargs):
         user_id = session.get('admin_user_id') or session.get('user_id')
-        if not user_id:
+        email = session.get('email')
+        if not user_id and not email:
             return jsonify({'error': 'Authentication required. Please sign in to VisionAdmin.'}), 401
+
+        u = None
+        if user_id:
+            u = get_user_by_id(user_id)
+        if not u and email:
+            u = get_user_by_email(email)
+            if u:
+                session['admin_user_id'] = u['id']
+                session['user_id'] = u['id']
+                session['name'] = u['name']
+                session['email'] = u['email']
+                session['role'] = u['role']
+                session['is_visionadmin'] = True
+
+        if not u:
+            return jsonify({'error': 'Authentication required. Please sign in to VisionAdmin.'}), 401
+
         return view(*args, **kwargs)
     return wrapped
 

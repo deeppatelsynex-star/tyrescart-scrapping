@@ -276,11 +276,24 @@ def register_tcsadmin_api_routes(app):
     @app.route('/api/me')
     def api_me():
         user_id = session.get('admin_user_id') or session.get('user_id')
-        if not user_id:
+        email = session.get('email')
+        if not user_id and not email:
             return jsonify({'error': 'Authentication required.'}), 401
 
-        from visionadmin.admin_auth import get_admin_user_by_id, serialize_admin_user
-        admin_u = get_admin_user_by_id(user_id)
+        from visionadmin.admin_auth import get_admin_user_by_id, get_admin_user_by_email, serialize_admin_user
+        admin_u = None
+        if user_id:
+            admin_u = get_admin_user_by_id(user_id)
+        if not admin_u and email:
+            admin_u = get_admin_user_by_email(email)
+            if admin_u:
+                session['admin_user_id'] = admin_u['id']
+                session['user_id'] = admin_u['id']
+                session['name'] = admin_u['name']
+                session['email'] = admin_u['email']
+                session['role'] = admin_u['role']
+                session['is_visionadmin'] = True
+
         if not admin_u:
             return jsonify({'error': 'Authentication required.'}), 401
 

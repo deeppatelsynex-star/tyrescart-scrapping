@@ -46,9 +46,28 @@ def login_required_visionadmin(view):
     @functools.wraps(view)
     def wrapped(*args, **kwargs):
         user_id = session.get('admin_user_id') or session.get('user_id')
-        role = session.get('role')
-        if not user_id:
+        email = session.get('email')
+        if not user_id and not email:
             return redirect(f'/visionadmin/login?next={request.path}')
+
+        admin_u = None
+        if user_id:
+            admin_u = get_admin_user_by_id(user_id)
+        if not admin_u and email:
+            admin_u = get_admin_user_by_email(email)
+            if admin_u:
+                session['admin_user_id'] = admin_u['id']
+                session['user_id'] = admin_u['id']
+                session['name'] = admin_u['name']
+                session['email'] = admin_u['email']
+                session['role'] = admin_u['role']
+                session['is_visionadmin'] = True
+
+        if not admin_u:
+            session.clear()
+            return redirect(f'/visionadmin/login?next={request.path}')
+
+        role = admin_u.get('role') or session.get('role')
         if not is_authorized_admin(role):
             return render_template(
                 '404.html',
