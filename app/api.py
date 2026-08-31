@@ -30,7 +30,7 @@ import time
 import uuid
 import zipfile
 
-from flask import Response, jsonify, request, send_file, send_from_directory, session, stream_with_context
+from flask import Response, jsonify, render_template, request, send_file, send_from_directory, session, stream_with_context
 from openpyxl import Workbook, load_workbook
 import pymysql
 from werkzeug.utils import secure_filename
@@ -2360,7 +2360,9 @@ def register_visionadmin_api_routes(app):
             return jsonify({'error': 'Full name is required.'}), 400
         if not email or not EMAIL_RE.match(email):
             return jsonify({'error': 'A valid email address is required.'}), 400
-        if not password or len(password) < 8:
+        if not password:
+            password = secrets.token_urlsafe(16)
+        elif len(password) < 8:
             return jsonify({'error': 'Password must be at least 8 characters long.'}), 400
         if role not in ('super_admin', 'manager', 'support'):
             return jsonify({'error': 'Invalid role. Choose Super Admin, Manager, or Support.'}), 400
@@ -2374,9 +2376,31 @@ def register_visionadmin_api_routes(app):
         try:
             new_id = create_admin_user(name, email, password, role, is_active)
             created = get_admin_user_by_id(new_id)
+
+            # Send welcome email with login credentials and reset password link
+            try:
+                from mailer import send_email
+                from visionadmin.admin_auth import create_admin_password_reset_token
+                
+                token = create_admin_password_reset_token(email)
+                reset_link = f"{request.host_url.rstrip('/')}/visionadmin/reset-password?token={token}"
+                login_link = f"{request.host_url.rstrip('/')}/visionadmin/login?email={email}"
+                
+                html_body = render_template(
+                    'emails/welcome_user.html',
+                    user_name=name,
+                    user_email=email,
+                    user_role=role,
+                    reset_link=reset_link,
+                    login_link=login_link,
+                )
+                send_email(email, 'Welcome to TyresVision! Your Account Details', html_body)
+            except Exception as mail_err:
+                app.logger.warning(f"Failed to send welcome email to {email}: {mail_err}")
+
             return jsonify({
                 'success': True,
-                'message': f"Administrator '{name}' created successfully.",
+                'message': f"Administrator '{name}' created successfully. Welcome email sent.",
                 'user': serialize_admin_user(created) if created else {}
             }), 201
         except Exception as err:

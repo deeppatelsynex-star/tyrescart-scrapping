@@ -328,13 +328,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = document.getElementById('create-password').value;
       const isActive = document.getElementById('create-is-active').checked;
 
-      if (!name || !email || !password) {
-        createErrText.textContent = 'Please fill in all required fields.';
+      if (!name || !email) {
+        createErrText.textContent = 'Please enter Full Name and Email Address.';
         createErrAlert.classList.remove('hidden');
         return;
       }
 
-      if (password.length < 8) {
+      if (password && password.length < 8) {
         createErrText.textContent = 'Password must be at least 8 characters long.';
         createErrAlert.classList.remove('hidden');
         return;
