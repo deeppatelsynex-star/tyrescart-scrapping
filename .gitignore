@@ -1,18 +1,50 @@
+# Environment & Secrets
 .env
-.claude
+.env.*
 .env.example
+
+# IDE & Editor configurations
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Agent, AI Assist, Skills & Plan files
+.agents/
+.gemini/
+.claude/
+skills-lock.json
+AGENTS.md
+PLAN.md
 claude.md
 promp.md
+prompt.md
+*.prompt.md
+
+# Internal setup & design markdown docs
+TECH_STACK.md
+PLESK_WINDOWS_SETUP.md
 TESTCASES.md
-scrapers/README.md
 TEST_FLOW.md
+scrapers/README.md
+templates/Client/*.md
+
+# Python cache & bytecode
 __pycache__/
 *.pyc
-tmp/
-*.xlsx
-*.log
-.vscode/
+*.pyo
+*.pyd
+.pytest_cache/
+venv/
+env/
+.venv/
+
+# Scratch, logs, outputs & temp files
 scratch/
-AGENTS.md
+tmp/
+*.log
+*.xlsx
+
+# Postman collections
 *.postman_collection.json
-*.postman_environment.json
+*.postman_environment.json
