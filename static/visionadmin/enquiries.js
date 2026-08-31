@@ -107,6 +107,11 @@
         headers: { 'Accept': 'application/json' }
       });
 
+      if (resp.status === 401 || resp.status === 403) {
+        window.location.href = `/visionadmin/login?next=${encodeURIComponent(window.location.pathname)}`;
+        return;
+      }
+
       if (!resp.ok) {
         let errMsg = `Server returned status ${resp.status}`;
         try {

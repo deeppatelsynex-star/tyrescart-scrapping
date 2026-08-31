@@ -144,6 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const statusParam = (currentFilter !== 'all' && currentFilter !== 'trash') ? currentFilter : '';
       const url = `/visionadmin/api/blogs?status=${statusParam}&trash=${isTrash ? '1' : '0'}&q=${encodeURIComponent(currentSearch)}`;
       const res = await fetch(url);
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = `/visionadmin/login?next=${encodeURIComponent(window.location.pathname)}`;
+        return;
+      }
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || 'Failed to load blogs');

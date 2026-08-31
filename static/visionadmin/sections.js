@@ -214,6 +214,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadAvailablePages() {
     try {
       const resp = await fetch('/visionadmin/api/pages?status=all');
+      if (resp.status === 401 || resp.status === 403) {
+        window.location.href = `/visionadmin/login?next=${encodeURIComponent(window.location.pathname)}`;
+        return;
+      }
       const data = await resp.json();
       const pages = data.pages || [];
 
@@ -254,6 +258,10 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       updateTargetPageUI(currentPageSlug);
       const resp = await fetch(`/visionadmin/api/sections?page=${encodeURIComponent(currentPageSlug)}`);
+      if (resp.status === 401 || resp.status === 403) {
+        window.location.href = `/visionadmin/login?next=${encodeURIComponent(window.location.pathname)}`;
+        return;
+      }
       const data = await resp.json();
       allSections = data.sections || [];
       renderSectionsList();

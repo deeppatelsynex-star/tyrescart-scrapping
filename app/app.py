@@ -51,11 +51,12 @@ app.config['CKEDITOR_ENABLE_CODESNIPPET'] = True
 app.config['CKEDITOR_CODE_THEME'] = 'monokai_sublime'
 ckeditor = CKEditor(app)
 
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-only-insecure-key-set-FLASK_SECRET_KEY-in-production')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'tyresvision-cms-secret-key-production-89f4b1e7c2a5d3e6')
 app.permanent_session_lifetime = timedelta(days=7)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+app.config['SESSION_COOKIE_PATH'] = '/'
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7 days browser cache for static files
 
 

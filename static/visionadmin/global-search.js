@@ -143,6 +143,10 @@
 
     try {
       const res = await fetch(`/visionadmin/api/global-search?q=${encodeURIComponent(query)}`);
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = `/visionadmin/login?next=${encodeURIComponent(window.location.pathname)}`;
+        return;
+      }
       const data = await res.json();
 
       // Guard against race conditions if query changed while fetching

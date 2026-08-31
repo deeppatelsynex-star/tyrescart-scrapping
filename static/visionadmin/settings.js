@@ -1,4 +1,4 @@
-﻿// static/visionadmin/settings.js - Reviewer Settings Controller
+// static/visionadmin/settings.js - Reviewer Settings Controller
 
 document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('reviewer-settings-form');
@@ -87,6 +87,10 @@ document.addEventListener('DOMContentLoaded', function() {
   async function loadSettings() {
     try {
       const res = await fetch('/visionadmin/api/settings/reviewer');
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = `/visionadmin/login?next=${encodeURIComponent(window.location.pathname)}`;
+        return;
+      }
       if (!res.ok) throw new Error('Failed to load settings');
       const data = await res.json();
       if (data.success && data.settings) {
