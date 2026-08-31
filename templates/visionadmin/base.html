@@ -198,40 +198,6 @@
           </div>
         </a>
         {% endif %}
-
-        <!-- Section: Scraper Engine & Automation -->
-        <div class="pt-3 pb-1 px-3.5 flex items-center justify-between text-[11px] font-black uppercase text-slate-400 tracking-wider">
-          <span>Scraper Tools</span>
-        </div>
-
-        <!-- Scraper Engine & Files Link -->
-        <a href="/tcsadmin/files" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page in ['files', 'scraper', 'scraping'] %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
-          <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['files', 'scraper', 'scraping'] %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            </div>
-            <span>Scraper Dashboard</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Runner</span>
-            {% if page in ['files', 'scraper', 'scraping'] %}
-            <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
-            {% endif %}
-          </div>
-        </a>
-
-        <!-- Scraper Runs & Reports Link -->
-        <a href="/tcsadmin/reports" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'reports' %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
-          <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'reports' %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            </div>
-            <span>Scraper Reports</span>
-          </div>
-          {% if page == 'reports' %}
-          <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
-          {% endif %}
-        </a>
       </div>
     </div>
 
