@@ -2712,6 +2712,26 @@ def register_visionadmin_api_routes(app):
         finally:
             conn.close()
 
+    @app.route('/visionadmin/api/websites/<int:web_id>', methods=['DELETE'])
+    def visionadmin_api_delete_website(web_id):
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM websites WHERE id = %s AND deleted_at IS NULL", (web_id,))
+                web = cursor.fetchone()
+                if not web:
+                    return jsonify({'error': 'Website not found.'}), 404
+                if web.get('is_default') == 1:
+                    return jsonify({'error': 'Cannot delete default primary website.'}), 400
+
+                cursor.execute("UPDATE websites SET deleted_at = NOW(), deleted_by = %s WHERE id = %s", (user_id, web_id))
+                conn.commit()
+                log_activity('delete', 'website', web_id, web, {'deleted': True}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': f"Website '{web['name']}' moved to trash."})
+        finally:
+            conn.close()
+
     @app.route('/visionadmin/api/stores', methods=['GET'])
     def visionadmin_api_list_stores():
         website_id = request.args.get('website_id')
@@ -2772,6 +2792,24 @@ def register_visionadmin_api_routes(app):
                 conn.commit()
                 log_activity('update', 'store', store_id, {'code': code, 'name': name}, actor_user_id=user_id)
                 return jsonify({'success': True, 'message': 'Store hub updated successfully.'})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/stores/<int:store_id>', methods=['DELETE'])
+    def visionadmin_api_delete_store(store_id):
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM stores WHERE id = %s AND deleted_at IS NULL", (store_id,))
+                store = cursor.fetchone()
+                if not store:
+                    return jsonify({'error': 'Store hub not found.'}), 404
+
+                cursor.execute("UPDATE stores SET deleted_at = NOW(), deleted_by = %s WHERE id = %s", (user_id, store_id))
+                conn.commit()
+                log_activity('delete', 'store', store_id, store, {'deleted': True}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': f"Store hub '{store['code']}' moved to trash."})
         finally:
             conn.close()
 
