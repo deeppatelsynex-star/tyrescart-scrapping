@@ -1,0 +1,595 @@
+{
+  "info": {
+    "name": "VisionAdmin Master API Suite (Full CMS, Scopes, Catalog & RBAC)",
+    "_postman_id": "visionadmin-master-suite-full-v1",
+    "description": "Complete, end-to-end API collection for all VisionAdmin control plane modules: Profile, Uploads, Pages, Sections, Blogs, Categories, Enquiries, Staff Users, Reviewer Settings, Global Search, Audit Trail, Scopes, and Dynamic Attributes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5049",
+      "type": "string"
+    },
+    {
+      "key": "websiteId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "storeId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication & Admin Profile",
+      "item": [
+        {
+          "name": "1.1 Get Current Admin Profile (/me)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "me"]
+            }
+          }
+        },
+        {
+          "name": "1.2 Update Admin Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Deep Patel\",\n  \"email\": \"deeppatel.synex@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "profile"]
+            }
+          }
+        },
+        {
+          "name": "1.3 Change Admin Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"OldPassword123!\",\n  \"new_password\": \"NewSecurePass2026!\",\n  \"confirm_password\": \"NewSecurePass2026!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "change-password"]
+            }
+          }
+        },
+        {
+          "name": "1.4 Delete Profile Avatar",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/profile/avatar",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "profile", "avatar"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Multi-Store Scopes & Global Search",
+      "item": [
+        {
+          "name": "2.1 Global Search Autocomplete (Ctrl + K)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/global-search?q=buy",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "global-search"],
+              "query": [{ "key": "q", "value": "buy" }]
+            }
+          }
+        },
+        {
+          "name": "2.2 Get Scope Hierarchy Tree",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/scopes/tree",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "scopes", "tree"]
+            }
+          }
+        },
+        {
+          "name": "2.3 Switch Active Scope",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scope_type\": \"website\",\n  \"scope_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/scopes/switch",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "scopes", "switch"]
+            }
+          }
+        },
+        {
+          "name": "2.4 API Version Manifest",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/version",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "version"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Dynamic Page Sections Builder",
+      "item": [
+        {
+          "name": "3.1 List Page Sections",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/sections?page=home",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "sections"],
+              "query": [{ "key": "page", "value": "home" }]
+            }
+          }
+        },
+        {
+          "name": "3.2 Get Single Section by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/sections/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "sections", "1"]
+            }
+          }
+        },
+        {
+          "name": "3.3 Create New Section",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"page_slug\": \"home\",\n  \"section_type\": \"faq\",\n  \"section_title_en\": \"Frequently Asked Questions\",\n  \"section_title_ar\": \"الأسئلة الشائعة\",\n  \"section_subtitle_en\": \"Everything you need to know\",\n  \"section_subtitle_ar\": \"كل ما تحتاج لمعرفته\",\n  \"section_data\": [\n    {\n      \"q_en\": \"How long does mobile fitting take?\",\n      \"q_ar\": \"كم يستغرق تركيب الإطارات المتنقل؟\",\n      \"a_en\": \"30-45 minutes for 4 tyres.\",\n      \"a_ar\": \"من 30 إلى 45 دقيقة لـ 4 إطارات.\"\n    }\n  ],\n  \"sort_order\": 8,\n  \"is_active\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/sections",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "sections"]
+            }
+          }
+        },
+        {
+          "name": "3.4 Update Section",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"section_title_en\": \"Updated FAQ Title\",\n  \"is_active\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/sections/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "sections", "1"]
+            }
+          }
+        },
+        {
+          "name": "3.5 Batch Reorder Sections",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"page_slug\": \"home\",\n  \"order\": [1, 2, 3, 4, 5, 6, 7, 8, 9]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/sections/reorder",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "sections", "reorder"]
+            }
+          }
+        },
+        {
+          "name": "3.6 Delete Section",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/sections/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "sections", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. CMS Static Pages",
+      "item": [
+        {
+          "name": "4.1 List All Static Pages",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/pages?status=all",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "pages"],
+              "query": [{ "key": "status", "value": "all" }]
+            }
+          }
+        },
+        {
+          "name": "4.2 Get Static Page by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/pages/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "pages", "1"]
+            }
+          }
+        },
+        {
+          "name": "4.3 Create Static Page",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"warranty-policy\",\n  \"title_en\": \"Official Warranty Policy\",\n  \"title_ar\": \"سياسة الضمان الرسمية\",\n  \"content_en\": \"<p>Full 1-year guarantee on manufacturing defects.</p>\",\n  \"content_ar\": \"<p>ضمان شامل لمدة عام ضد عيوب التصنيع.</p>\",\n  \"meta_title_en\": \"Warranty Policy | TyresVision\",\n  \"meta_desc_en\": \"Official tyre warranty terms.\",\n  \"is_active\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/pages",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "pages"]
+            }
+          }
+        },
+        {
+          "name": "4.4 Update Static Page",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title_en\": \"Updated Warranty Policy Title\",\n  \"is_active\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/pages/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "pages", "1"]
+            }
+          }
+        },
+        {
+          "name": "4.5 Soft-Delete Static Page",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/pages/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "pages", "1"]
+            }
+          }
+        },
+        {
+          "name": "4.6 Restore Static Page",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/pages/1/restore",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "pages", "1", "restore"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Blogs & Knowledge Hub",
+      "item": [
+        {
+          "name": "5.1 List All Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "categories"]
+            }
+          }
+        },
+        {
+          "name": "5.2 List All Blogs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/blogs?status=all",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "blogs"],
+              "query": [{ "key": "status", "value": "all" }]
+            }
+          }
+        },
+        {
+          "name": "5.3 Create New Blog",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"uae-summer-tyre-guide\",\n  \"title_en\": \"UAE Summer Tyre Maintenance Guide\",\n  \"title_ar\": \"دليل صيانة الإطارات في صيف الإمارات\",\n  \"category\": \"Maintenance\",\n  \"short_description_en\": \"Tips to maintain tyre pressure in extreme Dubai heat.\",\n  \"content_en\": \"<p>Tyre pressure increases in summer heat...</p>\",\n  \"reviewer_id\": 1,\n  \"status\": \"published\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/blogs",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "blogs"]
+            }
+          }
+        },
+        {
+          "name": "5.4 Update Blog",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"published\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/blogs/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "blogs", "1"]
+            }
+          }
+        },
+        {
+          "name": "5.5 Delete Blog",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/blogs/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "blogs", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Dynamic Attributes & Sets",
+      "item": [
+        {
+          "name": "6.1 List Dynamic Attributes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/attributes",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "attributes"]
+            }
+          }
+        },
+        {
+          "name": "6.2 Create Dynamic Attribute",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"wet_grip\",\n  \"name_en\": \"Wet Grip Rating\",\n  \"name_ar\": \"فئة التماسك على الأسطح الرطبة\",\n  \"type\": \"select\",\n  \"scope\": \"global\",\n  \"is_filterable\": 1,\n  \"is_searchable\": 1,\n  \"options\": [\n    { \"value\": \"A\", \"label_en\": \"Class A\", \"label_ar\": \"الفئة أ\", \"sort_order\": 1 },\n    { \"value\": \"B\", \"label_en\": \"Class B\", \"label_ar\": \"الفئة ب\", \"sort_order\": 2 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/attributes",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "attributes"]
+            }
+          }
+        },
+        {
+          "name": "6.3 List Attribute Sets",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/attribute-sets",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "attribute-sets"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Customer Enquiries & WhatsApp Leads",
+      "item": [
+        {
+          "name": "7.1 List All Enquiries",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/enquiries?status=all",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "enquiries"],
+              "query": [{ "key": "status", "value": "all" }]
+            }
+          }
+        },
+        {
+          "name": "7.2 Update Enquiry Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"contacted\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/enquiries/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "enquiries", "1", "status"]
+            }
+          }
+        },
+        {
+          "name": "7.3 Add Staff Note to Enquiry",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Customer requested Michelin Pilot Sport 4 in 245/40 R18. Quote sent via WhatsApp.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/enquiries/1/notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "enquiries", "1", "notes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Staff Governance & RBAC",
+      "item": [
+        {
+          "name": "8.1 List All Admin Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/admin-users",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "admin-users"]
+            }
+          }
+        },
+        {
+          "name": "8.2 Create New Staff User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Support Agent\",\n  \"email\": \"support@tyresvision.com\",\n  \"password\": \"SecurePass123!\",\n  \"role\": \"support\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/admin-users",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "admin-users"]
+            }
+          }
+        },
+        {
+          "name": "8.3 Toggle User Active Status",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/admin-users/21/toggle-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "admin-users", "21", "toggle-status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Activity & Audit Logs",
+      "item": [
+        {
+          "name": "9.1 Fetch Audit Activity Logs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/audit-logs?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "audit-logs"],
+              "query": [{ "key": "limit", "value": "50" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Settings & Expert Reviewer Config",
+      "item": [
+        {
+          "name": "10.1 Get Reviewer Profile Settings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/settings/reviewer",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "settings", "reviewer"]
+            }
+          }
+        },
+        {
+          "name": "10.2 Save Reviewer Profile Settings",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tariq Al-Hashemi\",\n  \"designation\": \"Senior Automotive Engineer & Tyre Specialist\",\n  \"experience_years\": 14,\n  \"bio\": \"14+ years evaluating tyre performance in Middle East climate.\",\n  \"is_verified\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/settings/reviewer",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "settings", "reviewer"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
