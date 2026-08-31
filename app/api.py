@@ -55,6 +55,9 @@ from models.blog import Blog
 from models.page import Page
 from models.page_section import PageSection
 from siteapp.clientroute import _get_locale
+from services.audit_service import log_activity, get_activity_logs, get_current_admin_user_id
+from services.store_context import StoreContext
+from services.attribute_service import AttributeService
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 # This file is app/api.py, so the project root (where scrapers/ and tmp/
@@ -2572,6 +2575,216 @@ def register_visionadmin_api_routes(app):
             'message': f"Administrator account '{target['name']}' {'activated' if new_status else 'disabled'}."
         })
 
+    # =========================================================================
+    # 7. SCOPE SWITCHER & MULTI-STORE API
+    # =========================================================================
+
+    @app.route('/visionadmin/api/scopes/tree', methods=['GET'])
+    def visionadmin_api_scope_tree():
+        """Returns full hierarchy tree for Topbar Scope Switcher (Global -> Websites -> Stores -> Views)."""
+        tree = StoreContext.get_scope_tree()
+        active_scope = {
+            'website_id': session.get('admin_active_website_id'),
+            'store_id': session.get('admin_active_store_id')
+        }
+        return jsonify({
+            'success': True,
+            'tree': tree,
+            'active_scope': active_scope
+        })
+
+    @app.route('/visionadmin/api/scopes/switch', methods=['POST'])
+    def visionadmin_api_scope_switch():
+        """Switches active Website and Store in admin session."""
+        data = request.get_json() or {}
+        website_id = data.get('website_id')
+        store_id = data.get('store_id')
+
+        if website_id in (None, '', 'global'):
+            session.pop('admin_active_website_id', None)
+            session.pop('admin_active_store_id', None)
+        else:
+            session['admin_active_website_id'] = int(website_id) if str(website_id).isdigit() else None
+            session['admin_active_store_id'] = int(store_id) if store_id and str(store_id).isdigit() else None
+
+        return jsonify({
+            'success': True,
+            'website_id': session.get('admin_active_website_id'),
+            'store_id': session.get('admin_active_store_id'),
+            'message': 'Admin scope updated successfully.'
+        })
+
+    @app.route('/visionadmin/api/websites', methods=['GET'])
+    def visionadmin_api_list_websites():
+        websites = StoreContext.get_all_websites(include_inactive=True)
+        return jsonify({'websites': websites, 'count': len(websites)})
+
+    @app.route('/visionadmin/api/stores', methods=['GET'])
+    def visionadmin_api_list_stores():
+        website_id = request.args.get('website_id')
+        stores = StoreContext.get_all_stores(website_id=website_id, include_inactive=True)
+        return jsonify({'stores': stores, 'count': len(stores)})
+
+    # =========================================================================
+    # 8. DYNAMIC ATTRIBUTES & ATTRIBUTE SETS API
+    # =========================================================================
+
+    @app.route('/visionadmin/api/attributes', methods=['GET'])
+    def visionadmin_api_list_attributes():
+        """Returns all attributes with options and user attribution."""
+        attrs = AttributeService.get_all_attributes(include_inactive=True)
+        return jsonify({'attributes': attrs, 'count': len(attrs)})
+
+    @app.route('/visionadmin/api/attributes/<int:attr_id>', methods=['GET'])
+    def visionadmin_api_get_attribute(attr_id):
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM attributes WHERE id = %s AND deleted_at IS NULL", (attr_id,))
+                attr = cursor.fetchone()
+                if not attr:
+                    return jsonify({'error': 'Attribute not found.'}), 404
+                if attr.get('name') and isinstance(attr['name'], str):
+                    try:
+                        attr['name'] = json.loads(attr['name'])
+                    except Exception:
+                        pass
+                if attr.get('validation_rules') and isinstance(attr['validation_rules'], str):
+                    try:
+                        attr['validation_rules'] = json.loads(attr['validation_rules'])
+                    except Exception:
+                        pass
+                attr['options'] = AttributeService.get_attribute_options(attr_id)
+                return jsonify({'attribute': attr})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/attributes', methods=['POST'])
+    def visionadmin_api_create_attribute():
+        """Creates a new dynamic attribute with options and audit tracking."""
+        data = request.get_json() or {}
+        code = (data.get('code') or '').strip().lower()
+        name = data.get('name') or {}
+        attr_type = data.get('type') or 'text'
+        scope = data.get('scope') or 'global'
+        unit = data.get('unit')
+        user_id = get_current_admin_user_id()
+
+        if not code:
+            return jsonify({'error': 'Attribute code is required.'}), 400
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT id FROM attributes WHERE code = %s AND deleted_at IS NULL", (code,))
+                if cursor.fetchone():
+                    return jsonify({'error': f"Attribute code '{code}' already exists."}), 400
+
+                cursor.execute("""
+                    INSERT INTO attributes (
+                        code, name, type, scope, unit, default_value, validation_rules,
+                        is_required, is_unique, is_filterable, is_searchable, is_comparable,
+                        is_visible_on_front, is_system, sort_order, created_by, updated_by
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    code,
+                    json.dumps(name) if isinstance(name, dict) else str(name),
+                    attr_type,
+                    scope,
+                    unit,
+                    data.get('default_value'),
+                    json.dumps(data.get('validation_rules')) if data.get('validation_rules') else None,
+                    1 if data.get('is_required') else 0,
+                    1 if data.get('is_unique') else 0,
+                    1 if data.get('is_filterable', True) else 0,
+                    1 if data.get('is_searchable', True) else 0,
+                    1 if data.get('is_comparable', True) else 0,
+                    1 if data.get('is_visible_on_front', True) else 0,
+                    0,
+                    int(data.get('sort_order', 0)),
+                    user_id,
+                    user_id
+                ))
+                attr_id = cursor.lastrowid
+
+                # Insert options if select/multiselect
+                options = data.get('options') or []
+                for idx, opt in enumerate(options, start=1):
+                    val = opt.get('value') if isinstance(opt, dict) else str(opt)
+                    lbl = opt.get('label') if isinstance(opt, dict) else {'en': str(opt), 'ar': str(opt)}
+                    cursor.execute("""
+                        INSERT INTO attribute_options (attribute_id, value, label, sort_order, created_by, updated_by)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (attr_id, val, json.dumps(lbl) if isinstance(lbl, dict) else str(lbl), idx, user_id, user_id))
+
+                conn.commit()
+
+                log_activity('create', 'attribute', attr_id, None, data, user_id=user_id)
+                return jsonify({'success': True, 'id': attr_id, 'message': f"Attribute '{code}' created successfully."}), 201
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/attribute-sets', methods=['GET'])
+    def visionadmin_api_list_attribute_sets():
+        sets = AttributeService.get_attribute_sets()
+        return jsonify({'attribute_sets': sets, 'count': len(sets)})
+
+    @app.route('/visionadmin/api/attribute-sets/<int:set_id>', methods=['GET'])
+    def visionadmin_api_get_attribute_set_detail(set_id):
+        full_set = AttributeService.get_attribute_set_with_groups(set_id)
+        if not full_set:
+            return jsonify({'error': 'Attribute set not found.'}), 404
+        return jsonify({'attribute_set': full_set})
+
+    @app.route('/visionadmin/api/catalog/form-schema/<int:set_id>', methods=['GET'])
+    def visionadmin_api_get_product_form_schema(set_id):
+        """Returns reactive Alpine.js form schema with scoped values & fallback flags."""
+        product_id = request.args.get('product_id')
+        website_id = request.args.get('website_id') or session.get('admin_active_website_id')
+        store_id = request.args.get('store_id') or session.get('admin_active_store_id')
+
+        prod_id = int(product_id) if product_id and str(product_id).isdigit() else None
+        web_id = int(website_id) if website_id and str(website_id).isdigit() else None
+        st_id = int(store_id) if store_id and str(store_id).isdigit() else None
+
+        schema = AttributeService.get_dynamic_form_schema(set_id, prod_id, web_id, st_id)
+        return jsonify({'schema': schema})
+
+    # =========================================================================
+    # 9. AUDIT ACTIVITY LOGS API
+    # =========================================================================
+
+    @app.route('/visionadmin/api/audit-logs', methods=['GET'])
+    def visionadmin_api_list_audit_logs():
+        """Returns real-time activity log stream for staff audit grid."""
+        entity_type = request.args.get('entity_type')
+        entity_id = request.args.get('entity_id')
+        user_id = request.args.get('user_id')
+        action = request.args.get('action')
+        website_id = request.args.get('website_id')
+        store_id = request.args.get('store_id')
+
+        try:
+            limit = min(100, max(1, int(request.args.get('limit', 50))))
+            page = max(1, int(request.args.get('page', 1)))
+            offset = (page - 1) * limit
+        except (ValueError, TypeError):
+            limit = 50
+            offset = 0
+
+        logs = get_activity_logs(
+            entity_type=entity_type,
+            entity_id=int(entity_id) if entity_id and str(entity_id).isdigit() else None,
+            user_id=int(user_id) if user_id and str(user_id).isdigit() else None,
+            action=action,
+            website_id=int(website_id) if website_id and str(website_id).isdigit() else None,
+            store_id=int(store_id) if store_id and str(store_id).isdigit() else None,
+            limit=limit,
+            offset=offset
+        )
+        return jsonify({'logs': logs, 'count': len(logs), 'page': page, 'limit': limit})
+
 
 def register_client_api_routes(app):
     """Registers all public, un-prefixed /api/* endpoints for the client storefront."""
@@ -2886,6 +3099,218 @@ def register_client_api_routes(app):
             }), 500
         finally:
             conn.close()
+
+    # =========================================================================
+    # 4. SCOPED FACETED SEARCH & CATALOG API (/api/v1/catalog/search)
+    # =========================================================================
+
+    @app.route('/api/catalog/search', methods=['GET'])
+    @app.route('/api/v1/catalog/search', methods=['GET'])
+    def api_catalog_search():
+        """
+        Public Scoped Faceted Search API:
+        Resolves Website/Store scope, filters products by size & attributes,
+        and aggregates real-time filter counts for faceted navigation sidebar.
+        """
+        ctx = StoreContext.resolve_current_context()
+        website = ctx.get('website') or {'id': 1, 'name': 'TyresVision UAE'}
+        store = ctx.get('store') or {'id': 1, 'name': 'Dubai Retail Hub'}
+        locale = request.args.get('locale') or _get_locale()
+
+        # Query filters
+        width = request.args.get('width')
+        aspect_ratio = request.args.get('aspect_ratio') or request.args.get('profile')
+        rim_size = request.args.get('rim_size') or request.args.get('rim')
+        speed_index = request.args.get('speed_index')
+        brand_filter = request.args.get('brand')
+        brand_id = request.args.get('brand_id')
+        run_flat = request.args.get('run_flat')
+        min_price = request.args.get('min_price')
+        max_price = request.args.get('max_price')
+        sort = request.args.get('sort') or 'popularity'
+
+        try:
+            page = max(1, int(request.args.get('page', 1)))
+            per_page = min(48, max(6, int(request.args.get('per_page', request.args.get('limit', 12)))))
+        except (ValueError, TypeError):
+            page = 1
+            per_page = 12
+
+        offset = (page - 1) * per_page
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Build base where conditions
+                where_clauses = ["p.deleted_at IS NULL", "p.status = 'active'"]
+                params = []
+
+                if brand_id and str(brand_id).isdigit():
+                    where_clauses.append("p.brand_id = %s")
+                    params.append(int(brand_id))
+                elif brand_filter:
+                    where_clauses.append("(b.slug = %s OR b.name = %s)")
+                    params.extend([brand_filter.lower(), brand_filter])
+
+                if min_price and str(min_price).replace('.', '', 1).isdigit():
+                    where_clauses.append("COALESCE(pp.special_price, pp.regular_price, p.price) >= %s")
+                    params.append(float(min_price))
+
+                if max_price and str(max_price).replace('.', '', 1).isdigit():
+                    where_clauses.append("COALESCE(pp.special_price, pp.regular_price, p.price) <= %s")
+                    params.append(float(max_price))
+
+                where_sql = " AND ".join(where_clauses)
+
+                # Sorting clause
+                order_sql = "p.sort_order ASC, p.id DESC"
+                if sort == 'price_asc':
+                    order_sql = "COALESCE(pp.special_price, pp.regular_price, p.price) ASC"
+                elif sort == 'price_desc':
+                    order_sql = "COALESCE(pp.special_price, pp.regular_price, p.price) DESC"
+                elif sort == 'newest':
+                    order_sql = "p.created_at DESC"
+
+                # Query Products with Store Scoped Prices
+                query = f"""
+                    SELECT 
+                        p.id, p.sku, p.name, p.slug, p.price AS base_price,
+                        p.tire_size_label, p.tire_speed_rating, p.tire_load_index,
+                        p.tire_pattern, p.run_flat, p.image_path, p.brand_id,
+                        b.name AS brand_name, b.slug AS brand_slug, b.logo AS brand_logo,
+                        pp.regular_price AS store_regular_price, pp.special_price AS store_special_price,
+                        COALESCE(inv.qty, p.stock_qty, 0) AS stock_qty,
+                        COALESCE(inv.is_in_stock, 1) AS is_in_stock
+                    FROM products p
+                    LEFT JOIN brands b ON p.brand_id = b.id
+                    LEFT JOIN product_prices pp ON pp.product_id = p.id AND (pp.store_id = %s OR pp.website_id = %s)
+                    LEFT JOIN product_inventories inv ON inv.product_id = p.id AND inv.store_id = %s
+                    WHERE {where_sql}
+                    ORDER BY {order_sql}
+                    LIMIT %s OFFSET %s
+                """
+                query_params = [store.get('id', 1), website.get('id', 1), store.get('id', 1)] + params + [per_page, offset]
+                cursor.execute(query, query_params)
+                rows = cursor.fetchall()
+
+                # Count total
+                count_query = f"""
+                    SELECT COUNT(DISTINCT p.id) AS total
+                    FROM products p
+                    LEFT JOIN brands b ON p.brand_id = b.id
+                    LEFT JOIN product_prices pp ON pp.product_id = p.id AND (pp.store_id = %s OR pp.website_id = %s)
+                    WHERE {where_sql}
+                """
+                cursor.execute(count_query, [store.get('id', 1), website.get('id', 1)] + params)
+                total_row = cursor.fetchone()
+                total_products = total_row['total'] if total_row else 0
+
+                products_list = []
+                for r in rows:
+                    name_dict = r.get('name')
+                    if isinstance(name_dict, str):
+                        try:
+                            name_dict = json.loads(name_dict)
+                        except Exception:
+                            pass
+                    prod_name = name_dict.get(locale) or name_dict.get('en') if isinstance(name_dict, dict) else (r.get('name') or r.get('sku'))
+
+                    reg_price = float(r.get('store_regular_price') or r.get('base_price') or 0.0)
+                    spec_price = float(r.get('store_special_price')) if r.get('store_special_price') is not None else None
+                    effective_price = spec_price if spec_price is not None else reg_price
+
+                    # Get resolved scoped attributes
+                    scoped_attrs = AttributeService.get_product_scoped_attributes(r['id'], website.get('id'), store.get('id'))
+
+                    products_list.append({
+                        'id': r['id'],
+                        'sku': r['sku'],
+                        'name': prod_name,
+                        'slug': r.get('slug'),
+                        'brand': {
+                            'id': r.get('brand_id'),
+                            'name': r.get('brand_name'),
+                            'slug': r.get('brand_slug'),
+                            'logo': r.get('brand_logo')
+                        },
+                        'price': effective_price,
+                        'regular_price': reg_price,
+                        'special_price': spec_price,
+                        'in_stock': bool(r.get('is_in_stock', True)),
+                        'stock_qty': int(r.get('stock_qty', 0)),
+                        'image': r.get('image_path'),
+                        'size_label': r.get('tire_size_label'),
+                        'attributes': {
+                            k: v.get('value') for k, v in scoped_attrs.items()
+                        }
+                    })
+
+                # Aggregate Facets
+                cursor.execute("""
+                    SELECT b.id, b.name, b.slug, COUNT(p.id) AS count
+                    FROM brands b
+                    JOIN products p ON p.brand_id = b.id
+                    WHERE p.deleted_at IS NULL AND p.status = 'active'
+                    GROUP BY b.id, b.name, b.slug
+                    ORDER BY count DESC LIMIT 15
+                """)
+                brand_facets = cursor.fetchall()
+
+                # Dynamic Option Facets for Rim Size & Speed Index
+                cursor.execute("""
+                    SELECT opt.value, COUNT(DISTINCT pav.product_id) AS count
+                    FROM attribute_options opt
+                    JOIN attributes a ON opt.attribute_id = a.id
+                    JOIN product_attribute_values pav ON pav.attribute_id = a.id AND pav.value_text = opt.value
+                    WHERE a.code = 'rim_size'
+                    GROUP BY opt.value
+                    ORDER BY CAST(opt.value AS UNSIGNED) ASC
+                """)
+                rim_facets = cursor.fetchall()
+
+                cursor.execute("""
+                    SELECT opt.value, COUNT(DISTINCT pav.product_id) AS count
+                    FROM attribute_options opt
+                    JOIN attributes a ON opt.attribute_id = a.id
+                    JOIN product_attribute_values pav ON pav.attribute_id = a.id AND pav.value_text = opt.value
+                    WHERE a.code = 'speed_index'
+                    GROUP BY opt.value, opt.sort_order
+                    ORDER BY opt.sort_order ASC
+                """)
+                speed_facets = cursor.fetchall()
+
+                facets = {
+                    'brands': brand_facets,
+                    'rim_sizes': rim_facets,
+                    'speed_indices': speed_facets
+                }
+
+                num_pages = max(1, math.ceil(total_products / per_page))
+                return jsonify({
+                    'success': True,
+                    'context': {
+                        'website_id': website.get('id'),
+                        'website_name': website.get('name'),
+                        'store_id': store.get('id'),
+                        'store_name': store.get('name'),
+                        'locale': locale,
+                        'currency': 'AED'
+                    },
+                    'products': products_list,
+                    'total': total_products,
+                    'page': page,
+                    'num_pages': num_pages,
+                    'per_page': per_page,
+                    'facets': facets
+                })
+        finally:
+            conn.close()
+
+    @app.route('/api/catalog/facets', methods=['GET'])
+    @app.route('/api/v1/catalog/facets', methods=['GET'])
+    def api_catalog_facets():
+        """Returns pre-computed aggregated facet counts for filter sidebar."""
+        return api_catalog_search()
 
 
 def register_api_routes(app):
