@@ -210,8 +210,8 @@
   </div>
 
   <!-- WORKING ADD / EDIT WEBSITE MODAL -->
-  <div x-show="showWebsiteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" x-cloak>
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95">
+  <div x-show="showWebsiteModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showWebsiteModal = false">
       <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
         <h3 class="text-base font-black text-[#0E1108]" x-text="websiteForm.id ? 'Edit Website' : 'Add New Website'"></h3>
         <button type="button" @click="showWebsiteModal = false" class="text-slate-400 hover:text-slate-700">✕</button>
@@ -249,8 +249,8 @@
   </div>
 
   <!-- WORKING ADD / EDIT STORE HUB MODAL -->
-  <div x-show="showStoreModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" x-cloak>
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95">
+  <div x-show="showStoreModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showStoreModal = false">
       <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
         <h3 class="text-base font-black text-[#0E1108]" x-text="storeForm.id ? 'Edit Store Hub' : 'Add New Store Hub'"></h3>
         <button type="button" @click="showStoreModal = false" class="text-slate-400 hover:text-slate-700">✕</button>
