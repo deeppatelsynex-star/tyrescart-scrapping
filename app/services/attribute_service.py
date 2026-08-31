@@ -24,6 +24,14 @@ class AttributeService:
                             a['name'] = json.loads(a['name'])
                         except Exception:
                             pass
+                    
+                    if isinstance(a.get('name'), dict):
+                        a['name_en'] = a['name'].get('en') or a['name'].get('ar') or ''
+                        a['name_ar'] = a['name'].get('ar') or ''
+                    elif isinstance(a.get('name'), str):
+                        a['name_en'] = a['name']
+                        a['name_ar'] = ''
+
                     if a.get('validation_rules') and isinstance(a['validation_rules'], str):
                         try:
                             a['validation_rules'] = json.loads(a['validation_rules'])

@@ -101,8 +101,8 @@
               <tr class="hover:bg-[#F9FCF8] transition-colors">
                 <td class="px-5 py-3.5 font-mono font-bold text-slate-800" x-text="attr.code"></td>
                 <td class="px-5 py-3.5">
-                  <div class="font-bold text-[#0E1108]" x-text="attr.name_en || attr.name || attr.code"></div>
-                  <div class="text-[10px] text-slate-400 font-medium" dir="rtl" x-text="attr.name_ar || ''"></div>
+                  <div class="font-bold text-[#0E1108]" x-text="formatAttrName(attr)"></div>
+                  <div class="text-[10px] text-slate-400 font-medium" dir="rtl" x-text="formatAttrArabic(attr)"></div>
                 </td>
                 <td class="px-5 py-3.5">
                   <span 
@@ -366,6 +366,38 @@ function visionAttributesApp() {
         const matchType = !this.typeFilter || a.type === this.typeFilter;
         return matchQ && matchScope && matchType;
       });
+    },
+
+    formatAttrName(attr) {
+      if (!attr) return '';
+      if (attr.name_en) return attr.name_en;
+      if (typeof attr.name === 'object' && attr.name !== null) {
+        return attr.name.en || attr.name.ar || attr.code;
+      }
+      if (typeof attr.name === 'string') {
+        try {
+          const parsed = JSON.parse(attr.name);
+          return parsed.en || parsed.ar || attr.name;
+        } catch (e) {
+          return attr.name;
+        }
+      }
+      return attr.code || '';
+    },
+
+    formatAttrArabic(attr) {
+      if (!attr) return '';
+      if (attr.name_ar) return attr.name_ar;
+      if (typeof attr.name === 'object' && attr.name !== null) {
+        return attr.name.ar || '';
+      }
+      if (typeof attr.name === 'string') {
+        try {
+          const parsed = JSON.parse(attr.name);
+          return parsed.ar || '';
+        } catch (e) {}
+      }
+      return '';
     },
 
     openCreateModal() {
