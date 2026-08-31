@@ -168,36 +168,24 @@
           </div>
         </a>
 
-        <!-- Reviewer Settings Link -->
-        <a href="/visionadmin/settings" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page in ['settings', 'config', 'reviewer-settings'] %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+        <!-- Settings Trigger Button (Opens Settings Modal with Reviewer & Admin User options) -->
+        <button type="button" id="va-settings-modal-btn" class="w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 cursor-pointer select-none active:scale-[0.98] {% if page in ['settings', 'config', 'reviewer-settings', 'users', 'admin-users', 'user-management'] %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
           <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['settings', 'config', 'reviewer-settings'] %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['settings', 'config', 'reviewer-settings', 'users', 'admin-users', 'user-management'] %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
             </div>
-            <span>Reviewer Settings</span>
-          </div>
-          {% if page in ['settings', 'config', 'reviewer-settings'] %}
-          <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
-          {% endif %}
-        </a>
-
-        <!-- Admin Users Management Link (Super Admin only) -->
-        {% if session.get('role') in ['super_admin', 'superadmin', 'SuperAdmin'] %}
-        <a href="/visionadmin/users" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page in ['users', 'admin-users', 'user-management'] %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
-          <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['users', 'admin-users', 'user-management'] %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <span>Admin Users</span>
+            <span>Settings</span>
           </div>
           <div class="flex items-center gap-1.5">
-            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full {% if page in ['users', 'admin-users', 'user-management'] %}bg-[#D1E7C4] text-[#35760F]{% else %}bg-slate-100 text-slate-500{% endif %}">RBAC</span>
-            {% if page in ['users', 'admin-users', 'user-management'] %}
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full {% if page in ['settings', 'config', 'reviewer-settings', 'users', 'admin-users', 'user-management'] %}bg-[#D1E7C4] text-[#35760F]{% else %}bg-slate-100 text-slate-500{% endif %}">2</span>
+            {% if page in ['settings', 'config', 'reviewer-settings', 'users', 'admin-users', 'user-management'] %}
             <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
             {% endif %}
           </div>
-        </a>
-        {% endif %}
+        </button>
       </div>
     </div>
 
@@ -523,6 +511,81 @@
           <dd id="vp-updated" class="font-medium text-slate-800">—</dd>
         </div>
       </dl>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- SETTINGS HUB MODAL (Reviewer & Admin User)                                -->
+  <!-- ========================================================================= -->
+  <div id="modal-settings-hub" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-8 space-y-6 transform transition-all">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-black text-[#0E1108]">Settings</h3>
+            <p class="text-xs text-slate-400">Select configuration module to manage</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close-settings-modal p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition cursor-pointer">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- 2 Options: Reviewer & Admin User (Exact match user diagram) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        
+        <!-- Option 1: Reviewer -->
+        <a href="/visionadmin/settings" class="group p-5 rounded-2xl border-2 border-slate-100 hover:border-[#58B31B] bg-slate-50/60 hover:bg-[#F8FAF7] transition-all duration-300 flex flex-col justify-between space-y-4 hover:shadow-lg hover:shadow-emerald-500/10 cursor-pointer">
+          <div class="space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center text-[#58B31B] group-hover:bg-[#58B31B] group-hover:text-white transition-all duration-300">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-base font-black text-[#0E1108] group-hover:text-[#35760F] transition-colors">Reviewer</h4>
+              <p class="text-xs text-slate-500 font-medium mt-1 leading-relaxed">Reviewer settings, verification &amp; content review configs.</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 text-xs font-bold text-[#58B31B] group-hover:translate-x-1 transition-transform">
+            <span>Open Reviewer</span>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </a>
+
+        <!-- Option 2: Admin User -->
+        <a href="/visionadmin/users" class="group p-5 rounded-2xl border-2 border-slate-100 hover:border-[#58B31B] bg-slate-50/60 hover:bg-[#F8FAF7] transition-all duration-300 flex flex-col justify-between space-y-4 hover:shadow-lg hover:shadow-emerald-500/10 cursor-pointer">
+          <div class="space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-base font-black text-[#0E1108] group-hover:text-blue-700 transition-colors">Admin User</h4>
+              <p class="text-xs text-slate-500 font-medium mt-1 leading-relaxed">System administrator accounts, RBAC &amp; permissions.</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 text-xs font-bold text-blue-600 group-hover:translate-x-1 transition-transform">
+            <span>Manage Users</span>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </a>
+
+      </div>
+
     </div>
   </div>
 
@@ -858,6 +921,30 @@
           userDropdownMenu.classList.add('hidden');
           if (userChevron) userChevron.classList.remove('rotate-180');
           userDropdownBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
+    // Settings Hub Modal Toggle Logic
+    const settingsBtn = document.getElementById('va-settings-modal-btn');
+    const settingsModal = document.getElementById('modal-settings-hub');
+    const closeSettingsBtns = document.querySelectorAll('.btn-close-settings-modal');
+
+    if (settingsBtn && settingsModal) {
+      settingsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        settingsModal.classList.remove('hidden');
+      });
+
+      closeSettingsBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          settingsModal.classList.add('hidden');
+        });
+      });
+
+      settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+          settingsModal.classList.add('hidden');
         }
       });
     }
