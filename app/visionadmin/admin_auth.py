@@ -133,38 +133,54 @@ def verify_admin_password(raw_password: str, hashed_password: str) -> bool:
 # 3. DATABASE CRUD ON admin_users TABLE
 # ============================================================================
 
-def get_admin_user_by_email(email: str):
-    """Fetches an active/inactive admin_user record by email."""
+def get_admin_user_by_email(email: str, include_deleted: bool = False):
+    """Fetches an admin_user record by email."""
     if not email:
         return None
     email_clean = email.strip().lower()
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("""
-                SELECT id, name, email, password, role, is_active, last_login_at, remember_token, created_at, updated_at
-                FROM `admin_users`
-                WHERE LOWER(TRIM(email)) = %s
-                LIMIT 1
-            """, (email_clean,))
+            if include_deleted:
+                cur.execute("""
+                    SELECT id, name, email, password, role, is_active, is_deleted, deleted_at, last_login_at, remember_token, created_at, updated_at
+                    FROM `admin_users`
+                    WHERE LOWER(TRIM(email)) = %s
+                    LIMIT 1
+                """, (email_clean,))
+            else:
+                cur.execute("""
+                    SELECT id, name, email, password, role, is_active, is_deleted, deleted_at, last_login_at, remember_token, created_at, updated_at
+                    FROM `admin_users`
+                    WHERE LOWER(TRIM(email)) = %s AND (is_deleted = 0 OR is_deleted IS NULL)
+                    LIMIT 1
+                """, (email_clean,))
             return cur.fetchone()
     finally:
         conn.close()
 
 
-def get_admin_user_by_id(admin_id: int):
+def get_admin_user_by_id(admin_id: int, include_deleted: bool = True):
     """Fetches an admin_user record by ID."""
     if not admin_id:
         return None
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("""
-                SELECT id, name, email, password, role, is_active, last_login_at, remember_token, created_at, updated_at
-                FROM `admin_users`
-                WHERE id = %s
-                LIMIT 1
-            """, (admin_id,))
+            if include_deleted:
+                cur.execute("""
+                    SELECT id, name, email, password, role, is_active, is_deleted, deleted_at, last_login_at, remember_token, created_at, updated_at
+                    FROM `admin_users`
+                    WHERE id = %s
+                    LIMIT 1
+                """, (admin_id,))
+            else:
+                cur.execute("""
+                    SELECT id, name, email, password, role, is_active, is_deleted, deleted_at, last_login_at, remember_token, created_at, updated_at
+                    FROM `admin_users`
+                    WHERE id = %s AND (is_deleted = 0 OR is_deleted IS NULL)
+                    LIMIT 1
+                """, (admin_id,))
             return cur.fetchone()
     finally:
         conn.close()
@@ -196,6 +212,7 @@ def serialize_admin_user(u: dict) -> dict:
     created_raw = u['created_at'].isoformat() + 'Z' if u.get('created_at') and hasattr(u['created_at'], 'isoformat') else str(u.get('created_at') or '')
     updated_raw = u['updated_at'].isoformat() + 'Z' if u.get('updated_at') and hasattr(u['updated_at'], 'isoformat') else str(u.get('updated_at') or '')
     last_login_raw = u['last_login_at'].isoformat() + 'Z' if u.get('last_login_at') and hasattr(u['last_login_at'], 'isoformat') else None
+    deleted_raw = u['deleted_at'].isoformat() + 'Z' if u.get('deleted_at') and hasattr(u['deleted_at'], 'isoformat') else None
     
     # Format human-readable date
     def fmt_date(dt):
@@ -213,6 +230,9 @@ def serialize_admin_user(u: dict) -> dict:
         'role': u.get('role', 'manager'),
         'role_display': (u.get('role', 'manager') or '').replace('_', ' ').title(),
         'is_active': bool(u.get('is_active', 1)),
+        'is_deleted': bool(u.get('is_deleted', 0)),
+        'deleted_at': fmt_date(u.get('deleted_at')),
+        'deleted_raw': deleted_raw,
         'last_login_at': fmt_date(u.get('last_login_at')),
         'last_login_raw': last_login_raw,
         'created_at': fmt_date(u.get('created_at')),
@@ -222,28 +242,63 @@ def serialize_admin_user(u: dict) -> dict:
     }
 
 
-def list_admin_users():
-    """Fetches all administrator accounts from admin_users table."""
+def list_admin_users(is_trash: bool = False):
+    """Fetches active or deleted administrator accounts from admin_users table."""
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("""
-                SELECT id, name, email, password, role, is_active, last_login_at, remember_token, created_at, updated_at
-                FROM `admin_users`
-                ORDER BY id ASC
-            """)
+            if is_trash:
+                cur.execute("""
+                    SELECT id, name, email, password, role, is_active, is_deleted, deleted_at, last_login_at, remember_token, created_at, updated_at
+                    FROM `admin_users`
+                    WHERE is_deleted = 1
+                    ORDER BY deleted_at DESC, id DESC
+                """)
+            else:
+                cur.execute("""
+                    SELECT id, name, email, password, role, is_active, is_deleted, deleted_at, last_login_at, remember_token, created_at, updated_at
+                    FROM `admin_users`
+                    WHERE is_deleted = 0 OR is_deleted IS NULL
+                    ORDER BY id ASC
+                """)
             rows = cur.fetchall()
             return [serialize_admin_user(r) for r in rows]
     finally:
         conn.close()
 
 
-def count_super_admins() -> int:
-    """Returns number of active super_admin users."""
+def get_admin_user_metrics() -> dict:
+    """Returns metric counters including active, super admins, managers, and trash."""
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT COUNT(*) AS c FROM `admin_users` WHERE `role` = 'super_admin' AND `is_active` = 1")
+            cur.execute("""
+                SELECT 
+                    COUNT(CASE WHEN is_deleted = 0 OR is_deleted IS NULL THEN 1 END) AS total,
+                    COUNT(CASE WHEN (is_deleted = 0 OR is_deleted IS NULL) AND role = 'super_admin' THEN 1 END) AS super,
+                    COUNT(CASE WHEN (is_deleted = 0 OR is_deleted IS NULL) AND role IN ('manager', 'support') THEN 1 END) AS managers,
+                    COUNT(CASE WHEN (is_deleted = 0 OR is_deleted IS NULL) AND is_active = 1 THEN 1 END) AS active,
+                    COUNT(CASE WHEN is_deleted = 1 THEN 1 END) AS trash
+                FROM `admin_users`
+            """)
+            res = cur.fetchone()
+            return {
+                'total': res['total'] if res else 0,
+                'super': res['super'] if res else 0,
+                'managers': res['managers'] if res else 0,
+                'active': res['active'] if res else 0,
+                'trash': res['trash'] if res else 0,
+            }
+    finally:
+        conn.close()
+
+
+def count_super_admins() -> int:
+    """Returns number of active non-deleted super_admin users."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS c FROM `admin_users` WHERE `role` = 'super_admin' AND `is_active` = 1 AND (is_deleted = 0 OR is_deleted IS NULL)")
             res = cur.fetchone()
             return res['c'] if res else 0
     finally:
@@ -276,7 +331,40 @@ def update_admin_user(admin_id: int, name: str, email: str, role: str, is_active
 
 
 def delete_admin_user(admin_id: int):
-    """Deletes an administrator account from admin_users table."""
+    """Moves an administrator account to trash (soft delete)."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE `admin_users`
+                SET is_deleted = 1, deleted_at = NOW(), updated_at = NOW()
+                WHERE `id` = %s
+            """, (admin_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+soft_delete_admin_user = delete_admin_user
+
+
+def restore_admin_user(admin_id: int):
+    """Restores a soft-deleted administrator account from trash."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE `admin_users`
+                SET is_deleted = 0, deleted_at = NULL, updated_at = NOW()
+                WHERE `id` = %s
+            """, (admin_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def permanent_delete_admin_user(admin_id: int):
+    """Permanently deletes an administrator account from admin_users table."""
     conn = get_connection()
     try:
         with conn.cursor() as cur:

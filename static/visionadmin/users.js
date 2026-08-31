@@ -1,14 +1,15 @@
 /**
  * static/visionadmin/users.js
- * Comprehensive Administrator User Management UI & API Connector for admin_users Table.
+ * Comprehensive Administrator User Management UI & API Connector with Trash, Restore, and Purge.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   let allUsers = [];
+  let currentView = 'active'; // 'active' | 'trash'
   let currentSearch = '';
   let currentRoleFilter = 'all';
   let currentStatusFilter = 'all';
-  let deleteTargetId = null;
+  let activeTargetId = null;
 
   // DOM Elements
   const tableBody = document.getElementById('users-table-body');
@@ -16,6 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const metricSuper = document.getElementById('metric-super');
   const metricManagers = document.getElementById('metric-managers');
   const metricActive = document.getElementById('metric-active');
+  const metricTrash = document.getElementById('metric-trash');
+  const tabTrashCount = document.getElementById('tab-trash-count');
+
+  const tabBtnActive = document.getElementById('tab-btn-active');
+  const tabBtnTrash = document.getElementById('tab-btn-trash');
 
   const inputSearch = document.getElementById('input-user-search');
   const selectRole = document.getElementById('select-role-filter');
@@ -26,6 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalCreate = document.getElementById('modal-create-user');
   const modalEdit = document.getElementById('modal-edit-user');
   const modalDelete = document.getElementById('modal-delete-user');
+  const modalRestore = document.getElementById('modal-restore-user');
+  const modalPurge = document.getElementById('modal-purge-user');
 
   const btnOpenCreate = document.getElementById('btn-open-create-modal');
   const formCreate = document.getElementById('form-create-user');
@@ -38,6 +46,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const btnConfirmDelete = document.getElementById('btn-confirm-delete');
   const deleteUserName = document.getElementById('delete-user-name');
+
+  const btnConfirmRestore = document.getElementById('btn-confirm-restore');
+  const restoreUserName = document.getElementById('restore-user-name');
+
+  const btnConfirmPurge = document.getElementById('btn-confirm-purge');
+  const purgeUserName = document.getElementById('purge-user-name');
 
   // ---------------------------------------------------------------------------
   // 1. Toast Notification Helper
@@ -80,7 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------------------------------------------------------------------------
   async function loadUsers() {
     try {
-      const res = await fetch('/visionadmin/api/users');
+      const isTrash = currentView === 'trash';
+      const res = await fetch(`/visionadmin/api/users?trash=${isTrash ? '1' : '0'}`);
       if (res.status === 401 || res.status === 403) {
         window.location.href = `/visionadmin/login?next=${encodeURIComponent(window.location.pathname)}`;
         return;
@@ -99,11 +114,15 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateMetrics(metrics) {
     if (metricTotal) metricTotal.textContent = metrics.total || 0;
     if (metricSuper) metricSuper.textContent = metrics.super_admins || 0;
-    if (metricManagers) metricManagers.textContent = (metrics.managers || 0) + (metrics.support || 0);
+    if (metricManagers) metricManagers.textContent = metrics.managers || 0;
     if (metricActive) metricActive.textContent = metrics.active || 0;
+    if (metricTrash) metricTrash.textContent = metrics.trash || 0;
+    if (tabTrashCount) tabTrashCount.textContent = metrics.trash || 0;
   }
 
   function renderTable() {
+    const isTrash = currentView === 'trash';
+
     // Filter users locally
     let filtered = allUsers.filter(u => {
       const name = (u.name || '').toLowerCase();
@@ -123,11 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr>
           <td colspan="6" class="py-14 text-center text-slate-400">
             <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
+              ${isTrash 
+                ? '<polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>'
+                : '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'}
             </svg>
-            <p class="font-bold text-sm text-[#0E1108]">No administrators found</p>
-            <p class="text-xs text-slate-400 mt-0.5">${currentSearch ? 'Try clearing your search query' : 'Click "+ Add Admin User" to create one'}</p>
+            <p class="font-bold text-sm text-[#0E1108]">${isTrash ? 'Trash is empty' : 'No administrators found'}</p>
+            <p class="text-xs text-slate-400 mt-0.5">${currentSearch ? 'Try clearing your search query' : (isTrash ? 'No deleted administrator accounts in trash' : 'Click "+ Add Admin User" to create one')}</p>
           </td>
         </tr>
       `;
@@ -148,16 +168,26 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Status pill styles
-      const statusBadge = u.is_active 
-        ? `<button type="button" class="btn-toggle-status px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#EAF7E2] text-[#2E7D32] border border-[#C8E8B8] hover:bg-emerald-100 transition flex items-center gap-1.5 cursor-pointer" data-id="${u.id}" title="Click to toggle status"><span class="w-2 h-2 rounded-full bg-[#00A650] animate-pulse"></span>Active</button>`
-        : `<button type="button" class="btn-toggle-status px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200 transition flex items-center gap-1.5 cursor-pointer" data-id="${u.id}" title="Click to toggle status"><span class="w-2 h-2 rounded-full bg-slate-400"></span>Disabled</button>`;
+      let statusBadge = '';
+      if (isTrash) {
+        statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1.5 w-max"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>In Trash</span>`;
+      } else {
+        statusBadge = u.is_active 
+          ? `<button type="button" class="btn-toggle-status px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#EAF7E2] text-[#2E7D32] border border-[#C8E8B8] hover:bg-emerald-100 transition flex items-center gap-1.5 cursor-pointer" data-id="${u.id}" title="Click to toggle status"><span class="w-2 h-2 rounded-full bg-[#00A650] animate-pulse"></span>Active</button>`
+          : `<button type="button" class="btn-toggle-status px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200 transition flex items-center gap-1.5 cursor-pointer" data-id="${u.id}" title="Click to toggle status"><span class="w-2 h-2 rounded-full bg-slate-400"></span>Disabled</button>`;
+      }
+
+      // Dates column (in trash show deleted_at, else last_login)
+      const dateLabel = isTrash 
+        ? `<span class="text-rose-600 font-semibold">${escapeHtml(u.deleted_at || 'Recently')}</span>`
+        : escapeHtml(u.last_login_at || 'Never');
 
       return `
         <tr class="hover:bg-slate-50/70 transition">
           <!-- Administrator Profile -->
           <td class="py-4 px-6">
             <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-full bg-[#0E1108] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+              <div class="w-9 h-9 rounded-full ${isTrash ? 'bg-slate-400' : 'bg-[#0E1108]'} text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
                 ${initial}
               </div>
               <div class="min-w-0">
@@ -177,9 +207,9 @@ document.addEventListener('DOMContentLoaded', () => {
             ${statusBadge}
           </td>
 
-          <!-- Last Login -->
+          <!-- Date / Last Login / Deleted -->
           <td class="py-4 px-6 text-slate-500 text-xs">
-            ${escapeHtml(u.last_login_at || 'Never')}
+            ${dateLabel}
           </td>
 
           <!-- Created At -->
@@ -189,21 +219,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
           <!-- Action Buttons -->
           <td class="py-4 px-6 text-right">
-            <div class="flex items-center justify-end gap-1.5">
-              <button type="button" class="btn-edit-user p-2 rounded-xl text-slate-500 hover:text-[#00A650] hover:bg-[#EAF7E2] transition cursor-pointer" data-id="${u.id}" title="Edit Administrator">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-              </button>
+            ${isTrash ? `
+              <div class="flex items-center justify-end gap-1.5">
+                <button type="button" class="btn-restore-user p-2 rounded-xl text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 transition cursor-pointer" data-id="${u.id}" data-name="${escapeHtml(u.name)}" title="Restore Account">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <polyline points="1 4 1 10 7 10"></polyline>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                  </svg>
+                </button>
+                <button type="button" class="btn-purge-user p-2 rounded-xl text-rose-600 hover:text-rose-800 hover:bg-rose-50 transition cursor-pointer" data-id="${u.id}" data-name="${escapeHtml(u.name)}" title="Permanently Delete">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            ` : `
+              <div class="flex items-center justify-end gap-1.5">
+                <button type="button" class="btn-edit-user p-2 rounded-xl text-slate-500 hover:text-[#00A650] hover:bg-[#EAF7E2] transition cursor-pointer" data-id="${u.id}" title="Edit Administrator">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
 
-              <button type="button" class="btn-delete-user p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer" data-id="${u.id}" data-name="${escapeHtml(u.name)}" title="Delete Administrator">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-              </button>
-            </div>
+                <button type="button" class="btn-delete-user p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer" data-id="${u.id}" data-name="${escapeHtml(u.name)}" title="Move to Trash">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            `}
           </td>
         </tr>
       `;
@@ -213,7 +260,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ---------------------------------------------------------------------------
-  // 3. Search & Filter Listeners
+  // 3. Tab Switching (Active vs Trash)
+  // ---------------------------------------------------------------------------
+  if (tabBtnActive) {
+    tabBtnActive.addEventListener('click', () => {
+      if (currentView === 'active') return;
+      currentView = 'active';
+      tabBtnActive.className = 'tab-user-view px-4 py-2 rounded-xl bg-[#EAF7E2] text-[#35760F] shadow-2xs transition cursor-pointer';
+      tabBtnTrash.className = 'tab-user-view px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white transition cursor-pointer flex items-center gap-1.5';
+      loadUsers();
+    });
+  }
+
+  if (tabBtnTrash) {
+    tabBtnTrash.addEventListener('click', () => {
+      if (currentView === 'trash') return;
+      currentView = 'trash';
+      tabBtnTrash.className = 'tab-user-view px-4 py-2 rounded-xl bg-rose-100 text-rose-800 shadow-2xs transition cursor-pointer flex items-center gap-1.5';
+      tabBtnActive.className = 'tab-user-view px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white transition cursor-pointer';
+      loadUsers();
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // 4. Search & Filter Listeners
   // ---------------------------------------------------------------------------
   if (inputSearch) {
     inputSearch.addEventListener('input', (e) => {
@@ -244,13 +314,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ---------------------------------------------------------------------------
-  // 4. Modal Helpers & Event Attachments
+  // 5. Modal Helpers & Event Attachments
   // ---------------------------------------------------------------------------
   document.querySelectorAll('.btn-close-modal').forEach(btn => {
     btn.addEventListener('click', () => {
-      modalCreate.classList.add('hidden');
-      modalEdit.classList.add('hidden');
-      modalDelete.classList.add('hidden');
+      if (modalCreate) modalCreate.classList.add('hidden');
+      if (modalEdit) modalEdit.classList.add('hidden');
+      if (modalDelete) modalDelete.classList.add('hidden');
+      if (modalRestore) modalRestore.classList.add('hidden');
+      if (modalPurge) modalPurge.classList.add('hidden');
     });
   });
 
@@ -302,19 +374,39 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Delete User Button Click
+    // Move to Trash Click
     document.querySelectorAll('.btn-delete-user').forEach(btn => {
       btn.addEventListener('click', () => {
-        deleteTargetId = btn.getAttribute('data-id');
+        activeTargetId = btn.getAttribute('data-id');
         const name = btn.getAttribute('data-name');
-        deleteUserName.textContent = `"${name}"`;
-        modalDelete.classList.remove('hidden');
+        if (deleteUserName) deleteUserName.textContent = `"${name}"`;
+        if (modalDelete) modalDelete.classList.remove('hidden');
+      });
+    });
+
+    // Restore from Trash Click
+    document.querySelectorAll('.btn-restore-user').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeTargetId = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        if (restoreUserName) restoreUserName.textContent = `"${name}"`;
+        if (modalRestore) modalRestore.classList.remove('hidden');
+      });
+    });
+
+    // Permanent Purge Click
+    document.querySelectorAll('.btn-purge-user').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeTargetId = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        if (purgeUserName) purgeUserName.textContent = `"${name}"`;
+        if (modalPurge) modalPurge.classList.remove('hidden');
       });
     });
   }
 
   // ---------------------------------------------------------------------------
-  // 5. Form Submissions
+  // 6. Form Submissions & Actions
   // ---------------------------------------------------------------------------
   // Create User Form Submit
   if (formCreate) {
@@ -439,32 +531,92 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Delete Confirmation Submit
+  // Move to Trash Submit
   if (btnConfirmDelete) {
     btnConfirmDelete.addEventListener('click', async () => {
-      if (!deleteTargetId) return;
+      if (!activeTargetId) return;
 
       btnConfirmDelete.disabled = true;
-      btnConfirmDelete.textContent = 'Deleting...';
+      btnConfirmDelete.textContent = 'Moving to Trash...';
 
       try {
-        const res = await fetch(`/visionadmin/api/users/${deleteTargetId}`, {
+        const res = await fetch(`/visionadmin/api/users/${activeTargetId}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' }
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to delete user.');
+        if (!res.ok) throw new Error(data.error || 'Failed to move user to trash.');
 
-        modalDelete.classList.add('hidden');
-        showToast(data.message || 'Administrator deleted successfully.');
+        if (modalDelete) modalDelete.classList.add('hidden');
+        showToast(data.message || 'Administrator moved to trash.');
         loadUsers();
       } catch (err) {
         showToast(err.message, 'error');
-        modalDelete.classList.add('hidden');
+        if (modalDelete) modalDelete.classList.add('hidden');
       } finally {
         btnConfirmDelete.disabled = false;
-        btnConfirmDelete.textContent = 'Yes, Delete Account';
-        deleteTargetId = null;
+        btnConfirmDelete.textContent = 'Move to Trash';
+        activeTargetId = null;
+      }
+    });
+  }
+
+  // Restore Submit
+  if (btnConfirmRestore) {
+    btnConfirmRestore.addEventListener('click', async () => {
+      if (!activeTargetId) return;
+
+      btnConfirmRestore.disabled = true;
+      btnConfirmRestore.textContent = 'Restoring...';
+
+      try {
+        const res = await fetch(`/visionadmin/api/users/${activeTargetId}/restore`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to restore user.');
+
+        if (modalRestore) modalRestore.classList.add('hidden');
+        showToast(data.message || 'Administrator restored successfully.');
+        loadUsers();
+      } catch (err) {
+        showToast(err.message, 'error');
+        if (modalRestore) modalRestore.classList.add('hidden');
+      } finally {
+        btnConfirmRestore.disabled = false;
+        btnConfirmRestore.textContent = 'Yes, Restore Account';
+        activeTargetId = null;
+      }
+    });
+  }
+
+  // Permanent Purge Submit
+  if (btnConfirmPurge) {
+    btnConfirmPurge.addEventListener('click', async () => {
+      if (!activeTargetId) return;
+
+      btnConfirmPurge.disabled = true;
+      btnConfirmPurge.textContent = 'Deleting Permanently...';
+
+      try {
+        const res = await fetch(`/visionadmin/api/users/${activeTargetId}/purge`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to delete user permanently.');
+
+        if (modalPurge) modalPurge.classList.add('hidden');
+        showToast(data.message || 'Administrator permanently deleted.');
+        loadUsers();
+      } catch (err) {
+        showToast(err.message, 'error');
+        if (modalPurge) modalPurge.classList.add('hidden');
+      } finally {
+        btnConfirmPurge.disabled = false;
+        btnConfirmPurge.textContent = 'Yes, Permanently Delete';
+        activeTargetId = null;
       }
     });
   }

@@ -2321,24 +2321,21 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/users', methods=['GET'])
     @app.route('/visonadmin/api/users', methods=['GET'])
     def visionadmin_api_list_users():
-        from visionadmin.admin_auth import list_admin_users
-        users = list_admin_users()
-        total = len(users)
-        super_admins = sum(1 for u in users if u.get('role') in ('super_admin', 'SuperAdmin'))
-        managers = sum(1 for u in users if u.get('role') == 'manager')
-        support = sum(1 for u in users if u.get('role') == 'support')
-        active = sum(1 for u in users if u.get('is_active'))
+        from visionadmin.admin_auth import list_admin_users, get_admin_user_metrics
+        is_trash = request.args.get('trash') in ('1', 'true', 'yes')
+        users = list_admin_users(is_trash=is_trash)
+        metrics = get_admin_user_metrics()
 
         return jsonify({
             'success': True,
             'users': users,
+            'is_trash': is_trash,
             'metrics': {
-                'total': total,
-                'super_admins': super_admins,
-                'managers': managers,
-                'support': support,
-                'active': active,
-                'inactive': total - active
+                'total': metrics.get('total', 0),
+                'super_admins': metrics.get('super', 0),
+                'managers': metrics.get('managers', 0),
+                'active': metrics.get('active', 0),
+                'trash': metrics.get('trash', 0)
             }
         })
 
@@ -2501,10 +2498,58 @@ def register_visionadmin_api_routes(app):
             delete_admin_user(user_id)
             return jsonify({
                 'success': True,
-                'message': f"Administrator account '{target['name']}' deleted."
+                'message': f"Administrator account '{target['name']}' moved to trash."
             })
         except Exception as err:
-            return jsonify({'error': f"Failed to delete user: {err}"}), 500
+            return jsonify({'error': f"Failed to move user to trash: {err}"}), 500
+
+    @app.route('/visionadmin/api/users/<int:user_id>/restore', methods=['POST'])
+    @app.route('/visonadmin/api/users/<int:user_id>/restore', methods=['POST'])
+    def visionadmin_api_restore_user(user_id):
+        role_norm = str(session.get('role') or '').strip().lower().replace('-', '_').replace(' ', '_')
+        if role_norm not in ('super_admin', 'superadmin') and session.get('role') != 'SuperAdmin':
+            return jsonify({'error': 'Forbidden. Only Super Administrators can restore admin users.'}), 403
+
+        from visionadmin.admin_auth import get_admin_user_by_id, restore_admin_user
+
+        target = get_admin_user_by_id(user_id)
+        if not target:
+            return jsonify({'error': 'Administrator user not found.'}), 404
+
+        try:
+            restore_admin_user(user_id)
+            return jsonify({
+                'success': True,
+                'message': f"Administrator account '{target['name']}' restored from trash."
+            })
+        except Exception as err:
+            return jsonify({'error': f"Failed to restore user: {err}"}), 500
+
+    @app.route('/visionadmin/api/users/<int:user_id>/purge', methods=['DELETE', 'POST'])
+    @app.route('/visonadmin/api/users/<int:user_id>/purge', methods=['DELETE', 'POST'])
+    def visionadmin_api_purge_user(user_id):
+        role_norm = str(session.get('role') or '').strip().lower().replace('-', '_').replace(' ', '_')
+        if role_norm not in ('super_admin', 'superadmin') and session.get('role') != 'SuperAdmin':
+            return jsonify({'error': 'Forbidden. Only Super Administrators can permanently delete admin users.'}), 403
+
+        current_admin_id = session.get('admin_user_id') or session.get('user_id')
+        if user_id == current_admin_id:
+            return jsonify({'error': 'Action not allowed. You cannot delete your own account.'}), 400
+
+        from visionadmin.admin_auth import get_admin_user_by_id, permanent_delete_admin_user
+
+        target = get_admin_user_by_id(user_id)
+        if not target:
+            return jsonify({'error': 'Administrator user not found.'}), 404
+
+        try:
+            permanent_delete_admin_user(user_id)
+            return jsonify({
+                'success': True,
+                'message': f"Administrator account '{target['name']}' permanently deleted."
+            })
+        except Exception as err:
+            return jsonify({'error': f"Failed to permanently delete user: {err}"}), 500
 
     @app.route('/visionadmin/api/users/<int:user_id>/toggle-status', methods=['POST'])
     @app.route('/visonadmin/api/users/<int:user_id>/toggle-status', methods=['POST'])
