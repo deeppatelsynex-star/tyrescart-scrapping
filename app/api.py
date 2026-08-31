@@ -2875,6 +2875,92 @@ def register_visionadmin_api_routes(app):
         finally:
             conn.close()
 
+    @app.route('/visionadmin/api/attributes/<int:attr_id>', methods=['PUT'])
+    def visionadmin_api_update_attribute(attr_id):
+        """Updates an existing dynamic attribute, its options and audit log."""
+        data = request.get_json() or {}
+        name = data.get('name') or {}
+        attr_type = data.get('type')
+        scope = data.get('scope')
+        unit = data.get('unit')
+        user_id = get_current_admin_user_id()
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM attributes WHERE id = %s AND deleted_at IS NULL", (attr_id,))
+                old_attr = cursor.fetchone()
+                if not old_attr:
+                    return jsonify({'error': 'Attribute not found.'}), 404
+
+                cursor.execute("""
+                    UPDATE attributes 
+                    SET name = %s,
+                        scope = COALESCE(%s, scope),
+                        unit = %s,
+                        is_required = %s,
+                        is_filterable = %s,
+                        is_searchable = %s,
+                        updated_by = %s,
+                        updated_at = NOW()
+                    WHERE id = %s
+                """, (
+                    json.dumps(name) if isinstance(name, dict) else str(name),
+                    scope,
+                    unit,
+                    1 if data.get('is_required') else 0,
+                    1 if data.get('is_filterable') else 0,
+                    1 if data.get('is_searchable', True) else 0,
+                    user_id,
+                    attr_id
+                ))
+
+                # Update options if provided
+                if 'options' in data:
+                    cursor.execute("DELETE FROM attribute_options WHERE attribute_id = %s", (attr_id,))
+                    options = data.get('options') or []
+                    for idx, opt in enumerate(options, start=1):
+                        val = opt.get('value') if isinstance(opt, dict) else str(opt)
+                        lbl = opt.get('label') if isinstance(opt, dict) else {'en': str(opt), 'ar': str(opt)}
+                        if val:
+                            cursor.execute("""
+                                INSERT INTO attribute_options (attribute_id, value, label, sort_order, created_by, updated_by)
+                                VALUES (%s, %s, %s, %s, %s, %s)
+                            """, (attr_id, val, json.dumps(lbl) if isinstance(lbl, dict) else str(lbl), idx, user_id, user_id))
+
+                conn.commit()
+                log_activity('update', 'attribute', attr_id, old_attr, data, user_id=user_id)
+                return jsonify({'success': True, 'message': f"Attribute #{attr_id} updated successfully."})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/attributes/<int:attr_id>', methods=['DELETE'])
+    def visionadmin_api_delete_attribute(attr_id):
+        """Soft-deletes an attribute if it is not a protected system attribute."""
+        user_id = get_current_admin_user_id()
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM attributes WHERE id = %s AND deleted_at IS NULL", (attr_id,))
+                attr = cursor.fetchone()
+                if not attr:
+                    return jsonify({'error': 'Attribute not found.'}), 404
+
+                if attr.get('is_system') == 1:
+                    return jsonify({'error': f"Cannot delete core system attribute '{attr['code']}'."}), 400
+
+                cursor.execute("""
+                    UPDATE attributes 
+                    SET deleted_at = NOW(), deleted_by = %s
+                    WHERE id = %s
+                """, (user_id, attr_id))
+                conn.commit()
+
+                log_activity('delete', 'attribute', attr_id, attr, {'deleted': True}, user_id=user_id)
+                return jsonify({'success': True, 'message': f"Attribute '{attr['code']}' has been moved to trash."})
+        finally:
+            conn.close()
+
     @app.route('/visionadmin/api/attribute-sets', methods=['GET'])
     def visionadmin_api_list_attribute_sets():
         sets = AttributeService.get_attribute_sets()

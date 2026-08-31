@@ -128,7 +128,7 @@
                 <td class="px-5 py-3.5 text-center">
                   <span class="text-xs font-bold" :class="attr.is_required ? 'text-rose-600' : 'text-slate-300'" x-text="attr.is_required ? '● Required' : 'Optional'"></span>
                 </td>
-                <td class="px-5 py-3.5 text-right space-x-2">
+                <td class="px-5 py-3.5 text-right space-x-1 whitespace-nowrap">
                   <button 
                     type="button" 
                     @click="viewAttribute(attr)" 
@@ -136,6 +136,23 @@
                     title="Inspect Attribute"
                   >
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                  <button 
+                    type="button" 
+                    @click="openEditModal(attr)" 
+                    class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+                    title="Edit Attribute"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button 
+                    type="button" 
+                    @click="deleteAttribute(attr)" 
+                    class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                    :class="attr.is_system ? 'opacity-30 cursor-not-allowed' : ''"
+                    :title="attr.is_system ? 'Protected System Attribute' : 'Delete Attribute'"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   </button>
                 </td>
               </tr>
@@ -183,7 +200,7 @@
     <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto" @click.away="showCreateModal = false">
       <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
         <div>
-          <h3 class="text-base font-black text-[#0E1108]">Add New Dynamic Attribute</h3>
+          <h3 class="text-base font-black text-[#0E1108]" x-text="form.id ? 'Edit Attribute: ' + form.code : 'Add New Dynamic Attribute'"></h3>
           <p class="text-xs text-slate-400">EAV Attribute definition with multi-store scoping and options.</p>
         </div>
         <button type="button" @click="showCreateModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
@@ -193,11 +210,19 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Attribute Code *</label>
-            <input type="text" x-model="form.code" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono" placeholder="e.g. wet_grip">
+            <input 
+              type="text" 
+              x-model="form.code" 
+              :disabled="!!form.id" 
+              :class="form.id ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''"
+              required 
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono" 
+              placeholder="e.g. wet_grip"
+            >
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Data Type *</label>
-            <select x-model="form.type" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold">
+            <select x-model="form.type" :disabled="!!form.id" :class="form.id ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold">
               <option value="select">Select / Dropdown</option>
               <option value="multiselect">Multiselect</option>
               <option value="text">Single-line Text</option>
@@ -264,8 +289,8 @@
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-4 border-t border-[#F1F5F0]">
-          <button type="button" @click="showCreateModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] shadow-xs">Save Attribute</button>
+          <button type="button" @click="showCreateModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 cursor-pointer">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] shadow-xs cursor-pointer" x-text="form.id ? 'Save Changes' : 'Create Attribute'"></button>
         </div>
       </form>
     </div>
@@ -459,6 +484,7 @@ function visionAttributesApp() {
 
     openCreateModal() {
       this.form = {
+        id: null,
         code: '',
         name_en: '',
         name_ar: '',
@@ -470,6 +496,55 @@ function visionAttributesApp() {
         options: [{ value: 'A' }, { value: 'B' }]
       };
       this.showCreateModal = true;
+    },
+
+    async openEditModal(attr) {
+      let options = [];
+      try {
+        const res = await fetch(`/visionadmin/api/attributes/${attr.id}`);
+        const d = await res.json();
+        if (d.attribute && d.attribute.options) {
+          options = d.attribute.options.map(o => ({ value: o.value || o }));
+        }
+      } catch (e) {}
+
+      this.form = {
+        id: attr.id,
+        code: attr.code,
+        name_en: this.formatAttrName(attr),
+        name_ar: this.formatAttrArabic(attr),
+        type: attr.type || 'select',
+        scope: attr.scope || 'global',
+        unit: attr.unit || '',
+        is_filterable: !!attr.is_filterable,
+        is_required: !!attr.is_required,
+        options: options.length ? options : [{ value: 'A' }, { value: 'B' }]
+      };
+      this.showCreateModal = true;
+    },
+
+    async deleteAttribute(attr) {
+      if (attr.is_system) {
+        alert(`Cannot delete core system attribute '${attr.code}'.`);
+        return;
+      }
+      const confirmMsg = `Are you sure you want to delete attribute '${attr.code}'?`;
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch(`/visionadmin/api/attributes/${attr.id}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          await this.initData();
+          if (window.showToast) window.showToast(`Attribute '${attr.code}' moved to trash.`, 'success');
+        } else {
+          alert(data.error || 'Failed to delete attribute.');
+        }
+      } catch (e) {
+        console.error('Delete attribute error:', e);
+      }
     },
 
     addOption() {
@@ -493,8 +568,11 @@ function visionAttributesApp() {
           options: this.form.options.map(o => o.value).filter(Boolean)
         };
 
-        const res = await fetch('/visionadmin/api/attributes', {
-          method: 'POST',
+        const method = this.form.id ? 'PUT' : 'POST';
+        const url = this.form.id ? `/visionadmin/api/attributes/${this.form.id}` : '/visionadmin/api/attributes';
+
+        const res = await fetch(url, {
+          method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
@@ -502,7 +580,7 @@ function visionAttributesApp() {
         if (data.success || data.id) {
           this.showCreateModal = false;
           await this.initData();
-          if (window.showToast) window.showToast('Attribute created successfully!', 'success');
+          if (window.showToast) window.showToast(this.form.id ? 'Attribute updated successfully!' : 'Attribute created successfully!', 'success');
         } else {
           alert(data.error || 'Failed to save attribute.');
         }
