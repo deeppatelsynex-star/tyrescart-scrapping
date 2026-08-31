@@ -1,0 +1,235 @@
+{% extends "visionadmin/base.html" %}
+
+{% block title %}Dynamic Attributes & Sizing - VisionAdmin{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="visionAttributesApp()" x-init="initData()">
+
+  <!-- Top Hero Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 text-[11px] font-black uppercase tracking-wider rounded-lg bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]">E-Commerce Engine</span>
+        <span class="text-xs text-slate-400 font-semibold">• Dynamic EAV &amp; Scope Hierarchy</span>
+      </div>
+      <h1 class="text-2xl font-black text-[#0E1108] tracking-tight mt-1">Attributes &amp; Sizing Studio</h1>
+      <p class="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">Manage typed attributes, vehicle tyre dimensions, EU label parameters, and scoped attribute sets.</p>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button 
+        type="button" 
+        @click="openCreateModal()" 
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#0E1108] hover:bg-[#35760F] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>Add New Attribute</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="flex items-center gap-2 border-b border-[#E8EDE4] pb-2">
+    <button 
+      type="button" 
+      @click="activeTab = 'attributes'" 
+      :class="activeTab === 'attributes' ? 'bg-[#0E1108] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
+      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
+    >
+      Attributes List (<span x-text="attributes.length"></span>)
+    </button>
+    <button 
+      type="button" 
+      @click="activeTab = 'sets'" 
+      :class="activeTab === 'sets' ? 'bg-[#0E1108] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
+      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
+    >
+      Attribute Sets (<span x-text="attributeSets.length"></span>)
+    </button>
+  </div>
+
+  <!-- TAB 1: ATTRIBUTES LIST TABLE -->
+  <div x-show="activeTab === 'attributes'" class="space-y-4">
+    <!-- Filter bar -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-[#E8EDE4]">
+      <div class="relative w-full sm:w-80">
+        <input 
+          type="text" 
+          x-model="searchQuery" 
+          placeholder="Filter by code or label..." 
+          class="w-full pl-9 pr-4 py-2 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#35760F]"
+        />
+        <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <select x-model="scopeFilter" class="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
+          <option value="">All Scopes</option>
+          <option value="global">Global</option>
+          <option value="website">Website</option>
+          <option value="store">Store</option>
+          <option value="store_view">Store View</option>
+        </select>
+        <select x-model="typeFilter" class="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
+          <option value="">All Types</option>
+          <option value="select">Select / Dropdown</option>
+          <option value="text">Text</option>
+          <option value="number">Numeric</option>
+          <option value="boolean">Boolean (Yes/No)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50/80 border-b border-[#E8EDE4] text-slate-500 font-extrabold uppercase tracking-wider">
+            <tr>
+              <th class="px-5 py-3.5">Code</th>
+              <th class="px-5 py-3.5">Name (EN / AR)</th>
+              <th class="px-5 py-3.5">Data Type</th>
+              <th class="px-5 py-3.5">Scope Level</th>
+              <th class="px-5 py-3.5 text-center">Filterable</th>
+              <th class="px-5 py-3.5 text-center">Required</th>
+              <th class="px-5 py-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#F1F5F0]">
+            <template x-for="attr in filteredAttributes" :key="attr.id">
+              <tr class="hover:bg-[#F9FCF8] transition-colors">
+                <td class="px-5 py-3.5 font-mono font-bold text-[#0E1108]" x-text="attr.code"></td>
+                <td class="px-5 py-3.5">
+                  <div class="font-bold text-[#0E1108]" x-text="attr.name_en"></div>
+                  <div class="text-[10px] text-slate-400 font-arabic" x-text="attr.name_ar"></div>
+                </td>
+                <td class="px-5 py-3.5">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-slate-100 text-slate-700" x-text="attr.type"></span>
+                </td>
+                <td class="px-5 py-3.5">
+                  <span 
+                    class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase"
+                    :class="{
+                      'bg-blue-50 text-blue-700 border border-blue-200': attr.scope === 'global',
+                      'bg-purple-50 text-purple-700 border border-purple-200': attr.scope === 'website',
+                      'bg-emerald-50 text-emerald-700 border border-emerald-200': attr.scope === 'store',
+                      'bg-amber-50 text-amber-700 border border-amber-200': attr.scope === 'store_view'
+                    }"
+                    x-text="attr.scope"
+                  ></span>
+                </td>
+                <td class="px-5 py-3.5 text-center">
+                  <span x-show="attr.is_filterable" class="inline-flex items-center text-emerald-600 font-bold">✓ Yes</span>
+                  <span x-show="!attr.is_filterable" class="text-slate-300">—</span>
+                </td>
+                <td class="px-5 py-3.5 text-center">
+                  <span x-show="attr.is_required" class="inline-flex items-center text-rose-600 font-bold">Required</span>
+                  <span x-show="!attr.is_required" class="text-slate-300">Optional</span>
+                </td>
+                <td class="px-5 py-3.5 text-right">
+                  <button 
+                    type="button" 
+                    @click="viewAttribute(attr)" 
+                    class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-[#EAF7E2] hover:text-[#35760F] text-slate-700 transition cursor-pointer"
+                  >
+                    View / Edit
+                  </button>
+                </td>
+              </tr>
+            </template>
+            <tr x-show="filteredAttributes.length === 0">
+              <td colspan="7" class="px-5 py-12 text-center text-slate-400">
+                No matching dynamic attributes found.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: ATTRIBUTE SETS -->
+  <div x-show="activeTab === 'sets'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <template x-for="set in attributeSets" :key="set.id">
+      <div class="bg-white p-5 rounded-3xl border border-[#E8EDE4] shadow-xs flex flex-col justify-between space-y-4 hover:border-[#C8E8B8] transition">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black px-2 py-0.5 rounded-md bg-slate-100 text-slate-600" x-text="`Set #${set.id}`"></span>
+            <span x-show="set.is_system" class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EAF7E2] text-[#35760F]">System Master</span>
+          </div>
+          <h3 class="text-base font-black text-[#0E1108] mt-2" x-text="set.name"></h3>
+          <p class="text-xs text-slate-500 font-mono mt-0.5" x-text="`slug: ${set.slug}`"></p>
+        </div>
+
+        <div class="pt-3 border-t border-[#F1F5F0] flex items-center justify-between">
+          <span class="text-xs text-slate-400 font-semibold">Includes Sizing &amp; EU Labels</span>
+          <button type="button" @click="loadSetSchema(set.id)" class="text-xs font-bold text-[#35760F] hover:underline cursor-pointer">
+            View Schema &rarr;
+          </button>
+        </div>
+      </div>
+    </template>
+  </div>
+
+</div>
+
+<script>
+function visionAttributesApp() {
+  return {
+    activeTab: 'attributes',
+    searchQuery: '',
+    scopeFilter: '',
+    typeFilter: '',
+    attributes: [],
+    attributeSets: [],
+
+    async initData() {
+      try {
+        const [attrRes, setRes] = await Promise.all([
+          fetch('/visionadmin/api/attributes'),
+          fetch('/visionadmin/api/attribute-sets')
+        ]);
+        const attrData = await attrRes.json();
+        const setData = await setRes.json();
+        if (attrData.success) this.attributes = attrData.attributes || [];
+        if (setData.success) this.attributeSets = setData.attribute_sets || [];
+      } catch (err) {
+        console.error('Error loading attributes data:', err);
+      }
+    },
+
+    get filteredAttributes() {
+      return this.attributes.filter(a => {
+        const matchQ = !this.searchQuery || 
+          a.code.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          (a.name_en && a.name_en.toLowerCase().includes(this.searchQuery.toLowerCase()));
+        const matchScope = !this.scopeFilter || a.scope === this.scopeFilter;
+        const matchType = !this.typeFilter || a.type === this.typeFilter;
+        return matchQ && matchScope && matchType;
+      });
+    },
+
+    viewAttribute(attr) {
+      alert(`Attribute: ${attr.code}\nType: ${attr.type}\nScope: ${attr.scope}\nOptions: ${(attr.options || []).map(o => o.value).join(', ') || 'N/A'}`);
+    },
+
+    async loadSetSchema(setId) {
+      try {
+        const res = await fetch(`/visionadmin/api/catalog/form-schema/${setId}`);
+        const data = await res.json();
+        if (data.success) {
+          const groups = data.schema.groups.map(g => `${g.name} (${g.attributes.length} attrs)`).join('\n• ');
+          alert(`Schema Groups for Set #${setId}:\n• ${groups}`);
+        }
+      } catch (err) {
+        alert('Failed to load schema');
+      }
+    },
+
+    openCreateModal() {
+      alert('Attribute creation studio is ready for new tyre dimension and homologation entries.');
+    }
+  }
+}
+</script>
+{% endblock %}

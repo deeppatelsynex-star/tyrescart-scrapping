@@ -340,6 +340,18 @@ def register_visionadmin_routes(app):
             ), 403
         return render_template('visionadmin/users.html', page='users')
 
+    @app.route('/visionadmin/attributes', methods=['GET'])
+    @app.route('/visionadmin/catalog/attributes', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_attributes():
+        return render_template('visionadmin/attributes.html', page='attributes')
+
+    @app.route('/visionadmin/audit-logs', methods=['GET'])
+    @app.route('/visionadmin/activity-logs', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_audit_logs():
+        return render_template('visionadmin/audit_logs.html', page='audit_logs')
+
     @app.route('/visionadmin/scrapers', methods=['GET'])
     @app.route('/visionadmin/scraper', methods=['GET'])
     @app.route('/visionadmin/scraper-dashboard', methods=['GET'])
