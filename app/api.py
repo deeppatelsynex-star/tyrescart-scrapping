@@ -1378,13 +1378,13 @@ def register_visionadmin_api_routes(app):
 
     @app.before_request
     def visionadmin_api_auth_guard():
-        """Protects all /visionadmin/api/ endpoints with session auth and RBAC."""
+        """Protects all /visionadmin/api/ endpoints with session auth and RBAC against admin_users."""
         if request.path.startswith('/visionadmin/api/'):
-            user_id = session.get('user_id')
+            user_id = session.get('admin_user_id') or session.get('user_id')
             if not user_id:
                 return jsonify({'error': 'Authentication required. Please sign in to VisionAdmin.'}), 401
             role = session.get('role')
-            if role not in ('SuperAdmin', 'Admin'):
+            if role not in ('super_admin', 'manager', 'support', 'SuperAdmin', 'Admin'):
                 return jsonify({'error': 'Unauthorized. VisionAdmin access requires administrator privileges.'}), 403
 
     # =========================================================================
