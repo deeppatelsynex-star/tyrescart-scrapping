@@ -2636,18 +2636,23 @@ def register_visionadmin_api_routes(app):
         data = request.get_json() or {}
         website_id = data.get('website_id')
         store_id = data.get('store_id')
+        scope_name = data.get('scope_name')
 
-        if website_id in (None, '', 'global'):
+        if website_id in (None, '', 'global') and store_id in (None, '', 'global'):
             session.pop('admin_active_website_id', None)
             session.pop('admin_active_store_id', None)
+            session['admin_active_scope_name'] = 'Global (All Websites)'
         else:
-            session['admin_active_website_id'] = int(website_id) if str(website_id).isdigit() else None
+            session['admin_active_website_id'] = int(website_id) if website_id and str(website_id).isdigit() else None
             session['admin_active_store_id'] = int(store_id) if store_id and str(store_id).isdigit() else None
+            if scope_name:
+                session['admin_active_scope_name'] = scope_name
 
         return jsonify({
             'success': True,
             'website_id': session.get('admin_active_website_id'),
             'store_id': session.get('admin_active_store_id'),
+            'scope_name': session.get('admin_active_scope_name', 'Global Scope'),
             'message': 'Admin scope updated successfully.'
         })
 

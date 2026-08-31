@@ -297,11 +297,169 @@
           </div>
         </div>
 
-        <!-- Scope Switcher Pill Widget -->
-        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-slate-50 border border-[#E8EDE4] text-xs font-bold text-[#0E1108] cursor-pointer hover:bg-[#EAF7E2] transition group" title="Current Store Scope">
-          <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
-          <span class="truncate max-w-[180px]">TyresVision UAE • Dubai Hub</span>
-          <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-white border border-[#E8EDE4] text-[#35760F]">Store</span>
+        <!-- Interactive Multi-Website / Multi-Store Scope Switcher Component -->
+        <div class="relative hidden md:block" id="va-scope-container">
+          <button 
+            type="button" 
+            id="va-scope-btn" 
+            class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-slate-50 border border-[#E8EDE4] text-xs font-bold text-[#0E1108] cursor-pointer hover:bg-[#EAF7E2] hover:border-[#58B31B]/40 active:scale-95 transition group" 
+            title="Click to Switch Website &amp; Store Scope"
+            aria-expanded="false"
+          >
+            <span class="w-2 h-2 rounded-full bg-[#58B31B] animate-pulse"></span>
+            <span id="va-current-scope-label" class="truncate max-w-[180px]">
+              {% if session.get('admin_active_scope_name') %}
+                {{ session.get('admin_active_scope_name') }}
+              {% elif session.get('admin_active_store_id') %}
+                Store Scope #{{ session.get('admin_active_store_id') }}
+              {% elif session.get('admin_active_website_id') %}
+                Website #{{ session.get('admin_active_website_id') }}
+              {% else %}
+                TyresVision UAE • Dubai Hub
+              {% endif %}
+            </span>
+            <span id="va-current-scope-badge" class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-white border border-[#E8EDE4] text-[#35760F] group-hover:border-[#58B31B]/40">
+              {% if not session.get('admin_active_website_id') and not session.get('admin_active_store_id') and session.get('admin_active_scope_name') == 'Global (All Websites)' %}
+                Global
+              {% elif session.get('admin_active_store_id') %}
+                Store
+              {% else %}
+                Website
+              {% endif %}
+            </span>
+            <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition-transform duration-200" id="va-scope-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+
+          <!-- Floating Scope Dropdown Panel -->
+          <div 
+            id="va-scope-dropdown" 
+            class="hidden absolute left-0 mt-2 w-80 sm:w-96 bg-white/95 backdrop-blur-xl border border-[#E8EDE4] rounded-3xl shadow-[0_20px_50px_rgba(14,17,8,0.15)] z-50 p-3 space-y-2 animate-in fade-in zoom-in-95 duration-150"
+          >
+            <!-- Dropdown Header -->
+            <div class="px-3 py-2 border-b border-[#F1F5F0]">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-black uppercase tracking-widest text-[#35760F]">Management Scope</span>
+                <span class="text-[10px] font-bold text-slate-400">Multi-Channel Hierarchy</span>
+              </div>
+              <p class="text-[11px] text-slate-500 font-medium mt-0.5">Switch active website or store to filter catalog, sections &amp; pricing.</p>
+            </div>
+
+            <!-- Scope Options List -->
+            <div class="max-h-[320px] overflow-y-auto space-y-1.5 pr-1" id="va-scope-options-container">
+              
+              <!-- 1. Global Scope -->
+              <button 
+                type="button" 
+                onclick="window.switchVisionScope('global', 'global', 'Global (All Websites)')"
+                class="w-full flex items-center justify-between p-2.5 rounded-2xl hover:bg-[#EAF7E2] transition text-left group cursor-pointer border border-transparent hover:border-[#C8E8B8] {% if session.get('admin_active_scope_name') == 'Global (All Websites)' or (not session.get('admin_active_website_id') and not session.get('admin_active_store_id')) %}bg-[#EAF7E2] border-[#C8E8B8]{% endif %}"
+              >
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-[#58B31B] group-hover:text-white flex items-center justify-center text-slate-600 transition">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  </div>
+                  <div>
+                    <div class="text-xs font-extrabold text-[#0E1108]">🌐 Global Scope</div>
+                    <div class="text-[10px] text-slate-400 font-bold">Master Defaults &amp; All Stores</div>
+                  </div>
+                </div>
+                {% if session.get('admin_active_scope_name') == 'Global (All Websites)' or (not session.get('admin_active_website_id') and not session.get('admin_active_store_id')) %}
+                <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
+                {% endif %}
+              </button>
+
+              <div class="h-px bg-[#F1F5F0] my-1"></div>
+
+              <!-- 2. Website 1: TyresVision UAE -->
+              <div class="space-y-1">
+                <div class="flex items-center justify-between px-2 pt-1">
+                  <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">TyresVision UAE (Website)</span>
+                  <button 
+                    type="button" 
+                    onclick="window.switchVisionScope(1, null, 'TyresVision UAE (All Stores)')"
+                    class="text-[10px] font-bold text-[#35760F] hover:underline cursor-pointer"
+                  >
+                    Select Website Scope
+                  </button>
+                </div>
+
+                <!-- Store 1: Dubai Retail Hub -->
+                <button 
+                  type="button" 
+                  onclick="window.switchVisionScope(1, 1, 'TyresVision UAE • Dubai Hub')"
+                  class="w-full flex items-center justify-between pl-4 pr-3 py-2 rounded-xl hover:bg-slate-50 transition text-left cursor-pointer {% if session.get('admin_active_website_id') == 1 and session.get('admin_active_store_id') == 1 %}bg-[#EAF7E2] text-[#35760F] font-black{% else %}text-slate-700{% endif %}"
+                >
+                  <div class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#58B31B]"></span>
+                    <span class="text-xs font-bold">Dubai Central Retail Hub</span>
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-black">Dubai</span>
+                  </div>
+                  {% if session.get('admin_active_website_id') == 1 and session.get('admin_active_store_id') == 1 %}
+                  <svg class="w-4 h-4 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                  {% endif %}
+                </button>
+
+                <!-- Store 2: Abu Dhabi Service Centre -->
+                <button 
+                  type="button" 
+                  onclick="window.switchVisionScope(1, 2, 'TyresVision UAE • Abu Dhabi Hub')"
+                  class="w-full flex items-center justify-between pl-4 pr-3 py-2 rounded-xl hover:bg-slate-50 transition text-left cursor-pointer {% if session.get('admin_active_website_id') == 1 and session.get('admin_active_store_id') == 2 %}bg-[#EAF7E2] text-[#35760F] font-black{% else %}text-slate-700{% endif %}"
+                >
+                  <div class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                    <span class="text-xs font-bold">Abu Dhabi Service Centre</span>
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-black">Abu Dhabi</span>
+                  </div>
+                  {% if session.get('admin_active_website_id') == 1 and session.get('admin_active_store_id') == 2 %}
+                  <svg class="w-4 h-4 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                  {% endif %}
+                </button>
+
+                <!-- Store 3: UAE Mobile Van Fitting Fleet -->
+                <button 
+                  type="button" 
+                  onclick="window.switchVisionScope(1, 3, 'TyresVision UAE • Mobile Vans')"
+                  class="w-full flex items-center justify-between pl-4 pr-3 py-2 rounded-xl hover:bg-slate-50 transition text-left cursor-pointer {% if session.get('admin_active_website_id') == 1 and session.get('admin_active_store_id') == 3 %}bg-[#EAF7E2] text-[#35760F] font-black{% else %}text-slate-700{% endif %}"
+                >
+                  <div class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                    <span class="text-xs font-bold">UAE Mobile Van Fitting Fleet</span>
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-[#35760F] font-black">Mobile</span>
+                  </div>
+                  {% if session.get('admin_active_website_id') == 1 and session.get('admin_active_store_id') == 3 %}
+                  <svg class="w-4 h-4 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                  {% endif %}
+                </button>
+              </div>
+
+              <div class="h-px bg-[#F1F5F0] my-1"></div>
+
+              <!-- 3. Website 2: TyresCart Global B2B -->
+              <button 
+                type="button" 
+                onclick="window.switchVisionScope(2, null, 'TyresCart Global B2B')"
+                class="w-full flex items-center justify-between p-2.5 rounded-2xl hover:bg-slate-50 transition text-left cursor-pointer {% if session.get('admin_active_website_id') == 2 %}bg-[#EAF7E2] text-[#35760F] font-black{% else %}text-slate-700{% endif %}"
+              >
+                <div class="flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-[#0E1108]">TyresCart Global B2B</div>
+                    <div class="text-[10px] text-slate-400">Wholesale &amp; Export Hub</div>
+                  </div>
+                </div>
+                {% if session.get('admin_active_website_id') == 2 %}
+                <svg class="w-4 h-4 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                {% endif %}
+              </button>
+
+            </div>
+
+            <!-- Dropdown Footer -->
+            <div class="pt-2 border-t border-[#F1F5F0] text-center">
+              <span class="text-[10px] text-slate-400 font-medium">Scoping applies to Pricing, Catalog &amp; CMS Sections</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -965,6 +1123,67 @@
         }
       });
     }
+
+    // Scope Switcher Dropdown Toggle Logic
+    const scopeBtn = document.getElementById('va-scope-btn');
+    const scopeDropdown = document.getElementById('va-scope-dropdown');
+    const scopeChevron = document.getElementById('va-scope-chevron');
+
+    if (scopeBtn && scopeDropdown) {
+      scopeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = scopeDropdown.classList.contains('hidden');
+        if (isHidden) {
+          scopeDropdown.classList.remove('hidden');
+          if (scopeChevron) scopeChevron.classList.add('rotate-180');
+          scopeBtn.setAttribute('aria-expanded', 'true');
+        } else {
+          scopeDropdown.classList.add('hidden');
+          if (scopeChevron) scopeChevron.classList.remove('rotate-180');
+          scopeBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!scopeDropdown.contains(e.target) && !scopeBtn.contains(e.target)) {
+          scopeDropdown.classList.add('hidden');
+          if (scopeChevron) scopeChevron.classList.remove('rotate-180');
+          scopeBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
+    // Global Scope Switch Function
+    window.switchVisionScope = async function(websiteId, storeId, scopeName) {
+      try {
+        const payload = {
+          website_id: websiteId === 'global' ? null : websiteId,
+          store_id: storeId === 'global' ? null : storeId,
+          scope_name: scopeName
+        };
+
+        const res = await fetch('/visionadmin/api/scopes/switch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          if (window.showToast) {
+            window.showToast(`Active scope switched to: ${scopeName}`, 'success');
+          }
+          setTimeout(() => {
+            window.location.reload();
+          }, 300);
+        } else {
+          alert(data.error || 'Failed to switch scope.');
+        }
+      } catch (err) {
+        console.error('Scope switch error:', err);
+        window.location.reload();
+      }
+    };
 
     // Settings Hub Modal Toggle Logic
     const settingsBtn = document.getElementById('va-settings-modal-btn');
