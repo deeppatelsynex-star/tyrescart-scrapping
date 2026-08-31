@@ -267,29 +267,56 @@ def register_tcsadmin_api_routes(app):
     """Registers all REST, JSON, and Scraper execution APIs under /tcsadmin/api (and bare /api aliases)."""
 
     # ==========================================================================
-    # 1. User, Profile & Authentication APIs
+    # 1. User, Profile & Authentication APIs (Supports both userTbl & admin_users)
     # ==========================================================================
 
     @app.route('/visionadmin/api/me')
     @app.route('/tcsadmin/api/me')
     @app.route('/api/me')
-    @login_required_api
     def api_me():
-        user = get_user_by_id(session['user_id'])
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Authentication required.'}), 401
+
+        # 1. Check VisionAdmin admin_users table if visionadmin session
+        if session.get('is_visionadmin') or session.get('admin_user_id'):
+            from visionadmin.admin_auth import get_admin_user_by_id
+            admin_u = get_admin_user_by_id(user_id)
+            if admin_u:
+                return jsonify({
+                    'user': {
+                        'userid': admin_u['id'],
+                        'id': admin_u['id'],
+                        'name': admin_u['name'],
+                        'Name': admin_u['name'],
+                        'email': admin_u['email'],
+                        'Email': admin_u['email'],
+                        'role': admin_u['role'],
+                        'Role': admin_u['role'],
+                        'status': bool(admin_u.get('is_active', 1)),
+                        'avatar': None,
+                    },
+                    'csrfToken': session.get('csrf_token')
+                })
+
+        # 2. Check TCSAdmin userTbl
+        user = get_user_by_id(user_id)
         if not user:
-            session.clear()
             return jsonify({'error': 'Authentication required.'}), 401
         return jsonify({'user': serialize_user(user), 'csrfToken': session.get('csrf_token')})
 
     @app.route('/visionadmin/api/profile', methods=['PUT'])
     @app.route('/tcsadmin/api/profile', methods=['PUT'])
     @app.route('/api/profile', methods=['PUT'])
-    @login_required_api
     @require_csrf
     def api_update_profile():
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Authentication required.'}), 401
+
         data = request.get_json(silent=True) or {}
         name = (data.get('name') or '').strip()
-        email = (data.get('email') or '').strip()
+        email = (data.get('email') or '').strip().lower()
         avatar = data.get('avatar')
         avatar = avatar.strip() if isinstance(avatar, str) else None
         avatar = avatar or None
@@ -305,10 +332,17 @@ def register_tcsadmin_api_routes(app):
         try:
             with conn.cursor() as cursor:
                 try:
-                    cursor.execute(
-                        'UPDATE userTbl SET Name = %s, Email = %s, avatar = %s WHERE userid = %s',
-                        (name, email, avatar, session['user_id']),
-                    )
+                    if session.get('is_visionadmin') or session.get('admin_user_id'):
+                        cursor.execute(
+                            'UPDATE `admin_users` SET `name` = %s, `email` = %s, `updated_at` = NOW() WHERE `id` = %s',
+                            (name, email, user_id),
+                        )
+                    else:
+                        cursor.execute(
+                            'UPDATE userTbl SET Name = %s, Email = %s, avatar = %s WHERE userid = %s',
+                            (name, email, avatar, user_id),
+                        )
+                    conn.commit()
                 except pymysql.err.IntegrityError:
                     return jsonify({'error': 'That email is already in use.'}), 409
         finally:
@@ -317,36 +351,53 @@ def register_tcsadmin_api_routes(app):
         session['name'] = name
         session['email'] = email
 
-        user = get_user_by_id(session['user_id'])
+        if session.get('is_visionadmin') or session.get('admin_user_id'):
+            return jsonify({
+                'user': {
+                    'id': user_id,
+                    'name': name,
+                    'email': email,
+                    'role': session.get('role')
+                }
+            })
+        user = get_user_by_id(user_id)
         return jsonify({'user': serialize_user(user)})
 
     @app.route('/visionadmin/api/profile/avatar', methods=['DELETE'])
     @app.route('/tcsadmin/api/profile/avatar', methods=['DELETE'])
     @app.route('/api/profile/avatar', methods=['DELETE'])
-    @login_required_api
     @require_csrf
-    def api_remove_avatar():
-        conn = get_connection()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute('UPDATE userTbl SET avatar = NULL WHERE userid = %s', (session['user_id'],))
-        finally:
-            conn.close()
+    def api_delete_avatar():
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Authentication required.'}), 401
 
-        user = get_user_by_id(session['user_id'])
-        return jsonify({'user': serialize_user(user)})
+        if not (session.get('is_visionadmin') or session.get('admin_user_id')):
+            conn = get_connection()
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute('UPDATE userTbl SET avatar = NULL WHERE userid = %s', (user_id,))
+                    conn.commit()
+            finally:
+                conn.close()
+
+            user = get_user_by_id(user_id)
+            return jsonify({'user': serialize_user(user)})
+        return jsonify({'success': True})
 
     @app.route('/visionadmin/api/change-password', methods=['POST'])
     @app.route('/visonadmin/api/change-password', methods=['POST'])
     @app.route('/tcsadmin/api/change-password', methods=['POST'])
     @app.route('/api/change-password', methods=['POST'])
-    @login_required_api
     @require_csrf
     def api_change_password():
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Authentication required.'}), 401
+
         fail_count = session.get('pwd_fail_count', 0)
         if fail_count >= 5:
-            session.clear()
-            return jsonify({'error': 'Too many failed attempts. Please log in again.'}), 429
+            return jsonify({'error': 'Too many failed attempts. Please try again later.'}), 429
 
         data = request.get_json(silent=True) or {}
         current_password = data.get('current_password') or ''
@@ -360,29 +411,36 @@ def register_tcsadmin_api_routes(app):
         if len(new_password) < 8:
             return jsonify({'error': 'New password must be at least 8 characters.'}), 400
 
-        user = get_user_by_id(session['user_id'])
+        # 1. VisionAdmin check
+        if session.get('is_visionadmin') or session.get('admin_user_id'):
+            from visionadmin.admin_auth import get_admin_user_by_id, verify_admin_password, update_admin_user_password
+            admin_u = get_admin_user_by_id(user_id)
+            if not admin_u or not verify_admin_password(current_password, admin_u.get('password', '')):
+                session['pwd_fail_count'] = fail_count + 1
+                return jsonify({'error': 'Current password is incorrect.'}), 400
+            update_admin_user_password(user_id, new_password)
+            session['pwd_fail_count'] = 0
+            return jsonify({'message': 'Password updated successfully.'})
+
+        # 2. TCSAdmin check
+        user = get_user_by_id(user_id)
         if not user or not verify_password(current_password, user['password']):
             session['pwd_fail_count'] = fail_count + 1
             return jsonify({'error': 'Current password is incorrect.'}), 400
-
-        if verify_password(new_password, user['password']):
-            return jsonify({'error': 'New password must be different from the current password.'}), 400
 
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute(
                     'UPDATE userTbl SET password = %s WHERE userid = %s',
-                    (hash_password(new_password), session['user_id']),
+                    (hash_password(new_password), user_id),
                 )
+                conn.commit()
         finally:
             conn.close()
 
-        session.pop('pwd_fail_count', None)
-        session['sid'] = secrets.token_hex(16)
-        session['csrf_token'] = secrets.token_hex(16)
-
-        return jsonify({'message': 'Password changed successfully.'})
+        session['pwd_fail_count'] = 0
+        return jsonify({'message': 'Password updated successfully.'})
 
     @app.route('/tcsadmin/api/profile/delete-account', methods=['POST', 'DELETE'])
     @app.route('/api/profile/delete-account', methods=['POST', 'DELETE'])
