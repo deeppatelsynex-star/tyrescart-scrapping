@@ -33,14 +33,16 @@ def log_activity(
     new_values: dict = None,
     website_id: int = None,
     store_id: int = None,
-    user_id: int = None
+    user_id: int = None,
+    actor_user_id: int = None,
+    **kwargs
 ):
     """
     Records an immutable audit log entry into `activity_logs`.
     Logs user ID, IP address, user agent, website, store, action, and JSON diffs.
     """
     if user_id is None:
-        user_id = get_current_admin_user_id()
+        user_id = actor_user_id or get_current_admin_user_id()
 
     ip_address = get_client_ip()
     user_agent = get_user_agent()

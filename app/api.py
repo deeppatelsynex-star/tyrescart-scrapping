@@ -2933,7 +2933,7 @@ def register_visionadmin_api_routes(app):
             limit=limit,
             offset=offset
         )
-        return jsonify({'logs': logs, 'count': len(logs), 'page': page, 'limit': limit})
+        return jsonify({'success': True, 'logs': logs, 'count': len(logs), 'page': page, 'limit': limit})
 
 
 def register_client_api_routes(app):
