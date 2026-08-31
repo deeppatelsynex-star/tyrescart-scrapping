@@ -152,10 +152,14 @@ CREATE TABLE IF NOT EXISTS `pages` (
 CREATE_PAGE_SECTIONS_TBL = """
 CREATE TABLE IF NOT EXISTS `page_sections` (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `page_slug` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'about-us',
+  `website_id` bigint UNSIGNED DEFAULT NULL,
+  `store_id` bigint UNSIGNED DEFAULT NULL,
+  `page_slug` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'home',
   `section_type` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `section_title` json NOT NULL,
   `section_subtitle` json DEFAULT NULL,
+  `meta_title` json DEFAULT NULL,
+  `meta_description` json DEFAULT NULL,
   `content` json DEFAULT NULL,
   `image` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `image_position` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'right',
@@ -164,12 +168,19 @@ CREATE TABLE IF NOT EXISTS `page_sections` (
   `section_data` json DEFAULT NULL,
   `sort_order` int NOT NULL DEFAULT 0,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_by` bigint UNSIGNED DEFAULT NULL,
+  `updated_by` bigint UNSIGNED DEFAULT NULL,
+  `deleted_by` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` timestamp NULL DEFAULT NULL,
   KEY `idx_sections_slug` (`page_slug`),
   KEY `idx_sections_active_order` (`page_slug`, `is_active`, `sort_order`),
-  KEY `idx_sections_deleted_at` (`deleted_at`)
+  KEY `idx_sections_deleted_at` (`deleted_at`),
+  KEY `idx_sections_website_id` (`website_id`),
+  KEY `idx_sections_store_id` (`store_id`),
+  KEY `idx_sections_created_by` (`created_by`),
+  KEY `idx_sections_updated_by` (`updated_by`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
 
@@ -193,6 +204,7 @@ CREATE TABLE IF NOT EXISTS `blogs` (
   `deleted_at` timestamp NULL DEFAULT NULL,
   `created_by` bigint UNSIGNED DEFAULT NULL,
   `updated_by` bigint UNSIGNED DEFAULT NULL,
+  `deleted_by` bigint UNSIGNED DEFAULT NULL,
   UNIQUE KEY `blogs_slug_unique` (`slug`),
   KEY `blogs_status_index` (`status`),
   KEY `blogs_published_at_index` (`published_at`),
@@ -206,6 +218,21 @@ CREATE TABLE IF NOT EXISTS `blogs` (
 
 NEW_BLOG_COLUMNS = {
     "category_name": "ALTER TABLE blogs ADD COLUMN category_name VARCHAR(255) NULL AFTER image",
+    "deleted_by": "ALTER TABLE blogs ADD COLUMN deleted_by BIGINT UNSIGNED NULL AFTER updated_by",
+}
+
+NEW_PAGE_SECTION_COLUMNS = {
+    "website_id": "ALTER TABLE page_sections ADD COLUMN website_id BIGINT UNSIGNED NULL AFTER id",
+    "store_id": "ALTER TABLE page_sections ADD COLUMN store_id BIGINT UNSIGNED NULL AFTER website_id",
+    "created_by": "ALTER TABLE page_sections ADD COLUMN created_by BIGINT UNSIGNED NULL AFTER is_active",
+    "updated_by": "ALTER TABLE page_sections ADD COLUMN updated_by BIGINT UNSIGNED NULL AFTER created_by",
+    "deleted_by": "ALTER TABLE page_sections ADD COLUMN deleted_by BIGINT UNSIGNED NULL AFTER deleted_at",
+}
+
+NEW_PAGE_COLUMNS = {
+    "deleted_by": "ALTER TABLE pages ADD COLUMN deleted_by BIGINT UNSIGNED NULL AFTER deleted_at",
+    "website_id": "ALTER TABLE pages ADD COLUMN website_id BIGINT UNSIGNED NULL AFTER id",
+    "store_id": "ALTER TABLE pages ADD COLUMN store_id BIGINT UNSIGNED NULL AFTER website_id",
 }
 
 PERFORMANCE_INDEXES = [
@@ -257,6 +284,30 @@ def add_missing_columns(cursor):
     existing_blogs = {row["COLUMN_NAME"] for row in cursor.fetchall()}
     for column, statement in NEW_BLOG_COLUMNS.items():
         if column not in existing_blogs:
+            try:
+                cursor.execute(statement)
+            except Exception:
+                pass
+
+    cursor.execute(
+        "SELECT COLUMN_NAME FROM information_schema.COLUMNS "
+        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'page_sections'"
+    )
+    existing_sections = {row["COLUMN_NAME"] for row in cursor.fetchall()}
+    for column, statement in NEW_PAGE_SECTION_COLUMNS.items():
+        if column not in existing_sections:
+            try:
+                cursor.execute(statement)
+            except Exception:
+                pass
+
+    cursor.execute(
+        "SELECT COLUMN_NAME FROM information_schema.COLUMNS "
+        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'pages'"
+    )
+    existing_pages = {row["COLUMN_NAME"] for row in cursor.fetchall()}
+    for column, statement in NEW_PAGE_COLUMNS.items():
+        if column not in existing_pages:
             try:
                 cursor.execute(statement)
             except Exception:
