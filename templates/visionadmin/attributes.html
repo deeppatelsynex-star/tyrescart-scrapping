@@ -149,8 +149,7 @@
                     type="button" 
                     @click="deleteAttribute(attr)" 
                     class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                    :class="attr.is_system ? 'opacity-30 cursor-not-allowed' : ''"
-                    :title="attr.is_system ? 'Protected System Attribute' : 'Delete Attribute'"
+                    title="Delete Attribute"
                   >
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   </button>
@@ -524,11 +523,7 @@ function visionAttributesApp() {
     },
 
     async deleteAttribute(attr) {
-      if (attr.is_system) {
-        alert(`Cannot delete core system attribute '${attr.code}'.`);
-        return;
-      }
-      const confirmMsg = `Are you sure you want to delete attribute '${attr.code}'?`;
+      const confirmMsg = `Are you sure you want to move attribute '${attr.code}' to trash?`;
       if (!confirm(confirmMsg)) return;
 
       try {

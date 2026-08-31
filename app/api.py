@@ -2974,7 +2974,7 @@ def register_visionadmin_api_routes(app):
 
     @app.route('/visionadmin/api/attributes/<int:attr_id>', methods=['DELETE'])
     def visionadmin_api_delete_attribute(attr_id):
-        """Soft-deletes an attribute if it is not a protected system attribute."""
+        """Soft-deletes an attribute into trash."""
         user_id = get_current_admin_user_id()
         conn = get_connection()
         try:
@@ -2983,9 +2983,6 @@ def register_visionadmin_api_routes(app):
                 attr = cursor.fetchone()
                 if not attr:
                     return jsonify({'error': 'Attribute not found.'}), 404
-
-                if attr.get('is_system') == 1:
-                    return jsonify({'error': f"Cannot delete core system attribute '{attr['code']}'."}), 400
 
                 cursor.execute("""
                     UPDATE attributes 
