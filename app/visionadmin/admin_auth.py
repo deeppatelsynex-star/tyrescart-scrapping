@@ -189,6 +189,120 @@ def create_admin_user(name: str, email: str, password: str, role: str = 'super_a
         conn.close()
 
 
+def serialize_admin_user(u: dict) -> dict:
+    """Serializes an admin_users row with formatted and raw dates."""
+    if not u:
+        return {}
+    created_raw = u['created_at'].isoformat() + 'Z' if u.get('created_at') and hasattr(u['created_at'], 'isoformat') else str(u.get('created_at') or '')
+    updated_raw = u['updated_at'].isoformat() + 'Z' if u.get('updated_at') and hasattr(u['updated_at'], 'isoformat') else str(u.get('updated_at') or '')
+    last_login_raw = u['last_login_at'].isoformat() + 'Z' if u.get('last_login_at') and hasattr(u['last_login_at'], 'isoformat') else None
+    
+    # Format human-readable date
+    def fmt_date(dt):
+        if not dt:
+            return 'Never'
+        try:
+            return dt.strftime('%d %b %Y, %I:%M %p')
+        except Exception:
+            return str(dt)
+
+    return {
+        'id': u['id'],
+        'name': u.get('name', ''),
+        'email': u.get('email', ''),
+        'role': u.get('role', 'manager'),
+        'role_display': (u.get('role', 'manager') or '').replace('_', ' ').title(),
+        'is_active': bool(u.get('is_active', 1)),
+        'last_login_at': fmt_date(u.get('last_login_at')),
+        'last_login_raw': last_login_raw,
+        'created_at': fmt_date(u.get('created_at')),
+        'created_raw': created_raw,
+        'updated_at': fmt_date(u.get('updated_at')),
+        'updated_raw': updated_raw,
+    }
+
+
+def list_admin_users():
+    """Fetches all administrator accounts from admin_users table."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, name, email, password, role, is_active, last_login_at, remember_token, created_at, updated_at
+                FROM `admin_users`
+                ORDER BY id ASC
+            """)
+            rows = cur.fetchall()
+            return [serialize_admin_user(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def count_super_admins() -> int:
+    """Returns number of active super_admin users."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS c FROM `admin_users` WHERE `role` = 'super_admin' AND `is_active` = 1")
+            res = cur.fetchone()
+            return res['c'] if res else 0
+    finally:
+        conn.close()
+
+
+def update_admin_user(admin_id: int, name: str, email: str, role: str, is_active: int = 1, new_password: str = None):
+    """Updates an existing administrator account in admin_users table."""
+    conn = get_connection()
+    try:
+        email_clean = email.strip().lower()
+        role_clean = role if role in VALID_ADMIN_ROLES else 'manager'
+        with conn.cursor() as cur:
+            if new_password:
+                hashed = hash_admin_password(new_password)
+                cur.execute("""
+                    UPDATE `admin_users`
+                    SET `name` = %s, `email` = %s, `role` = %s, `is_active` = %s, `password` = %s, `updated_at` = NOW()
+                    WHERE `id` = %s
+                """, (name.strip(), email_clean, role_clean, is_active, hashed, admin_id))
+            else:
+                cur.execute("""
+                    UPDATE `admin_users`
+                    SET `name` = %s, `email` = %s, `role` = %s, `is_active` = %s, `updated_at` = NOW()
+                    WHERE `id` = %s
+                """, (name.strip(), email_clean, role_clean, is_active, admin_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def delete_admin_user(admin_id: int):
+    """Deletes an administrator account from admin_users table."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM `admin_users` WHERE `id` = %s", (admin_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def toggle_admin_user_status(admin_id: int) -> bool:
+    """Toggles is_active between 1 and 0, returns new status."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT is_active FROM `admin_users` WHERE id = %s", (admin_id,))
+            row = cur.fetchone()
+            if not row:
+                return False
+            new_status = 0 if row.get('is_active', 1) else 1
+            cur.execute("UPDATE `admin_users` SET is_active = %s, updated_at = NOW() WHERE id = %s", (new_status, admin_id))
+        conn.commit()
+        return bool(new_status)
+    finally:
+        conn.close()
+
+
 def update_admin_user_password(admin_id: int, new_password: str):
     """Updates password in admin_users table."""
     conn = get_connection()

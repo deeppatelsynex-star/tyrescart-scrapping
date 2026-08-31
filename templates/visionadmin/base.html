@@ -180,6 +180,24 @@
           <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
           {% endif %}
         </a>
+
+        <!-- Admin Users Management Link (Super Admin only) -->
+        {% if session.get('role') in ['super_admin', 'superadmin', 'SuperAdmin'] %}
+        <a href="/visionadmin/users" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page in ['users', 'admin-users', 'user-management'] %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['users', 'admin-users', 'user-management'] %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <span>Admin Users</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full {% if page in ['users', 'admin-users', 'user-management'] %}bg-[#D1E7C4] text-[#35760F]{% else %}bg-slate-100 text-slate-500{% endif %}">RBAC</span>
+            {% if page in ['users', 'admin-users', 'user-management'] %}
+            <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
+            {% endif %}
+          </div>
+        </a>
+        {% endif %}
       </div>
     </div>
 
@@ -337,7 +355,17 @@
                 </svg>
               </a>
 
-              {% if session.get('role') in ['SuperAdmin', 'Admin'] %}
+              {% if session.get('role') in ['super_admin', 'superadmin', 'SuperAdmin'] %}
+              <a href="/visionadmin/users" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition group">
+                <svg class="w-4 h-4 text-slate-400 group-hover:text-[#388E3C] transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span>Admin Users</span>
+              </a>
+              {% elif session.get('role') in ['SuperAdmin', 'Admin'] %}
               <a href="/tcsadmin/Admin" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition group">
                 <svg class="w-4 h-4 text-slate-400 group-hover:text-[#388E3C] transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>

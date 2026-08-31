@@ -2341,18 +2341,189 @@ def register_visionadmin_api_routes(app):
         finally:
             conn.close()
 
-    @app.route('/visionadmin/api/enquiries/<int:enquiry_id>', methods=['DELETE'])
-    @app.route('/visionadmin/api/v1/enquiries/<int:enquiry_id>', methods=['DELETE'])
-    def visionadmin_delete_enquiry(enquiry_id):
-        """Deletes an enquiry from hdweb_enquiry."""
-        conn = get_connection()
+    # =========================================================================
+    # 8. VISIONADMIN USER MANAGEMENT API (admin_users table)
+    # =========================================================================
+
+    @app.route('/visionadmin/api/users', methods=['GET'])
+    @app.route('/visonadmin/api/users', methods=['GET'])
+    def visionadmin_api_list_users():
+        from visionadmin.admin_auth import list_admin_users
+        users = list_admin_users()
+        total = len(users)
+        super_admins = sum(1 for u in users if u.get('role') in ('super_admin', 'SuperAdmin'))
+        managers = sum(1 for u in users if u.get('role') == 'manager')
+        support = sum(1 for u in users if u.get('role') == 'support')
+        active = sum(1 for u in users if u.get('is_active'))
+
+        return jsonify({
+            'success': True,
+            'users': users,
+            'metrics': {
+                'total': total,
+                'super_admins': super_admins,
+                'managers': managers,
+                'support': support,
+                'active': active,
+                'inactive': total - active
+            }
+        })
+
+    @app.route('/visionadmin/api/users', methods=['POST'])
+    @app.route('/visonadmin/api/users', methods=['POST'])
+    def visionadmin_api_create_user():
+        role_norm = str(session.get('role') or '').strip().lower().replace('-', '_').replace(' ', '_')
+        if role_norm not in ('super_admin', 'superadmin') and session.get('role') != 'SuperAdmin':
+            return jsonify({'error': 'Forbidden. Only Super Administrators can create admin users.'}), 403
+
+        data = request.get_json(silent=True) or request.form
+        name = (data.get('name') or '').strip()
+        email = (data.get('email') or '').strip().lower()
+        password = data.get('password') or ''
+        role = (data.get('role') or 'manager').strip().lower()
+        is_active = 1 if data.get('is_active') in (1, True, '1', 'true', 'on') else 0
+
+        if not name:
+            return jsonify({'error': 'Full name is required.'}), 400
+        if not email or not EMAIL_RE.match(email):
+            return jsonify({'error': 'A valid email address is required.'}), 400
+        if not password or len(password) < 8:
+            return jsonify({'error': 'Password must be at least 8 characters long.'}), 400
+        if role not in ('super_admin', 'manager', 'support'):
+            return jsonify({'error': 'Invalid role. Choose Super Admin, Manager, or Support.'}), 400
+
+        from visionadmin.admin_auth import create_admin_user, get_admin_user_by_email, get_admin_user_by_id, serialize_admin_user
+
+        existing = get_admin_user_by_email(email)
+        if existing:
+            return jsonify({'error': f"An administrator account with email '{email}' already exists."}), 409
+
         try:
-            with conn.cursor() as cursor:
-                cursor.execute("DELETE FROM hdweb_enquiry WHERE enquiry_id = %s", (enquiry_id,))
-                conn.commit()
-                return jsonify({'success': True, 'message': 'Enquiry deleted successfully'})
-        finally:
-            conn.close()
+            new_id = create_admin_user(name, email, password, role, is_active)
+            created = get_admin_user_by_id(new_id)
+            return jsonify({
+                'success': True,
+                'message': f"Administrator '{name}' created successfully.",
+                'user': serialize_admin_user(created) if created else {}
+            }), 201
+        except Exception as err:
+            return jsonify({'error': f"Failed to create admin user: {err}"}), 500
+
+    @app.route('/visionadmin/api/users/<int:user_id>', methods=['GET'])
+    @app.route('/visonadmin/api/users/<int:user_id>', methods=['GET'])
+    def visionadmin_api_get_user(user_id):
+        from visionadmin.admin_auth import get_admin_user_by_id, serialize_admin_user
+        user = get_admin_user_by_id(user_id)
+        if not user:
+            return jsonify({'error': 'Administrator user not found.'}), 404
+        return jsonify({'success': True, 'user': serialize_admin_user(user)})
+
+    @app.route('/visionadmin/api/users/<int:user_id>', methods=['PUT'])
+    @app.route('/visonadmin/api/users/<int:user_id>', methods=['PUT'])
+    def visionadmin_api_update_user(user_id):
+        role_norm = str(session.get('role') or '').strip().lower().replace('-', '_').replace(' ', '_')
+        if role_norm not in ('super_admin', 'superadmin') and session.get('role') != 'SuperAdmin':
+            return jsonify({'error': 'Forbidden. Only Super Administrators can update admin users.'}), 403
+
+        from visionadmin.admin_auth import get_admin_user_by_id, update_admin_user, get_admin_user_by_email, serialize_admin_user, count_super_admins
+
+        existing = get_admin_user_by_id(user_id)
+        if not existing:
+            return jsonify({'error': 'Administrator user not found.'}), 404
+
+        data = request.get_json(silent=True) or request.form
+        name = (data.get('name') or existing['name']).strip()
+        email = (data.get('email') or existing['email']).strip().lower()
+        role = (data.get('role') or existing['role']).strip().lower()
+        is_active_val = data.get('is_active')
+        is_active = 1 if is_active_val in (1, True, '1', 'true', 'on') else (0 if is_active_val in (0, False, '0', 'false') else existing.get('is_active', 1))
+        password = data.get('password')
+
+        if not name:
+            return jsonify({'error': 'Name cannot be empty.'}), 400
+        if not email or not EMAIL_RE.match(email):
+            return jsonify({'error': 'A valid email address is required.'}), 400
+        if role not in ('super_admin', 'manager', 'support'):
+            return jsonify({'error': 'Invalid role.'}), 400
+        if password and len(password) < 8:
+            return jsonify({'error': 'New password must be at least 8 characters.'}), 400
+
+        # Check if demoting the only super_admin
+        if existing.get('role') == 'super_admin' and role != 'super_admin' and count_super_admins() <= 1:
+            return jsonify({'error': 'Action blocked. Cannot demote the only remaining Super Administrator.'}), 400
+
+        # Check email collision
+        if email != existing['email'].strip().lower():
+            dup = get_admin_user_by_email(email)
+            if dup and dup['id'] != user_id:
+                return jsonify({'error': f"Email '{email}' is already in use."}), 409
+
+        try:
+            update_admin_user(user_id, name, email, role, is_active, password if password else None)
+            updated = get_admin_user_by_id(user_id)
+            return jsonify({
+                'success': True,
+                'message': f"Administrator '{name}' updated successfully.",
+                'user': serialize_admin_user(updated)
+            })
+        except Exception as err:
+            return jsonify({'error': f"Failed to update user: {err}"}), 500
+
+    @app.route('/visionadmin/api/users/<int:user_id>', methods=['DELETE'])
+    @app.route('/visonadmin/api/users/<int:user_id>', methods=['DELETE'])
+    def visionadmin_api_delete_user(user_id):
+        role_norm = str(session.get('role') or '').strip().lower().replace('-', '_').replace(' ', '_')
+        if role_norm not in ('super_admin', 'superadmin') and session.get('role') != 'SuperAdmin':
+            return jsonify({'error': 'Forbidden. Only Super Administrators can delete admin users.'}), 403
+
+        current_admin_id = session.get('admin_user_id') or session.get('user_id')
+        if user_id == current_admin_id:
+            return jsonify({'error': 'Action not allowed. You cannot delete your own active account.'}), 400
+
+        from visionadmin.admin_auth import get_admin_user_by_id, delete_admin_user, count_super_admins
+
+        target = get_admin_user_by_id(user_id)
+        if not target:
+            return jsonify({'error': 'Administrator user not found.'}), 404
+
+        if target.get('role') == 'super_admin' and count_super_admins() <= 1:
+            return jsonify({'error': 'Action blocked. Cannot delete the only remaining Super Administrator.'}), 400
+
+        try:
+            delete_admin_user(user_id)
+            return jsonify({
+                'success': True,
+                'message': f"Administrator account '{target['name']}' deleted."
+            })
+        except Exception as err:
+            return jsonify({'error': f"Failed to delete user: {err}"}), 500
+
+    @app.route('/visionadmin/api/users/<int:user_id>/toggle-status', methods=['POST'])
+    @app.route('/visonadmin/api/users/<int:user_id>/toggle-status', methods=['POST'])
+    def visionadmin_api_toggle_user_status(user_id):
+        role_norm = str(session.get('role') or '').strip().lower().replace('-', '_').replace(' ', '_')
+        if role_norm not in ('super_admin', 'superadmin') and session.get('role') != 'SuperAdmin':
+            return jsonify({'error': 'Forbidden. Only Super Administrators can modify account status.'}), 403
+
+        current_admin_id = session.get('admin_user_id') or session.get('user_id')
+        if user_id == current_admin_id:
+            return jsonify({'error': 'Action not allowed. You cannot disable your own active account.'}), 400
+
+        from visionadmin.admin_auth import get_admin_user_by_id, toggle_admin_user_status, count_super_admins
+
+        target = get_admin_user_by_id(user_id)
+        if not target:
+            return jsonify({'error': 'Administrator user not found.'}), 404
+
+        if target.get('role') == 'super_admin' and target.get('is_active', 1) == 1 and count_super_admins() <= 1:
+            return jsonify({'error': 'Action blocked. Cannot disable the only remaining active Super Administrator.'}), 400
+
+        new_status = toggle_admin_user_status(user_id)
+        return jsonify({
+            'success': True,
+            'is_active': new_status,
+            'message': f"Administrator account '{target['name']}' {'activated' if new_status else 'disabled'}."
+        })
 
 
 def register_client_api_routes(app):

@@ -286,3 +286,25 @@ def register_visionadmin_routes(app):
     @login_required_visionadmin
     def visionadmin_enquiries():
         return render_template('visionadmin/enquiries.html', page='enquiries')
+
+    @app.route('/visionadmin/users', methods=['GET'])
+    @app.route('/visionadmin/admin-users', methods=['GET'])
+    @app.route('/visonadmin/users', methods=['GET'])
+    @app.route('/visonadmin/admin-users', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_users():
+        """Renders Admin Users Management Studio (Super Admin only)."""
+        role_norm = str(session.get('role') or '').strip().lower().replace('-', '_').replace(' ', '_')
+        if role_norm not in ('super_admin', 'superadmin') and session.get('role') != 'SuperAdmin':
+            return render_template(
+                '404.html',
+                page='403',
+                requested_path=request.path,
+                user_name=session.get('name'),
+                user_email=session.get('email'),
+                user_role=session.get('role'),
+                error_message='Super Administrator privileges required to manage VisionAdmin accounts.',
+                unread_notifications=0,
+                notifications=[]
+            ), 403
+        return render_template('visionadmin/users.html', page='users')
