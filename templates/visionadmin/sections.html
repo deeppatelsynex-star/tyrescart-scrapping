@@ -19,14 +19,35 @@
     <!-- Page Switcher and Action Buttons -->
     <div class="flex flex-wrap items-center gap-3 shrink-0">
       
-      <!-- Target Page Dropdown Selector -->
-      <div class="relative min-w-[210px]">
-        <select id="select-target-page" class="w-full pl-4 pr-10 py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-emerald-600/60 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#58B31B] cursor-pointer appearance-none shadow-2xs">
+      <!-- Target Page Custom Dropdown Selector -->
+      <div class="relative min-w-[220px]" id="target-page-dropdown-container">
+        <button 
+          type="button" 
+          id="btn-target-page-dropdown" 
+          class="w-full flex items-center justify-between gap-3 pl-4 pr-3.5 py-2.5 rounded-2xl bg-white hover:bg-[#F8FAF7] border border-[#58B31B]/60 hover:border-[#58B31B] text-xs font-bold text-[#0E1108] shadow-2xs transition-all cursor-pointer select-none"
+          aria-expanded="false"
+          aria-haspopup="true"
+        >
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="w-2 h-2 rounded-full bg-[#58B31B] shrink-0"></span>
+            <span id="target-page-current-label" class="truncate font-extrabold text-[#0E1108]">About Us (about-us)</span>
+          </div>
+          <svg id="target-page-chevron" class="w-4 h-4 text-emerald-600 transition-transform duration-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+
+        <!-- Custom Floating Dropdown Menu -->
+        <div 
+          id="target-page-dropdown-menu" 
+          class="hidden absolute left-0 right-0 top-full mt-2 min-w-[240px] bg-white rounded-2xl shadow-[0_12px_36px_-8px_rgba(0,0,0,0.15)] border border-slate-100 p-1.5 z-50 transform origin-top transition-all duration-200 max-h-72 overflow-y-auto"
+        >
+          <div id="target-page-options-list" class="space-y-0.5">
+            <!-- Dynamically injected options -->
+          </div>
+        </div>
+
+        <select id="select-target-page" class="hidden">
           <option value="about-us" selected>About Us (about-us)</option>
         </select>
-        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-emerald-600">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
       </div>
 
       <!-- Live Page Link -->

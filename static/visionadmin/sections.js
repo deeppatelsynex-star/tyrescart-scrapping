@@ -65,6 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentPageSlug = urlParams.get('page') || 'about-us';
 
   const selectTargetPage = document.getElementById('select-target-page');
+  const btnTargetPageDropdown = document.getElementById('btn-target-page-dropdown');
+  const targetPageDropdownMenu = document.getElementById('target-page-dropdown-menu');
+  const targetPageCurrentLabel = document.getElementById('target-page-current-label');
+  const targetPageChevron = document.getElementById('target-page-chevron');
+  const targetPageOptionsList = document.getElementById('target-page-options-list');
   const badgePageSlug = document.getElementById('badge-page-slug');
   const pageSectionsTitle = document.getElementById('page-sections-title');
   const linkViewLivePage = document.getElementById('link-view-live-page');
@@ -198,10 +203,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3500);
   }
 
-  function updateTargetPageUI(slug) {
+  function updateTargetPageUI(slug, title) {
     currentPageSlug = slug || 'about-us';
     if (badgePageSlug) badgePageSlug.textContent = currentPageSlug.toUpperCase();
     if (formPageSlug) formPageSlug.value = currentPageSlug;
+
+    if (targetPageCurrentLabel) {
+      if (title) {
+        targetPageCurrentLabel.textContent = `${title} (${currentPageSlug})`;
+      } else {
+        const prettySlug = currentPageSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        targetPageCurrentLabel.textContent = `${prettySlug} (${currentPageSlug})`;
+      }
+    }
 
     if (pageSectionsTitle) {
       pageSectionsTitle.textContent = 'Page Sections';
@@ -209,6 +223,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (linkViewLivePage) {
       linkViewLivePage.href = `/en/${currentPageSlug}`;
     }
+  }
+
+  function selectPage(slug, title) {
+    if (targetPageDropdownMenu) targetPageDropdownMenu.classList.add('hidden');
+    if (targetPageChevron) {
+      targetPageChevron.classList.remove('rotate-180');
+      targetPageChevron.classList.remove('text-[#35760F]');
+    }
+    if (btnTargetPageDropdown) btnTargetPageDropdown.setAttribute('aria-expanded', 'false');
+
+    updateTargetPageUI(slug, title);
+    if (selectTargetPage) selectTargetPage.value = slug;
+
+    const newUrl = window.location.pathname + '?page=' + encodeURIComponent(currentPageSlug);
+    window.history.pushState({ page: currentPageSlug }, '', newUrl);
+
+    // Refresh option checkmarks
+    loadAvailablePages();
+    fetchSections();
   }
 
   async function loadAvailablePages() {
@@ -233,6 +266,42 @@ document.addEventListener('DOMContentLoaded', () => {
         pageList.push({ slug: currentPageSlug, title: currentPageSlug });
       }
 
+      const activePage = pageList.find(p => p.slug === currentPageSlug) || { slug: currentPageSlug, title: currentPageSlug };
+      updateTargetPageUI(activePage.slug, activePage.title);
+
+      // Render custom styled options in dropdown card
+      if (targetPageOptionsList) {
+        targetPageOptionsList.innerHTML = pageList.map(p => {
+          const isSelected = p.slug === currentPageSlug;
+          return `
+            <button 
+              type="button" 
+              class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                isSelected 
+                  ? 'bg-[#EAF7E2] text-[#0E1108] font-extrabold' 
+                  : 'text-slate-700 hover:bg-slate-50 hover:text-[#0E1108]'
+              }"
+              data-slug="${p.slug}"
+              data-title="${p.title}"
+            >
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-[#58B31B]' : 'bg-slate-300'} shrink-0"></span>
+                <span class="truncate">${p.title} <span class="text-[11px] text-slate-400 font-semibold">(${p.slug})</span></span>
+              </div>
+              ${isSelected ? '<svg class="w-4 h-4 text-[#35760F] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+            </button>
+          `;
+        }).join('');
+
+        targetPageOptionsList.querySelectorAll('button[data-slug]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const slug = btn.getAttribute('data-slug');
+            const title = btn.getAttribute('data-title');
+            selectPage(slug, title);
+          });
+        });
+      }
+
       if (selectTargetPage) {
         selectTargetPage.innerHTML = pageList.map(p => `
           <option value="${p.slug}" ${p.slug === currentPageSlug ? 'selected' : ''}>
@@ -245,12 +314,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (selectTargetPage) {
-    selectTargetPage.addEventListener('change', () => {
-      updateTargetPageUI(selectTargetPage.value);
-      const newUrl = window.location.pathname + '?page=' + encodeURIComponent(currentPageSlug);
-      window.history.pushState({ page: currentPageSlug }, '', newUrl);
-      fetchSections();
+  // Toggle Custom Dropdown
+  if (btnTargetPageDropdown && targetPageDropdownMenu) {
+    btnTargetPageDropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = targetPageDropdownMenu.classList.toggle('hidden');
+      btnTargetPageDropdown.setAttribute('aria-expanded', !isHidden);
+      if (targetPageChevron) {
+        targetPageChevron.classList.toggle('rotate-180', !isHidden);
+        targetPageChevron.classList.toggle('text-[#35760F]', !isHidden);
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!targetPageDropdownMenu.contains(e.target) && !btnTargetPageDropdown.contains(e.target)) {
+        targetPageDropdownMenu.classList.add('hidden');
+        btnTargetPageDropdown.setAttribute('aria-expanded', 'false');
+        if (targetPageChevron) {
+          targetPageChevron.classList.remove('rotate-180', 'text-[#35760F]');
+        }
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !targetPageDropdownMenu.classList.contains('hidden')) {
+        targetPageDropdownMenu.classList.add('hidden');
+        btnTargetPageDropdown.setAttribute('aria-expanded', 'false');
+        if (targetPageChevron) {
+          targetPageChevron.classList.remove('rotate-180', 'text-[#35760F]');
+        }
+      }
     });
   }
 
