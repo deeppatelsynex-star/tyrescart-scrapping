@@ -199,14 +199,25 @@ def register_visionadmin_routes(app):
         admin_user = get_admin_user_by_email(email)
         if admin_user and admin_user.get('is_active', 1):
             try:
+                import base64
+                import os
+                logo_b64 = ''
+                logo_file = os.path.join(app.static_folder or 'static', 'assets', 'images', 'tyresvision-email-logo.png')
+                if os.path.isfile(logo_file):
+                    with open(logo_file, 'rb') as f:
+                        logo_b64 = base64.b64encode(f.read()).decode('utf-8')
+
                 token = create_admin_password_reset_token(admin_user['email'])
                 reset_link = f"{request.host_url.rstrip('/')}/visionadmin/reset-password?token={token}"
+                logo_url = f"{request.host_url.rstrip('/')}/static/assets/images/tyresvision-email-logo.png"
                 html_body = render_template(
                     'emails/vison_forgotpass.html',
                     user_name=admin_user.get('name') or 'there',
                     user_email=admin_user.get('email') or email,
                     reset_link=reset_link,
                     expires_minutes=30,
+                    logo_b64=logo_b64,
+                    logo_url=logo_url,
                 )
                 send_email(admin_user['email'], 'Reset Your VisionAdmin Password', html_body)
             except Exception as e:
