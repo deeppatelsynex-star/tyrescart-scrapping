@@ -2377,30 +2377,10 @@ def register_visionadmin_api_routes(app):
             # Send welcome email with login credentials and reset password link
             try:
                 from mailer import send_email
-                from visionadmin.admin_auth import create_admin_password_reset_token
-
-                email_img_dir = os.path.join(app.static_folder or 'static', 'assets', 'images', 'email')
-                logo_file = os.path.join(app.static_folder or 'static', 'assets', 'images', 'tyresvision-email-logo.png')
-                
-                all_cids = {
-                    'tyresvision_logo': logo_file,
-                    'hero_shield_badge': os.path.join(email_img_dir, 'hero_shield_badge.png'),
-                    'badge_user': os.path.join(email_img_dir, 'badge_user.png'),
-                    'badge_lock': os.path.join(email_img_dir, 'badge_lock.png'),
-                    'badge_tip': os.path.join(email_img_dir, 'badge_tip.png'),
-                    'row_user': os.path.join(email_img_dir, 'row_user.png'),
-                    'row_email': os.path.join(email_img_dir, 'row_email.png'),
-                    'social_fb': os.path.join(email_img_dir, 'social_fb.png'),
-                    'social_in': os.path.join(email_img_dir, 'social_in.png'),
-                    'social_ig': os.path.join(email_img_dir, 'social_ig.png'),
-                    'social_yt': os.path.join(email_img_dir, 'social_yt.png'),
-                }
-                inline_imgs = {k: v for k, v in all_cids.items() if os.path.isfile(v)}
-                
                 token = create_admin_password_reset_token(email)
                 reset_link = f"{request.host_url.rstrip('/')}/visionadmin/reset-password?token={token}"
                 login_link = f"{request.host_url.rstrip('/')}/visionadmin/login?email={email}"
-                logo_url = f"{request.host_url.rstrip('/')}/static/assets/images/tyresvision-email-logo.png"
+                assets_url = 'https://tyrescart-scrapping.klever.ae' if ('localhost' in request.host_url or '127.0.0.1' in request.host_url) else request.host_url.rstrip('/')
                 
                 html_body = render_template(
                     'emails/welcome_user.html',
@@ -2409,24 +2389,12 @@ def register_visionadmin_api_routes(app):
                     user_role=role,
                     reset_link=reset_link,
                     login_link=login_link,
-                    logo_cid='tyresvision_logo' if 'tyresvision_logo' in inline_imgs else None,
-                    hero_shield_cid='hero_shield_badge' if 'hero_shield_badge' in inline_imgs else None,
-                    badge_user_cid='badge_user' if 'badge_user' in inline_imgs else None,
-                    badge_lock_cid='badge_lock' if 'badge_lock' in inline_imgs else None,
-                    badge_tip_cid='badge_tip' if 'badge_tip' in inline_imgs else None,
-                    row_user_cid='row_user' if 'row_user' in inline_imgs else None,
-                    row_email_cid='row_email' if 'row_email' in inline_imgs else None,
-                    social_fb_cid='social_fb' if 'social_fb' in inline_imgs else None,
-                    social_in_cid='social_in' if 'social_in' in inline_imgs else None,
-                    social_ig_cid='social_ig' if 'social_ig' in inline_imgs else None,
-                    social_yt_cid='social_yt' if 'social_yt' in inline_imgs else None,
-                    logo_url=logo_url,
+                    assets_url=assets_url,
                 )
                 send_email(
                     email,
                     'Welcome to TyresVision! Your Account Details',
                     html_body,
-                    inline_images=inline_imgs,
                 )
             except Exception as mail_err:
                 app.logger.warning(f"Failed to send welcome email to {email}: {mail_err}")
