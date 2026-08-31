@@ -30,8 +30,15 @@ from mailer import send_email
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
-# Allowed administrator roles for VisionAdmin CMS access
-ALLOWED_ADMIN_ROLES = ('super_admin', 'manager', 'support', 'SuperAdmin', 'Admin')
+ALLOWED_ADMIN_ROLES = {'super_admin', 'superadmin', 'manager', 'support', 'admin'}
+
+
+def is_authorized_admin(role: str) -> bool:
+    """Case-insensitive check for admin privileges."""
+    if not role:
+        return False
+    normalized = str(role).strip().lower().replace('-', '_').replace(' ', '_')
+    return normalized in ALLOWED_ADMIN_ROLES or role.strip() in ('SuperAdmin', 'Admin')
 
 
 def login_required_visionadmin(view):
@@ -42,7 +49,7 @@ def login_required_visionadmin(view):
         role = session.get('role')
         if not user_id:
             return redirect(f'/visionadmin/login?next={request.path}')
-        if role not in ALLOWED_ADMIN_ROLES:
+        if not is_authorized_admin(role):
             return render_template(
                 '404.html',
                 page='403',
@@ -70,7 +77,8 @@ def register_visionadmin_routes(app):
     def visionadmin_login_page():
         """Renders the VisionAdmin login page or redirects if already signed in."""
         user_id = session.get('admin_user_id') or session.get('user_id')
-        if user_id and session.get('role') in ALLOWED_ADMIN_ROLES:
+        role = session.get('role')
+        if user_id and is_authorized_admin(role):
             next_url = request.args.get('next') or '/visionadmin/pages'
             return redirect(next_url)
         return render_template('visionadmin/login.html')
@@ -104,7 +112,7 @@ def register_visionadmin_routes(app):
 
         # Check role permission
         role = admin_user.get('role', 'manager')
-        if role not in ALLOWED_ADMIN_ROLES:
+        if not is_authorized_admin(role):
             return jsonify({'error': 'Access denied. Administrator privileges required.'}), 403
 
         # Success - Clear rate limit counters and record login timestamp
