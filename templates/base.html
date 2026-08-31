@@ -56,7 +56,7 @@
             </svg>
           </a>
 
-          {% if session.get('role') == 'SuperAdmin' %}
+          {% if session.get('role') in ['SuperAdmin', 'super_admin', 'Admin', 'manager'] or session.get('admin_role') in ['super_admin', 'manager'] %}
           <a href="/tcsadmin/reports" title="Execution Logs & Reports"
             class="shell-navlink flex items-center justify-center w-12 h-12 rounded-2xl focus:outline-none {% if page == 'reports' %}is-active font-semibold{% else %}font-medium{% endif %} transition-all">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none"
@@ -117,7 +117,7 @@
         </svg>
         <span class="text-[10px] tracking-tight mt-0.5">Scraper</span>
       </a>
-      {% if session.get('role') == 'SuperAdmin' %}
+      {% if session.get('role') in ['SuperAdmin', 'super_admin', 'Admin', 'manager'] or session.get('admin_role') in ['super_admin', 'manager'] %}
       <a href="/tcsadmin/reports"
         class="shell-mobile-link flex flex-col items-center justify-center p-1.5 rounded-lg flex-1 relative {% if page == 'reports' %}is-active font-semibold{% endif %}">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none"
@@ -126,11 +126,9 @@
           <polyline points="14 2 14 8 20 8" />
           <line x1="16" y1="13" x2="8" y2="13" />
         </svg>
-        <span class="text-[10px] tracking-tight mt-0.5">Logs</span>
+        <span class="text-[10px] tracking-tight mt-0.5">Reports</span>
       </a>
-      {% endif %}
-      {% if session.get('role') in ['SuperAdmin', 'Admin'] %}
-      <a href="/tcsadmin/Admin"
+      <a href="/visionadmin/users"
         class="shell-mobile-link flex flex-col items-center justify-center p-1.5 rounded-lg flex-1 relative {% if page == 'admin' %}is-active font-semibold{% endif %}">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -139,6 +137,7 @@
         </svg>
         <span class="text-[10px] tracking-tight mt-0.5">Admin</span>
       </a>
+      {% endif %}
       <a href="/tcsadmin/trash"
         class="shell-mobile-link is-danger flex flex-col items-center justify-center p-1.5 rounded-lg flex-1 relative {% if page == 'trash' %}is-active font-semibold{% endif %}">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none"
@@ -247,6 +246,15 @@
                       <span>User Management</span>
                     </a>
                     {% endif %}
+
+                    <a href="/tcsadmin/reports" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition group">
+                      <svg class="w-4 h-4 text-slate-400 group-hover:text-[#388E3C] transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                      </svg>
+                      <span>Scraper Reports</span>
+                    </a>
 
                     <a href="/visionadmin/pages" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition group">
                       <svg class="w-4 h-4 text-slate-400 group-hover:text-[#388E3C] transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
