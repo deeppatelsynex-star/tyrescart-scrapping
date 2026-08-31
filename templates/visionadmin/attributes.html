@@ -1,6 +1,6 @@
 {% extends "visionadmin/base.html" %}
 
-{% block title %}Dynamic Attributes & Sizing - VisionAdmin{% endblock %}
+{% block title %}Dynamic Attributes &amp; Sizing - VisionAdmin{% endblock %}
 
 {% block content %}
 <div class="space-y-6" x-data="visionAttributesApp()" x-init="initData()">
@@ -20,7 +20,7 @@
       <button 
         type="button" 
         @click="openCreateModal()" 
-        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#0E1108] hover:bg-[#35760F] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
       >
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span>Add New Attribute</span>
@@ -33,7 +33,7 @@
     <button 
       type="button" 
       @click="activeTab = 'attributes'" 
-      :class="activeTab === 'attributes' ? 'bg-[#0E1108] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
+      :class="activeTab === 'attributes' ? 'bg-[#58B31B] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
       class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
     >
       Attributes List (<span x-text="attributes.length"></span>)
@@ -41,7 +41,7 @@
     <button 
       type="button" 
       @click="activeTab = 'sets'" 
-      :class="activeTab === 'sets' ? 'bg-[#0E1108] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
+      :class="activeTab === 'sets' ? 'bg-[#58B31B] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
       class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
     >
       Attribute Sets (<span x-text="attributeSets.length"></span>)
@@ -76,6 +76,7 @@
           <option value="text">Text</option>
           <option value="number">Numeric</option>
           <option value="boolean">Boolean (Yes/No)</option>
+          <option value="multiselect">Multiselect</option>
         </select>
       </div>
     </div>
@@ -84,7 +85,7 @@
     <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50/80 border-b border-[#E8EDE4] text-slate-500 font-extrabold uppercase tracking-wider">
+          <thead class="bg-slate-50/80 border-b border-[#E8EDE4] text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">
             <tr>
               <th class="px-5 py-3.5">Code</th>
               <th class="px-5 py-3.5">Name (EN / AR)</th>
@@ -98,48 +99,50 @@
           <tbody class="divide-y divide-[#F1F5F0]">
             <template x-for="attr in filteredAttributes" :key="attr.id">
               <tr class="hover:bg-[#F9FCF8] transition-colors">
-                <td class="px-5 py-3.5 font-mono font-bold text-[#0E1108]" x-text="attr.code"></td>
+                <td class="px-5 py-3.5 font-mono font-bold text-slate-800" x-text="attr.code"></td>
                 <td class="px-5 py-3.5">
-                  <div class="font-bold text-[#0E1108]" x-text="attr.name_en"></div>
-                  <div class="text-[10px] text-slate-400 font-arabic" x-text="attr.name_ar"></div>
-                </td>
-                <td class="px-5 py-3.5">
-                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-slate-100 text-slate-700" x-text="attr.type"></span>
+                  <div class="font-bold text-[#0E1108]" x-text="attr.name_en || attr.name || attr.code"></div>
+                  <div class="text-[10px] text-slate-400 font-medium" dir="rtl" x-text="attr.name_ar || ''"></div>
                 </td>
                 <td class="px-5 py-3.5">
                   <span 
                     class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase"
                     :class="{
-                      'bg-blue-50 text-blue-700 border border-blue-200': attr.scope === 'global',
-                      'bg-purple-50 text-purple-700 border border-purple-200': attr.scope === 'website',
-                      'bg-emerald-50 text-emerald-700 border border-emerald-200': attr.scope === 'store',
-                      'bg-amber-50 text-amber-700 border border-amber-200': attr.scope === 'store_view'
+                      'bg-blue-50 text-blue-700': attr.type === 'select' || attr.type === 'multiselect',
+                      'bg-emerald-50 text-emerald-700': attr.type === 'number',
+                      'bg-slate-100 text-slate-700': attr.type === 'text',
+                      'bg-purple-50 text-purple-700': attr.type === 'boolean'
                     }"
-                    x-text="attr.scope"
+                    x-text="attr.type"
                   ></span>
+                  <template x-if="attr.unit">
+                    <span class="ml-1 text-[10px] font-mono text-slate-400" x-text="`(${attr.unit})`"></span>
+                  </template>
+                </td>
+                <td class="px-5 py-3.5">
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold uppercase" x-text="attr.scope"></span>
                 </td>
                 <td class="px-5 py-3.5 text-center">
-                  <span x-show="attr.is_filterable" class="inline-flex items-center text-emerald-600 font-bold">✓ Yes</span>
-                  <span x-show="!attr.is_filterable" class="text-slate-300">—</span>
+                  <span class="text-xs font-bold" :class="attr.is_filterable ? 'text-[#35760F]' : 'text-slate-300'" x-text="attr.is_filterable ? '✓ Yes' : '—'"></span>
                 </td>
                 <td class="px-5 py-3.5 text-center">
-                  <span x-show="attr.is_required" class="inline-flex items-center text-rose-600 font-bold">Required</span>
-                  <span x-show="!attr.is_required" class="text-slate-300">Optional</span>
+                  <span class="text-xs font-bold" :class="attr.is_required ? 'text-rose-600' : 'text-slate-300'" x-text="attr.is_required ? '● Required' : 'Optional'"></span>
                 </td>
-                <td class="px-5 py-3.5 text-right">
+                <td class="px-5 py-3.5 text-right space-x-2">
                   <button 
                     type="button" 
                     @click="viewAttribute(attr)" 
-                    class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-[#EAF7E2] hover:text-[#35760F] text-slate-700 transition cursor-pointer"
+                    class="p-1.5 rounded-lg text-slate-500 hover:text-[#35760F] hover:bg-[#EAF7E2] transition cursor-pointer"
+                    title="Inspect Attribute"
                   >
-                    View / Edit
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
                 </td>
               </tr>
             </template>
             <tr x-show="filteredAttributes.length === 0">
               <td colspan="7" class="px-5 py-12 text-center text-slate-400">
-                No matching dynamic attributes found.
+                No attributes found matching your criteria.
               </td>
             </tr>
           </tbody>
@@ -151,24 +154,164 @@
   <!-- TAB 2: ATTRIBUTE SETS -->
   <div x-show="activeTab === 'sets'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
     <template x-for="set in attributeSets" :key="set.id">
-      <div class="bg-white p-5 rounded-3xl border border-[#E8EDE4] shadow-xs flex flex-col justify-between space-y-4 hover:border-[#C8E8B8] transition">
+      <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-xs flex flex-col justify-between hover:border-[#58B31B]/40 transition">
         <div>
           <div class="flex items-center justify-between">
-            <span class="text-xs font-black px-2 py-0.5 rounded-md bg-slate-100 text-slate-600" x-text="`Set #${set.id}`"></span>
-            <span x-show="set.is_system" class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EAF7E2] text-[#35760F]">System Master</span>
+            <span class="px-2.5 py-0.5 rounded-full bg-[#EAF7E2] text-[#35760F] text-[10px] font-black uppercase">Set #<span x-text="set.id"></span></span>
+            <span class="text-xs font-mono text-slate-400" x-text="`${set.groups_count || 0} Groups`"></span>
           </div>
-          <h3 class="text-base font-black text-[#0E1108] mt-2" x-text="set.name"></h3>
-          <p class="text-xs text-slate-500 font-mono mt-0.5" x-text="`slug: ${set.slug}`"></p>
+          <h3 class="text-base font-black text-[#0E1108] mt-3" x-text="set.name"></h3>
+          <p class="text-xs text-slate-500 font-medium mt-1" x-text="set.description || 'Pre-configured schema groups for vehicle sizing and EU labeling.'"></p>
         </div>
 
-        <div class="pt-3 border-t border-[#F1F5F0] flex items-center justify-between">
-          <span class="text-xs text-slate-400 font-semibold">Includes Sizing &amp; EU Labels</span>
-          <button type="button" @click="loadSetSchema(set.id)" class="text-xs font-bold text-[#35760F] hover:underline cursor-pointer">
-            View Schema &rarr;
+        <div class="mt-5 pt-4 border-t border-[#F1F5F0] flex items-center justify-between">
+          <span class="text-[11px] font-bold text-slate-400">Default Tyre Schema</span>
+          <button 
+            type="button" 
+            @click="loadSetSchema(set.id)" 
+            class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#EAF7E2] hover:text-[#35760F] text-slate-700 text-xs font-bold transition cursor-pointer"
+          >
+            Inspect Form Schema ↗
           </button>
         </div>
       </div>
     </template>
+  </div>
+
+  <!-- WORKING ADD / EDIT ATTRIBUTE MODAL -->
+  <div x-show="showCreateModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto" @click.away="showCreateModal = false">
+      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
+        <div>
+          <h3 class="text-base font-black text-[#0E1108]">Add New Dynamic Attribute</h3>
+          <p class="text-xs text-slate-400">EAV Attribute definition with multi-store scoping and options.</p>
+        </div>
+        <button type="button" @click="showCreateModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+      </div>
+
+      <form @submit.prevent="saveAttribute()" class="space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Attribute Code *</label>
+            <input type="text" x-model="form.code" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono" placeholder="e.g. wet_grip">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Data Type *</label>
+            <select x-model="form.type" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold">
+              <option value="select">Select / Dropdown</option>
+              <option value="multiselect">Multiselect</option>
+              <option value="text">Single-line Text</option>
+              <option value="number">Numeric</option>
+              <option value="boolean">Boolean (Yes/No)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Attribute Name (English) *</label>
+          <input type="text" x-model="form.name_en" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold" placeholder="e.g. Wet Grip Rating">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Attribute Name (Arabic)</label>
+          <input type="text" x-model="form.name_ar" dir="rtl" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold" placeholder="تصنيف التماسك على الأسطح الرطبة">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Scope Level</label>
+            <select x-model="form.scope" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold">
+              <option value="global">Global (Universal)</option>
+              <option value="website">Website Scoped</option>
+              <option value="store">Store Scoped</option>
+              <option value="store_view">Store View / Locale</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Unit of Measure (Optional)</label>
+            <input type="text" x-model="form.unit" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs" placeholder="e.g. dB, mm, kg, km/h">
+          </div>
+        </div>
+
+        <!-- Dynamic Options Repeater (For Select / Multiselect) -->
+        <template x-if="form.type === 'select' || form.type === 'multiselect'">
+          <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-slate-700">Predefined Select Options</span>
+              <button type="button" @click="addOption()" class="text-xs font-bold text-[#35760F] hover:underline cursor-pointer">+ Add Option</button>
+            </div>
+            <div class="space-y-2 max-h-36 overflow-y-auto">
+              <template x-for="(opt, idx) in form.options" :key="idx">
+                <div class="flex items-center gap-2">
+                  <input type="text" x-model="opt.value" placeholder="Option Value (e.g. A, B, XL)" class="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold">
+                  <button type="button" @click="removeOption(idx)" class="text-slate-400 hover:text-rose-600 px-1 text-sm font-bold">✕</button>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <!-- Feature Flags Toggles -->
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" x-model="form.is_filterable" class="w-4 h-4 rounded text-[#58B31B]">
+            <span class="text-xs font-bold text-slate-700">Filterable on Storefront</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" x-model="form.is_required" class="w-4 h-4 rounded text-[#58B31B]">
+            <span class="text-xs font-bold text-slate-700">Required Field</span>
+          </label>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-4 border-t border-[#F1F5F0]">
+          <button type="button" @click="showCreateModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] shadow-xs">Save Attribute</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- INSPECT ATTRIBUTE DETAILS MODAL -->
+  <div x-show="showDetailModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showDetailModal = false">
+      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
+        <div>
+          <h3 class="text-base font-black text-[#0E1108]" x-text="selectedAttr ? selectedAttr.name_en || selectedAttr.name : 'Attribute Details'"></h3>
+          <p class="text-xs font-mono text-slate-400" x-text="selectedAttr ? `Code: ${selectedAttr.code}` : ''"></p>
+        </div>
+        <button type="button" @click="showDetailModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+      </div>
+
+      <template x-if="selectedAttr">
+        <div class="space-y-3 text-xs">
+          <div class="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-2xl">
+            <div>
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Type</span>
+              <span class="font-bold text-slate-800 uppercase" x-text="selectedAttr.type"></span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Scope</span>
+              <span class="font-bold text-slate-800 uppercase" x-text="selectedAttr.scope"></span>
+            </div>
+          </div>
+
+          <template x-if="selectedAttr.options && selectedAttr.options.length">
+            <div>
+              <span class="text-xs font-black text-slate-700 block mb-1.5">Configured Options</span>
+              <div class="flex flex-wrap gap-1.5">
+                <template x-for="opt in selectedAttr.options" :key="opt.id || opt.value">
+                  <span class="px-2.5 py-1 rounded-lg bg-[#EAF7E2] text-[#35760F] font-bold text-xs" x-text="opt.value || opt"></span>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <div class="flex items-center justify-end pt-3 border-t border-[#F1F5F0]">
+        <button type="button" @click="showDetailModal = false" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer">Close</button>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -182,6 +325,20 @@ function visionAttributesApp() {
     typeFilter: '',
     attributes: [],
     attributeSets: [],
+    showCreateModal: false,
+    showDetailModal: false,
+    selectedAttr: null,
+    form: {
+      code: '',
+      name_en: '',
+      name_ar: '',
+      type: 'select',
+      scope: 'global',
+      unit: '',
+      is_filterable: true,
+      is_required: false,
+      options: [{ value: 'A' }, { value: 'B' }, { value: 'C' }]
+    },
 
     async initData() {
       try {
@@ -191,8 +348,8 @@ function visionAttributesApp() {
         ]);
         const attrData = await attrRes.json();
         const setData = await setRes.json();
-        if (attrData.success) this.attributes = attrData.attributes || [];
-        if (setData.success) this.attributeSets = setData.attribute_sets || [];
+        if (attrData.attributes) this.attributes = attrData.attributes || [];
+        if (setData.attribute_sets) this.attributeSets = setData.attribute_sets || [];
       } catch (err) {
         console.error('Error loading attributes data:', err);
       }
@@ -200,36 +357,89 @@ function visionAttributesApp() {
 
     get filteredAttributes() {
       return this.attributes.filter(a => {
-        const matchQ = !this.searchQuery || 
-          a.code.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          (a.name_en && a.name_en.toLowerCase().includes(this.searchQuery.toLowerCase()));
+        const q = this.searchQuery.toLowerCase();
+        const matchQ = !q || 
+          (a.code && a.code.toLowerCase().includes(q)) ||
+          (a.name_en && a.name_en.toLowerCase().includes(q)) ||
+          (a.name && typeof a.name === 'string' && a.name.toLowerCase().includes(q));
         const matchScope = !this.scopeFilter || a.scope === this.scopeFilter;
         const matchType = !this.typeFilter || a.type === this.typeFilter;
         return matchQ && matchScope && matchType;
       });
     },
 
+    openCreateModal() {
+      this.form = {
+        code: '',
+        name_en: '',
+        name_ar: '',
+        type: 'select',
+        scope: 'global',
+        unit: '',
+        is_filterable: true,
+        is_required: false,
+        options: [{ value: 'A' }, { value: 'B' }]
+      };
+      this.showCreateModal = true;
+    },
+
+    addOption() {
+      this.form.options.push({ value: '' });
+    },
+
+    removeOption(idx) {
+      this.form.options.splice(idx, 1);
+    },
+
+    async saveAttribute() {
+      try {
+        const payload = {
+          code: this.form.code,
+          name: { en: this.form.name_en, ar: this.form.name_ar },
+          type: this.form.type,
+          scope: this.form.scope,
+          unit: this.form.unit || null,
+          is_filterable: this.form.is_filterable,
+          is_required: this.form.is_required,
+          options: this.form.options.map(o => o.value).filter(Boolean)
+        };
+
+        const res = await fetch('/visionadmin/api/attributes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success || data.id) {
+          this.showCreateModal = false;
+          await this.initData();
+          if (window.showToast) window.showToast('Attribute created successfully!', 'success');
+        } else {
+          alert(data.error || 'Failed to save attribute.');
+        }
+      } catch (err) {
+        console.error('Save attribute error:', err);
+      }
+    },
+
     viewAttribute(attr) {
-      alert(`Attribute: ${attr.code}\nType: ${attr.type}\nScope: ${attr.scope}\nOptions: ${(attr.options || []).map(o => o.value).join(', ') || 'N/A'}`);
+      this.selectedAttr = attr;
+      this.showDetailModal = true;
     },
 
     async loadSetSchema(setId) {
       try {
         const res = await fetch(`/visionadmin/api/catalog/form-schema/${setId}`);
         const data = await res.json();
-        if (data.success) {
+        if (data.schema) {
           const groups = data.schema.groups.map(g => `${g.name} (${g.attributes.length} attrs)`).join('\n• ');
           alert(`Schema Groups for Set #${setId}:\n• ${groups}`);
         }
       } catch (err) {
         alert('Failed to load schema');
       }
-    },
-
-    openCreateModal() {
-      alert('Attribute creation studio is ready for new tyre dimension and homologation entries.');
     }
-  }
+  };
 }
 </script>
 {% endblock %}
