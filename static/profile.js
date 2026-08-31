@@ -42,12 +42,20 @@
   }
 
   async function fetchMe() {
-    const res = await fetch('/tcsadmin/api/me');
-    if (!res.ok) return;
-    const data = await res.json();
-    currentUser = data.user;
-    csrfToken = data.csrfToken;
-    renderEverywhere();
+    try {
+      const endpoint = window.location.pathname.startsWith('/visionadmin') || window.location.pathname.startsWith('/visonadmin') 
+        ? '/visionadmin/api/me' 
+        : '/tcsadmin/api/me';
+      const res = await fetch(endpoint);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data || !data.user) return;
+      currentUser = data.user;
+      csrfToken = data.csrfToken;
+      renderEverywhere();
+    } catch (e) {
+      console.warn('Profile fetch error:', e);
+    }
   }
 
   function openModal(id) {

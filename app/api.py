@@ -275,8 +275,8 @@ def register_tcsadmin_api_routes(app):
     @app.route('/tcsadmin/api/me')
     @app.route('/api/me')
     def api_me():
-        user_id = session.get('admin_user_id') or session.get('user_id')
-        email = session.get('email')
+        user_id = session.get('admin_user_id') or session.get('user_id') or session.get('userid') or session.get('id')
+        email = session.get('email') or session.get('Email')
         if not user_id and not email:
             return jsonify({'error': 'Authentication required.'}), 401
 
@@ -289,13 +289,21 @@ def register_tcsadmin_api_routes(app):
             if admin_u:
                 session['admin_user_id'] = admin_u['id']
                 session['user_id'] = admin_u['id']
+                session['userid'] = admin_u['id']
+                session['id'] = admin_u['id']
                 session['name'] = admin_u['name']
+                session['Name'] = admin_u['name']
                 session['email'] = admin_u['email']
-                session['role'] = admin_u['role']
+                session['Email'] = admin_u['email']
+                session['role'] = 'SuperAdmin' if admin_u['role'] in ('super_admin', 'superadmin', 'SuperAdmin') else ('Admin' if admin_u['role'] in ('manager', 'admin', 'Admin') else 'User')
+                session['admin_role'] = admin_u['role']
                 session['is_visionadmin'] = True
+                session['logged_in'] = True
 
         if not admin_u:
             return jsonify({'error': 'Authentication required.'}), 401
+
+        role_disp = 'SuperAdmin' if admin_u.get('role') in ('super_admin', 'superadmin', 'SuperAdmin') else ('Admin' if admin_u.get('role') in ('manager', 'admin', 'Admin') else 'User')
 
         return jsonify({
             'user': {
@@ -305,10 +313,13 @@ def register_tcsadmin_api_routes(app):
                 'Name': admin_u['name'],
                 'email': admin_u['email'],
                 'Email': admin_u['email'],
-                'role': admin_u['role'],
-                'Role': admin_u['role'],
+                'role': role_disp,
+                'Role': role_disp,
+                'admin_role': admin_u.get('role'),
                 'status': bool(admin_u.get('is_active', 1)),
                 'avatar': None,
+                'createdAt': str(admin_u.get('created_at', '')),
+                'updatedAt': str(admin_u.get('updated_at', '')),
             },
             'csrfToken': session.get('csrf_token')
         })

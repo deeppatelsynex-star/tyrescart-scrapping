@@ -158,11 +158,17 @@ def register_tcsadmin_routes(app):
         session['sid'] = secrets.token_hex(16)
         session['admin_user_id'] = user['id']
         session['user_id'] = user['id']
+        session['userid'] = user['id']
+        session['id'] = user['id']
         session['name'] = user['name']
+        session['Name'] = user['name']
         session['email'] = user['email']
-        session['role'] = user['role']
+        session['Email'] = user['email']
+        session['role'] = 'SuperAdmin' if user['role'] in ('super_admin', 'superadmin', 'SuperAdmin') else ('Admin' if user['role'] in ('manager', 'admin', 'Admin') else 'User')
+        session['admin_role'] = user['role']
         session['csrf_token'] = secrets.token_hex(16)
         session['is_visionadmin'] = True
+        session['logged_in'] = True
 
         return jsonify({'redirect': '/tcsadmin/files'})
 

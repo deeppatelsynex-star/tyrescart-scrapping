@@ -143,11 +143,17 @@ def register_visionadmin_routes(app):
         session['sid'] = secrets.token_hex(16)
         session['admin_user_id'] = admin_user['id']
         session['user_id'] = admin_user['id']
+        session['userid'] = admin_user['id']
+        session['id'] = admin_user['id']
         session['name'] = admin_user['name']
+        session['Name'] = admin_user['name']
         session['email'] = admin_user['email']
-        session['role'] = admin_user['role']
+        session['Email'] = admin_user['email']
+        session['role'] = 'SuperAdmin' if admin_user['role'] in ('super_admin', 'superadmin', 'SuperAdmin') else ('Admin' if admin_user['role'] in ('manager', 'admin', 'Admin') else 'User')
+        session['admin_role'] = admin_user['role']
         session['csrf_token'] = secrets.token_hex(16)
         session['is_visionadmin'] = True
+        session['logged_in'] = True
 
         next_url = request.args.get('next') or '/visionadmin/pages'
         return jsonify({
