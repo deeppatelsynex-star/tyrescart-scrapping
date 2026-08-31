@@ -17,7 +17,7 @@ from db import get_connection
 from cache_manager import cache, invalidate_scraper_cache
 
 FILE_COLUMNS = 'file_id, logo, site_name, python_file_path, urls_json, working, is_deleted, deleted_at, created_by, create_date, update_date'
-FILE_SELECT_FIELDS = 'f.file_id, f.logo, f.site_name, f.python_file_path, f.urls_json, f.working, f.is_deleted, f.deleted_at, f.created_by, f.create_date, f.update_date, u.name AS created_by_name, u.email AS created_by_email'
+FILE_SELECT_FIELDS = 'f.file_id, f.logo, f.site_name, f.python_file_path, f.urls_json, f.working, f.is_deleted, f.deleted_at, f.created_by, f.create_date, f.update_date, u.name AS created_by_name, u.email AS created_by_email, (SELECT MAX(start_time) FROM logTbl l WHERE l.file_id = f.file_id) AS last_used_at'
 
 # scrapers/ lives at the project root. This file is app/scraperapp/files_repo.py,
 # so the project root is two directories up from this file's own directory
@@ -193,6 +193,8 @@ def serialize_file(row):
         'createDateRaw': row['create_date'].isoformat() + 'Z' if row.get('create_date') else None,
         'updateDate': to_ist_12h(row.get('update_date')),
         'updateDateRaw': row['update_date'].isoformat() + 'Z' if row.get('update_date') else None,
+        'lastUsed': to_ist_12h(row.get('last_used_at')) if row.get('last_used_at') else None,
+        'lastUsedRaw': row['last_used_at'].isoformat() + 'Z' if row.get('last_used_at') else None,
     }
 
 
