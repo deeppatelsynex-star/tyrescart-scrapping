@@ -7,7 +7,7 @@
 import json
 import os
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, request, session, abort, redirect, make_response, send_from_directory
+from flask import Blueprint, current_app, render_template, request, session, abort, redirect, make_response, send_from_directory
 from models.blog import Blog
 from models.page import Page
 from models.page_section import PageSection

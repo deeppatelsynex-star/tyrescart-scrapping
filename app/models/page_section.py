@@ -238,29 +238,23 @@ class PageSection:
                 return val.get(locale) or val.get("en") or val.get("ar") or ""
             return str(val)
 
+        def localize_value(v):
+            # Recursively resolves bilingual {"en":..,"ar":..} dicts anywhere
+            # in section_data, including dicts-of-dicts (e.g. quote_card)
+            # and lists of dicts (e.g. badges), not just top-level fields.
+            if isinstance(v, dict):
+                if "en" in v or "ar" in v:
+                    return get_loc(v)
+                return {sub_k: localize_value(sub_v) for sub_k, sub_v in v.items()}
+            if isinstance(v, list):
+                return [localize_value(item) for item in v]
+            return v
+
         sec_data = section.get("section_data") or {}
         localized_data = {}
         if isinstance(sec_data, dict):
-            # Localize nested features, cards, metrics, badges
             for k, v in sec_data.items():
-                if isinstance(v, list):
-                    localized_list = []
-                    for item in v:
-                        if isinstance(item, dict):
-                            loc_item = {}
-                            for sub_k, sub_v in item.items():
-                                if isinstance(sub_v, dict) and ("en" in sub_v or "ar" in sub_v):
-                                    loc_item[sub_k] = get_loc(sub_v)
-                                else:
-                                    loc_item[sub_k] = sub_v
-                            localized_list.append(loc_item)
-                        else:
-                            localized_list.append(item)
-                    localized_data[k] = localized_list
-                elif isinstance(v, dict) and ("en" in v or "ar" in v):
-                    localized_data[k] = get_loc(v)
-                else:
-                    localized_data[k] = v
+                localized_data[k] = localize_value(v)
 
         return {
             "id": section.get("id"),
