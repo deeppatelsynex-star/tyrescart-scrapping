@@ -2819,9 +2819,19 @@ def register_visionadmin_api_routes(app):
 
     @app.route('/visionadmin/api/attributes', methods=['GET'])
     def visionadmin_api_list_attributes():
-        """Returns all attributes with options and user attribution."""
+        """Returns all active attributes or trash attributes with counts."""
+        if request.args.get('trash') == '1':
+            trash_attrs = AttributeService.get_trash_attributes()
+            return jsonify({'attributes': trash_attrs, 'count': len(trash_attrs)})
+
         attrs = AttributeService.get_all_attributes(include_inactive=True)
-        return jsonify({'attributes': attrs, 'count': len(attrs)})
+        trash_attrs = AttributeService.get_trash_attributes()
+        return jsonify({
+            'attributes': attrs,
+            'count': len(attrs),
+            'trash_count': len(trash_attrs),
+            'trash': trash_attrs
+        })
 
     @app.route('/visionadmin/api/attributes/<int:attr_id>', methods=['GET'])
     def visionadmin_api_get_attribute(attr_id):
@@ -2995,6 +3005,16 @@ def register_visionadmin_api_routes(app):
                 return jsonify({'success': True, 'message': f"Attribute '{attr['code']}' has been moved to trash."})
         finally:
             conn.close()
+
+    @app.route('/visionadmin/api/attributes/<int:attr_id>/restore', methods=['POST'])
+    def visionadmin_api_restore_attribute(attr_id):
+        """Restores a soft-deleted attribute back to the active list."""
+        user_id = get_current_admin_user_id()
+        success = AttributeService.restore_attribute(attr_id, user_id)
+        if not success:
+            return jsonify({'error': 'Attribute not found in trash.'}), 404
+        log_activity('restore', 'attribute', attr_id, {'deleted': True}, {'deleted': False}, user_id=user_id)
+        return jsonify({'success': True, 'message': f"Attribute #{attr_id} restored successfully."})
 
     @app.route('/visionadmin/api/attribute-sets', methods=['GET'])
     def visionadmin_api_list_attribute_sets():

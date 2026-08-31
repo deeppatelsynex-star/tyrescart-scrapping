@@ -46,6 +46,15 @@
     >
       Attribute Sets (<span x-text="attributeSets.length"></span>)
     </button>
+    <button 
+      type="button" 
+      @click="activeTab = 'trash'" 
+      :class="activeTab === 'trash' ? 'bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3]' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
+      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-1.5"
+    >
+      <span>🗑️ Trash</span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'trash' ? 'bg-[#FFE4E6] text-[#E11D48]' : 'bg-slate-100 text-slate-600'" x-text="trashAttributes.length"></span>
+    </button>
   </div>
 
   <!-- TAB 1: ATTRIBUTES LIST TABLE -->
@@ -192,6 +201,65 @@
         </div>
       </div>
     </template>
+  </div>
+
+  <!-- TAB 3: ATTRIBUTES TRASH TABLE -->
+  <div x-show="activeTab === 'trash'" class="space-y-4">
+    <div class="bg-white rounded-3xl border border-[#FECDD3] overflow-hidden shadow-xs">
+      <div class="p-4 bg-rose-50/60 border-b border-rose-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          <span class="font-black text-rose-900 text-xs sm:text-sm">Archived &amp; Soft-Deleted Attributes</span>
+        </div>
+        <span class="text-xs text-rose-700 font-bold" x-text="`${trashAttributes.length} items in trash`"></span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-[#F9FCF8] text-slate-400 font-bold uppercase text-[10px] border-b border-[#F1F5F0]">
+            <tr>
+              <th class="px-5 py-3.5">Code</th>
+              <th class="px-5 py-3.5">Name / Label</th>
+              <th class="px-5 py-3.5">Data Type</th>
+              <th class="px-5 py-3.5">Scope</th>
+              <th class="px-5 py-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#F1F5F0]">
+            <template x-for="attr in trashAttributes" :key="attr.id">
+              <tr class="hover:bg-rose-50/30 transition-colors">
+                <td class="px-5 py-3.5 font-mono font-bold text-slate-800" x-text="attr.code"></td>
+                <td class="px-5 py-3.5">
+                  <div class="font-bold text-[#0E1108]" x-text="formatAttrName(attr)"></div>
+                  <div class="text-[10px] text-slate-400 font-medium" dir="rtl" x-text="formatAttrArabic(attr)"></div>
+                </td>
+                <td class="px-5 py-3.5">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-slate-100 text-slate-700" x-text="attr.type"></span>
+                </td>
+                <td class="px-5 py-3.5">
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold uppercase" x-text="attr.scope"></span>
+                </td>
+                <td class="px-5 py-3.5 text-right">
+                  <button 
+                    type="button" 
+                    @click="restoreAttribute(attr)" 
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#EAF7E2] hover:bg-[#D1E7C4] text-[#35760F] text-xs font-bold transition cursor-pointer"
+                    title="Restore Attribute"
+                  >
+                    <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    <span>Restore</span>
+                  </button>
+                </td>
+              </tr>
+            </template>
+            <tr x-show="trashAttributes.length === 0">
+              <td colspan="5" class="px-5 py-12 text-center text-slate-400">
+                Trash is empty. No soft-deleted attributes.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- WORKING ADD / EDIT ATTRIBUTE MODAL -->
@@ -403,6 +471,7 @@ function visionAttributesApp() {
     scopeFilter: '',
     typeFilter: '',
     attributes: [],
+    trashAttributes: [],
     attributeSets: [],
     showCreateModal: false,
     showDetailModal: false,
@@ -410,6 +479,7 @@ function visionAttributesApp() {
     selectedAttr: null,
     selectedSchema: null,
     form: {
+      id: null,
       code: '',
       name_en: '',
       name_ar: '',
@@ -430,6 +500,7 @@ function visionAttributesApp() {
         const attrData = await attrRes.json();
         const setData = await setRes.json();
         if (attrData.attributes) this.attributes = attrData.attributes || [];
+        if (attrData.trash) this.trashAttributes = attrData.trash || [];
         if (setData.attribute_sets) this.attributeSets = setData.attribute_sets || [];
       } catch (err) {
         console.error('Error loading attributes data:', err);
@@ -539,6 +610,23 @@ function visionAttributesApp() {
         }
       } catch (e) {
         console.error('Delete attribute error:', e);
+      }
+    },
+
+    async restoreAttribute(attr) {
+      try {
+        const res = await fetch(`/visionadmin/api/attributes/${attr.id}/restore`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (data.success) {
+          await this.initData();
+          if (window.showToast) window.showToast(`Attribute '${attr.code}' restored to active list!`, 'success');
+        } else {
+          alert(data.error || 'Failed to restore attribute.');
+        }
+      } catch (e) {
+        console.error('Restore attribute error:', e);
       }
     },
 

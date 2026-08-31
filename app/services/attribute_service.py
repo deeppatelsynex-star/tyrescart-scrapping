@@ -42,6 +42,42 @@ class AttributeService:
             conn.close()
 
     @staticmethod
+    def get_trash_attributes():
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                sql = "SELECT * FROM attributes WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC"
+                cursor.execute(sql)
+                attrs = cursor.fetchall()
+                for a in attrs:
+                    if a.get('name') and isinstance(a['name'], str):
+                        try:
+                            a['name'] = json.loads(a['name'])
+                        except Exception:
+                            pass
+                    
+                    if isinstance(a.get('name'), dict):
+                        a['name_en'] = a['name'].get('en') or a['name'].get('ar') or ''
+                        a['name_ar'] = a['name'].get('ar') or ''
+                    elif isinstance(a.get('name'), str):
+                        a['name_en'] = a['name']
+                        a['name_ar'] = ''
+                return attrs
+        finally:
+            conn.close()
+
+    @staticmethod
+    def restore_attribute(attr_id, user_id=None):
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("UPDATE attributes SET deleted_at = NULL, deleted_by = NULL, updated_by = %s WHERE id = %s", (user_id, attr_id))
+                conn.commit()
+                return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    @staticmethod
     def get_attribute_options(attribute_id):
         conn = get_connection()
         try:
