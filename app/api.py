@@ -2377,6 +2377,7 @@ def register_visionadmin_api_routes(app):
             # Send welcome email with login credentials and reset password link
             try:
                 from mailer import send_email
+                from visionadmin.admin_auth import create_admin_password_reset_token
                 token = create_admin_password_reset_token(email)
                 reset_link = f"{request.host_url.rstrip('/')}/visionadmin/reset-password?token={token}"
                 login_link = f"{request.host_url.rstrip('/')}/visionadmin/login?email={email}"
@@ -2397,7 +2398,7 @@ def register_visionadmin_api_routes(app):
                     html_body,
                 )
             except Exception as mail_err:
-                app.logger.warning(f"Failed to send welcome email to {email}: {mail_err}")
+                app.logger.error(f"Failed to send welcome email to {email}: {mail_err}", exc_info=True)
 
             return jsonify({
                 'success': True,
