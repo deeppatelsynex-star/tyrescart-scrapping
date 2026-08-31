@@ -31,105 +31,501 @@
 <meta name="twitter:description" content="60+ brands, 10,000+ products, fitted free at 350+ locations across the UAE — or at your door by mobile van.">
 <meta name="twitter:image" content="https://www.tyresvision.com/assets/online-tyres-shop-dubai.png">
 
-<!-- Structured data: business entity (for Search, Maps, AI Overviews & answer engines) -->
+<!-- Structured data: business entity & knowledge graph (Schema.org) -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "AutomotiveBusiness",
-  "@id": "https://www.tyresvision.com/#business",
-  "name": "TyresVision",
-  "url": "https://www.tyresvision.com/",
-  "telephone": "+971505069575",
-  "priceRange": "AED",
-  "image": "https://www.tyresvision.com/assets/online-tyres-shop-dubai.png",
-  "description": "TyresVision is an online tyre shop serving the UAE, offering tyres from 60+ brands with free fitting at 350+ centres across Dubai, Abu Dhabi, Sharjah and Ajman, or mobile fitting at the customer's home or office.",
-  "areaServed": [
-    { "@type": "City", "name": "Dubai" },
-    { "@type": "City", "name": "Abu Dhabi" },
-    { "@type": "City", "name": "Sharjah" },
-    { "@type": "City", "name": "Ajman" },
-    { "@type": "Country", "name": "United Arab Emirates" }
-  ],
-  "openingHoursSpecification": {
-    "@type": "OpeningHoursSpecification",
-    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
-    "opens": "00:00",
-    "closes": "23:59"
-  },
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "telephone": "+971-50-506-9575",
-    "contactType": "customer service",
-    "areaServed": "AE",
-    "availableLanguage": ["English", "Arabic"]
-  },
-  "makesOffer": [
-    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Tyre sales" } },
-    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Tyre fitting" } },
-    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Mobile tyre fitting" } },
-    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Wheel alignment" } },
-    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Wheel balancing" } }
-  ]
-}
-</script>
-
-<!-- Structured data: FAQ (must mirror the visible FAQ section below) -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
+  "@graph": [
     {
-      "@type": "Question",
-      "name": "How do I find my tyre size?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "It's printed on the sidewall of your current tyre — something like 235/55 R19 105W. Send a photo on WhatsApp if you're not sure, or share your car's make, model and year and TyresVision will look it up."
+      "@type": "Organization",
+      "@id": "https://www.tyresvision.com/#organization",
+      "name": "TyresVision",
+      "alternateName": "TyresVision UAE",
+      "url": "https://www.tyresvision.com/",
+      "image": "https://www.tyresvision.com/assets/online-tyres-shop-dubai.png",
+      "logo": {
+        "@type": "ImageObject",
+        "@id": "https://www.tyresvision.com/#logo",
+        "url": "https://www.tyresvision.com/assets/online-tyres-shop-dubai.png",
+        "caption": "TyresVision"
+      },
+      "description": "TyresVision is an online tyre shop for the UAE. Genuine, date-fresh tyres from 60+ brands at the lowest prices, delivered free to a fitting centre near you, or fitted at your home or office by our mobile vans.",
+      "slogan": "Buy tyres online, fitted locally across the UAE.",
+      "telephone": "+971505069575",
+      "currenciesAccepted": "AED",
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "@id": "https://www.tyresvision.com/#sales",
+          "telephone": "+971505069575",
+          "contactType": "sales",
+          "availableLanguage": [
+            "English",
+            "Arabic"
+          ],
+          "areaServed": "AE",
+          "url": "https://wa.me/971505069575"
+        },
+        {
+          "@type": "ContactPoint",
+          "telephone": "+971505069575",
+          "contactType": "customer support",
+          "availableLanguage": [
+            "English",
+            "Arabic"
+          ],
+          "areaServed": "AE"
+        }
+      ],
+      "areaServed": [
+        {
+          "@type": "City",
+          "name": "Dubai"
+        },
+        {
+          "@type": "City",
+          "name": "Abu Dhabi"
+        },
+        {
+          "@type": "City",
+          "name": "Sharjah"
+        },
+        {
+          "@type": "City",
+          "name": "Ajman"
+        },
+        {
+          "@type": "City",
+          "name": "Ras Al Khaimah"
+        },
+        {
+          "@type": "City",
+          "name": "Fujairah"
+        },
+        {
+          "@type": "City",
+          "name": "Umm Al Quwain"
+        },
+        {
+          "@type": "Country",
+          "name": "United Arab Emirates"
+        }
+      ],
+      "knowsAbout": [
+        "Car tyres",
+        "Tyre fitting",
+        "Mobile tyre fitting",
+        "Wheel balancing",
+        "Wheel alignment",
+        "Puncture repair",
+        "Tyre sizes",
+        "Fleet tyre supply"
+      ],
+      "brand": [
+        {
+          "@type": "Brand",
+          "name": "Michelin"
+        },
+        {
+          "@type": "Brand",
+          "name": "Bridgestone"
+        },
+        {
+          "@type": "Brand",
+          "name": "Goodyear"
+        },
+        {
+          "@type": "Brand",
+          "name": "Continental"
+        },
+        {
+          "@type": "Brand",
+          "name": "Pirelli"
+        },
+        {
+          "@type": "Brand",
+          "name": "Dunlop"
+        },
+        {
+          "@type": "Brand",
+          "name": "Hankook"
+        },
+        {
+          "@type": "Brand",
+          "name": "Yokohama"
+        },
+        {
+          "@type": "Brand",
+          "name": "Toyo"
+        },
+        {
+          "@type": "Brand",
+          "name": "Falken"
+        },
+        {
+          "@type": "Brand",
+          "name": "Nexen"
+        },
+        {
+          "@type": "Brand",
+          "name": "Kumho"
+        },
+        {
+          "@type": "Brand",
+          "name": "BFGoodrich"
+        },
+        {
+          "@type": "Brand",
+          "name": "Cooper"
+        },
+        {
+          "@type": "Brand",
+          "name": "Nitto"
+        },
+        {
+          "@type": "Brand",
+          "name": "Vredestein"
+        },
+        {
+          "@type": "Brand",
+          "name": "Giti"
+        },
+        {
+          "@type": "Brand",
+          "name": "Laufenn"
+        },
+        {
+          "@type": "Brand",
+          "name": "Sumitomo"
+        },
+        {
+          "@type": "Brand",
+          "name": "Zeetex"
+        }
+      ],
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Tyres and fitting services across the UAE",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Tyre delivery and fitting at a partner centre",
+              "description": "Free delivery of your tyres to a partner fitting centre near you, with fitting arranged for you."
+            },
+            "price": "0",
+            "priceCurrency": "AED"
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Mobile tyre fitting at your location",
+              "description": "A fully equipped mobile van fits your tyres at your home, office or roadside. Quoted upfront on WhatsApp before dispatch."
+            },
+            "priceCurrency": "AED"
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Wheel balancing"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Wheel alignment"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Tyre rotation"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Puncture repair"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Nitrogen fill"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Car battery replacement"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Fleet tyre supply and fitting"
+            }
+          }
+        ]
       }
     },
     {
-      "@type": "Question",
-      "name": "Is fitting included in the price?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Delivery to your chosen fitting centre is free and fitting is arranged for you. Mobile fitting at your own location and extras such as alignment are quoted upfront, with no surprises at the till."
+      "@type": "WebSite",
+      "@id": "https://www.tyresvision.com/#website",
+      "url": "https://www.tyresvision.com/",
+      "name": "TyresVision",
+      "publisher": {
+        "@id": "https://www.tyresvision.com/#organization"
+      },
+      "inLanguage": "en-AE"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://www.tyresvision.com/#webpage",
+      "url": "https://www.tyresvision.com/",
+      "name": "Buy Tyres Online in Dubai, Abu Dhabi & Sharjah | TyresVision",
+      "description": "Buy tyres online from 60+ brands, fitted free at fitting centres across the UAE or at your door by mobile van. WhatsApp your tyre size for a price in minutes.",
+      "isPartOf": {
+        "@id": "https://www.tyresvision.com/#website"
+      },
+      "about": {
+        "@id": "https://www.tyresvision.com/#organization"
+      },
+      "primaryImageOfPage": {
+        "@id": "https://www.tyresvision.com/#logo"
+      },
+      "inLanguage": "en-AE"
+    },
+    {
+      "@type": "Service",
+      "@id": "https://www.tyresvision.com/#service-centre-fitting",
+      "serviceType": "Tyre delivery and fitting",
+      "name": "Tyre delivery and fitting at a centre near you",
+      "description": "We deliver your tyres free to a partner fitting centre near you across Dubai, Abu Dhabi, Sharjah and the Northern Emirates, and arrange the fitting for you.",
+      "provider": {
+        "@id": "https://www.tyresvision.com/#organization"
+      },
+      "areaServed": [
+        {
+          "@type": "City",
+          "name": "Dubai"
+        },
+        {
+          "@type": "City",
+          "name": "Abu Dhabi"
+        },
+        {
+          "@type": "City",
+          "name": "Sharjah"
+        },
+        {
+          "@type": "City",
+          "name": "Ajman"
+        },
+        {
+          "@type": "City",
+          "name": "Ras Al Khaimah"
+        },
+        {
+          "@type": "City",
+          "name": "Fujairah"
+        },
+        {
+          "@type": "City",
+          "name": "Umm Al Quwain"
+        }
+      ],
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "AED",
+        "description": "Free delivery to a partner fitting centre."
       }
     },
     {
-      "@type": "Question",
-      "name": "Are the tyres new and date-fresh?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes. Every tyre is brand new with a recent manufacturing date, sourced through authorised channels, and eligible tyres carry manufacturer-backed warranty."
+      "@type": "Service",
+      "@id": "https://www.tyresvision.com/#service-mobile-fitting",
+      "serviceType": "Mobile tyre fitting",
+      "name": "Mobile tyre fitting in Dubai and Abu Dhabi",
+      "description": "Our mobile vans fit your tyres at your home, office car park or roadside across Dubai, Abu Dhabi, Sharjah and Ajman. Mobile fitting at your own location is quoted upfront on WhatsApp before we dispatch a van.",
+      "provider": {
+        "@id": "https://www.tyresvision.com/#organization"
+      },
+      "areaServed": [
+        {
+          "@type": "City",
+          "name": "Dubai"
+        },
+        {
+          "@type": "City",
+          "name": "Abu Dhabi"
+        },
+        {
+          "@type": "City",
+          "name": "Sharjah"
+        },
+        {
+          "@type": "City",
+          "name": "Ajman"
+        }
+      ],
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "AED",
+        "description": "Call-out fee quoted upfront on WhatsApp before dispatch."
       }
     },
     {
-      "@type": "Question",
-      "name": "Which emirates does TyresVision cover?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Dubai, Abu Dhabi, Sharjah, Ajman and the rest of the UAE, through a network of fitting centres and mobile vans."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Can TyresVision handle a company fleet?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes — fleet pricing, consolidated invoicing and scheduled on-site visits are available. Call and ask for the fleet desk."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "What if I need help right now?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Message TyresVision on WhatsApp or call +971 50 506 9575."
-      }
+      "@type": "FAQPage",
+      "@id": "https://www.tyresvision.com/#faq",
+      "isPartOf": {
+        "@id": "https://www.tyresvision.com/#webpage"
+      },
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do I buy tyres online from TyresVision?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Send your tyre size to us on WhatsApp and we reply within minutes with in-stock options at budget, mid-range and premium price points, each with the fitted price. Choose one, tell us whether you want it fitted at a partner centre or at your own location, and pay when the job is done. There is no account to create and no card details to enter online."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much do tyres cost in Dubai and Abu Dhabi?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It depends on your tyre size and the brand tier you choose. A common sedan size such as 205/55 R16 costs less than a large SUV size such as 285/50 R20, and budget, mid-range and premium brands differ significantly within the same size. Send your exact size on WhatsApp for today's price."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is fitting included in the price?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Fitting at one of our partner centres is free and included in the tyre price, along with free delivery to that centre. Mobile fitting at your own location is quoted upfront on WhatsApp before we dispatch a van, so there is nothing unexpected to pay at the end."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you really match other tyre prices?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Find the same tyre, same brand, same size and same manufacturing year cheaper anywhere in the UAE and send us a screenshot on WhatsApp. We will match it or beat it. Compare fitted prices, because many quotes look cheaper until fitting and balancing are added at the counter."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I find my tyre size?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It is moulded into the sidewall of your current tyre and looks like 235/55 R19 105W. The 235 is the width in millimetres, 55 is the sidewall height as a percentage of that width, R19 is the wheel diameter in inches, and 105W is the load index and speed rating. If you are unsure, send a photo of the sidewall on WhatsApp or tell us your car's make, model and year."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are your tyres new and date-fresh?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Every tyre is brand new, sourced through authorised channels, and carries a recent DOT manufacturing date. The last four digits of the DOT code are the week and year of manufacture, so 1226 means week 12 of 2026. This matters more in the UAE than in cooler countries, because heat degrades rubber long before the tread wears out."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I get tyres delivered and fitted the same day?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Usually yes. Most popular UAE sizes are in stock, so if you message early in the day we can normally arrange fitting the same day across Dubai, Abu Dhabi and Sharjah. Rarer sizes and specialist fitments may take longer, and we will tell you which yours is when we send the quote."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you deliver to Abu Dhabi as well as Dubai?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. We deliver free to partner fitting centres across both emirates, and our mobile vans cover Dubai, Abu Dhabi, Sharjah and Ajman. Send a location pin on WhatsApp and we will confirm coverage for your area."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can you fit tyres at my home or office?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Our mobile vans fit tyres in villa driveways, apartment car parks, office bays and mall parking. Mobile fitting at your own location is quoted upfront before we dispatch. We need a safe, level spot with room to work beside the car, so tell us if your building has height restrictions or requires access approval."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How long does tyre fitting take?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Once the technician is on site, a full set of four typically takes well under an hour including balancing and a final torque check, and a single tyre is considerably quicker. At a partner fitting centre, allow extra time for waiting."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which tyre brand is best for UAE heat?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "There is no single answer. Premium makers such as Michelin, Bridgestone, Continental and Pirelli generally hold up best on sustained high-temperature tarmac and long highway runs. For city driving and moderate mileage, mid-range brands such as Hankook, Yokohama and Falken give most of the performance for noticeably less. Tell us how and where you drive and we will recommend honestly, including when the cheaper option is the right one."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you sell tyres for SUVs and 4x4s?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, and SUV and 4x4 sizes are a large part of what we sell. We supply the common Land Cruiser, Patrol, Prado, Pajero, Explorer and Tahoe fitments in highway, all-terrain and mud-terrain patterns. Tell us whether you stay on tarmac or actually drive in sand and we will match the tyre to that."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you have EV and run-flat tyres?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes to both. Electric vehicles are heavier and need a higher load rating plus a low rolling resistance compound to protect range, so we match to the original equipment specification rather than just the size. Run-flat tyres need the correct equipment to fit safely, and we will tell you if a workshop is the better option for your car."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens to my old tyres?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We take them away and dispose of them through licensed recycling channels at no extra charge, whether the job is done at a fitting centre or at your own location."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can you supply tyres to a company fleet?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. We offer fleet pricing, consolidated invoicing and scheduled on-site visits so your vehicles never leave the yard for a tyre change. We cover cars, pickups and light commercial vehicles across Dubai and Abu Dhabi. Message us on WhatsApp and ask for the fleet desk."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I pay for my tyres?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You pay on completion. There is no online checkout and no deposit. You confirm the price on WhatsApp, we do the job, and you pay when it is finished."
+          }
+        }
+      ]
     }
   ]
 }
 </script>
+
+
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/client.css') }}?v={{ range(10000, 99999) | random }}">
 
