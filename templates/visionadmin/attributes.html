@@ -314,6 +314,61 @@
     </div>
   </div>
 
+  <!-- SCHEMA GROUPS & ATTRIBUTES INSPECTOR MODAL -->
+  <div x-show="showSchemaModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto" @click.away="showSchemaModal = false">
+      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-base font-black text-[#0E1108]" x-text="selectedSchema ? selectedSchema.name : 'Form Schema Inspector'"></h3>
+            <span class="px-2 py-0.5 rounded-full bg-[#EAF7E2] text-[#35760F] text-[10px] font-black uppercase">Active Schema</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">Dynamic attribute groups that render on product create &amp; edit forms.</p>
+        </div>
+        <button type="button" @click="showSchemaModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+      </div>
+
+      <template x-if="selectedSchema">
+        <div class="space-y-4 text-xs">
+          <template x-for="(group, gIdx) in selectedSchema.groups" :key="group.id || gIdx">
+            <div class="p-4 bg-slate-50/90 rounded-2xl border border-slate-200/80 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                  <span class="font-black text-[#0E1108] text-xs" x-text="formatGroupName(group)"></span>
+                  <span class="text-[10px] font-mono text-slate-400" x-text="`(${group.code})`"></span>
+                </div>
+                <span class="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600 text-[10px] font-bold" x-text="`${group.attributes ? group.attributes.length : 0} Attributes`"></span>
+              </div>
+
+              <!-- Group Attributes Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <template x-for="attr in group.attributes" :key="attr.id">
+                  <div class="p-2.5 bg-white rounded-xl border border-slate-200/80 flex items-center justify-between">
+                    <div>
+                      <div class="font-bold text-[#0E1108]" x-text="formatAttrName(attr)"></div>
+                      <div class="text-[10px] font-mono text-slate-400" x-text="attr.code"></div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-blue-50 text-blue-700" x-text="attr.type"></span>
+                      <template x-if="attr.unit">
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-slate-100 text-slate-600" x-text="attr.unit"></span>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <div class="flex items-center justify-end pt-3 border-t border-[#F1F5F0]">
+        <button type="button" @click="showSchemaModal = false" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer">Close</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -327,7 +382,9 @@ function visionAttributesApp() {
     attributeSets: [],
     showCreateModal: false,
     showDetailModal: false,
+    showSchemaModal: false,
     selectedAttr: null,
+    selectedSchema: null,
     form: {
       code: '',
       name_en: '',
@@ -459,16 +516,33 @@ function visionAttributesApp() {
       this.showDetailModal = true;
     },
 
+    formatGroupName(g) {
+      if (!g) return '';
+      if (typeof g.name === 'object' && g.name !== null) {
+        return g.name.en || g.name.ar || g.code || 'Schema Group';
+      }
+      if (typeof g.name === 'string' && g.name.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(g.name);
+          return parsed.en || parsed.ar || g.name;
+        } catch(e) {}
+      }
+      return g.name || g.code || 'Schema Group';
+    },
+
     async loadSetSchema(setId) {
       try {
         const res = await fetch(`/visionadmin/api/catalog/form-schema/${setId}`);
         const data = await res.json();
         if (data.schema) {
-          const groups = data.schema.groups.map(g => `${g.name} (${g.attributes.length} attrs)`).join('\n• ');
-          alert(`Schema Groups for Set #${setId}:\n• ${groups}`);
+          this.selectedSchema = data.schema;
+          this.showSchemaModal = true;
+        } else {
+          alert('No schema groups configured for this set.');
         }
       } catch (err) {
-        alert('Failed to load schema');
+        console.error('Failed to load schema:', err);
+        alert('Failed to load schema from server.');
       }
     }
   };
