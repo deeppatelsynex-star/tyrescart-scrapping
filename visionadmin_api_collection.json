@@ -1,14 +1,24 @@
 {
   "info": {
     "name": "VisionAdmin Master API Suite (Full CMS, Scopes, Catalog & RBAC)",
-    "_postman_id": "visionadmin-master-suite-full-v1",
-    "description": "Complete, end-to-end API collection for all VisionAdmin control plane modules: Profile, Uploads, Pages, Sections, Blogs, Categories, Enquiries, Staff Users, Reviewer Settings, Global Search, Audit Trail, Scopes, and Dynamic Attributes.",
+    "_postman_id": "visionadmin-master-suite-full-v2",
+    "description": "Complete, end-to-end API collection for all VisionAdmin & TyresVision modules: Auth Login/Logout, Multi-Website & Multi-Store Channel Scopes, Scoped Catalog Search & Facets, Page Sections, CMS Pages, Blogs, Dynamic Attributes, Leads & Enquiries, Staff RBAC, Audit Logs, Settings, and Scrapers.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:5049",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "deeppatel.synex@gmail.com",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "12345678",
       "type": "string"
     },
     {
@@ -20,14 +30,37 @@
       "key": "storeId",
       "value": "1",
       "type": "string"
+    },
+    {
+      "key": "storeViewId",
+      "value": "1",
+      "type": "string"
     }
   ],
   "item": [
     {
-      "name": "1. Authentication & Admin Profile",
+      "name": "0. Authentication & Session Lifecycle",
       "item": [
         {
-          "name": "1.1 Get Current Admin Profile (/me)",
+          "name": "0.1 Admin Login (Email & Password)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"remember\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "login"]
+            }
+          }
+        },
+        {
+          "name": "0.2 Get Current Authenticated Profile (/me)",
           "request": {
             "method": "GET",
             "url": {
@@ -38,7 +71,7 @@
           }
         },
         {
-          "name": "1.2 Update Admin Profile",
+          "name": "0.3 Update Current Profile",
           "request": {
             "method": "PUT",
             "header": [
@@ -56,7 +89,7 @@
           }
         },
         {
-          "name": "1.3 Change Admin Password",
+          "name": "0.4 Change Password",
           "request": {
             "method": "POST",
             "header": [
@@ -64,7 +97,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"current_password\": \"OldPassword123!\",\n  \"new_password\": \"NewSecurePass2026!\",\n  \"confirm_password\": \"NewSecurePass2026!\"\n}"
+              "raw": "{\n  \"current_password\": \"12345678\",\n  \"new_password\": \"NewPassword2026!\",\n  \"confirm_password\": \"NewPassword2026!\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/visionadmin/api/change-password",
@@ -74,35 +107,44 @@
           }
         },
         {
-          "name": "1.4 Delete Profile Avatar",
+          "name": "0.5 Forgot Password (Request Reset Link)",
           "request": {
-            "method": "DELETE",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"deeppatel.synex@gmail.com\"\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/visionadmin/api/profile/avatar",
+              "raw": "{{baseUrl}}/visionadmin/forgot-password",
               "host": ["{{baseUrl}}"],
-              "path": ["visionadmin", "api", "profile", "avatar"]
+              "path": ["visionadmin", "forgot-password"]
+            }
+          }
+        },
+        {
+          "name": "0.6 Admin Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "logout"]
             }
           }
         }
       ]
     },
     {
-      "name": "2. Multi-Store Scopes & Global Search",
+      "name": "1. Multi-Website & Multi-Store Hierarchy",
       "item": [
         {
-          "name": "2.1 Global Search Autocomplete (Ctrl + K)",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/visionadmin/api/global-search?q=buy",
-              "host": ["{{baseUrl}}"],
-              "path": ["visionadmin", "api", "global-search"],
-              "query": [{ "key": "q", "value": "buy" }]
-            }
-          }
-        },
-        {
-          "name": "2.2 Get Scope Hierarchy Tree",
+          "name": "1.1 Get Multi-Store Hierarchy Tree",
           "request": {
             "method": "GET",
             "url": {
@@ -113,7 +155,7 @@
           }
         },
         {
-          "name": "2.3 Switch Active Scope",
+          "name": "1.2 Switch Active Website Scope (Global / Website / Store)",
           "request": {
             "method": "POST",
             "header": [
@@ -131,23 +173,157 @@
           }
         },
         {
-          "name": "2.4 API Version Manifest",
+          "name": "1.3 Switch to Specific Store Hub Scope (e.g. Dubai Retail Hub)",
           "request": {
-            "method": "GET",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scope_type\": \"store\",\n  \"scope_id\": 1\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/visionadmin/api/version",
+              "raw": "{{baseUrl}}/visionadmin/api/scopes/switch",
               "host": ["{{baseUrl}}"],
-              "path": ["visionadmin", "api", "version"]
+              "path": ["visionadmin", "api", "scopes", "switch"]
             }
           }
         }
       ]
     },
     {
-      "name": "3. Dynamic Page Sections Builder",
+      "name": "2. Public Storefront & Scoped Catalog APIs",
       "item": [
         {
-          "name": "3.1 List Page Sections",
+          "name": "2.1 Scoped Product Catalog Search (Multi-Filter & Facets)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Website-Id", "value": "{{websiteId}}" },
+              { "key": "X-Store-Id", "value": "{{storeId}}" },
+              { "key": "X-Store-View-Id", "value": "{{storeViewId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalog/search?q=buy&brand=michelin&rim_size=17&page=1&per_page=12",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "catalog", "search"],
+              "query": [
+                { "key": "q", "value": "buy" },
+                { "key": "brand", "value": "michelin" },
+                { "key": "rim_size", "value": "17" },
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "12" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.2 Scoped Faceted Search Aggregations",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Website-Id", "value": "{{websiteId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalog/facets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "catalog", "facets"]
+            }
+          }
+        },
+        {
+          "name": "2.3 Submit Customer Lead / Quote Enquiry",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ahmed Al-Mansoor\",\n  \"phone\": \"+971501234567\",\n  \"email\": \"ahmed@example.com\",\n  \"city\": \"Dubai\",\n  \"vehicle_make\": \"Nissan\",\n  \"vehicle_model\": \"Patrol\",\n  \"vehicle_year\": 2023,\n  \"tyre_size\": \"275/60 R20\",\n  \"message\": \"Looking for 4 tyres with doorstep mobile van installation.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/enquiries",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "enquiries"]
+            }
+          }
+        },
+        {
+          "name": "2.4 API Health & Version Manifest",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/version",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "version"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Dynamic Attributes & Sizing Matrix",
+      "item": [
+        {
+          "name": "3.1 List All Dynamic Attributes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/attributes",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "attributes"]
+            }
+          }
+        },
+        {
+          "name": "3.2 Create Dynamic Attribute with Options (e.g. EU Wet Grip)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"wet_grip\",\n  \"name_en\": \"Wet Grip Rating\",\n  \"name_ar\": \"فئة التماسك على الأسطح الرطبة\",\n  \"type\": \"select\",\n  \"scope\": \"global\",\n  \"is_filterable\": 1,\n  \"is_searchable\": 1,\n  \"options\": [\n    { \"value\": \"A\", \"label_en\": \"Class A (Best)\", \"label_ar\": \"الفئة أ\", \"sort_order\": 1 },\n    { \"value\": \"B\", \"label_en\": \"Class B\", \"label_ar\": \"الفئة ب\", \"sort_order\": 2 },\n    { \"value\": \"C\", \"label_en\": \"Class C\", \"label_ar\": \"الفئة ج\", \"sort_order\": 3 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/attributes",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "attributes"]
+            }
+          }
+        },
+        {
+          "name": "3.3 Get Attribute Sets",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/attribute-sets",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "attribute-sets"]
+            }
+          }
+        },
+        {
+          "name": "3.4 Get Dynamic Form Schema for Attribute Set (Set ID: 1)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/catalog/form-schema/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "catalog", "form-schema", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Dynamic Page Sections Builder",
+      "item": [
+        {
+          "name": "4.1 List Sections for Page (Home)",
           "request": {
             "method": "GET",
             "url": {
@@ -159,7 +335,7 @@
           }
         },
         {
-          "name": "3.2 Get Single Section by ID",
+          "name": "4.2 Get Section by ID",
           "request": {
             "method": "GET",
             "url": {
@@ -170,7 +346,7 @@
           }
         },
         {
-          "name": "3.3 Create New Section",
+          "name": "4.3 Create New Dynamic Section (FAQ / Stats / Services)",
           "request": {
             "method": "POST",
             "header": [
@@ -178,7 +354,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"page_slug\": \"home\",\n  \"section_type\": \"faq\",\n  \"section_title_en\": \"Frequently Asked Questions\",\n  \"section_title_ar\": \"الأسئلة الشائعة\",\n  \"section_subtitle_en\": \"Everything you need to know\",\n  \"section_subtitle_ar\": \"كل ما تحتاج لمعرفته\",\n  \"section_data\": [\n    {\n      \"q_en\": \"How long does mobile fitting take?\",\n      \"q_ar\": \"كم يستغرق تركيب الإطارات المتنقل؟\",\n      \"a_en\": \"30-45 minutes for 4 tyres.\",\n      \"a_ar\": \"من 30 إلى 45 دقيقة لـ 4 إطارات.\"\n    }\n  ],\n  \"sort_order\": 8,\n  \"is_active\": 1\n}"
+              "raw": "{\n  \"page_slug\": \"home\",\n  \"section_type\": \"faq\",\n  \"section_title_en\": \"Frequently Asked Questions\",\n  \"section_title_ar\": \"الأسئلة الشائعة\",\n  \"section_subtitle_en\": \"Tyre Fitting Guidance\",\n  \"section_subtitle_ar\": \"إرشادات تركيب الإطارات\",\n  \"section_data\": [\n    {\n      \"q_en\": \"How long does mobile fitting take?\",\n      \"q_ar\": \"كم يستغرق تركيب الإطارات المتنقل؟\",\n      \"a_en\": \"30-45 minutes for 4 tyres.\",\n      \"a_ar\": \"من 30 إلى 45 دقيقة لـ 4 إطارات.\"\n    }\n  ],\n  \"sort_order\": 8,\n  \"is_active\": 1\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/visionadmin/api/sections",
@@ -188,7 +364,7 @@
           }
         },
         {
-          "name": "3.4 Update Section",
+          "name": "4.4 Update Dynamic Section",
           "request": {
             "method": "PUT",
             "header": [
@@ -206,7 +382,7 @@
           }
         },
         {
-          "name": "3.5 Batch Reorder Sections",
+          "name": "4.5 Reorder Page Sections (Batch Sort)",
           "request": {
             "method": "POST",
             "header": [
@@ -224,7 +400,7 @@
           }
         },
         {
-          "name": "3.6 Delete Section",
+          "name": "4.6 Delete Section",
           "request": {
             "method": "DELETE",
             "url": {
@@ -237,10 +413,10 @@
       ]
     },
     {
-      "name": "4. CMS Static Pages",
+      "name": "5. CMS Static Pages",
       "item": [
         {
-          "name": "4.1 List All Static Pages",
+          "name": "5.1 List All Static Pages",
           "request": {
             "method": "GET",
             "url": {
@@ -252,7 +428,7 @@
           }
         },
         {
-          "name": "4.2 Get Static Page by ID",
+          "name": "5.2 Get Static Page by ID",
           "request": {
             "method": "GET",
             "url": {
@@ -263,7 +439,7 @@
           }
         },
         {
-          "name": "4.3 Create Static Page",
+          "name": "5.3 Create Static Page",
           "request": {
             "method": "POST",
             "header": [
@@ -281,7 +457,7 @@
           }
         },
         {
-          "name": "4.4 Update Static Page",
+          "name": "5.4 Update Static Page",
           "request": {
             "method": "PUT",
             "header": [
@@ -299,7 +475,7 @@
           }
         },
         {
-          "name": "4.5 Soft-Delete Static Page",
+          "name": "5.5 Soft-Delete Static Page",
           "request": {
             "method": "DELETE",
             "url": {
@@ -310,7 +486,7 @@
           }
         },
         {
-          "name": "4.6 Restore Static Page",
+          "name": "5.6 Restore Static Page",
           "request": {
             "method": "POST",
             "url": {
@@ -323,10 +499,10 @@
       ]
     },
     {
-      "name": "5. Blogs & Knowledge Hub",
+      "name": "6. Blogs & Knowledge Hub",
       "item": [
         {
-          "name": "5.1 List All Categories",
+          "name": "6.1 List All Categories",
           "request": {
             "method": "GET",
             "url": {
@@ -337,7 +513,7 @@
           }
         },
         {
-          "name": "5.2 List All Blogs",
+          "name": "6.2 List All Blogs",
           "request": {
             "method": "GET",
             "url": {
@@ -349,7 +525,7 @@
           }
         },
         {
-          "name": "5.3 Create New Blog",
+          "name": "6.3 Create New Blog Article",
           "request": {
             "method": "POST",
             "header": [
@@ -367,7 +543,7 @@
           }
         },
         {
-          "name": "5.4 Update Blog",
+          "name": "6.4 Update Blog Article",
           "request": {
             "method": "PUT",
             "header": [
@@ -385,7 +561,7 @@
           }
         },
         {
-          "name": "5.5 Delete Blog",
+          "name": "6.5 Delete Blog Article",
           "request": {
             "method": "DELETE",
             "url": {
@@ -398,55 +574,10 @@
       ]
     },
     {
-      "name": "6. Dynamic Attributes & Sets",
-      "item": [
-        {
-          "name": "6.1 List Dynamic Attributes",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/visionadmin/api/attributes",
-              "host": ["{{baseUrl}}"],
-              "path": ["visionadmin", "api", "attributes"]
-            }
-          }
-        },
-        {
-          "name": "6.2 Create Dynamic Attribute",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"code\": \"wet_grip\",\n  \"name_en\": \"Wet Grip Rating\",\n  \"name_ar\": \"فئة التماسك على الأسطح الرطبة\",\n  \"type\": \"select\",\n  \"scope\": \"global\",\n  \"is_filterable\": 1,\n  \"is_searchable\": 1,\n  \"options\": [\n    { \"value\": \"A\", \"label_en\": \"Class A\", \"label_ar\": \"الفئة أ\", \"sort_order\": 1 },\n    { \"value\": \"B\", \"label_en\": \"Class B\", \"label_ar\": \"الفئة ب\", \"sort_order\": 2 }\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/visionadmin/api/attributes",
-              "host": ["{{baseUrl}}"],
-              "path": ["visionadmin", "api", "attributes"]
-            }
-          }
-        },
-        {
-          "name": "6.3 List Attribute Sets",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/visionadmin/api/attribute-sets",
-              "host": ["{{baseUrl}}"],
-              "path": ["visionadmin", "api", "attribute-sets"]
-            }
-          }
-        }
-      ]
-    },
-    {
       "name": "7. Customer Enquiries & WhatsApp Leads",
       "item": [
         {
-          "name": "7.1 List All Enquiries",
+          "name": "7.1 List All Customer Enquiries",
           "request": {
             "method": "GET",
             "url": {
@@ -458,7 +589,7 @@
           }
         },
         {
-          "name": "7.2 Update Enquiry Status",
+          "name": "7.2 Update Enquiry Status (Pipeline)",
           "request": {
             "method": "PUT",
             "header": [
@@ -496,7 +627,7 @@
       ]
     },
     {
-      "name": "8. Staff Governance & RBAC",
+      "name": "8. Staff Governance & Multi-Store RBAC",
       "item": [
         {
           "name": "8.1 List All Admin Users",
@@ -541,10 +672,10 @@
       ]
     },
     {
-      "name": "9. Activity & Audit Logs",
+      "name": "9. Activity & Universal Audit Logs",
       "item": [
         {
-          "name": "9.1 Fetch Audit Activity Logs",
+          "name": "9.1 Fetch Audit Activity Logs (Live Stream)",
           "request": {
             "method": "GET",
             "url": {
@@ -554,11 +685,27 @@
               "query": [{ "key": "limit", "value": "50" }]
             }
           }
+        },
+        {
+          "name": "9.2 Filter Logs by Entity / Action",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/visionadmin/api/audit-logs?action=update&entity=section&limit=25",
+              "host": ["{{baseUrl}}"],
+              "path": ["visionadmin", "api", "audit-logs"],
+              "query": [
+                { "key": "action", "value": "update" },
+                { "key": "entity", "value": "section" },
+                { "key": "limit", "value": "25" }
+              ]
+            }
+          }
         }
       ]
     },
     {
-      "name": "10. Settings & Expert Reviewer Config",
+      "name": "10. Settings & Technical Reviewer",
       "item": [
         {
           "name": "10.1 Get Reviewer Profile Settings",
@@ -586,6 +733,55 @@
               "raw": "{{baseUrl}}/visionadmin/api/settings/reviewer",
               "host": ["{{baseUrl}}"],
               "path": ["visionadmin", "api", "settings", "reviewer"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Scrapers Subsystem APIs",
+      "item": [
+        {
+          "name": "11.1 List Registered Scraper Files",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/files",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "files"]
+            }
+          }
+        },
+        {
+          "name": "11.2 Start Scraper Background Execution",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/files/1/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "files", "1", "start"]
+            }
+          }
+        },
+        {
+          "name": "11.3 Stop Running Scraper",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/files/1/stop",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "files", "1", "stop"]
+            }
+          }
+        },
+        {
+          "name": "11.4 Poll Scraper Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/files/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "files", "1", "status"]
             }
           }
         }
