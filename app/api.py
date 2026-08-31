@@ -2026,18 +2026,18 @@ def register_visionadmin_api_routes(app):
         all_pages = [p for p in Page.all(include_deleted=False) if p.deleted_at is None]
         matched_pages = []
         for p in all_pages:
-            title_en = p.get_title('en')
-            title_ar = p.get_title('ar')
+            title_en = p.get_title('en') or ''
+            title_ar = p.get_title('ar') or ''
             slug = p.slug or ''
-            content_en = clean_html(p.get_content('en'))
-            content_ar = clean_html(p.get_content('ar'))
-            meta_desc = clean_html(p.get_meta_desc('en'))
+            content_en = clean_html(p.get_content('en') or '')
+            content_ar = clean_html(p.get_content('ar') or '')
+            meta_desc = clean_html(p.get_meta_desc('en') or '')
 
             match_found = False
             snippet = ''
             if q_lower in title_en.lower() or q_lower in title_ar.lower():
                 match_found = True
-                snippet = title_en
+                snippet = title_en or title_ar
             elif q_lower in slug.lower():
                 match_found = True
                 snippet = f"/{slug.lstrip('/')}"
@@ -2065,10 +2065,11 @@ def register_visionadmin_api_routes(app):
         # 2. Search Page Sections
         conn = get_connection()
         matched_sections = []
+        matched_products = []
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    SELECT id, page_slug, section_type, section_title, section_subtitle, content, is_active
+                    SELECT id, page_slug, section_type, section_title, section_subtitle, content, section_data, is_active
                     FROM page_sections
                     WHERE deleted_at IS NULL
                     ORDER BY sort_order ASC, id ASC
@@ -2079,11 +2080,12 @@ def register_visionadmin_api_routes(app):
                     page_slug = row.get('page_slug') or 'about-us'
                     sec_type = row.get('section_type') or 'section'
                     sec_title_raw = PageSection._parse_json(row.get('section_title'))
-                    sec_title_en = sec_title_raw.get('en') if isinstance(sec_title_raw, dict) else str(sec_title_raw or '')
+                    sec_title_en = (sec_title_raw.get('en') if isinstance(sec_title_raw, dict) else str(sec_title_raw or '')) or ''
                     sec_sub_raw = PageSection._parse_json(row.get('section_subtitle'))
-                    sec_sub_en = sec_sub_raw.get('en') if isinstance(sec_sub_raw, dict) else str(sec_sub_raw or '')
+                    sec_sub_en = (sec_sub_raw.get('en') if isinstance(sec_sub_raw, dict) else str(sec_sub_raw or '')) or ''
                     sec_content_raw = PageSection._parse_json(row.get('content'))
                     sec_content_en = clean_html(sec_content_raw.get('en') if isinstance(sec_content_raw, dict) else str(sec_content_raw or ''))
+                    sec_data_str = json.dumps(row.get('section_data') or {})
 
                     match_found = False
                     snippet = ''
@@ -2096,6 +2098,9 @@ def register_visionadmin_api_routes(app):
                     elif q_lower in sec_content_en.lower():
                         match_found = True
                         snippet = make_snippet(sec_content_en, q_lower)
+                    elif q_lower in sec_data_str.lower():
+                        match_found = True
+                        snippet = make_snippet(sec_data_str, q_lower)
                     elif q_lower in page_slug.lower() or q_lower in sec_type.lower():
                         match_found = True
                         snippet = f"Page: {page_slug} ({sec_type})"
@@ -2113,6 +2118,37 @@ def register_visionadmin_api_routes(app):
                             'is_active': bool(row.get('is_active', 1)),
                             'url': f"/visionadmin/sections?page={page_slug}#section-{sec_id}"
                         })
+
+                # Search Products
+                cursor.execute("""
+                    SELECT p.id, p.sku, p.name, p.slug, p.tire_size_label, b.name AS brand_name
+                    FROM products p
+                    LEFT JOIN brands b ON p.brand_id = b.id
+                    WHERE p.deleted_at IS NULL AND (
+                        LOWER(p.sku) LIKE %s OR
+                        LOWER(p.slug) LIKE %s OR
+                        LOWER(p.tire_size_label) LIKE %s OR
+                        LOWER(b.name) LIKE %s
+                    )
+                    LIMIT 10
+                """, (f"%{q_lower}%", f"%{q_lower}%", f"%{q_lower}%", f"%{q_lower}%"))
+                prod_rows = cursor.fetchall() or []
+                for pr in prod_rows:
+                    pr_name = pr.get('name')
+                    if isinstance(pr_name, str):
+                        try:
+                            pr_name = json.loads(pr_name).get('en') or pr.get('sku')
+                        except Exception:
+                            pass
+                    matched_products.append({
+                        'id': pr['id'],
+                        'type': 'product',
+                        'title': pr_name or pr['sku'],
+                        'slug': pr.get('slug'),
+                        'snippet': f"SKU: {pr['sku']} | Size: {pr.get('tire_size_label') or 'N/A'}",
+                        'is_active': True,
+                        'url': f"/en/product/{pr.get('slug') or pr['id']}"
+                    })
         finally:
             conn.close()
 
@@ -2120,9 +2156,9 @@ def register_visionadmin_api_routes(app):
         all_blogs = [b for b in Blog.all(include_deleted=False) if b.deleted_at is None]
         matched_blogs = []
         for b in all_blogs:
-            title_en = b.get_title('en')
+            title_en = b.get_title('en') or ''
             slug = b.slug or ''
-            content_en = clean_html(b.get_content('en'))
+            content_en = clean_html(b.get_content('en') or '')
             cat_name = b.category_name or ''
 
             match_found = False
@@ -2152,15 +2188,16 @@ def register_visionadmin_api_routes(app):
                     'url': f"/visionadmin/blogs#blog-{b.id}"
                 })
 
-        total = len(matched_pages) + len(matched_sections) + len(matched_blogs)
+        total = len(matched_pages) + len(matched_sections) + len(matched_blogs) + len(matched_products)
         return jsonify({
             'success': True,
             'query': query,
             'total': total,
             'results': {
-                'pages': matched_pages[:5],
-                'sections': matched_sections[:5],
-                'blogs': matched_blogs[:5]
+                'pages': matched_pages,
+                'sections': matched_sections,
+                'blogs': matched_blogs,
+                'products': matched_products
             }
         })
 
