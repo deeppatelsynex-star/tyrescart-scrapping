@@ -2,13 +2,54 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 
+  <!-- Home Page -->
   <url>
     <loc>https://www.tyresvision.com/</loc>
-    <lastmod>2026-08-26</lastmod>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
     <image:image>
-      <image:loc>https://www.tyresvision.com/assets/online-tyres-shop-dubai.png</image:loc>
-      <image:title>TyresVision — buy tyres online, fitted locally across the UAE</image:title>
+      <image:loc>https://www.tyresvision.com/static/assets/images/tyresvision-logo.png</image:loc>
+      <image:title>TyresVision - Buy tyres online, fitted locally across the UAE</image:title>
     </image:image>
+  </url>
+
+  <!-- About Us -->
+  <url>
+    <loc>https://www.tyresvision.com/about-us</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Blog Listing -->
+  <url>
+    <loc>https://www.tyresvision.com/blog</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Blog Articles -->
+  <url>
+    <loc>https://www.tyresvision.com/blog/how-to-choose-the-right-tyres-for-your-car</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://www.tyresvision.com/blog/how-hot-weather-affects-your-car-tyres</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://www.tyresvision.com/blog/how-to-choose-the-right-tyres-for-your-vehicle</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 
 </urlset>
