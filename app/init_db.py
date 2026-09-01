@@ -236,6 +236,7 @@ NEW_PAGE_COLUMNS = {
 }
 
 PERFORMANCE_INDEXES = [
+    # 0. logTbl & fileTbl
     ("logTbl", "idx_log_file_id_id", "(file_id, id)"),
     ("logTbl", "idx_log_status_id", "(status, id)"),
     ("logTbl", "idx_log_user_id_id", "(user_id, id)"),
@@ -243,6 +244,147 @@ PERFORMANCE_INDEXES = [
     ("fileTbl", "idx_file_deleted_id", "(is_deleted, file_id)"),
     ("fileTbl", "idx_file_site_name", "(site_name)"),
     ("fileTbl", "idx_file_working", "(working)"),
+
+    # 1. stores
+    ("stores", "idx_stores_website_id", "(website_id)"),
+    ("stores", "idx_stores_code", "(code)"),
+    ("stores", "idx_stores_is_active", "(is_active)"),
+    ("stores", "idx_stores_deleted_at", "(deleted_at)"),
+    ("stores", "idx_stores_emirate", "(emirate)"),
+    ("stores", "idx_stores_active_lookup", "(website_id, is_active, deleted_at)"),
+
+    # 2. blog_categories
+    ("blog_categories", "idx_blog_cats_slug", "(slug)"),
+    ("blog_categories", "idx_blog_cats_deleted_at", "(deleted_at)"),
+    ("blog_categories", "idx_blog_cats_sort", "(sort_order, deleted_at)"),
+
+    # 3. blogs
+    ("blogs", "idx_blogs_category_status", "(category_id, status, deleted_at)"),
+    ("blogs", "idx_blogs_published", "(status, deleted_at, published_at)"),
+    ("blogs", "idx_blogs_created_at", "(created_at)"),
+
+    # 4. products
+    ("products", "idx_products_sku", "(sku)"),
+    ("products", "idx_products_slug", "(slug)"),
+    ("products", "idx_products_brand_id", "(brand_id)"),
+    ("products", "idx_products_category_id", "(category_id)"),
+    ("products", "idx_products_status", "(status)"),
+    ("products", "idx_products_visibility", "(visibility)"),
+    ("products", "idx_products_deleted_at", "(deleted_at)"),
+    ("products", "idx_products_tire_size", "(tire_size_label)"),
+    ("products", "idx_products_price", "(price)"),
+    ("products", "idx_products_active_catalog", "(status, visibility, deleted_at, brand_id)"),
+
+    # 5. categories
+    ("categories", "idx_categories_slug", "(slug)"),
+    ("categories", "idx_categories_parent_id", "(parent_id)"),
+    ("categories", "idx_categories_status", "(status)"),
+    ("categories", "idx_categories_deleted_at", "(deleted_at)"),
+    ("categories", "idx_categories_sort", "(sort_order, status, deleted_at)"),
+
+    # 6. brands
+    ("brands", "idx_brands_slug", "(slug)"),
+    ("brands", "idx_brands_status", "(status)"),
+    ("brands", "idx_brands_is_featured", "(is_featured)"),
+    ("brands", "idx_brands_deleted_at", "(deleted_at)"),
+
+    # 7. enquiries
+    ("enquiries", "idx_enquiries_email", "(email)"),
+    ("enquiries", "idx_enquiries_phone", "(phone)"),
+    ("enquiries", "idx_enquiries_status", "(status)"),
+    ("enquiries", "idx_enquiries_form_type", "(form_type)"),
+    ("enquiries", "idx_enquiries_store_id", "(store_id)"),
+    ("enquiries", "idx_enquiries_created_at", "(created_at)"),
+    ("enquiries", "idx_enquiries_deleted_at", "(deleted_at)"),
+
+    # 8. hdweb_enquiry
+    ("hdweb_enquiry", "idx_hdweb_email", "(email)"),
+    ("hdweb_enquiry", "idx_hdweb_status", "(status)"),
+    ("hdweb_enquiry", "idx_hdweb_created_at", "(created_at)"),
+    ("hdweb_enquiry", "idx_hdweb_form_type", "(form_type)"),
+
+    # 9. orders
+    ("orders", "idx_orders_order_number", "(order_number)"),
+    ("orders", "idx_orders_user_id", "(user_id)"),
+    ("orders", "idx_orders_status", "(status)"),
+    ("orders", "idx_orders_payment_status", "(payment_status)"),
+    ("orders", "idx_orders_website_id", "(website_id)"),
+    ("orders", "idx_orders_store_id", "(store_id)"),
+    ("orders", "idx_orders_created_at", "(created_at)"),
+    ("orders", "idx_orders_deleted_at", "(deleted_at)"),
+
+    # 10. order_items
+    ("order_items", "idx_order_items_order_id", "(order_id)"),
+    ("order_items", "idx_order_items_product_id", "(product_id)"),
+    ("order_items", "idx_order_items_sku", "(sku)"),
+
+    # 11. carts
+    ("carts", "idx_carts_session_id", "(session_id)"),
+    ("carts", "idx_carts_user_id", "(user_id)"),
+    ("carts", "idx_carts_expires_at", "(expires_at)"),
+    ("carts", "idx_carts_deleted_at", "(deleted_at)"),
+
+    # 12. cart_items
+    ("cart_items", "idx_cart_items_cart_id", "(cart_id)"),
+    ("cart_items", "idx_cart_items_product_id", "(product_id)"),
+
+    # 13. users
+    ("users", "idx_users_email", "(email)"),
+    ("users", "idx_users_phone", "(phone)"),
+    ("users", "idx_users_status", "(status)"),
+    ("users", "idx_users_customer_group_id", "(customer_group_id)"),
+    ("users", "idx_users_deleted_at", "(deleted_at)"),
+    ("users", "idx_users_created_at", "(created_at)"),
+
+    # 14. vehicles
+    ("vehicles", "idx_vehicles_make", "(make)"),
+    ("vehicles", "idx_vehicles_model", "(model)"),
+    ("vehicles", "idx_vehicles_active", "(active)"),
+    ("vehicles", "idx_vehicles_front_tire", "(front_tire_size)"),
+    ("vehicles", "idx_vehicles_rear_tire", "(rear_tire_size)"),
+    ("vehicles", "idx_vehicles_deleted_at", "(deleted_at)"),
+
+    # 15. makes
+    ("makes", "idx_makes_slug", "(make_slug)"),
+    ("makes", "idx_makes_status", "(status)"),
+    ("makes", "idx_makes_deleted_at", "(deleted_at)"),
+
+    # 16. models
+    ("models", "idx_models_make_id", "(make_id)"),
+    ("models", "idx_models_slug", "(model_slug)"),
+    ("models", "idx_models_deleted_at", "(deleted_at)"),
+
+    # 17. banners
+    ("banners", "idx_banners_position", "(position)"),
+    ("banners", "idx_banners_is_active", "(is_active)"),
+    ("banners", "idx_banners_sort", "(sort_order, is_active)"),
+    ("banners", "idx_banners_deleted_at", "(deleted_at)"),
+
+    # 18. faqs
+    ("faqs", "idx_faqs_is_active", "(is_active)"),
+    ("faqs", "idx_faqs_sort", "(sort_order, is_active)"),
+    ("faqs", "idx_faqs_deleted_at", "(deleted_at)"),
+
+    # 19. admin_users
+    ("admin_users", "idx_admin_users_role", "(role)"),
+    ("admin_users", "idx_admin_users_active", "(is_active)"),
+    ("admin_users", "idx_admin_users_deleted", "(is_deleted, deleted_at)"),
+
+    # 20. coupons
+    ("coupons", "idx_coupons_code", "(code)"),
+    ("coupons", "idx_coupons_active", "(is_active)"),
+    ("coupons", "idx_coupons_dates", "(starts_at, expires_at)"),
+    ("coupons", "idx_coupons_deleted_at", "(deleted_at)"),
+
+    # 21. newsletter_subscribers
+    ("newsletter_subscribers", "idx_newsletter_email", "(email)"),
+    ("newsletter_subscribers", "idx_newsletter_status", "(status)"),
+    ("newsletter_subscribers", "idx_newsletter_deleted_at", "(deleted_at)"),
+
+    # 22. password_reset_tokens
+    ("password_reset_tokens", "idx_reset_token", "(token)"),
+    ("password_reset_tokens", "idx_reset_email", "(email)"),
+    ("password_reset_tokens", "idx_reset_created_at", "(created_at)"),
 ]
 
 
