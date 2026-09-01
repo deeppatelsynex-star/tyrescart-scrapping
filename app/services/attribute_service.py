@@ -105,10 +105,13 @@ class AttributeService:
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    SELECT id, name, slug, description, is_system, sort_order, created_at, updated_at
-                    FROM attribute_sets
-                    WHERE deleted_at IS NULL
-                    ORDER BY sort_order ASC, id ASC
+                    SELECT s.id, s.name, s.slug, s.description, s.is_system, s.sort_order, s.created_at, s.updated_at,
+                           COUNT(DISTINCT g.id) AS groups_count
+                    FROM attribute_sets s
+                    LEFT JOIN attribute_groups g ON s.id = g.attribute_set_id
+                    WHERE s.deleted_at IS NULL
+                    GROUP BY s.id, s.name, s.slug, s.description, s.is_system, s.sort_order, s.created_at, s.updated_at
+                    ORDER BY s.sort_order ASC, s.id ASC
                 """)
                 return cursor.fetchall()
         finally:

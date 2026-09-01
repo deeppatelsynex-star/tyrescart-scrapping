@@ -3028,6 +3028,133 @@ def register_visionadmin_api_routes(app):
             return jsonify({'error': 'Attribute set not found.'}), 404
         return jsonify({'attribute_set': full_set})
 
+    @app.route('/visionadmin/api/attribute-sets', methods=['POST'])
+    def visionadmin_api_create_attribute_set():
+        """Creates a new dynamic attribute set, optionally cloned from an existing template set."""
+        data = request.get_json() or {}
+        name = (data.get('name') or '').strip()
+        slug = (data.get('slug') or '').strip().lower().replace(' ', '_')
+        description = data.get('description') or ''
+        clone_from_id = data.get('clone_from_id')
+        user_id = get_current_admin_user_id()
+
+        if not name:
+            return jsonify({'error': 'Attribute set name is required.'}), 400
+        if not slug:
+            slug = re.sub(r'[^a-z0-9_]+', '_', name.lower()).strip('_')
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT id FROM attribute_sets WHERE (slug = %s OR name = %s) AND deleted_at IS NULL", (slug, name))
+                if cursor.fetchone():
+                    return jsonify({'error': f"Attribute set with name '{name}' or slug '{slug}' already exists."}), 400
+
+                cursor.execute("""
+                    INSERT INTO attribute_sets (name, slug, description, is_system, sort_order, created_by, updated_by)
+                    VALUES (%s, %s, %s, 0, 10, %s, %s)
+                """, (name, slug, description, user_id, user_id))
+                new_set_id = cursor.lastrowid
+
+                # If cloning from an existing set, duplicate all its groups and attribute associations
+                if clone_from_id:
+                    cursor.execute("""
+                        SELECT id, name, code, sort_order 
+                        FROM attribute_groups 
+                        WHERE attribute_set_id = %s 
+                        ORDER BY sort_order ASC, id ASC
+                    """, (clone_from_id,))
+                    source_groups = cursor.fetchall()
+                    for sg in source_groups:
+                        g_name = json.dumps(sg['name']) if isinstance(sg['name'], dict) else str(sg['name'])
+                        cursor.execute("""
+                            INSERT INTO attribute_groups (attribute_set_id, name, code, sort_order, created_by, updated_by)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                        """, (new_set_id, g_name, sg['code'], sg['sort_order'], user_id, user_id))
+                        new_grp_id = cursor.lastrowid
+
+                        cursor.execute("""
+                            SELECT attribute_id, sort_order 
+                            FROM attribute_group_attributes 
+                            WHERE attribute_group_id = %s
+                            ORDER BY sort_order ASC
+                        """, (sg['id'],))
+                        source_attrs = cursor.fetchall()
+                        for sa in source_attrs:
+                            cursor.execute("""
+                                INSERT INTO attribute_group_attributes (attribute_group_id, attribute_id, sort_order, created_by, updated_by)
+                                VALUES (%s, %s, %s, %s, %s)
+                            """, (new_grp_id, sa['attribute_id'], sa['sort_order'], user_id, user_id))
+                else:
+                    default_grp_name = json.dumps({'en': 'General Attributes', 'ar': 'الخصائص العامة'})
+                    cursor.execute("""
+                        INSERT INTO attribute_groups (attribute_set_id, name, code, sort_order, created_by, updated_by)
+                        VALUES (%s, %s, 'general', 1, %s, %s)
+                    """, (new_set_id, default_grp_name, user_id, user_id))
+
+                conn.commit()
+                log_activity('create', 'attribute_set', new_set_id, None, {'name': name, 'slug': slug}, user_id=user_id)
+                return jsonify({'success': True, 'id': new_set_id, 'message': f"Attribute set '{name}' created successfully."}), 201
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/attribute-sets/<int:set_id>', methods=['PUT'])
+    def visionadmin_api_update_attribute_set(set_id):
+        """Updates an attribute set's metadata."""
+        data = request.get_json() or {}
+        name = data.get('name')
+        slug = data.get('slug')
+        description = data.get('description')
+        user_id = get_current_admin_user_id()
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM attribute_sets WHERE id = %s AND deleted_at IS NULL", (set_id,))
+                old_set = cursor.fetchone()
+                if not old_set:
+                    return jsonify({'error': 'Attribute set not found.'}), 404
+
+                cursor.execute("""
+                    UPDATE attribute_sets
+                    SET name = COALESCE(%s, name),
+                        slug = COALESCE(%s, slug),
+                        description = COALESCE(%s, description),
+                        updated_by = %s,
+                        updated_at = NOW()
+                    WHERE id = %s
+                """, (name, slug, description, user_id, set_id))
+                conn.commit()
+
+                log_activity('update', 'attribute_set', set_id, old_set, data, user_id=user_id)
+                return jsonify({'success': True, 'message': f"Attribute set '{name or old_set['name']}' updated successfully."})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/attribute-sets/<int:set_id>', methods=['DELETE'])
+    def visionadmin_api_delete_attribute_set(set_id):
+        """Soft-deletes an attribute set."""
+        user_id = get_current_admin_user_id()
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM attribute_sets WHERE id = %s AND deleted_at IS NULL", (set_id,))
+                attr_set = cursor.fetchone()
+                if not attr_set:
+                    return jsonify({'error': 'Attribute set not found.'}), 404
+
+                cursor.execute("""
+                    UPDATE attribute_sets
+                    SET deleted_at = NOW(), deleted_by = %s
+                    WHERE id = %s
+                """, (user_id, set_id))
+                conn.commit()
+
+                log_activity('delete', 'attribute_set', set_id, attr_set, {'deleted': True}, user_id=user_id)
+                return jsonify({'success': True, 'message': f"Attribute set '{attr_set['name']}' moved to trash."})
+        finally:
+            conn.close()
+
     @app.route('/visionadmin/api/catalog/form-schema/<int:set_id>', methods=['GET'])
     def visionadmin_api_get_product_form_schema(set_id):
         """Returns reactive Alpine.js form schema with scoped values & fallback flags."""

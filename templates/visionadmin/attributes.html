@@ -17,14 +17,28 @@
     </div>
     
     <div class="flex items-center gap-3">
-      <button 
-        type="button" 
-        @click="openCreateModal()" 
-        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
-      >
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <span>Add New Attribute</span>
-      </button>
+      <div class="flex items-center gap-2">
+        <template x-if="activeTab === 'sets'">
+          <button 
+            type="button" 
+            @click="openCreateSetModal()" 
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Add Attribute Set</span>
+          </button>
+        </template>
+        <template x-if="activeTab === 'attributes'">
+          <button 
+            type="button" 
+            @click="openCreateModal()" 
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Add New Attribute</span>
+          </button>
+        </template>
+      </div>
     </div>
   </div>
 
@@ -190,7 +204,24 @@
         </div>
 
         <div class="mt-5 pt-4 border-t border-[#F1F5F0] flex items-center justify-between">
-          <span class="text-[11px] font-bold text-slate-400">Default Tyre Schema</span>
+          <div class="flex items-center gap-1.5">
+            <button 
+              type="button" 
+              @click="openEditSetModal(set)" 
+              class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+              title="Edit Attribute Set"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button 
+              type="button" 
+              @click="deleteAttributeSet(set)" 
+              class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+              title="Delete Attribute Set"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
           <button 
             type="button" 
             @click="loadSetSchema(set.id)" 
@@ -259,6 +290,54 @@
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <!-- WORKING ADD / EDIT ATTRIBUTE SET MODAL -->
+  <div x-show="showSetModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showSetModal = false">
+      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
+        <div>
+          <h3 class="text-base font-black text-[#0E1108]" x-text="setForm.id ? 'Edit Attribute Set: ' + setForm.name : 'Create New Attribute Set'"></h3>
+          <p class="text-xs text-slate-400">Schema blueprint grouping dynamic attributes for vehicle &amp; product catalogs.</p>
+        </div>
+        <button type="button" @click="showSetModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+      </div>
+
+      <form @submit.prevent="saveAttributeSet()" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Set Name *</label>
+          <input type="text" x-model="setForm.name" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold" placeholder="e.g. Electric Vehicle (EV) Tyres">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Slug / Code</label>
+          <input type="text" x-model="setForm.slug" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono" placeholder="e.g. ev_tyres (auto-generated if blank)">
+        </div>
+
+        <template x-if="!setForm.id">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Clone Schema Groups From (Optional)</label>
+            <select x-model="setForm.clone_from_id" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold">
+              <option value="">None (Create Blank Set with General Group)</option>
+              <template x-for="s in attributeSets" :key="s.id">
+                <option :value="s.id" x-text="`Inherit from: ${s.name} (#${s.id})`"></option>
+              </template>
+            </select>
+            <p class="text-[11px] text-slate-400 mt-1">Inherits all schema groups and attribute mappings from the selected template.</p>
+          </div>
+        </template>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Description</label>
+          <textarea x-model="setForm.description" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="e.g. Specialized acoustic ratings, high load capacity, and rolling resistance."></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#F1F5F0]">
+          <button type="button" @click="showSetModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 cursor-pointer">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] shadow-xs cursor-pointer" x-text="setForm.id ? 'Save Changes' : 'Create Set'"></button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -474,10 +553,18 @@ function visionAttributesApp() {
     trashAttributes: [],
     attributeSets: [],
     showCreateModal: false,
+    showSetModal: false,
     showDetailModal: false,
     showSchemaModal: false,
     selectedAttr: null,
     selectedSchema: null,
+    setForm: {
+      id: null,
+      name: '',
+      slug: '',
+      description: '',
+      clone_from_id: ''
+    },
     form: {
       id: null,
       code: '',
@@ -704,6 +791,78 @@ function visionAttributesApp() {
       } catch (err) {
         console.error('Failed to load schema:', err);
         alert('Failed to load schema from server.');
+      }
+    },
+
+    openCreateSetModal() {
+      this.setForm = {
+        id: null,
+        name: '',
+        slug: '',
+        description: '',
+        clone_from_id: ''
+      };
+      this.showSetModal = true;
+    },
+
+    openEditSetModal(set) {
+      this.setForm = {
+        id: set.id,
+        name: set.name || '',
+        slug: set.slug || '',
+        description: set.description || '',
+        clone_from_id: ''
+      };
+      this.showSetModal = true;
+    },
+
+    async saveAttributeSet() {
+      try {
+        const payload = {
+          name: this.setForm.name,
+          slug: this.setForm.slug,
+          description: this.setForm.description,
+          clone_from_id: this.setForm.clone_from_id || null
+        };
+
+        const method = this.setForm.id ? 'PUT' : 'POST';
+        const url = this.setForm.id ? `/visionadmin/api/attribute-sets/${this.setForm.id}` : '/visionadmin/api/attribute-sets';
+
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success || data.id) {
+          this.showSetModal = false;
+          await this.initData();
+          if (window.showToast) window.showToast(this.setForm.id ? 'Attribute set updated successfully!' : 'Attribute set created successfully!', 'success');
+        } else {
+          alert(data.error || 'Failed to save attribute set.');
+        }
+      } catch (err) {
+        console.error('Save attribute set error:', err);
+      }
+    },
+
+    async deleteAttributeSet(set) {
+      const confirmMsg = `Are you sure you want to move attribute set '${set.name}' to trash?`;
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch(`/visionadmin/api/attribute-sets/${set.id}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          await this.initData();
+          if (window.showToast) window.showToast(`Attribute set '${set.name}' moved to trash.`, 'success');
+        } else {
+          alert(data.error || 'Failed to delete attribute set.');
+        }
+      } catch (e) {
+        console.error('Delete attribute set error:', e);
       }
     }
   };
