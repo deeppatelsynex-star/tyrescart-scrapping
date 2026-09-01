@@ -18,7 +18,7 @@
     },
     {
       "key": "adminPassword",
-      "value": "12345678",
+      "value": "Admin@123",
       "type": "string"
     },
     {
