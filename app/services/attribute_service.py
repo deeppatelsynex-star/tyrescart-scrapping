@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from db import get_connection
 
 logger = logging.getLogger(__name__)
@@ -177,6 +178,54 @@ class AttributeService:
 
                 attr_set['groups'] = groups
                 return attr_set
+        finally:
+            conn.close()
+
+    @staticmethod
+    def add_group_to_set(attribute_set_id, name, code=None, sort_order=10, user_id=None):
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                if not code:
+                    clean_code = re.sub(r'[^a-z0-9_]+', '_', (name.get('en') if isinstance(name, dict) else str(name)).lower()).strip('_')
+                else:
+                    clean_code = code
+                name_val = json.dumps(name) if isinstance(name, dict) else str(name)
+                cursor.execute("""
+                    INSERT INTO attribute_groups (attribute_set_id, name, code, sort_order, created_by, updated_by)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (attribute_set_id, name_val, clean_code, sort_order, user_id, user_id))
+                conn.commit()
+                return cursor.lastrowid
+        finally:
+            conn.close()
+
+    @staticmethod
+    def add_attribute_to_group(group_id, attribute_id, sort_order=10, user_id=None):
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO attribute_group_attributes (attribute_group_id, attribute_id, sort_order, created_by, updated_by)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE sort_order = VALUES(sort_order), updated_by = VALUES(updated_by)
+                """, (group_id, attribute_id, sort_order, user_id, user_id))
+                conn.commit()
+                return True
+        finally:
+            conn.close()
+
+    @staticmethod
+    def remove_attribute_from_group(group_id, attribute_id):
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    DELETE FROM attribute_group_attributes 
+                    WHERE attribute_group_id = %s AND attribute_id = %s
+                """, (group_id, attribute_id))
+                conn.commit()
+                return cursor.rowcount > 0
         finally:
             conn.close()
 

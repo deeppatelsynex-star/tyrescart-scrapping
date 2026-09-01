@@ -3155,6 +3155,46 @@ def register_visionadmin_api_routes(app):
         finally:
             conn.close()
 
+    @app.route('/visionadmin/api/attribute-sets/<int:set_id>/groups', methods=['POST'])
+    def visionadmin_api_add_group_to_set(set_id):
+        """Adds a new schema group to an existing attribute set."""
+        data = request.get_json() or {}
+        name = data.get('name')
+        code = data.get('code')
+        user_id = get_current_admin_user_id()
+
+        if not name:
+            return jsonify({'error': 'Group name is required.'}), 400
+
+        group_id = AttributeService.add_group_to_set(set_id, name, code=code, user_id=user_id)
+        log_activity('create', 'attribute_group', group_id, None, {'set_id': set_id, 'name': name}, user_id=user_id)
+        return jsonify({'success': True, 'id': group_id, 'message': 'Group added to set successfully.'}), 201
+
+    @app.route('/visionadmin/api/attribute-groups/<int:group_id>/attributes', methods=['POST'])
+    def visionadmin_api_add_attribute_to_group(group_id):
+        """Maps an attribute to a schema group."""
+        data = request.get_json() or {}
+        attribute_id = data.get('attribute_id')
+        sort_order = data.get('sort_order', 10)
+        user_id = get_current_admin_user_id()
+
+        if not attribute_id:
+            return jsonify({'error': 'attribute_id is required.'}), 400
+
+        AttributeService.add_attribute_to_group(group_id, attribute_id, sort_order=sort_order, user_id=user_id)
+        log_activity('assign', 'attribute_group', group_id, None, {'attribute_id': attribute_id}, user_id=user_id)
+        return jsonify({'success': True, 'message': 'Attribute assigned to group successfully.'}), 200
+
+    @app.route('/visionadmin/api/attribute-groups/<int:group_id>/attributes/<int:attribute_id>', methods=['DELETE'])
+    def visionadmin_api_remove_attribute_from_group(group_id, attribute_id):
+        """Removes an attribute assignment from a schema group."""
+        user_id = get_current_admin_user_id()
+        removed = AttributeService.remove_attribute_from_group(group_id, attribute_id)
+        if not removed:
+            return jsonify({'error': 'Attribute assignment not found.'}), 404
+        log_activity('unassign', 'attribute_group', group_id, {'attribute_id': attribute_id}, None, user_id=user_id)
+        return jsonify({'success': True, 'message': 'Attribute removed from group successfully.'}), 200
+
     @app.route('/visionadmin/api/catalog/form-schema/<int:set_id>', methods=['GET'])
     def visionadmin_api_get_product_form_schema(set_id):
         """Returns reactive Alpine.js form schema with scoped values & fallback flags."""

@@ -485,24 +485,43 @@
     </div>
   </div>
 
-  <!-- SCHEMA GROUPS & ATTRIBUTES INSPECTOR MODAL -->
+  <!-- SCHEMA GROUPS & ATTRIBUTES BUILDER / INSPECTOR MODAL -->
   <div x-show="showSchemaModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
     <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto" @click.away="showSchemaModal = false">
       <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
         <div>
           <div class="flex items-center gap-2">
-            <h3 class="text-base font-black text-[#0E1108]" x-text="selectedSchema ? selectedSchema.name : 'Form Schema Inspector'"></h3>
-            <span class="px-2 py-0.5 rounded-full bg-[#EAF7E2] text-[#35760F] text-[10px] font-black uppercase">Active Schema</span>
+            <h3 class="text-base font-black text-[#0E1108]" x-text="selectedSchema ? selectedSchema.name : 'Form Schema Builder'"></h3>
+            <span class="px-2 py-0.5 rounded-full bg-[#EAF7E2] text-[#35760F] text-[10px] font-black uppercase">Active Schema Builder</span>
           </div>
-          <p class="text-xs text-slate-400 mt-0.5">Dynamic attribute groups that render on product create &amp; edit forms.</p>
+          <p class="text-xs text-slate-400 mt-0.5">Assign, reorder, or remove dynamic attributes across schema groups.</p>
         </div>
-        <button type="button" @click="showSchemaModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+        <button type="button" @click="showSchemaModal = false" class="text-slate-400 hover:text-slate-700 text-base cursor-pointer">✕</button>
+      </div>
+
+      <!-- Add New Group Toolbar -->
+      <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+        <div class="flex items-center gap-2 flex-1">
+          <input 
+            type="text" 
+            x-model="newGroupName" 
+            placeholder="New Group Name (e.g. Electric Vehicle Specs)" 
+            class="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#35760F]"
+          >
+          <button 
+            type="button" 
+            @click="addGroupToCurrentSet()" 
+            class="px-3.5 py-1.5 rounded-xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs font-bold transition shadow-2xs cursor-pointer whitespace-nowrap"
+          >
+            + Add Group
+          </button>
+        </div>
       </div>
 
       <template x-if="selectedSchema">
         <div class="space-y-4 text-xs">
           <template x-for="(group, gIdx) in selectedSchema.groups" :key="group.id || gIdx">
-            <div class="p-4 bg-slate-50/90 rounded-2xl border border-slate-200/80 space-y-2.5">
+            <div class="p-4 bg-slate-50/90 rounded-2xl border border-slate-200/80 space-y-3">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
@@ -515,20 +534,52 @@
               <!-- Group Attributes Grid -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                 <template x-for="attr in group.attributes" :key="attr.id">
-                  <div class="p-2.5 bg-white rounded-xl border border-slate-200/80 flex items-center justify-between">
-                    <div>
-                      <div class="font-bold text-[#0E1108]" x-text="formatAttrName(attr)"></div>
-                      <div class="text-[10px] font-mono text-slate-400" x-text="attr.code"></div>
+                  <div class="p-2.5 bg-white rounded-xl border border-slate-200/80 flex items-center justify-between shadow-2xs group hover:border-slate-300">
+                    <div class="min-w-0 flex-1 pr-2">
+                      <div class="font-bold text-[#0E1108] truncate" x-text="formatAttrName(attr)"></div>
+                      <div class="text-[10px] font-mono text-slate-400 truncate" x-text="attr.code"></div>
                     </div>
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-1.5 shrink-0">
                       <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-blue-50 text-blue-700" x-text="attr.type"></span>
                       <template x-if="attr.unit">
                         <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-slate-100 text-slate-600" x-text="attr.unit"></span>
                       </template>
+                      <button 
+                        type="button" 
+                        @click="removeAttributeFromGroup(group.id, attr.id, formatAttrName(attr))" 
+                        class="p-1 rounded-md text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                        title="Remove from this group"
+                      >
+                        ✕
+                      </button>
                     </div>
                   </div>
                 </template>
+                <div x-show="!group.attributes || group.attributes.length === 0" class="col-span-2 py-3 text-center text-slate-400 italic">
+                  No attributes assigned to this group yet.
+                </div>
               </div>
+
+              <!-- Inline Assign Attribute to Group Controls -->
+              <div class="pt-2 border-t border-slate-200/60 flex items-center gap-2">
+                <select 
+                  x-model="selectedAttrToAdd[group.id]" 
+                  class="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700"
+                >
+                  <option value="">Select an attribute to add to this group...</option>
+                  <template x-for="a in getAvailableAttrsForGroup(group)" :key="a.id">
+                    <option :value="a.id" x-text="`${formatAttrName(a)} (${a.code})`"></option>
+                  </template>
+                </select>
+                <button 
+                  type="button" 
+                  @click="addAttributeToGroup(group.id)" 
+                  class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-black text-white text-xs font-bold transition cursor-pointer whitespace-nowrap"
+                >
+                  + Add to Group
+                </button>
+              </div>
+
             </div>
           </template>
         </div>
@@ -558,6 +609,8 @@ function visionAttributesApp() {
     showSchemaModal: false,
     selectedAttr: null,
     selectedSchema: null,
+    selectedAttrToAdd: {},
+    newGroupName: '',
     setForm: {
       id: null,
       name: '',
@@ -863,6 +916,85 @@ function visionAttributesApp() {
         }
       } catch (e) {
         console.error('Delete attribute set error:', e);
+      }
+    },
+
+    getAvailableAttrsForGroup(group) {
+      if (!group || !this.attributes) return [];
+      const assignedIds = new Set((group.attributes || []).map(a => a.id));
+      return this.attributes.filter(a => !assignedIds.has(a.id));
+    },
+
+    async addAttributeToGroup(groupId) {
+      const attrId = this.selectedAttrToAdd[groupId];
+      if (!attrId) {
+        alert('Please select an attribute from the dropdown first.');
+        return;
+      }
+      try {
+        const res = await fetch(`/visionadmin/api/attribute-groups/${groupId}/attributes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ attribute_id: parseInt(attrId), sort_order: 10 })
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.selectedAttrToAdd[groupId] = '';
+          await this.loadSetSchema(this.selectedSchema.id);
+          if (window.showToast) window.showToast('Attribute added to group successfully!', 'success');
+        } else {
+          alert(data.error || 'Failed to add attribute to group.');
+        }
+      } catch (e) {
+        console.error('Add attribute to group error:', e);
+      }
+    },
+
+    async removeAttributeFromGroup(groupId, attrId, attrName) {
+      const confirmMsg = `Remove attribute '${attrName || attrId}' from this group?`;
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch(`/visionadmin/api/attribute-groups/${groupId}/attributes/${attrId}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          await this.loadSetSchema(this.selectedSchema.id);
+          if (window.showToast) window.showToast('Attribute removed from group.', 'success');
+        } else {
+          alert(data.error || 'Failed to remove attribute.');
+        }
+      } catch (e) {
+        console.error('Remove attribute from group error:', e);
+      }
+    },
+
+    async addGroupToCurrentSet() {
+      const name = (this.newGroupName || '').trim();
+      if (!name) {
+        alert('Please enter a name for the new schema group.');
+        return;
+      }
+      if (!this.selectedSchema || !this.selectedSchema.id) return;
+
+      try {
+        const res = await fetch(`/visionadmin/api/attribute-sets/${this.selectedSchema.id}/groups`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: { en: name, ar: name } })
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.newGroupName = '';
+          await this.loadSetSchema(this.selectedSchema.id);
+          await this.initData();
+          if (window.showToast) window.showToast(`Group '${name}' added to set!`, 'success');
+        } else {
+          alert(data.error || 'Failed to add group.');
+        }
+      } catch (e) {
+        console.error('Add group to set error:', e);
       }
     }
   };
