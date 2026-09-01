@@ -348,17 +348,67 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
     # -------------------------------------------------------------------------
     @classmethod
     def get_all_categories(cls) -> list:
-        """Returns all active categories from blog_categories table."""
+        """Returns all active categories from blog_categories table with blog counts."""
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    SELECT id, name_en, name_ar, slug, sort_order, created_at, updated_at
-                    FROM blog_categories
-                    WHERE deleted_at IS NULL
-                    ORDER BY sort_order ASC, name_en ASC
+                    SELECT c.id, c.name_en, c.name_ar, c.slug, c.sort_order, c.created_at, c.updated_at,
+                           COUNT(b.id) AS blogs_count
+                    FROM blog_categories c
+                    LEFT JOIN blogs b ON (b.blog_category_id = c.id OR LOWER(b.category_name) = LOWER(c.name_en)) AND b.deleted_at IS NULL
+                    WHERE c.deleted_at IS NULL
+                    GROUP BY c.id
+                    ORDER BY c.sort_order ASC, c.name_en ASC
                 """)
                 return cursor.fetchall()
+        finally:
+            conn.close()
+
+    @classmethod
+    def update_category(cls, cat_id: int, name_en: str, name_ar: str = None, slug: str = None, user_id: int = None) -> dict:
+        """Updates an existing category in blog_categories and updates linked blogs."""
+        clean_name = name_en.strip()
+        slug = SlugMixin.slugify(slug) if slug else SlugMixin.slugify(clean_name)
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE blog_categories
+                    SET name_en = %s, name_ar = %s, slug = %s, updated_at = NOW(), updated_by = %s
+                    WHERE id = %s AND deleted_at IS NULL
+                """, (clean_name, name_ar or clean_name, slug, user_id, cat_id))
+                # Sync blogs using this category
+                cursor.execute("""
+                    UPDATE blogs
+                    SET category_name = %s
+                    WHERE blog_category_id = %s
+                """, (clean_name, cat_id))
+                conn.commit()
+                cursor.execute("SELECT * FROM blog_categories WHERE id = %s", (cat_id,))
+                return cursor.fetchone()
+        finally:
+            conn.close()
+
+    @classmethod
+    def delete_category(cls, cat_id: int, user_id: int = None) -> bool:
+        """Soft-deletes a category in blog_categories."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE blog_categories
+                    SET deleted_at = NOW(), updated_by = %s
+                    WHERE id = %s AND deleted_at IS NULL
+                """, (user_id, cat_id))
+                affected = cursor.rowcount
+                cursor.execute("""
+                    UPDATE blogs
+                    SET blog_category_id = NULL
+                    WHERE blog_category_id = %s
+                """, (cat_id,))
+                conn.commit()
+                return affected > 0
         finally:
             conn.close()
 

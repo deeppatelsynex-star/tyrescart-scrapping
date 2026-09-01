@@ -619,6 +619,179 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ---------------------------------------------------------------------------
+  // 5B. Blog Categories Studio Management
+  // ---------------------------------------------------------------------------
+  let cachedCategories = [];
+  const categoriesModal = document.getElementById('blog-categories-modal');
+  const catTableBody = document.getElementById('categories-table-body');
+  const catCountBadge = document.getElementById('categories-count-badge');
+  const catNameEnInput = document.getElementById('cat_name_en');
+  const catNameArInput = document.getElementById('cat_name_ar');
+  const catSlugInput = document.getElementById('cat_slug');
+  const catEditIdInput = document.getElementById('category-edit-id');
+  const catFormTitle = document.getElementById('cat-form-title');
+  const btnSaveCat = document.getElementById('btn-save-category');
+  const btnSaveCatText = document.getElementById('btn-save-cat-text');
+  const btnCancelCatEdit = document.getElementById('btn-cancel-cat-edit');
+
+  function openCategoriesModal() {
+    resetCategoryForm();
+    loadCategoriesManagerTable();
+    if (categoriesModal) categoriesModal.classList.remove('hidden');
+  }
+
+  function closeCategoriesModal() {
+    if (categoriesModal) categoriesModal.classList.add('hidden');
+    const currentSelected = document.getElementById('category_name')?.value;
+    loadCategories(currentSelected);
+  }
+
+  function resetCategoryForm() {
+    if (catEditIdInput) catEditIdInput.value = '';
+    if (catNameEnInput) catNameEnInput.value = '';
+    if (catNameArInput) catNameArInput.value = '';
+    if (catSlugInput) catSlugInput.value = '';
+    if (catFormTitle) catFormTitle.textContent = '+ Add New Category';
+    if (btnSaveCatText) btnSaveCatText.textContent = 'Save Category';
+    if (btnCancelCatEdit) btnCancelCatEdit.classList.add('hidden');
+  }
+
+  catNameEnInput?.addEventListener('input', () => {
+    if (!catEditIdInput?.value && catSlugInput) {
+      catSlugInput.value = catNameEnInput.value.toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+  });
+
+  async function loadCategoriesManagerTable() {
+    if (!catTableBody) return;
+    catTableBody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400 font-medium">Loading categories…</td></tr>';
+
+    try {
+      const res = await fetch('/visionadmin/api/blog-categories');
+      const data = await res.json();
+      cachedCategories = data.categories || [];
+
+      if (catCountBadge) {
+        catCountBadge.textContent = `${cachedCategories.length} Categories`;
+      }
+
+      if (cachedCategories.length === 0) {
+        catTableBody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400 font-medium">No categories found in database. Add one above!</td></tr>';
+        return;
+      }
+
+      catTableBody.innerHTML = cachedCategories.map(c => `
+        <tr class="hover:bg-slate-50/80 transition">
+          <td class="py-3 px-4 font-mono font-bold text-slate-400">#${c.id}</td>
+          <td class="py-3 px-4">
+            <div class="font-bold text-[#0E1108] text-xs">${escapeHtml(c.name_en)}</div>
+            ${c.name_ar ? `<div class="text-[10px] text-slate-400" dir="rtl">${escapeHtml(c.name_ar)}</div>` : ''}
+          </td>
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-500">
+            <span class="px-2 py-0.5 rounded bg-slate-100">${escapeHtml(c.slug)}</span>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700">
+              ${c.blogs_count || 0}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-right space-x-1 whitespace-nowrap">
+            <button type="button" onclick="window.editCategory(${c.id})" class="p-1.5 rounded-lg text-slate-500 hover:text-[#35760F] hover:bg-[#EAF7E2] transition cursor-pointer" title="Edit Category">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button type="button" onclick="window.deleteCategory(${c.id}, '${escapeHtml(c.name_en)}')" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer" title="Delete Category">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+    } catch (e) {
+      console.error('Error loading category table:', e);
+      catTableBody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-rose-500 font-medium">Failed to load categories.</td></tr>';
+    }
+  }
+
+  btnSaveCat?.addEventListener('click', async () => {
+    const name_en = catNameEnInput?.value.trim();
+    const name_ar = catNameArInput?.value.trim();
+    const slug = catSlugInput?.value.trim();
+    const editId = catEditIdInput?.value;
+
+    if (!name_en) {
+      alert('Please enter an English category name.');
+      catNameEnInput?.focus();
+      return;
+    }
+
+    try {
+      const url = editId ? `/visionadmin/api/blog-categories/${editId}` : '/visionadmin/api/blog-categories';
+      const method = editId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name_en, name_ar, slug })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        resetCategoryForm();
+        loadCategoriesManagerTable();
+        loadCategories();
+      } else {
+        alert(data.error || 'Failed to save category.');
+      }
+    } catch (e) {
+      alert('Network error saving category.');
+    }
+  });
+
+  btnCancelCatEdit?.addEventListener('click', resetCategoryForm);
+
+  window.editCategory = function(catId) {
+    const cat = cachedCategories.find(c => c.id === catId);
+    if (!cat) return;
+
+    if (catEditIdInput) catEditIdInput.value = cat.id;
+    if (catNameEnInput) catNameEnInput.value = cat.name_en || '';
+    if (catNameArInput) catNameArInput.value = cat.name_ar || '';
+    if (catSlugInput) catSlugInput.value = cat.slug || '';
+    if (catFormTitle) catFormTitle.textContent = `✏️ Edit Category: ${cat.name_en}`;
+    if (btnSaveCatText) btnSaveCatText.textContent = 'Update Category';
+    if (btnCancelCatEdit) btnCancelCatEdit.classList.remove('hidden');
+    catNameEnInput?.focus();
+  };
+
+  window.deleteCategory = async function(catId, catName) {
+    if (!confirm(`Are you sure you want to delete category "${catName}"?\nArticles in this category will become uncategorized.`)) return;
+
+    try {
+      const res = await fetch(`/visionadmin/api/blog-categories/${catId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadCategoriesManagerTable();
+        loadCategories();
+        loadBlogs();
+      } else {
+        alert(data.error || 'Failed to delete category.');
+      }
+    } catch (e) {
+      alert('Network error deleting category.');
+    }
+  };
+
+  document.getElementById('btn-manage-categories')?.addEventListener('click', openCategoriesModal);
+  document.getElementById('btn-close-categories-modal')?.addEventListener('click', closeCategoriesModal);
+  document.getElementById('btn-done-categories-modal')?.addEventListener('click', closeCategoriesModal);
+  document.getElementById('categories-modal-backdrop')?.addEventListener('click', closeCategoriesModal);
+
   function openModal(isEdit = false, blog = null) {
     if (blogForm) blogForm.reset();
     if (editIdInput) editIdInput.value = isEdit && blog ? blog.id : '';

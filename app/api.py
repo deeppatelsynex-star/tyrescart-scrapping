@@ -1828,12 +1828,49 @@ def register_visionadmin_api_routes(app):
             return jsonify({'error': 'English category name is required.'}), 400
 
         cat = Blog.get_or_create_category(name_en, name_ar=name_ar, user_id=user_id)
-        log_activity('create', 'blog_category', cat['id'], None, cat, user_id=user_id)
+        log_activity('create', 'blog_category', cat['id'], None, {'name_en': name_en, 'name_ar': name_ar, 'slug': cat.get('slug')}, user_id=user_id)
         return jsonify({
             'success': True,
             'category': cat,
             'message': f"Category '{name_en}' saved successfully."
         }), 201
+
+    @app.route('/visionadmin/api/blog-categories/<int:cat_id>', methods=['PUT'])
+    def visionadmin_update_blog_category(cat_id):
+        """Updates an existing category in blog_categories table."""
+        data = request.get_json(silent=True) or {}
+        name_en = (data.get('name_en') or data.get('name') or '').strip()
+        name_ar = (data.get('name_ar') or '').strip() or None
+        slug = (data.get('slug') or '').strip() or None
+        user_id = session.get('user_id')
+
+        if not name_en:
+            return jsonify({'error': 'English category name is required.'}), 400
+
+        cat = Blog.update_category(cat_id, name_en, name_ar=name_ar, slug=slug, user_id=user_id)
+        if not cat:
+            return jsonify({'error': 'Category not found.'}), 404
+
+        log_activity('update', 'blog_category', cat_id, None, {'name_en': name_en, 'name_ar': name_ar, 'slug': cat.get('slug')}, user_id=user_id)
+        return jsonify({
+            'success': True,
+            'category': cat,
+            'message': f"Category '{name_en}' updated successfully."
+        })
+
+    @app.route('/visionadmin/api/blog-categories/<int:cat_id>', methods=['DELETE'])
+    def visionadmin_delete_blog_category(cat_id):
+        """Soft-deletes a category in blog_categories table."""
+        user_id = session.get('user_id')
+        success = Blog.delete_category(cat_id, user_id=user_id)
+        if not success:
+            return jsonify({'error': 'Category not found or already deleted.'}), 404
+
+        log_activity('delete', 'blog_category', cat_id, None, {'deleted_at': 'NOW()'}, user_id=user_id)
+        return jsonify({
+            'success': True,
+            'message': 'Category deleted successfully.'
+        })
 
     # =========================================================================
     # 4. PAGE SECTIONS CRUD & REORDER API (/visionadmin/api/sections & /visionadmin/api/v1/sections)

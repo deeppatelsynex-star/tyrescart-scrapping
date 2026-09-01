@@ -28,6 +28,11 @@
         <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       </a>
 
+      <button type="button" id="btn-manage-categories" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-[#EAF7E2] border border-[#D1E7C4] text-xs font-extrabold text-[#35760F] shadow-2xs hover:shadow-xs transition cursor-pointer">
+        <svg class="w-4 h-4 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        <span>Manage Categories</span>
+      </button>
+
       <button type="button" id="btn-create-blog" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#58B31B] hover:bg-[#35760F] text-white text-xs sm:text-sm font-extrabold shadow-md shadow-[#58B31B]/20 hover:shadow-lg transition-all duration-200 cursor-pointer">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span>Create New Article</span>
@@ -369,7 +374,107 @@
 
       </div>
     </div>
+  <!-- BLOG CATEGORIES STUDIO MODAL -->
+  <div id="blog-categories-modal" class="fixed inset-0 z-50 overflow-y-auto hidden">
+    <!-- Backdrop -->
+    <div id="categories-modal-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"></div>
+
+    <div class="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+      <div class="relative w-full max-w-2xl transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all border border-[#E8EDE4]">
+        
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            </div>
+            <div>
+              <h3 class="text-base font-black text-[#0E1108]">Blog Categories Management</h3>
+              <p class="text-xs text-slate-400 font-medium">Create, edit names (EN/AR), slug, or delete categories in <code class="font-mono text-[10px] text-emerald-700">blog_categories</code></p>
+            </div>
+          </div>
+          <button type="button" id="btn-close-categories-modal" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition cursor-pointer">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+          
+          <!-- Category Create / Edit Form Card -->
+          <div class="p-4 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] space-y-4">
+            <div class="flex items-center justify-between">
+              <span id="cat-form-title" class="text-xs font-black uppercase tracking-wider text-[#35760F]">+ Add New Category</span>
+              <button type="button" id="btn-cancel-cat-edit" class="text-[11px] font-bold text-slate-400 hover:text-slate-600 hidden cursor-pointer">✕ Cancel Edit</button>
+            </div>
+
+            <input type="hidden" id="category-edit-id" value="" />
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1">Category Name (English) <span class="text-rose-500">*</span></label>
+                <input type="text" id="cat_name_en" placeholder="e.g. Tyre Maintenance Tips" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner bg-white" />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1">Category Name (Arabic)</label>
+                <input type="text" id="cat_name_ar" dir="rtl" placeholder="e.g. نصائح صيانة الإطارات" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner bg-white" />
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="flex-1">
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">URL Slug</label>
+                <input type="text" id="cat_slug" placeholder="Auto-generated from English name..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner bg-white" />
+              </div>
+
+              <div class="pt-5">
+                <button type="button" id="btn-save-category" class="px-5 py-2 rounded-xl bg-[#58B31B] hover:bg-[#35760F] text-white text-xs font-extrabold shadow-sm hover:shadow transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span id="btn-save-cat-text">Save Category</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Existing Categories Table Card -->
+          <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+            <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <span class="text-xs font-black text-[#0E1108]">Saved Categories</span>
+              <span id="categories-count-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold">0 Categories</span>
+            </div>
+
+            <div class="overflow-x-auto max-h-72">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-100/70 border-b border-slate-200 text-slate-500 font-extrabold uppercase text-[10px] tracking-wider sticky top-0 bg-slate-50">
+                  <tr>
+                    <th class="py-2.5 px-4"># ID</th>
+                    <th class="py-2.5 px-4">Category (EN / AR)</th>
+                    <th class="py-2.5 px-4">Slug</th>
+                    <th class="py-2.5 px-4 text-center">Articles</th>
+                    <th class="py-2.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="categories-table-body" class="divide-y divide-slate-100">
+                  <tr>
+                    <td colspan="5" class="py-8 text-center text-slate-400 font-medium">Loading categories…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+          <button type="button" id="btn-done-categories-modal" class="px-5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-extrabold transition cursor-pointer">
+            Done
+          </button>
+        </div>
+
+      </div>
+    </div>
   </div>
+
 </div>
 {% endblock %}
 
