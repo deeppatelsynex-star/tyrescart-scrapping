@@ -401,4 +401,80 @@ table.dataTable tbody td {
   background: #F8FAF7 !important;
 }
 
+/* ==========================================================================
+   VisionAdmin Signature Pill Dropdowns
+   Matches green-pill trigger with dot, chevron, and floating card menu
+   ========================================================================== */
+
+/* Native select fallback styling across VisionAdmin */
+select:not(.no-va-select):not(.hidden) {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #FFFFFF !important;
+  border: 1.5px solid #58B31B !important;
+  border-radius: 9999px !important;
+  padding: 0.5rem 2.5rem 0.5rem 2.25rem !important;
+  font-family: inherit !important;
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  color: #0E1108 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
+  cursor: pointer !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
+  background-image: 
+    radial-gradient(circle 3.5px, #58B31B 100%, transparent 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2335760F' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-position: left 0.85rem center, right 0.85rem center !important;
+  background-size: 7px 7px, 15px 15px !important;
+}
+
+select:not(.no-va-select):not(.hidden):hover {
+  border-color: #35760F !important;
+  background-color: #F8FAF7 !important;
+}
+
+select:not(.no-va-select):not(.hidden):focus {
+  border-color: #35760F !important;
+  box-shadow: 0 0 0 3px rgba(88, 179, 27, 0.2) !important;
+}
+
+/* Custom Dropdown Trigger */
+.va-custom-dropdown-trigger {
+  border: 1.5px solid #58B31B !important;
+  border-radius: 9999px !important;
+  padding: 0.55rem 0.875rem 0.55rem 1rem !important;
+  background-color: #FFFFFF;
+  color: #0E1108;
+  font-weight: 800;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.va-custom-dropdown-trigger:hover {
+  border-color: #35760F !important;
+  background-color: #F8FAF7;
+}
+
+.va-custom-dropdown-trigger[aria-expanded="true"] {
+  border-color: #35760F !important;
+  box-shadow: 0 0 0 3px rgba(88, 179, 27, 0.2);
+}
+
+/* Custom Dropdown Floating Menu */
+.va-custom-dropdown-menu {
+  border-radius: 1.25rem !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid #E8EDE4 !important;
+  box-shadow: 0 16px 40px -12px rgba(14, 17, 8, 0.15), 0 0 0 1px rgba(232, 237, 228, 0.8) !important;
+  z-index: 9999 !important;
+}
+
+.va-option-btn {
+  font-family: inherit;
+}
+
+
 
