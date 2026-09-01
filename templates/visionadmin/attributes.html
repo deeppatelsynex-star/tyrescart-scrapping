@@ -120,7 +120,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-[#F1F5F0]">
-            <template x-for="attr in filteredAttributes" :key="attr.id">
+            <template x-for="attr in paginatedAttributes" :key="attr.id">
               <tr class="hover:bg-[#F9FCF8] transition-colors">
                 <td class="px-5 py-3.5 font-mono font-bold text-slate-800" x-text="attr.code"></td>
                 <td class="px-5 py-3.5">
@@ -181,6 +181,32 @@
             </template>
           </tbody>
         </table>
+
+        <!-- Alpine Pagination Bar -->
+        <div class="px-5 py-3.5 bg-slate-50/50 border-t border-[#E8EDE4] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-semibold text-slate-500">
+          <div class="flex items-center gap-2">
+            <span>Show</span>
+            <select x-model.number="perPage" @change="page = 1" class="px-3 py-1 text-xs">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            <span>entries &nbsp;|&nbsp; Showing <span class="font-bold text-[#0E1108]" x-text="filteredAttributes.length === 0 ? 0 : (page - 1) * perPage + 1"></span> to <span class="font-bold text-[#0E1108]" x-text="Math.min(page * perPage, filteredAttributes.length)"></span> of <span class="font-bold text-[#0E1108]" x-text="filteredAttributes.length"></span> attributes</span>
+          </div>
+
+          <div class="flex items-center gap-1" x-show="totalPages > 1">
+            <button type="button" @click="if (page > 1) page--" :disabled="page === 1" :class="page === 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-200 cursor-pointer'" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold transition">
+              Previous
+            </button>
+            <span class="px-3 py-1.5 text-xs font-bold text-[#0E1108]">
+              Page <span x-text="page"></span> of <span x-text="totalPages"></span>
+            </span>
+            <button type="button" @click="if (page < totalPages) page++" :disabled="page === totalPages" :class="page === totalPages ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-200 cursor-pointer'" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold transition">
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -612,6 +638,8 @@ function visionAttributesApp() {
     selectedAttr: null,
     selectedSchema: null,
     selectedAttrToAdd: {},
+    page: 1,
+    perPage: 10,
     newGroupName: '',
     setForm: {
       id: null,
@@ -644,28 +672,18 @@ function visionAttributesApp() {
         if (attrData.attributes) this.attributes = attrData.attributes || [];
         if (attrData.trash) this.trashAttributes = attrData.trash || [];
         if (setData.attribute_sets) this.attributeSets = setData.attribute_sets || [];
-        setTimeout(() => {
-          this.initDataTables();
-        }, 150);
       } catch (err) {
         console.error('Error loading attributes data:', err);
       }
     },
 
-    initDataTables() {
-      if (window.initVisionDataTable) {
-        if (this.attributes && this.attributes.length > 0) {
-          window.initVisionDataTable('#attributesTable', { pageLength: 10, order: [[0, 'asc']] });
-        } else if (window.jQuery && window.jQuery.fn.DataTable.isDataTable('#attributesTable')) {
-          window.jQuery('#attributesTable').DataTable().destroy();
-        }
+    get totalPages() {
+      return Math.ceil(this.filteredAttributes.length / this.perPage) || 1;
+    },
 
-        if (this.trashAttributes && this.trashAttributes.length > 0) {
-          window.initVisionDataTable('#trashAttributesTable', { pageLength: 10, order: [[0, 'asc']] });
-        } else if (window.jQuery && window.jQuery.fn.DataTable.isDataTable('#trashAttributesTable')) {
-          window.jQuery('#trashAttributesTable').DataTable().destroy();
-        }
-      }
+    get paginatedAttributes() {
+      const start = (this.page - 1) * this.perPage;
+      return this.filteredAttributes.slice(start, start + this.perPage);
     },
 
     get filteredAttributes() {

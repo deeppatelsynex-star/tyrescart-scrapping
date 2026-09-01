@@ -332,22 +332,6 @@ function storesStudio() {
         const storeRes = await fetch('/visionadmin/api/stores');
         const storeData = await storeRes.json();
         this.stores = storeData.stores || [];
-
-        setTimeout(() => {
-          if (window.initVisionDataTable) {
-            if (this.websites && this.websites.length > 0) {
-              window.initVisionDataTable('#websitesTable', { pageLength: 10, order: [[0, 'asc']] });
-            } else if (window.jQuery && window.jQuery.fn.DataTable.isDataTable('#websitesTable')) {
-              window.jQuery('#websitesTable').DataTable().destroy();
-            }
-
-            if (this.stores && this.stores.length > 0) {
-              window.initVisionDataTable('#storesTable', { pageLength: 10, order: [[0, 'asc']] });
-            } else if (window.jQuery && window.jQuery.fn.DataTable.isDataTable('#storesTable')) {
-              window.jQuery('#storesTable').DataTable().destroy();
-            }
-          }
-        }, 150);
       } catch (err) {
         console.error('Error loading stores data:', err);
       }
