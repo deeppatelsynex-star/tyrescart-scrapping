@@ -88,7 +88,7 @@
   <!-- Audit Table -->
   <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs">
+      <table id="auditLogsTable" class="w-full text-left text-xs">
         <thead class="bg-slate-50/80 border-b border-[#E8EDE4] text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">
           <tr>
             <th class="px-5 py-3.5">Timestamp</th>
@@ -222,6 +222,11 @@ function visionAuditLogsApp() {
         const data = await res.json();
         if (data.success) {
           this.logs = data.logs || [];
+          setTimeout(() => {
+            if (window.initVisionDataTable) {
+              window.initVisionDataTable('#auditLogsTable', { order: [[0, 'desc']], pageLength: 25 });
+            }
+          }, 150);
         }
       } catch (err) {
         console.error('Failed to load audit logs:', err);

@@ -107,7 +107,7 @@
     <!-- Data Table -->
     <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
+        <table id="attributesTable" class="w-full text-left text-xs">
           <thead class="bg-slate-50/80 border-b border-[#E8EDE4] text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">
             <tr>
               <th class="px-5 py-3.5">Code</th>
@@ -245,7 +245,7 @@
         <span class="text-xs text-rose-700 font-bold" x-text="`${trashAttributes.length} items in trash`"></span>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
+        <table id="trashAttributesTable" class="w-full text-left text-xs">
           <thead class="bg-[#F9FCF8] text-slate-400 font-bold uppercase text-[10px] border-b border-[#F1F5F0]">
             <tr>
               <th class="px-5 py-3.5">Code</th>
@@ -642,8 +642,18 @@ function visionAttributesApp() {
         if (attrData.attributes) this.attributes = attrData.attributes || [];
         if (attrData.trash) this.trashAttributes = attrData.trash || [];
         if (setData.attribute_sets) this.attributeSets = setData.attribute_sets || [];
+        setTimeout(() => {
+          this.initDataTables();
+        }, 150);
       } catch (err) {
         console.error('Error loading attributes data:', err);
+      }
+    },
+
+    initDataTables() {
+      if (window.initVisionDataTable) {
+        window.initVisionDataTable('#attributesTable', { pageLength: 10, order: [[0, 'asc']] });
+        window.initVisionDataTable('#trashAttributesTable', { pageLength: 10, order: [[0, 'asc']] });
       }
     },
 

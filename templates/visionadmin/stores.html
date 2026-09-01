@@ -98,7 +98,7 @@
     </div>
 
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs">
+      <table id="websitesTable" class="w-full text-left text-xs">
         <thead class="bg-[#F8FAF7] border-b border-[#E8EDE4] text-slate-400 font-black uppercase text-[10px] tracking-wider">
           <tr>
             <th class="py-3 px-4">Code / ID</th>
@@ -160,7 +160,7 @@
     </div>
 
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs">
+      <table id="storesTable" class="w-full text-left text-xs">
         <thead class="bg-[#F8FAF7] border-b border-[#E8EDE4] text-slate-400 font-black uppercase text-[10px] tracking-wider">
           <tr>
             <th class="py-3 px-4">Store Code</th>
@@ -332,6 +332,13 @@ function storesStudio() {
         const storeRes = await fetch('/visionadmin/api/stores');
         const storeData = await storeRes.json();
         this.stores = storeData.stores || [];
+
+        setTimeout(() => {
+          if (window.initVisionDataTable) {
+            window.initVisionDataTable('#websitesTable', { pageLength: 10, order: [[0, 'asc']] });
+            window.initVisionDataTable('#storesTable', { pageLength: 10, order: [[0, 'asc']] });
+          }
+        }, 150);
       } catch (err) {
         console.error('Error loading stores data:', err);
       }

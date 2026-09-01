@@ -257,6 +257,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
 
     attachTableActionListeners();
+
+    if (window.initVisionDataTable) {
+      setTimeout(() => {
+        window.initVisionDataTable('#users-table', { order: [[0, 'asc']] });
+      }, 50);
+    }
   }
 
   // ---------------------------------------------------------------------------
