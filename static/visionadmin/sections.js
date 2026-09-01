@@ -465,50 +465,65 @@ document.addEventListener('DOMContentLoaded', () => {
         if (Array.isArray(sec.section_data.metrics) && sec.section_data.metrics.length > 0) {
           itemsCount = sec.section_data.metrics.length;
           chipList = sec.section_data.metrics.map(m => {
-            const heading = typeof m.label === 'object' ? (m.label.en || m.label.ar || '') : (m.heading?.en || m.heading || m.label || '');
+            const raw = m?.label || m?.heading || '';
+            const heading = typeof raw === 'object' ? (raw.en || raw.ar || '') : String(raw || '');
             return `<span class="px-2 py-0.5 rounded-md bg-slate-100/90 text-slate-700 text-[10px] font-bold border border-slate-200/80"><span class="font-black text-slate-900">${m.number || ''}</span> ${heading}</span>`;
           });
         } else if (Array.isArray(sec.section_data.cards) && sec.section_data.cards.length > 0) {
           itemsCount = sec.section_data.cards.length;
           chipList = sec.section_data.cards.map(c => {
-            const title = typeof c.title === 'object' ? (c.title.en || c.title.ar || '') : (c.title || '');
+            const raw = c?.title || c?.heading || c?.name || '';
+            const title = typeof raw === 'object' ? (raw.en || raw.ar || '') : String(raw || '');
             return `<span class="px-2 py-0.5 rounded-md bg-slate-100/90 text-slate-700 text-[10px] font-semibold border border-slate-200/80 truncate max-w-[160px]">${title}</span>`;
           });
         } else if (Array.isArray(sec.section_data.services) && sec.section_data.services.length > 0) {
           itemsCount = sec.section_data.services.length;
           chipList = sec.section_data.services.map(s => {
-            const name = typeof s.name === 'object' ? (s.name.en || s.name.ar || '') : (s.name || s || '');
+            const raw = s?.name || s?.title || s?.text || s || '';
+            const name = typeof raw === 'object' ? (raw.en || raw.ar || '') : String(raw || '');
             return `<span class="px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 text-[10px] font-semibold border border-teal-200/80 truncate max-w-[160px]">${name}</span>`;
           });
         } else if (Array.isArray(sec.section_data.steps) && sec.section_data.steps.length > 0) {
           itemsCount = sec.section_data.steps.length;
           chipList = sec.section_data.steps.map(st => {
-            const title = typeof st.title === 'object' ? (st.title.en || st.title.ar || '') : (st.title || '');
+            const raw = st?.title || st?.heading || st?.name || '';
+            const title = typeof raw === 'object' ? (raw.en || raw.ar || '') : String(raw || '');
             return `<span class="px-2 py-0.5 rounded-md bg-cyan-50 text-cyan-800 text-[10px] font-semibold border border-cyan-200/80 truncate max-w-[160px]">Step ${st.step_number || ''}: ${title}</span>`;
           });
         } else if (Array.isArray(sec.section_data.brands) && sec.section_data.brands.length > 0) {
           itemsCount = sec.section_data.brands.length;
-          chipList = sec.section_data.brands.map(b => `<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-semibold border border-amber-200/80">${b}</span>`);
+          chipList = sec.section_data.brands.map(b => {
+            const raw = typeof b === 'object' ? (b.name || b.title || '') : (b || '');
+            return `<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-semibold border border-amber-200/80">${raw}</span>`;
+          });
         } else if (Array.isArray(sec.section_data.reviews) && sec.section_data.reviews.length > 0) {
           itemsCount = sec.section_data.reviews.length;
           chipList = sec.section_data.reviews.map(r => {
-            const auth = typeof r.author === 'object' ? (r.author.en || r.author.ar || '') : (r.author || 'Review');
+            const raw = r?.author || r?.name || 'Review';
+            const auth = typeof raw === 'object' ? (raw.en || raw.ar || '') : String(raw || '');
             return `<span class="px-2 py-0.5 rounded-md bg-yellow-50 text-yellow-800 text-[10px] font-semibold border border-yellow-200/80">★ 5 - ${auth}</span>`;
           });
         } else if (Array.isArray(sec.section_data.faqs) && sec.section_data.faqs.length > 0) {
           itemsCount = sec.section_data.faqs.length;
           chipList = sec.section_data.faqs.map(f => {
-            const q = typeof f.question === 'object' ? (f.question.en || f.question.ar || '') : (f.question || '');
+            const raw = f?.question || f?.title || '';
+            const q = typeof raw === 'object' ? (raw.en || raw.ar || '') : String(raw || '');
             return `<span class="px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 text-[10px] font-semibold border border-sky-200/80 truncate max-w-[180px]">? ${q}</span>`;
           });
         } else if (Array.isArray(sec.section_data.badges) && sec.section_data.badges.length > 0) {
           itemsCount = sec.section_data.badges.length;
           chipList = sec.section_data.badges.map(b => {
-            const txt = typeof b.text === 'object' ? (b.text.en || b.text.ar || '') : (b.text || b || '');
+            const raw = b?.title || b?.text || b?.name || b?.label || b || '';
+            const txt = typeof raw === 'object' ? (raw.en || raw.ar || Object.values(raw)[0] || '') : String(raw || '');
             return `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-semibold border border-emerald-200/80">✓ ${txt}</span>`;
           });
         } else if (Array.isArray(sec.section_data.features) && sec.section_data.features.length > 0) {
           itemsCount = sec.section_data.features.length;
+          chipList = sec.section_data.features.map(f => {
+            const raw = f?.title || f?.name || f?.text || f || '';
+            const txt = typeof raw === 'object' ? (raw.en || raw.ar || Object.values(raw)[0] || '') : String(raw || '');
+            return `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-semibold border border-emerald-200/80">✓ ${txt}</span>`;
+          });
         }
 
         if (chipList.length > 0) {
@@ -983,22 +998,22 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Title / Text (English) *</label>
-                <input type="text" placeholder="e.g. Genuine tyres only" class="rep-title-en w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none" value="${typeof item.title === 'object' ? (item.title.en || '') : (item.title || item.text?.en || item.text || '')}" />
+                <input type="text" placeholder="e.g. Genuine tyres only" class="rep-title-en w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none" value="${typeof item.title === 'object' ? (item.title?.en || '') : (typeof item.title === 'string' ? item.title : (typeof item.text === 'object' ? (item.text?.en || '') : (item.text || item.name || '')))}" />
               </div>
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Title / Text (Arabic) *</label>
-                <input type="text" dir="rtl" placeholder="مثال: إطارات أصلية 100%" class="rep-title-ar w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-right bg-[#F8FAF7] focus:bg-white outline-none" value="${typeof item.title === 'object' ? (item.title.ar || '') : (item.text?.ar || '')}" />
+                <input type="text" dir="rtl" placeholder="مثال: إطارات أصلية 100%" class="rep-title-ar w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-right bg-[#F8FAF7] focus:bg-white outline-none" value="${typeof item.title === 'object' ? (item.title?.ar || '') : (typeof item.text === 'object' ? (item.text?.ar || '') : '')}" />
               </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Description (English)</label>
-                <input type="text" placeholder="Details..." class="rep-desc-en w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs bg-[#F8FAF7] focus:bg-white outline-none" value="${typeof item.description === 'object' ? (item.description.en || '') : (item.description || item.desc?.en || item.desc || '')}" />
+                <input type="text" placeholder="Details..." class="rep-desc-en w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs bg-[#F8FAF7] focus:bg-white outline-none" value="${typeof item.description === 'object' ? (item.description?.en || '') : (typeof item.description === 'string' ? item.description : (typeof item.desc === 'object' ? (item.desc?.en || '') : (item.desc || '')))}" />
               </div>
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Description (Arabic)</label>
-                <input type="text" dir="rtl" placeholder="التفاصيل..." class="rep-desc-ar w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs text-right bg-[#F8FAF7] focus:bg-white outline-none" value="${typeof item.description === 'object' ? (item.description.ar || '') : (item.desc?.ar || '')}" />
+                <input type="text" dir="rtl" placeholder="التفاصيل..." class="rep-desc-ar w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs text-right bg-[#F8FAF7] focus:bg-white outline-none" value="${typeof item.description === 'object' ? (item.description?.ar || '') : (typeof item.desc === 'object' ? (item.desc?.ar || '') : '')}" />
               </div>
             </div>
           </div>
