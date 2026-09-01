@@ -335,8 +335,17 @@ function storesStudio() {
 
         setTimeout(() => {
           if (window.initVisionDataTable) {
-            window.initVisionDataTable('#websitesTable', { pageLength: 10, order: [[0, 'asc']] });
-            window.initVisionDataTable('#storesTable', { pageLength: 10, order: [[0, 'asc']] });
+            if (this.websites && this.websites.length > 0) {
+              window.initVisionDataTable('#websitesTable', { pageLength: 10, order: [[0, 'asc']] });
+            } else if (window.jQuery && window.jQuery.fn.DataTable.isDataTable('#websitesTable')) {
+              window.jQuery('#websitesTable').DataTable().destroy();
+            }
+
+            if (this.stores && this.stores.length > 0) {
+              window.initVisionDataTable('#storesTable', { pageLength: 10, order: [[0, 'asc']] });
+            } else if (window.jQuery && window.jQuery.fn.DataTable.isDataTable('#storesTable')) {
+              window.jQuery('#storesTable').DataTable().destroy();
+            }
           }
         }, 150);
       } catch (err) {

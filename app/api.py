@@ -1648,9 +1648,15 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/blog-categories', methods=['GET'])
     @app.route('/visionadmin/api/v1/blog-categories', methods=['GET'])
     def visionadmin_get_categories():
-        """Returns all distinct category names from existing blogs table."""
-        categories = Blog.distinct_categories()
-        return jsonify({'success': True, 'categories': categories})
+        """Returns all categories from blog_categories table."""
+        categories = Blog.get_all_categories()
+        names = [c['name_en'] for c in categories if c.get('name_en')] or Blog.distinct_categories()
+        return jsonify({
+            'success': True,
+            'categories': categories,
+            'category_names': names,
+            'count': len(categories)
+        })
 
     @app.route('/visionadmin/api/blogs', methods=['GET'])
     @app.route('/visionadmin/api/v1/blogs', methods=['GET'])
@@ -1809,6 +1815,25 @@ def register_visionadmin_api_routes(app):
             'success': True,
             'message': 'Blog article restored successfully.'
         })
+
+    @app.route('/visionadmin/api/blog-categories', methods=['POST'])
+    def visionadmin_create_blog_category():
+        """Creates or retrieves a blog category in blog_categories table."""
+        data = request.get_json(silent=True) or {}
+        name_en = (data.get('name_en') or data.get('name') or '').strip()
+        name_ar = (data.get('name_ar') or '').strip() or None
+        user_id = session.get('user_id')
+
+        if not name_en:
+            return jsonify({'error': 'English category name is required.'}), 400
+
+        cat = Blog.get_or_create_category(name_en, name_ar=name_ar, user_id=user_id)
+        log_activity('create', 'blog_category', cat['id'], None, cat, user_id=user_id)
+        return jsonify({
+            'success': True,
+            'category': cat,
+            'message': f"Category '{name_en}' saved successfully."
+        }), 201
 
     # =========================================================================
     # 4. PAGE SECTIONS CRUD & REORDER API (/visionadmin/api/sections & /visionadmin/api/v1/sections)

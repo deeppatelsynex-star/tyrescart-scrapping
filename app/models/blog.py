@@ -347,8 +347,62 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
     # Query Helpers
     # -------------------------------------------------------------------------
     @classmethod
+    def get_all_categories(cls) -> list:
+        """Returns all active categories from blog_categories table."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT id, name_en, name_ar, slug, sort_order, created_at, updated_at
+                    FROM blog_categories
+                    WHERE deleted_at IS NULL
+                    ORDER BY sort_order ASC, name_en ASC
+                """)
+                return cursor.fetchall()
+        finally:
+            conn.close()
+
+    @classmethod
+    def get_or_create_category(cls, name_en: str, name_ar: str = None, user_id: int = None) -> dict:
+        """Finds existing or creates a new category record in blog_categories table."""
+        if not name_en or not name_en.strip():
+            return None
+        clean_name = name_en.strip()
+        slug = SlugMixin.slugify(clean_name)
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT id, name_en, name_ar, slug, sort_order
+                    FROM blog_categories
+                    WHERE (name_en = %s OR slug = %s) AND deleted_at IS NULL
+                    LIMIT 1
+                """, (clean_name, slug))
+                row = cursor.fetchone()
+                if row:
+                    if name_ar and not row.get('name_ar'):
+                        cursor.execute("UPDATE blog_categories SET name_ar = %s, updated_at = NOW() WHERE id = %s", (name_ar, row['id']))
+                        conn.commit()
+                        row['name_ar'] = name_ar
+                    return row
+
+                cursor.execute("""
+                    INSERT INTO blog_categories (name_en, name_ar, slug, sort_order, created_at, updated_at, created_by, updated_by)
+                    VALUES (%s, %s, %s, 0, NOW(), NOW(), %s, %s)
+                """, (clean_name, name_ar or clean_name, slug, user_id, user_id))
+                conn.commit()
+                cat_id = cursor.lastrowid
+                return {'id': cat_id, 'name_en': clean_name, 'name_ar': name_ar or clean_name, 'slug': slug}
+        finally:
+            conn.close()
+
+    @classmethod
     def distinct_categories(cls) -> list:
-        """Returns distinct category names currently stored in blogs table."""
+        """Returns distinct category names stored in blog_categories table, with fallback to blogs."""
+        cats = cls.get_all_categories()
+        if cats:
+            return [c['name_en'] for c in cats if c.get('name_en')]
+
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
@@ -457,6 +511,14 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                cat_name = kwargs.get('category_name')
+                blog_cat_id = kwargs.get('blog_category_id')
+                if cat_name and not blog_cat_id:
+                    cat_rec = cls.get_or_create_category(cat_name, user_id=kwargs.get('created_by'))
+                    if cat_rec:
+                        blog_cat_id = cat_rec['id']
+                        cat_name = cat_rec['name_en']
+
                 sql = """
                     INSERT INTO blogs (
                         title, slug, content, short_description, image,
@@ -474,8 +536,8 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     content_json,
                     short_desc_json,
                     kwargs.get('image'),
-                    kwargs.get('category_name'),
-                    kwargs.get('blog_category_id'),
+                    cat_name,
+                    blog_cat_id,
                     kwargs.get('author_id', 1),
                     status,
                     published_at,
@@ -511,9 +573,19 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
             updates.append("image = %s")
             params.append(kwargs['image'])
         if 'category_name' in kwargs:
+            cat_name = kwargs['category_name']
+            cat_id = kwargs.get('blog_category_id')
+            if cat_name and not cat_id:
+                cat_rec = self.get_or_create_category(cat_name, user_id=kwargs.get('updated_by'))
+                if cat_rec:
+                    cat_id = cat_rec['id']
+                    cat_name = cat_rec['name_en']
             updates.append("category_name = %s")
-            params.append(kwargs['category_name'])
-        if 'blog_category_id' in kwargs:
+            params.append(cat_name)
+            if cat_id is not None:
+                updates.append("blog_category_id = %s")
+                params.append(cat_id)
+        elif 'blog_category_id' in kwargs:
             updates.append("blog_category_id = %s")
             params.append(kwargs['blog_category_id'])
         if 'author_id' in kwargs:

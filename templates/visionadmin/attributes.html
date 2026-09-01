@@ -104,8 +104,8 @@
       </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
+    <!-- Data Table Container -->
+    <div x-show="attributes.length > 0" class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
       <div class="overflow-x-auto">
         <table id="attributesTable" class="w-full text-left text-xs">
           <thead class="bg-slate-50/80 border-b border-[#E8EDE4] text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">
@@ -179,14 +179,18 @@
                 </td>
               </tr>
             </template>
-            <tr x-show="filteredAttributes.length === 0">
-              <td colspan="7" class="px-5 py-12 text-center text-slate-400">
-                No attributes found matching your criteria.
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
+    </div>
+
+    <!-- Empty State when catalog has 0 attributes -->
+    <div x-show="attributes.length === 0" class="bg-white rounded-3xl border border-[#E8EDE4] p-12 text-center shadow-xs">
+      <div class="w-12 h-12 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center mx-auto mb-3">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      </div>
+      <h4 class="font-black text-sm text-[#0E1108]">No Attributes in Catalog</h4>
+      <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Database is clean. Click "+ Add New Attribute" to create your first dynamic attribute.</p>
     </div>
   </div>
 
@@ -244,7 +248,7 @@
         </div>
         <span class="text-xs text-rose-700 font-bold" x-text="`${trashAttributes.length} items in trash`"></span>
       </div>
-      <div class="overflow-x-auto">
+      <div x-show="trashAttributes.length > 0" class="overflow-x-auto">
         <table id="trashAttributesTable" class="w-full text-left text-xs">
           <thead class="bg-[#F9FCF8] text-slate-400 font-bold uppercase text-[10px] border-b border-[#F1F5F0]">
             <tr>
@@ -261,7 +265,7 @@
                 <td class="px-5 py-3.5 font-mono font-bold text-slate-800" x-text="attr.code"></td>
                 <td class="px-5 py-3.5">
                   <div class="font-bold text-[#0E1108]" x-text="formatAttrName(attr)"></div>
-                  <div class="text-[10px] text-slate-400 font-medium" dir="rtl" x-text="formatAttrArabic(attr)"></div>
+                  <div class="text-[10px] text-slate-400" dir="rtl" x-text="formatAttrArabic(attr)"></div>
                 </td>
                 <td class="px-5 py-3.5">
                   <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-slate-100 text-slate-700" x-text="attr.type"></span>
@@ -282,13 +286,11 @@
                 </td>
               </tr>
             </template>
-            <tr x-show="trashAttributes.length === 0">
-              <td colspan="5" class="px-5 py-12 text-center text-slate-400">
-                Trash is empty. No soft-deleted attributes.
-              </td>
-            </tr>
           </tbody>
         </table>
+      </div>
+      <div x-show="trashAttributes.length === 0" class="p-12 text-center text-slate-400">
+        Trash is empty. No soft-deleted attributes.
       </div>
     </div>
   </div>
@@ -652,8 +654,17 @@ function visionAttributesApp() {
 
     initDataTables() {
       if (window.initVisionDataTable) {
-        window.initVisionDataTable('#attributesTable', { pageLength: 10, order: [[0, 'asc']] });
-        window.initVisionDataTable('#trashAttributesTable', { pageLength: 10, order: [[0, 'asc']] });
+        if (this.attributes && this.attributes.length > 0) {
+          window.initVisionDataTable('#attributesTable', { pageLength: 10, order: [[0, 'asc']] });
+        } else if (window.jQuery && window.jQuery.fn.DataTable.isDataTable('#attributesTable')) {
+          window.jQuery('#attributesTable').DataTable().destroy();
+        }
+
+        if (this.trashAttributes && this.trashAttributes.length > 0) {
+          window.initVisionDataTable('#trashAttributesTable', { pageLength: 10, order: [[0, 'asc']] });
+        } else if (window.jQuery && window.jQuery.fn.DataTable.isDataTable('#trashAttributesTable')) {
+          window.jQuery('#trashAttributesTable').DataTable().destroy();
+        }
       }
     },
 

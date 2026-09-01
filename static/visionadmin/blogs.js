@@ -562,6 +562,63 @@ document.addEventListener('DOMContentLoaded', () => {
     return el ? el.value.trim() : '';
   }
 
+  async function loadCategories(selectedVal = null) {
+    const catSelect = document.getElementById('category_name');
+    if (!catSelect) return;
+
+    try {
+      const res = await fetch('/visionadmin/api/blog-categories');
+      const data = await res.json();
+      const categories = data.categories || [];
+
+      let html = '<option value="">Select Category...</option>';
+      categories.forEach(c => {
+        const isSelected = selectedVal && (selectedVal.toLowerCase() === c.name_en.toLowerCase() || selectedVal.toLowerCase() === c.slug.toLowerCase());
+        html += `<option value="${escapeHtml(c.name_en)}" ${isSelected ? 'selected' : ''}>${escapeHtml(c.name_en)}</option>`;
+      });
+      html += '<option value="__add_new__">+ Add New Category...</option>';
+      catSelect.innerHTML = html;
+
+      if (selectedVal && !categories.some(c => c.name_en.toLowerCase() === selectedVal.toLowerCase())) {
+        const opt = document.createElement('option');
+        opt.value = selectedVal;
+        opt.textContent = selectedVal;
+        opt.selected = true;
+        catSelect.insertBefore(opt, catSelect.lastElementChild);
+      }
+    } catch (e) {
+      console.error('Error loading blog categories:', e);
+    }
+  }
+
+  const catSelectEl = document.getElementById('category_name');
+  catSelectEl?.addEventListener('change', async (e) => {
+    if (e.target.value === '__add_new__') {
+      const newCat = prompt('Enter new blog category name:');
+      if (newCat && newCat.trim()) {
+        try {
+          const res = await fetch('/visionadmin/api/blog-categories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name_en: newCat.trim() })
+          });
+          const d = await res.json();
+          if (d.success && d.category) {
+            await loadCategories(d.category.name_en);
+          } else {
+            alert(d.error || 'Failed to create category.');
+            e.target.value = '';
+          }
+        } catch(err) {
+          alert('Network error saving category.');
+          e.target.value = '';
+        }
+      } else {
+        e.target.value = '';
+      }
+    }
+  });
+
   function openModal(isEdit = false, blog = null) {
     if (blogForm) blogForm.reset();
     if (editIdInput) editIdInput.value = isEdit && blog ? blog.id : '';

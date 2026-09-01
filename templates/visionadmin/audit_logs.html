@@ -224,7 +224,11 @@ function visionAuditLogsApp() {
           this.logs = data.logs || [];
           setTimeout(() => {
             if (window.initVisionDataTable) {
-              window.initVisionDataTable('#auditLogsTable', { order: [[0, 'desc']], pageLength: 25 });
+              if (this.logs && this.logs.length > 0) {
+                window.initVisionDataTable('#auditLogsTable', { order: [[0, 'desc']], pageLength: 25 });
+              } else if (window.jQuery && window.jQuery.fn.DataTable.isDataTable('#auditLogsTable')) {
+                window.jQuery('#auditLogsTable').DataTable().destroy();
+              }
             }
           }, 150);
         }

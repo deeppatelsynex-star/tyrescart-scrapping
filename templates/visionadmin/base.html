@@ -171,9 +171,13 @@
     }
   </style>
   <script>
+    if (window.jQuery && window.jQuery.fn && window.jQuery.fn.dataTable) {
+      window.jQuery.fn.dataTable.ext.errMode = 'none';
+    }
     window.initVisionDataTable = function(selector, options = {}) {
       if (!window.jQuery || !window.jQuery.fn.DataTable) return null;
       const $ = window.jQuery;
+      $.fn.dataTable.ext.errMode = 'none';
       if ($.fn.DataTable.isDataTable(selector)) {
         $(selector).DataTable().destroy();
       }
