@@ -14,8 +14,8 @@ HOME_SECTIONS = [
             "ar": "دبي · أبوظبي · الشارقة · عجمان"
         },
         "section_title": {
-            "en": "Buy tyres online.\nFitted locally across the UAE.",
-            "ar": "اشترِ الإطارات عبر الإنترنت.\nتركيب محلي في جميع أنحاء الإمارات."
+            "en": "Buy tyres online.\n<em>Fitted locally</em> across the UAE.",
+            "ar": "اشترِ الإطارات عبر الإنترنت.\n<em>تركيب محلي</em> في جميع أنحاء الإمارات."
         },
         "content": {
             "en": "TyresVision is an online tyre shop for the UAE. Genuine, date-fresh tyres from 60+ brands at the lowest prices — delivered free to a fitting centre near you, or fitted at your home or office by our mobile vans.",

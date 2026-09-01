@@ -666,7 +666,7 @@ def seed_default_home_sections(cursor):
         (
             "home",
             "hero",
-            json.dumps({"en": "Buy tyres online.\nFitted locally across the UAE.", "ar": "اشترِ الإطارات عبر الإنترنت.\nتركيب محلي في جميع أنحاء الإمارات."}, ensure_ascii=False),
+            json.dumps({"en": "Buy tyres online.\n<em>Fitted locally</em> across the UAE.", "ar": "اشترِ الإطارات عبر الإنترنت.\n<em>تركيب محلي</em> في جميع أنحاء الإمارات."}, ensure_ascii=False),
             json.dumps({"en": "Dubai · Abu Dhabi · Sharjah · Ajman", "ar": "دبي · أبوظبي · الشارقة · عجمان"}, ensure_ascii=False),
             json.dumps({"en": "TyresVision is an online tyre shop for the UAE. Genuine, date-fresh tyres from 60+ brands at the lowest prices — delivered free to a fitting centre near you, or fitted at your home or office by our mobile vans.", "ar": "تايرز فيجن هو متجر إطارات إلكتروني رائد في الإمارات. إطارات أصلية وتواريخ إنتاج حديثة من أكثر من 60 علامة تجارية بأقل الأسعار — توصيل مجاني إلى مركز تركيب قريب منك، أو تركيب متنقل عند باب منزلك أو مكتبك."}, ensure_ascii=False),
             None,
