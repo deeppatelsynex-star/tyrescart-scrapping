@@ -2875,6 +2875,11 @@ def register_visionadmin_api_routes(app):
         finally:
             conn.close()
 
+    @app.route('/visionadmin/api/store-views', methods=['GET'])
+    def visionadmin_api_list_store_views():
+        views = StoreContext.get_all_store_views()
+        return jsonify({'store_views': views, 'count': len(views)})
+
     # =========================================================================
     # 8. DYNAMIC ATTRIBUTES & ATTRIBUTE SETS API
     # =========================================================================

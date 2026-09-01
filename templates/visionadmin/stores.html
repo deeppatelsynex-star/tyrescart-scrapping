@@ -62,7 +62,7 @@
     <div class="p-4 rounded-2xl bg-white border border-[#E8EDE4] shadow-xs flex items-center justify-between">
       <div>
         <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Store Views / Locales</span>
-        <h3 class="text-2xl font-black text-[#0E1108] mt-0.5">4 (EN / AR)</h3>
+        <h3 class="text-2xl font-black text-[#0E1108] mt-0.5" x-text="storeViews.length > 0 ? `${storeViews.length} (EN / AR)` : '0 (EN / AR)'">0 (EN / AR)</h3>
       </div>
       <div class="w-10 h-10 rounded-xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center">
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
@@ -314,6 +314,7 @@ function storesStudio() {
     activeTab: 'websites',
     websites: [],
     stores: [],
+    storeViews: [],
     showWebsiteModal: false,
     showStoreModal: false,
     websiteForm: { id: null, code: '', name: '', domain: '', is_default: false, status: 'active' },
@@ -325,13 +326,17 @@ function storesStudio() {
 
     async loadData() {
       try {
-        const webRes = await fetch('/visionadmin/api/websites');
+        const [webRes, storeRes, viewsRes] = await Promise.all([
+          fetch('/visionadmin/api/websites'),
+          fetch('/visionadmin/api/stores'),
+          fetch('/visionadmin/api/store-views')
+        ]);
         const webData = await webRes.json();
-        this.websites = webData.websites || [];
-
-        const storeRes = await fetch('/visionadmin/api/stores');
         const storeData = await storeRes.json();
+        const viewsData = await viewsRes.json();
+        this.websites = webData.websites || [];
         this.stores = storeData.stores || [];
+        this.storeViews = viewsData.store_views || [];
       } catch (err) {
         console.error('Error loading stores data:', err);
       }
