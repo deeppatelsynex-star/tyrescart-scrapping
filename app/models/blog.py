@@ -168,7 +168,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
     TABLE = 'blogs'
     COLUMNS = (
         'id', 'title', 'slug', 'content', 'short_description', 'image',
-        'category_name', 'blog_category_id', 'author_id', 'status', 'published_at',
+        'category_id', 'author_id', 'status', 'published_at',
         'meta_title', 'meta_desc', 'faqs', 'created_at', 'updated_at', 'deleted_at',
         'created_by', 'updated_by'
     )
@@ -187,8 +187,10 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         self.content = self._parse_json(data.get('content'))
         self.short_description = self._parse_json(data.get('short_description'))
         self.image = data.get('image')
+        self.category_id = data.get('category_id') or data.get('blog_category_id')
         self.category_name = data.get('category_name') or ''
-        self.blog_category_id = data.get('blog_category_id')
+        self.category_name_ar = data.get('category_name_ar') or ''
+        self.category_slug = data.get('category_slug') or ''
         self.author_id = data.get('author_id')
         self.status = data.get('status') or 'draft'
         self.published_at = data.get('published_at')
@@ -200,6 +202,11 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         self.deleted_at = data.get('deleted_at')
         self.created_by = data.get('created_by')
         self.updated_by = data.get('updated_by')
+
+    @property
+    def blog_category_id(self):
+        """Backward-compatible alias for category_id."""
+        return self.category_id
 
     @staticmethod
     def _parse_json(val):
@@ -312,8 +319,11 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
             'id': self.id,
             'slug': self.slug,
             'image': self.image,
+            'category_id': self.category_id,
             'category_name': self.category_name or '',
-            'blog_category_id': self.blog_category_id,
+            'category_name_ar': self.category_name_ar or '',
+            'category_slug': self.category_slug or '',
+            'blog_category_id': self.category_id,
             'author_id': self.author_id,
             'status': self.status,
             'published_at': self.published_at.isoformat() if self.published_at else None,
@@ -356,7 +366,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     SELECT c.id, c.name_en, c.name_ar, c.slug, c.sort_order, c.created_at, c.updated_at,
                            COUNT(b.id) AS blogs_count
                     FROM blog_categories c
-                    LEFT JOIN blogs b ON (b.blog_category_id = c.id OR LOWER(b.category_name) = LOWER(c.name_en)) AND b.deleted_at IS NULL
+                    LEFT JOIN blogs b ON b.category_id = c.id AND b.deleted_at IS NULL
                     WHERE c.deleted_at IS NULL
                     GROUP BY c.id
                     ORDER BY c.sort_order ASC, c.name_en ASC
@@ -378,12 +388,6 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     SET name_en = %s, name_ar = %s, slug = %s, updated_at = NOW(), updated_by = %s
                     WHERE id = %s AND deleted_at IS NULL
                 """, (clean_name, name_ar or clean_name, slug, user_id, cat_id))
-                # Sync blogs using this category
-                cursor.execute("""
-                    UPDATE blogs
-                    SET category_name = %s
-                    WHERE blog_category_id = %s
-                """, (clean_name, cat_id))
                 conn.commit()
                 cursor.execute("SELECT * FROM blog_categories WHERE id = %s", (cat_id,))
                 return cursor.fetchone()
@@ -404,8 +408,8 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                 affected = cursor.rowcount
                 cursor.execute("""
                     UPDATE blogs
-                    SET blog_category_id = NULL
-                    WHERE blog_category_id = %s
+                    SET category_id = NULL
+                    WHERE category_id = %s
                 """, (cat_id,))
                 conn.commit()
                 return affected > 0
@@ -471,18 +475,26 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
             conn.close()
     @classmethod
     def all(cls, include_deleted: bool = False, status: str = None):
-        """Returns all blogs with optional status/trash filtering."""
+        """Returns all blogs with optional status/trash filtering, joining category details."""
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                sql = "SELECT * FROM blogs WHERE 1=1"
+                sql = """
+                    SELECT b.*,
+                           c.name_en AS category_name,
+                           c.name_ar AS category_name_ar,
+                           c.slug AS category_slug
+                    FROM blogs b
+                    LEFT JOIN blog_categories c ON b.category_id = c.id
+                    WHERE 1=1
+                """
                 params = []
                 if not include_deleted:
-                    sql += " AND deleted_at IS NULL"
+                    sql += " AND b.deleted_at IS NULL"
                 if status:
-                    sql += " AND status = %s"
+                    sql += " AND b.status = %s"
                     params.append(status)
-                sql += " ORDER BY id DESC"
+                sql += " ORDER BY b.id DESC"
                 cursor.execute(sql, tuple(params))
                 return [cls(r) for r in cursor.fetchall()]
         finally:
@@ -495,10 +507,15 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         try:
             with conn.cursor() as cursor:
                 sql = """
-                    SELECT * FROM blogs 
-                    WHERE deleted_at IS NULL 
-                      AND status = 'published' 
-                    ORDER BY COALESCE(published_at, created_at) DESC, id DESC
+                    SELECT b.*,
+                           c.name_en AS category_name,
+                           c.name_ar AS category_name_ar,
+                           c.slug AS category_slug
+                    FROM blogs b
+                    LEFT JOIN blog_categories c ON b.category_id = c.id
+                    WHERE b.deleted_at IS NULL 
+                      AND b.status = 'published' 
+                    ORDER BY COALESCE(b.published_at, b.created_at) DESC, b.id DESC
                 """
                 if limit:
                     sql += f" LIMIT {int(limit)}"
@@ -514,9 +531,25 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         try:
             with conn.cursor() as cursor:
                 if include_drafts:
-                    sql = "SELECT * FROM blogs WHERE slug = %s AND deleted_at IS NULL LIMIT 1"
+                    sql = """
+                        SELECT b.*,
+                               c.name_en AS category_name,
+                               c.name_ar AS category_name_ar,
+                               c.slug AS category_slug
+                        FROM blogs b
+                        LEFT JOIN blog_categories c ON b.category_id = c.id
+                        WHERE b.slug = %s AND b.deleted_at IS NULL LIMIT 1
+                    """
                 else:
-                    sql = "SELECT * FROM blogs WHERE slug = %s AND deleted_at IS NULL AND status = 'published' LIMIT 1"
+                    sql = """
+                        SELECT b.*,
+                               c.name_en AS category_name,
+                               c.name_ar AS category_name_ar,
+                               c.slug AS category_slug
+                        FROM blogs b
+                        LEFT JOIN blog_categories c ON b.category_id = c.id
+                        WHERE b.slug = %s AND b.deleted_at IS NULL AND b.status = 'published' LIMIT 1
+                    """
                 cursor.execute(sql, (slug,))
                 row = cursor.fetchone()
                 return cls(row) if row else None
@@ -529,7 +562,15 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                cursor.execute("SELECT * FROM blogs WHERE id = %s LIMIT 1", (blog_id,))
+                cursor.execute("""
+                    SELECT b.*,
+                           c.name_en AS category_name,
+                           c.name_ar AS category_name_ar,
+                           c.slug AS category_slug
+                    FROM blogs b
+                    LEFT JOIN blog_categories c ON b.category_id = c.id
+                    WHERE b.id = %s LIMIT 1
+                """, (blog_id,))
                 row = cursor.fetchone()
                 return cls(row) if row else None
         finally:
@@ -537,7 +578,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
 
     @classmethod
     def create(cls, **kwargs):
-        """Creates and inserts a new Blog row into MySQL."""
+        """Creates and inserts a new Blog row into MySQL using category_id."""
         slug = kwargs.get('slug')
         if not slug and kwargs.get('title'):
             t = kwargs['title']
@@ -561,22 +602,21 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                cat_name = kwargs.get('category_name')
-                blog_cat_id = kwargs.get('blog_category_id')
-                if cat_name and not blog_cat_id:
+                cat_id = kwargs.get('category_id') or kwargs.get('blog_category_id')
+                cat_name = kwargs.get('category_name') or kwargs.get('category')
+                if not cat_id and cat_name:
                     cat_rec = cls.get_or_create_category(cat_name, user_id=kwargs.get('created_by'))
                     if cat_rec:
-                        blog_cat_id = cat_rec['id']
-                        cat_name = cat_rec['name_en']
+                        cat_id = cat_rec['id']
 
                 sql = """
                     INSERT INTO blogs (
                         title, slug, content, short_description, image,
-                        category_name, blog_category_id, author_id, status, published_at,
+                        category_id, author_id, status, published_at,
                         meta_title, meta_desc, faqs, created_by, updated_by
                     ) VALUES (
                         %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s,
                         %s, %s, %s, %s, %s
                     )
                 """
@@ -586,8 +626,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     content_json,
                     short_desc_json,
                     kwargs.get('image'),
-                    cat_name,
-                    blog_cat_id,
+                    cat_id,
                     kwargs.get('author_id', 1),
                     status,
                     published_at,
@@ -622,22 +661,21 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         if 'image' in kwargs:
             updates.append("image = %s")
             params.append(kwargs['image'])
-        if 'category_name' in kwargs:
-            cat_name = kwargs['category_name']
-            cat_id = kwargs.get('blog_category_id')
-            if cat_name and not cat_id:
-                cat_rec = self.get_or_create_category(cat_name, user_id=kwargs.get('updated_by'))
-                if cat_rec:
-                    cat_id = cat_rec['id']
-                    cat_name = cat_rec['name_en']
-            updates.append("category_name = %s")
-            params.append(cat_name)
-            if cat_id is not None:
-                updates.append("blog_category_id = %s")
-                params.append(cat_id)
+        if 'category_id' in kwargs:
+            updates.append("category_id = %s")
+            params.append(kwargs['category_id'] if kwargs['category_id'] else None)
         elif 'blog_category_id' in kwargs:
-            updates.append("blog_category_id = %s")
-            params.append(kwargs['blog_category_id'])
+            updates.append("category_id = %s")
+            params.append(kwargs['blog_category_id'] if kwargs['blog_category_id'] else None)
+        elif 'category_name' in kwargs:
+            cat_name = kwargs['category_name']
+            if cat_name:
+                cat_rec = self.get_or_create_category(cat_name, user_id=kwargs.get('updated_by'))
+                cat_id = cat_rec['id'] if cat_rec else None
+            else:
+                cat_id = None
+            updates.append("category_id = %s")
+            params.append(cat_id)
         if 'author_id' in kwargs:
             updates.append("author_id = %s")
             params.append(kwargs['author_id'])

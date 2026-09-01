@@ -562,7 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return el ? el.value.trim() : '';
   }
 
-  async function loadCategories(selectedVal = null) {
+  async function loadCategories(selectedVal = null, selectedId = null) {
     const catSelect = document.getElementById('category_name');
     if (!catSelect) return;
 
@@ -573,8 +573,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let html = '<option value="">Select Category...</option>';
       categories.forEach(c => {
-        const isSelected = selectedVal && (selectedVal.toLowerCase() === c.name_en.toLowerCase() || selectedVal.toLowerCase() === c.slug.toLowerCase());
-        html += `<option value="${escapeHtml(c.name_en)}" ${isSelected ? 'selected' : ''}>${escapeHtml(c.name_en)}</option>`;
+        const isSelected = (selectedId && selectedId == c.id) ||
+          (selectedVal && (selectedVal.toLowerCase() === c.name_en.toLowerCase() || selectedVal.toLowerCase() === c.slug.toLowerCase()));
+        html += `<option value="${escapeHtml(c.name_en)}" data-id="${c.id}" ${isSelected ? 'selected' : ''}>${escapeHtml(c.name_en)}</option>`;
       });
       html += '<option value="__add_new__">+ Add New Category...</option>';
       catSelect.innerHTML = html;
@@ -812,7 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setVal('meta_desc_en', (typeof blog.meta_desc === 'object' ? blog.meta_desc?.en : '') || '');
       setVal('meta_desc_ar', (typeof blog.meta_desc === 'object' ? blog.meta_desc?.ar : '') || '');
 
-      loadCategories(blog.category_name || null);
+      loadCategories(blog.category_name || null, blog.category_id || null);
       setImagePreview(blog.image || '');
 
       const contentEnVal = (typeof blog.content === 'object' ? blog.content?.en : blog.content) || '';
@@ -916,6 +917,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ar: getVal('short_description_ar')
       },
       slug: slug,
+      category_id: (catSelectEl?.selectedOptions[0]?.dataset?.id) ? parseInt(catSelectEl.selectedOptions[0].dataset.id) : null,
       category_name: (getVal('category_name') === '__add_new__' ? '' : getVal('category_name')) || null,
       image: imageInput ? imageInput.value.trim() || null : null,
       status: getVal('status') || 'draft',

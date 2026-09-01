@@ -192,13 +192,14 @@ CREATE TABLE IF NOT EXISTS `blogs` (
   `content` json NOT NULL,
   `short_description` json DEFAULT NULL,
   `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `category_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `blog_category_id` bigint UNSIGNED DEFAULT NULL,
+  `category_id` bigint UNSIGNED DEFAULT NULL,
   `author_id` bigint UNSIGNED DEFAULT NULL,
   `status` enum('draft','published','archived') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
   `published_at` timestamp NULL DEFAULT NULL,
   `meta_title` json DEFAULT NULL,
   `meta_desc` json DEFAULT NULL,
+  `faqs` json DEFAULT NULL,
+  `reviewer_data` json DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` timestamp NULL DEFAULT NULL,
@@ -208,8 +209,7 @@ CREATE TABLE IF NOT EXISTS `blogs` (
   UNIQUE KEY `blogs_slug_unique` (`slug`),
   KEY `blogs_status_index` (`status`),
   KEY `blogs_published_at_index` (`published_at`),
-  KEY `blogs_category_name_index` (`category_name`),
-  KEY `blogs_blog_category_id_index` (`blog_category_id`),
+  KEY `blogs_category_id_index` (`category_id`),
   KEY `blogs_created_by_foreign` (`created_by`),
   KEY `blogs_updated_by_foreign` (`updated_by`),
   KEY `idx_blogs_deleted_at` (`deleted_at`)
@@ -217,7 +217,7 @@ CREATE TABLE IF NOT EXISTS `blogs` (
 """
 
 NEW_BLOG_COLUMNS = {
-    "category_name": "ALTER TABLE blogs ADD COLUMN category_name VARCHAR(255) NULL AFTER image",
+    "category_id": "ALTER TABLE blogs ADD COLUMN category_id BIGINT UNSIGNED NULL AFTER image",
     "deleted_by": "ALTER TABLE blogs ADD COLUMN deleted_by BIGINT UNSIGNED NULL AFTER updated_by",
 }
 
