@@ -370,83 +370,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // 5.5 Category Dropdown & Inline "+ Add Category" Handler
   // ---------------------------------------------------------------------------
   // ---------------------------------------------------------------------------
-  // 5.5 Category Dropdown & Inline "+ Add Category" Handler
-  // ---------------------------------------------------------------------------
-  const categorySelect = document.getElementById('category_name');
-  let lastValidCategory = '';
-
-  async function loadCategories(selectedCategory = null) {
-    if (!categorySelect) return;
-    let categories = [];
-
-    try {
-      const res = await fetch('/visionadmin/api/categories');
-      const data = await res.json();
-      if (data && data.success && Array.isArray(data.categories)) {
-        categories = data.categories.filter(c => c && String(c).trim());
-      }
-    } catch (err) {
-      console.warn('Error fetching categories:', err);
-    }
-
-    if (selectedCategory && selectedCategory.trim() && !categories.includes(selectedCategory) && selectedCategory !== '__add_new__') {
-      categories.push(selectedCategory);
-    }
-
-    let optionsHtml = '';
-    if (categories.length === 0) {
-      optionsHtml = `<option value="">Select Category...</option>`;
-    } else {
-      optionsHtml = categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-    }
-    optionsHtml += `<option value="__add_new__" class="font-bold text-emerald-600">+ Add Category</option>`;
-
-    categorySelect.innerHTML = optionsHtml;
-
-    if (selectedCategory && selectedCategory !== '__add_new__') {
-      categorySelect.value = selectedCategory;
-      lastValidCategory = selectedCategory;
-    } else if (categories.length > 0) {
-      categorySelect.value = categories[0];
-      lastValidCategory = categories[0];
-    } else {
-      categorySelect.value = '';
-      lastValidCategory = '';
-    }
-  }
-
-  categorySelect?.addEventListener('focus', () => {
-    if (categorySelect.value !== '__add_new__') {
-      lastValidCategory = categorySelect.value;
-    }
-  });
-
-  categorySelect?.addEventListener('change', () => {
-    if (categorySelect.value === '__add_new__') {
-      const newCategory = prompt('Enter New Category Name:');
-      if (newCategory && newCategory.trim()) {
-        const cleanName = newCategory.trim();
-        // Remove empty placeholder if any
-        const emptyOpt = categorySelect.querySelector('option[value=""]');
-        if (emptyOpt) emptyOpt.remove();
-
-        // Insert new option before the "+ Add Category" option
-        const opt = document.createElement('option');
-        opt.value = cleanName;
-        opt.textContent = cleanName;
-        opt.selected = true;
-        categorySelect.insertBefore(opt, categorySelect.lastElementChild);
-        categorySelect.value = cleanName;
-        lastValidCategory = cleanName;
-      } else {
-        categorySelect.value = lastValidCategory;
-      }
-    } else {
-      lastValidCategory = categorySelect.value;
-    }
-  });
-
-  // ---------------------------------------------------------------------------
   // 5.8 Blog FAQs Repeater Management
   // ---------------------------------------------------------------------------
   let blogFaqItems = [];
@@ -577,7 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
           (selectedVal && (selectedVal.toLowerCase() === c.name_en.toLowerCase() || selectedVal.toLowerCase() === c.slug.toLowerCase()));
         html += `<option value="${escapeHtml(c.name_en)}" data-id="${c.id}" ${isSelected ? 'selected' : ''}>${escapeHtml(c.name_en)}</option>`;
       });
-      html += '<option value="__add_new__">+ Add New Category...</option>';
       catSelect.innerHTML = html;
 
       if (selectedVal && !categories.some(c => c.name_en.toLowerCase() === selectedVal.toLowerCase())) {
@@ -585,40 +507,12 @@ document.addEventListener('DOMContentLoaded', () => {
         opt.value = selectedVal;
         opt.textContent = selectedVal;
         opt.selected = true;
-        catSelect.insertBefore(opt, catSelect.lastElementChild);
+        catSelect.appendChild(opt);
       }
     } catch (e) {
       console.error('Error loading blog categories:', e);
     }
   }
-
-  const catSelectEl = document.getElementById('category_name');
-  catSelectEl?.addEventListener('change', async (e) => {
-    if (e.target.value === '__add_new__') {
-      const newCat = prompt('Enter new blog category name:');
-      if (newCat && newCat.trim()) {
-        try {
-          const res = await fetch('/visionadmin/api/blog-categories', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name_en: newCat.trim() })
-          });
-          const d = await res.json();
-          if (d.success && d.category) {
-            await loadCategories(d.category.name_en);
-          } else {
-            alert(d.error || 'Failed to create category.');
-            e.target.value = '';
-          }
-        } catch(err) {
-          alert('Network error saving category.');
-          e.target.value = '';
-        }
-      } else {
-        e.target.value = '';
-      }
-    }
-  });
 
   // ---------------------------------------------------------------------------
   // 5B. Blog Categories Studio Management
@@ -917,8 +811,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ar: getVal('short_description_ar')
       },
       slug: slug,
-      category_id: (catSelectEl?.selectedOptions[0]?.dataset?.id) ? parseInt(catSelectEl.selectedOptions[0].dataset.id) : null,
-      category_name: (getVal('category_name') === '__add_new__' ? '' : getVal('category_name')) || null,
+      category_id: (document.getElementById('category_name')?.selectedOptions[0]?.dataset?.id) ? parseInt(document.getElementById('category_name').selectedOptions[0].dataset.id) : null,
+      category_name: getVal('category_name') || null,
       image: imageInput ? imageInput.value.trim() || null : null,
       status: getVal('status') || 'draft',
       meta_title: {
