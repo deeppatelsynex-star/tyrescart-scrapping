@@ -15,11 +15,11 @@
     
     <!-- Breadcrumb: Home > Blog > Category > Title -->
     <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-      <a href="{% if locale == 'ar' %}/ar{% else %}/{% endif %}">{% if locale == 'ar' %}الرئيسية{% else %}Home{% endif %}</a>
+      <a href="/">Home</a>
       <span class="sep">&rsaquo;</span>
-      <a href="{% if locale == 'ar' %}/ar/blog{% else %}/en/blog{% endif %}">{% if locale == 'ar' %}المدونة{% else %}Blog{% endif %}</a>
+      <a href="/blog">Blog</a>
       <span class="sep">&rsaquo;</span>
-      <a href="{% if locale == 'ar' %}/ar/blog?category={{ post.category | urlencode }}{% else %}/en/blog?category={{ post.category | urlencode }}{% endif %}">{{ post.category }}</a>
+      <a href="/blog?category={{ post.category | urlencode }}">{{ post.category }}</a>
       <span class="sep">&rsaquo;</span>
       <span class="current" style="max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; vertical-align:bottom;">{{ post.title }}</span>
     </nav>
@@ -31,7 +31,7 @@
       <article class="detail-main-col">
         
         <!-- Category Badge Pill -->
-        <a href="{% if locale == 'ar' %}/ar/blog?category={{ post.category | urlencode }}{% else %}/en/blog?category={{ post.category | urlencode }}{% endif %}" class="category-badge-pill">
+        <a href="/blog?category={{ post.category | urlencode }}" class="category-badge-pill">
           {{ post.category }}
         </a>
 
@@ -228,12 +228,12 @@
               {% endfor %}
             {% else %}
               <!-- Fallback related items -->
-              <a href="{% if locale == 'ar' %}/ar/blog{% else %}/en/blog{% endif %}" class="related-blog-row">
+              <a href="/blog" class="related-blog-row">
                 <div class="related-blog-thumb">
                   <img src="/static/assets/online-tyres-shop-dubai.png" alt="Tyre Guide">
                 </div>
                 <div class="related-blog-content">
-                  <h4 class="related-blog-title">{% if locale == 'ar' %}دليل اختيار الإطارات المناسبة في الإمارات{% else %}How to Choose the Right Tyres in UAE{% endif %}</h4>
+                  <h4 class="related-blog-title">How to Choose the Right Tyres in UAE</h4>
                   <span class="related-blog-date">August 24, 2026</span>
                 </div>
               </a>
@@ -244,12 +244,12 @@
         <!-- Widget 2: Categories -->
         <div class="sidebar-card">
           <h3 class="widget-title-accent">
-            {% if locale == 'ar' %}التصنيفات والأقسام{% else %}Categories{% endif %}
+            Categories
           </h3>
 
           <div class="sidebar-cat-list">
             {% for cat in categories %}
-            <a href="{% if locale == 'ar' %}/ar/blog?category={{ cat.name | urlencode }}{% else %}/en/blog?category={{ cat.name | urlencode }}{% endif %}" class="sidebar-cat-row">
+            <a href="/blog?category={{ cat.name | urlencode }}" class="sidebar-cat-row">
               <span class="sidebar-cat-name">{{ cat.name }}</span>
               <span class="sidebar-cat-count">{{ cat.count }}</span>
             </a>

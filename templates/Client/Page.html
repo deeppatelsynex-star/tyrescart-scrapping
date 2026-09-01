@@ -15,9 +15,9 @@
       
       <!-- Breadcrumb -->
       <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-        <a href="{% if locale == 'ar' %}/ar{% else %}/{% endif %}">{% if locale == 'ar' %}الرئيسية{% else %}Home{% endif %}</a>
+        <a href="/">Home</a>
         <span class="sep">&rsaquo;</span>
-        <span class="current">{{ page.title if page else 'About Us' }}</span>
+        <span class="current">{{ page.title if page and page.title else (slug | replace('-', ' ') | title) }}</span>
       </nav>
 
       <div style="margin-top:20px; margin-bottom:32px;">
@@ -44,8 +44,8 @@
       </div>
 
       <div style="margin-top:40px; padding-top:24px; border-top:1px solid var(--line); display:flex; gap:16px; flex-wrap:wrap;">
-        <a href="{% if locale == 'ar' %}/ar/blog{% else %}/en/blog{% endif %}" class="btn btn-white">
-          {% if locale == 'ar' %}&rarr; تصفح المدونة{% else %}&larr; Browse Tyre Blog{% endif %}
+        <a href="/blog" class="btn btn-white">
+          &larr; Browse Tyre Blog
         </a>
         <a href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20have%20an%20inquiry." target="_blank" rel="noopener" class="btn btn-wa">
           {% if locale == 'ar' %}تواصل عبر واتساب{% else %}WhatsApp Us{% endif %}
