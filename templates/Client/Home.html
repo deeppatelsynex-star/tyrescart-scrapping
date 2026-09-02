@@ -213,7 +213,6 @@
               <table class="price-table responsive-price-table" aria-label="Tyre sizes and starting prices in UAE">
                 <thead>
                   <tr>
-                    <th scope="col" class="th-dtr-control dtr-mobile-only" aria-label="Expand row"></th>
                     <th scope="col" class="th-size">
                       <span class="th-content">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M4.93 4.93 9.17 9.17"/><path d="m14.83 14.83 4.24 4.24"/><path d="m19.07 4.93-4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
@@ -253,13 +252,16 @@
                   <tr class="dtr-parent-row" 
                       :class="expandedRow === {{ row_idx }} ? 'dtr-expanded' : ''"
                       @click="expandedRow = expandedRow === {{ row_idx }} ? null : {{ row_idx }}">
-                    <td class="td-dtr-control dtr-mobile-only">
-                      <span class="dtr-control-btn" :aria-expanded="expandedRow === {{ row_idx }} ? 'true' : 'false'">
-                        <span class="dtr-icon" x-text="expandedRow === {{ row_idx }} ? '−' : '+'">+</span>
-                      </span>
-                    </td>
                     <td class="td-size">
-                      <span class="size-pill">{{ r.size }}</span>
+                      <div class="dtr-cell-content">
+                        <button type="button" 
+                                class="dtr-control-btn" 
+                                :class="expandedRow === {{ row_idx }} ? 'is-expanded' : ''" 
+                                :aria-expanded="expandedRow === {{ row_idx }} ? 'true' : 'false'">
+                          <span class="dtr-icon" x-text="expandedRow === {{ row_idx }} ? '−' : '+'">+</span>
+                        </button>
+                        <span class="size-pill">{{ r.size }}</span>
+                      </div>
                     </td>
                     <td class="td-common desktop-col">
                       {{ r.common_on.en if (r.common_on is mapping) else (r.common_on or '') }}
@@ -275,9 +277,9 @@
                     </td>
                   </tr>
 
-                  <!-- Responsive Detail Child Row (Shown on Mobile when Expanded) -->
-                  <tr class="dtr-child-row dtr-mobile-only" x-show="expandedRow === {{ row_idx }}" x-cloak>
-                    <td colspan="3" class="dtr-child-td">
+                  <!-- Responsive Detail Child Row (Collapses & Expands on Click) -->
+                  <tr class="dtr-child-row" x-show="expandedRow === {{ row_idx }}" x-cloak>
+                    <td colspan="5" class="dtr-child-td">
                       <div class="dtr-child-details">
                         <div class="dtr-detail-item">
                           <span class="dtr-detail-title">
