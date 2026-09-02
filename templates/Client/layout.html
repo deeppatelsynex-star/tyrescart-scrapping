@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ locale or session.get('site_locale', 'en') }}" dir="{{ 'rtl' if (locale == 'ar' or session.get('site_locale') == 'ar') else 'ltr' }}">
+<html lang="{{ locale or 'en' }}" dir="{{ 'rtl' if locale == 'ar' else 'ltr' }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

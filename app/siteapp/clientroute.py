@@ -69,10 +69,9 @@ def _get_home_sections(locale: str = 'en'):
 @site_bp.route('/')
 @site_bp.route('/home')
 def home():
-    """Client storefront home landing page (default/session locale)."""
-    locale = _get_locale()
-    sections = _get_home_sections(locale)
-    return render_template('Client/Home.html', sections=sections, locale=locale)
+    """Client storefront home landing page (EN only)."""
+    sections = _get_home_sections('en')
+    return render_template('Client/Home.html', sections=sections, locale='en')
 
 
 @site_bp.route('/en')
@@ -91,11 +90,11 @@ def home_en():
 @site_bp.route('/ar/')
 @site_bp.route('/ar/home')
 def home_ar():
-    """Client storefront home landing page in Arabic."""
-    session['site_locale'] = 'ar'
-    sections = _get_home_sections('ar')
-    resp = make_response(render_template('Client/Home.html', sections=sections, locale='ar'))
-    resp.set_cookie('site_locale', 'ar', max_age=31536000, path='/')
+    """Client storefront home landing page (EN only for now)."""
+    session['site_locale'] = 'en'
+    sections = _get_home_sections('en')
+    resp = make_response(render_template('Client/Home.html', sections=sections, locale='en'))
+    resp.set_cookie('site_locale', 'en', max_age=31536000, path='/')
     return resp
 
 
