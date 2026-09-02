@@ -3543,6 +3543,27 @@ def register_client_api_routes(app):
                 except Exception as ex:
                     print("Session user lookup error in enquiry:", ex)
 
+        # Build message summary
+        message = data.get('message')
+
+        # Fallback: extract tyre_size from message if missing
+        if not tyre_size and message:
+            size_match = re.search(r'\b([1-3]\d{2}\s*/\s*\d{2}\s*(?:R|ZR|r|zr)?\s*\d{2})\b', message)
+            if size_match:
+                tyre_size = size_match.group(1).strip()
+
+        # Fallback: extract vehicle from message if missing
+        if not vehicle_raw and message:
+            veh_match = re.search(r'(?:tyre\s+options\s+for|options\s+for|vehicle:?)\s*([^.\n]+)', message, re.IGNORECASE)
+            if veh_match:
+                vehicle_raw = veh_match.group(1).strip()
+
+        # Fallback: extract brand from message if missing
+        if not spec and message:
+            brand_match = re.search(r'(?:tyres\s+from|brand:?)\s*([^.\n]+)', message, re.IGNORECASE)
+            if brand_match:
+                spec = brand_match.group(1).strip()
+
         # Extract make, model, year if available in vehicle string
         make = data.get('make')
         model = data.get('model')
@@ -3558,8 +3579,6 @@ def register_client_api_routes(app):
             if len(parts) > 1 and not model:
                 model = " ".join(parts[1:]).title()
 
-        # Build message summary
-        message = data.get('message')
         if not message:
             msg_parts = []
             if tyre_size:

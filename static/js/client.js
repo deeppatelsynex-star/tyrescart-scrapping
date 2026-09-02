@@ -209,6 +209,44 @@
       formType = 'mobile_whatsapp_bar';
     }
 
+    // Extract structured tyre size, vehicle, and brand from element or ancestors
+    var tyreSize = target.getAttribute('data-tyre-size') || (target.closest && target.closest('[data-tyre-size]') ? target.closest('[data-tyre-size]').getAttribute('data-tyre-size') : '') || '';
+    var vehicle = target.getAttribute('data-vehicle') || (target.closest && target.closest('[data-vehicle]') ? target.closest('[data-vehicle]').getAttribute('data-vehicle') : '') || '';
+    var brand = target.getAttribute('data-brand') || (target.closest && target.closest('[data-brand]') ? target.closest('[data-brand]').getAttribute('data-brand') : '') || '';
+    var customFormType = target.getAttribute('data-form-type') || (target.closest && target.closest('[data-form-type]') ? target.closest('[data-form-type]').getAttribute('data-form-type') : '') || '';
+    var customEnquiryFor = target.getAttribute('data-enquiry-for') || (target.closest && target.closest('[data-enquiry-for]') ? target.closest('[data-enquiry-for]').getAttribute('data-enquiry-for') : '') || '';
+
+    // Intelligent regex parsing fallback from messageText
+    if (!tyreSize && messageText) {
+      var sm = messageText.match(/\b([1-3]\d{2}\s*\/\s*\d{2}\s*(?:R|ZR|r|zr)?\s*\d{2})\b/);
+      if (sm && sm[1]) tyreSize = sm[1].trim();
+    }
+    if (!vehicle && messageText) {
+      var vm = messageText.match(/(?:tyre\s+options\s+for|options\s+for|vehicle:?)\s*([^.\n]+)/i);
+      if (vm && vm[1]) vehicle = vm[1].trim();
+    }
+    if (!brand && messageText) {
+      var bm = messageText.match(/(?:tyres\s+from|brand:?)\s*([^.\n]+)/i);
+      if (bm && bm[1]) brand = bm[1].trim();
+    }
+
+    if (customFormType) {
+      formType = customFormType;
+    } else if (tyreSize) {
+      formType = 'shop_by_size';
+    } else if (vehicle) {
+      formType = 'shop_by_vehicle';
+    } else if (brand) {
+      formType = 'shop_by_brand';
+    }
+
+    var enquiryFor = customEnquiryFor || (
+      tyreSize ? ('Tyre Size Lead (' + tyreSize + ')') :
+      vehicle ? ('Vehicle Tyre Lead (' + vehicle + ')') :
+      brand ? ('Brand Tyre Lead (' + brand + ')') :
+      ('WhatsApp Lead (' + (ctaText || 'CTA Button') + ')')
+    );
+
     try {
       fetch('/api/v1/enquiry', {
         method: 'POST',
@@ -217,9 +255,12 @@
           'Accept': 'application/json'
         },
         body: JSON.stringify({
-          enquiry_for: 'WhatsApp Lead (' + (ctaText || 'CTA Button') + ')',
+          enquiry_for: enquiryFor,
           form_type: formType,
           message: messageText + '\nSource Page: ' + pageUrl,
+          tyre_size: tyreSize || '',
+          vehicle: vehicle || '',
+          spec: brand || '',
           city: 'UAE'
         })
       }).catch(function(err) {
