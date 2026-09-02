@@ -280,9 +280,110 @@
     }
   });
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMobileNav);
-  } else {
+  /* ---------- Dynamic Nav Active State & ScrollSpy ---------- */
+  function initNavActiveState() {
+    var allLinks = document.querySelectorAll('.nav-links a, .mobile-nav-links a');
+    if (!allLinks.length) return;
+
+    function setActive(targetKey) {
+      if (!targetKey) return;
+      allLinks.forEach(function(link) {
+        var key = link.getAttribute('data-nav-target') || '';
+        if (!key) {
+          var href = link.getAttribute('href') || '';
+          key = href.indexOf('#') !== -1 ? ('#' + href.split('#')[1]) : href;
+        }
+        if (key === targetKey) {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    }
+
+    // 1. Click Listener: instantly activate clicked link
+    allLinks.forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        var key = link.getAttribute('data-nav-target') || '';
+        if (!key) {
+          var href = link.getAttribute('href') || '';
+          key = href.indexOf('#') !== -1 ? ('#' + href.split('#')[1]) : href;
+        }
+        setActive(key);
+
+        // If clicking hash link on current home page, handle smooth scroll
+        if (key && key.startsWith('#')) {
+          var targetEl = document.getElementById(key.substring(1));
+          if (targetEl) {
+            var path = window.location.pathname;
+            var isHome = path === '/' || path === '/en' || path === '/ar' || path === '/home';
+            if (isHome) {
+              e.preventDefault();
+              history.pushState(null, null, key);
+              targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }
+        }
+      });
+    });
+
+    // 2. Hash Change & Initial Check
+    function checkHashOrTop() {
+      if (window.location.hash) {
+        setActive(window.location.hash);
+      } else {
+        var path = window.location.pathname;
+        var isHome = path === '/' || path === '/en' || path === '/ar' || path === '/home';
+        if (isHome && window.scrollY < 200) {
+          setActive('/');
+        }
+      }
+    }
+
+    window.addEventListener('hashchange', checkHashOrTop);
+    checkHashOrTop();
+
+    // 3. ScrollSpy on Home Page
+    var sectionKeys = ['#faq', '#brands', '#how', '#services', '#prices', '#why'];
+    var sectionMap = [];
+    sectionKeys.forEach(function(k) {
+      var el = document.getElementById(k.substring(1));
+      if (el) sectionMap.push({ key: k, el: el });
+    });
+
+    if (sectionMap.length > 0) {
+      var ticking = false;
+      window.addEventListener('scroll', function() {
+        if (!ticking) {
+          window.requestAnimationFrame(function() {
+            var scrollY = window.scrollY;
+            if (scrollY < 200) {
+              setActive('/');
+            } else {
+              var probe = scrollY + 180;
+              for (var i = 0; i < sectionMap.length; i++) {
+                if (probe >= sectionMap[i].el.offsetTop) {
+                  setActive(sectionMap[i].key);
+                  break;
+                }
+              }
+            }
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }, { passive: true });
+    }
+  }
+
+  function initAll() {
     initMobileNav();
+    initNavActiveState();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll);
+  } else {
+    initAll();
   }
 })();

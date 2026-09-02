@@ -357,12 +357,37 @@ header {
 }
 
 .nav-links a {
+  position: relative;
   text-decoration: none;
-  color: var(--slate)
+  color: var(--slate);
+  padding: 6px 2px;
+  transition: color 0.18s ease;
 }
 
 .nav-links a:hover {
-  color: var(--green-deep)
+  color: var(--green-deep);
+}
+
+.nav-links a.active {
+  color: #0E1108 !important;
+  font-weight: 800;
+}
+
+.nav-links a.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: var(--green, #58B31B);
+  border-radius: 9999px;
+  animation: navIndicatorIn 0.2s ease forwards;
+}
+
+@keyframes navIndicatorIn {
+  from { transform: scaleX(0); opacity: 0; }
+  to { transform: scaleX(1); opacity: 1; }
 }
 
 .nav-cta {
