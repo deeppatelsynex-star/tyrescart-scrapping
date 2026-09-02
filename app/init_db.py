@@ -680,13 +680,7 @@ def seed_default_home_sections(cursor):
                     {"icon": "dollar", "text": {"en": "Lowest price guaranteed", "ar": "أقل سعر مضمون"}},
                     {"icon": "shield", "text": {"en": "Warranty on eligible tyres", "ar": "ضمان على الإطارات المؤهلة"}},
                     {"icon": "truck", "text": {"en": "Free delivery to fitter", "ar": "توصيل مجاني لمركز التركيب"}}
-                ],
-                "quote_card": {
-                    "title": {"en": "Get your tyre price in minutes", "ar": "احصل على سعر إطاراتك في دقائق"},
-                    "subtitle": {"en": "Send us your size — we’ll reply on WhatsApp with options and prices.", "ar": "أرسل لنا مقاس إطاراتك — وسنرد عليك عبر واتساب بالخيارات والأسعار."},
-                    "button_text": {"en": "Send on WhatsApp", "ar": "إرسال عبر واتساب"},
-                    "note": {"en": "Opens WhatsApp with your details pre-filled. No account needed.", "ar": "يفتح واتساب مع ملء بياناتك مسبقاً. لا يلزم إنشاء حساب."}
-                }
+                ]
             }, ensure_ascii=False),
             1,
             1
