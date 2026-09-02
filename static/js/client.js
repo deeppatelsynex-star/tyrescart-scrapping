@@ -280,14 +280,19 @@
     }
   });
 
-  /* ---------- Dynamic Nav Active State & ScrollSpy ---------- */
+  /* ---------- Dynamic Nav Active State (Mobile Drawer) & ScrollSpy ---------- */
   function initNavActiveState() {
+    var mobileLinks = document.querySelectorAll('.mobile-nav-links a');
     var allLinks = document.querySelectorAll('.nav-links a, .mobile-nav-links a');
     if (!allLinks.length) return;
 
+    // Ensure desktop links never retain an active class
+    var desktopLinks = document.querySelectorAll('.nav-links a');
+    desktopLinks.forEach(function(l) { l.classList.remove('active'); });
+
     function setActive(targetKey) {
       if (!targetKey) return;
-      allLinks.forEach(function(link) {
+      mobileLinks.forEach(function(link) {
         var key = link.getAttribute('data-nav-target') || '';
         if (!key) {
           var href = link.getAttribute('href') || '';
@@ -301,7 +306,7 @@
       });
     }
 
-    // 1. Click Listener: instantly activate clicked link
+    // 1. Click Listener
     allLinks.forEach(function(link) {
       link.addEventListener('click', function(e) {
         var key = link.getAttribute('data-nav-target') || '';
