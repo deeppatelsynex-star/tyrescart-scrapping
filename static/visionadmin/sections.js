@@ -59,6 +59,14 @@ document.addEventListener('DOMContentLoaded', () => {
       tagColor: 'bg-cyan-500',
       desc: '4-Step Process Flow with WhatsApp/Call' 
     },
+    shop_by: { 
+      label: 'Shop by Size, Car & Brand', 
+      shortLabel: 'Shop By', 
+      emoji: '🔍', 
+      badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
+      tagColor: 'bg-emerald-500',
+      desc: 'Browse Tyres by Sizes, Vehicles, and Brand Tiers' 
+    },
     brands: { 
       label: 'Brands List', 
       shortLabel: 'Brands', 
@@ -537,6 +545,12 @@ document.addEventListener('DOMContentLoaded', () => {
           chipList = sec.section_data.rows.map(r => {
             return `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200/80 font-mono">🛞 ${r.size || ''}</span>`;
           });
+        } else if (Array.isArray(sec.section_data.groups) && sec.section_data.groups.length > 0) {
+          itemsCount = sec.section_data.groups.length;
+          chipList = sec.section_data.groups.map(g => {
+            const count = Array.isArray(g.chips) ? g.chips.length : 0;
+            return `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200/80">📂 ${g.heading || 'Group'} (${count})</span>`;
+          });
         }
 
         if (chipList.length > 0) {
@@ -788,6 +802,11 @@ document.addEventListener('DOMContentLoaded', () => {
       structTitle.textContent = 'How It Works Steps (4 Steps)';
       imageWrap.classList.add('hidden');
       btnWrap.classList.add('hidden');
+    } else if (type === 'shop_by') {
+      structTitle.textContent = 'Shop By Groups (Sizes, Vehicles, Brand Tiers)';
+      imageWrap.classList.add('hidden');
+      imagePosWrap.classList.add('hidden');
+      btnWrap.classList.add('hidden');
     } else if (type === 'brands') {
       structTitle.textContent = 'Brand Names List';
       imageWrap.classList.add('hidden');
@@ -926,6 +945,37 @@ document.addEventListener('DOMContentLoaded', () => {
               <input type="text" dir="rtl" placeholder="اسم الخدمة (عربي)" class="rep-svc-ar px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-right bg-[#F8FAF7] focus:bg-white outline-none" value="${typeof item.name === 'object' ? (item.name.ar || '') : ''}" />
             </div>
             <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">✕</button>
+          </div>
+        `;
+      } else if (type === 'shop_by') {
+        const chipsVal = Array.isArray(item.chips) ? item.chips.join(' · ') : (item.chips || '');
+        return `
+          <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
+              <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                <span>Group #${i + 1}: ${item.heading || 'New Group'}</span>
+              </span>
+              <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="sm:col-span-2">
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Group Heading</label>
+                <input type="text" placeholder="e.g. Popular tyre sizes in the UAE" class="rep-shopby-heading w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none" value="${item.heading || ''}" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Type</label>
+                <select class="rep-shopby-type w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none">
+                  <option value="size" ${item.type === 'size' ? 'selected' : ''}>Tyre Size</option>
+                  <option value="vehicle" ${item.type === 'vehicle' ? 'selected' : ''}>Vehicle</option>
+                  <option value="brand" ${item.type === 'brand' ? 'selected' : ''}>Brand</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Chips (separated by " · " or commas)</label>
+              <textarea rows="2" placeholder="e.g. 195/65 R15 · 205/55 R16 · 215/55 R17" class="rep-shopby-chips w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-medium bg-[#F8FAF7] focus:bg-white outline-none">${chipsVal}</textarea>
+            </div>
           </div>
         `;
       } else if (type === 'brands') {
@@ -1107,6 +1157,8 @@ document.addEventListener('DOMContentLoaded', () => {
       repeaterItems.push({ step_number: repeaterItems.length + 1, icon: 'phone', title: { en: 'Step Title', ar: 'عنوان الخطوة' }, description: { en: 'Description', ar: 'الوصف' } });
     } else if (type === 'price_table') {
       repeaterItems.push({ size: '205/55 R16', common_on: { en: 'Civic, Jetta, Cerato', ar: 'سيفيك، جيتا، سيراتو' }, budget: 'AED —', mid_range: 'AED —', premium: 'AED —' });
+    } else if (type === 'shop_by') {
+      repeaterItems.push({ heading: 'New Group', type: 'size', chips: [] });
     } else {
       repeaterItems.push({ icon: 'shield', title: { en: 'Card Title', ar: 'عنوان البطاقة' }, description: { en: 'Description', ar: 'الوصف' } });
     }
@@ -1191,6 +1243,20 @@ document.addEventListener('DOMContentLoaded', () => {
             budget: budget,
             mid_range: mid,
             premium: prem
+          });
+        }
+      } else if (type === 'shop_by') {
+        const heading = row.querySelector('.rep-shopby-heading')?.value.trim() || '';
+        const groupType = row.querySelector('.rep-shopby-type')?.value || 'size';
+        const rawChips = row.querySelector('.rep-shopby-chips')?.value || '';
+        const chips = rawChips.split(/[·,\n]/)
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+        if (heading || chips.length > 0) {
+          items.push({
+            heading: heading,
+            type: groupType,
+            chips: chips
           });
         }
       } else {
@@ -1385,6 +1451,8 @@ document.addEventListener('DOMContentLoaded', () => {
       repeaterItems = JSON.parse(JSON.stringify(sData.rows));
     } else if (sData.features && Array.isArray(sData.features)) {
       repeaterItems = JSON.parse(JSON.stringify(sData.features));
+    } else if (sData.groups && Array.isArray(sData.groups)) {
+      repeaterItems = JSON.parse(JSON.stringify(sData.groups));
     } else {
       repeaterItems = [];
     }
@@ -1472,6 +1540,8 @@ document.addEventListener('DOMContentLoaded', () => {
       sectionData.faqs = repData;
     } else if (sectionType === 'price_table') {
       sectionData.rows = repData;
+    } else if (sectionType === 'shop_by') {
+      sectionData.groups = repData;
     } else if (sectionType === 'hero') {
       if (repData.length > 0) sectionData.badges = repData;
     } else {

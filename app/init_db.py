@@ -962,6 +962,68 @@ def seed_default_home_sections(cursor):
         ),
         (
             "home",
+            "shop_by",
+            json.dumps({"en": "Find Your Tyres by Size, Vehicle or Brand"}, ensure_ascii=False),
+            json.dumps({"en": "Shop by Size, Vehicle or Brand"}, ensure_ascii=False),
+            json.dumps({"en": "Not sure what fits? Tap your size or your car below and we’ll come back with options and prices on WhatsApp."}, ensure_ascii=False),
+            None,
+            "right",
+            None,
+            None,
+            json.dumps({
+                "groups": [
+                    {
+                        "heading": "Popular tyre sizes in the UAE",
+                        "type": "size",
+                        "chips": [
+                            "195/65 R15", "205/55 R16", "215/55 R17", "215/60 R17", "225/45 R17",
+                            "225/65 R17", "235/55 R19", "235/60 R18", "245/45 R18", "245/70 R16",
+                            "255/50 R20", "265/50 R20", "265/65 R17", "275/40 R20", "275/45 R20",
+                            "275/60 R20", "285/50 R20", "285/60 R18", "305/40 R22"
+                        ]
+                    },
+                    {
+                        "heading": "Tyres by vehicle",
+                        "type": "vehicle",
+                        "chips": [
+                            "Toyota Land Cruiser", "Nissan Patrol", "Toyota Prado", "Toyota Corolla",
+                            "Toyota Camry", "Nissan Sunny", "Honda Civic", "Hyundai Elantra",
+                            "Mitsubishi Pajero", "Ford Explorer", "Chevrolet Tahoe", "Kia Sportage",
+                            "Range Rover", "Toyota Hilux", "Tesla Model 3 & Model Y", "Mercedes G-Class"
+                        ]
+                    },
+                    {
+                        "heading": "Tyres by brand — Premium",
+                        "type": "brand",
+                        "tier": "premium",
+                        "chips": [
+                            "Michelin", "Bridgestone", "Continental", "Pirelli", "Goodyear", "Dunlop"
+                        ]
+                    },
+                    {
+                        "heading": "Tyres by brand — Mid-range",
+                        "type": "brand",
+                        "tier": "mid-range",
+                        "chips": [
+                            "Hankook", "Yokohama", "Toyo", "Falken", "Kumho", "Nexen", "BFGoodrich",
+                            "Cooper", "Nitto", "Vredestein"
+                        ]
+                    },
+                    {
+                        "heading": "Tyres by brand — Value",
+                        "type": "brand",
+                        "tier": "value",
+                        "chips": [
+                            "Laufenn", "Giti", "Sumitomo", "Zeetex", "Roadstone", "and 40+ more"
+                        ]
+                    }
+                ]
+            }, ensure_ascii=False),
+            7,
+            1
+        ),
+        (
+            "home",
             "brands",
             json.dumps({"en": "The names you trust, the prices you don’t expect", "ar": "العلامات التي تثق بها، بالأسعار التي لا تتوقعها"}, ensure_ascii=False),
             json.dumps({"en": "60+ brands in stock", "ar": "+60 علامة تجارية في المخزون"}, ensure_ascii=False),
@@ -978,7 +1040,7 @@ def seed_default_home_sections(cursor):
                     "Sumitomo", "Zeetex", "+40 more"
                 ]
             }, ensure_ascii=False),
-            7,
+            8,
             1
         ),
         (
@@ -1022,7 +1084,7 @@ def seed_default_home_sections(cursor):
                     }
                 ]
             }, ensure_ascii=False),
-            8,
+            9,
             1
         ),
         (
@@ -1063,7 +1125,7 @@ def seed_default_home_sections(cursor):
                     }
                 ]
             }, ensure_ascii=False),
-            9,
+            10,
             1
         ),
         (
@@ -1084,7 +1146,7 @@ def seed_default_home_sections(cursor):
                     "ar": "مفتوح يومياً — اتصل أو راسلنا في أي وقت وسنرد عليك بسرعة فائقة."
                 }
             }, ensure_ascii=False),
-            10,
+            11,
             1
         )
     ]
