@@ -4461,34 +4461,6 @@ details summary span:last-child {
   font-size: 0.9rem;
 }
 
-.dtr-detail-action {
-  margin-top: 6px;
-  padding-top: 10px;
-  border-top: 1px dashed #E2E8DC;
-}
-
-.dtr-wa-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 16px;
-  background: #00A650;
-  color: #FFFFFF !important;
-  border-radius: 12px;
-  font-size: 0.84rem;
-  font-weight: 800;
-  text-decoration: none;
-  box-shadow: 0 3px 10px rgba(0, 166, 80, 0.25);
-  transition: background 0.15s ease, transform 0.15s ease;
-}
-
-.dtr-wa-btn:hover {
-  background: #008F45;
-  transform: translateY(-1px);
-}
-
 /* Desktop vs Mobile Rules */
 @media (min-width: 769px) {
   .dtr-control-btn,
