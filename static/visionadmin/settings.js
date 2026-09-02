@@ -46,8 +46,8 @@ document.addEventListener('DOMContentLoaded', function() {
   function updatePreview() {
     const initials = (initialsInput.value || 'SK').toUpperCase().trim();
     const name = nameEnInput.value.trim() || 'Sharvil Kumar';
-    const role = roleEnInput.value.trim() || 'Tyre Selection Specialist, TyresCart';
-    const bio = bioEnInput.value.trim() || 'Sharvil Kumar oversees operations at TyresCart, helping customers find tyres that match their vehicle and budget.';
+    const role = roleEnInput.value.trim() || 'Tyre Selection Specialist, TyresVision';
+    const bio = bioEnInput.value.trim() || 'Sharvil Kumar oversees operations at TyresVision, helping customers find tyres that match their vehicle and budget.';
 
     if (previewAvatar) previewAvatar.textContent = initials;
     if (previewName) previewName.textContent = name;

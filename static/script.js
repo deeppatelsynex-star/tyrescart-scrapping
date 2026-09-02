@@ -864,7 +864,7 @@
         stopStatusPolling();
       }
     } catch (error) {
-      console.error('[TyresCart Scraper Refresh Error]:', error);
+      console.error('[TyresVision Scraper Refresh Error]:', error);
     }
   };
 

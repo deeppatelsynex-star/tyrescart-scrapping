@@ -1,4 +1,4 @@
-# TyresCart Scraping Dashboard
+# TyresVision Scraping Dashboard
 
 A Flask web dashboard for scraping tyre product data from [pitstoparabia.com](https://www.pitstoparabia.com).
 Authenticated users start scraping jobs from the browser — by uploading a CSV/JSON

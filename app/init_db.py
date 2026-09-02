@@ -1245,28 +1245,68 @@ def seed_default_home_sections(cursor):
             json.dumps({
                 "faqs": [
                     {
-                        "question": {"en": "How do I find my tyre size?", "ar": "كيف أجد مقاس إطاري؟"},
-                        "answer": {"en": "It’s printed on the sidewall of your current tyre — something like <strong>235/55 R19 105W</strong>. Send a photo on WhatsApp if you’re not sure, or share your car’s make, model and year and TyresVision will look it up.", "ar": "ستجده مطبوعاً على جدار إطارك الحالي — مثل <strong>235/55 R19 105W</strong>. يمكنك إرسال صورة عبر واتساب أو تزويدنا بموديل وسنة سيارتك لنقوم بتحديده لك."}
+                        "question": {"en": "How do I buy tyres online from TyresVision?"},
+                        "answer": {"en": "Send your tyre size on WhatsApp and we reply within minutes with three in-stock options — budget, mid-range and premium — each with the fitted price. Choose one, tell us whether you want it fitted at a partner centre or at your own location, and pay when the job is done. No account, no card details online."}
                     },
                     {
-                        "question": {"en": "Is fitting included in the price?", "ar": "هل التركيب مشمول في السعر؟"},
-                        "answer": {"en": "Delivery to your chosen fitting centre is free and fitting is arranged for you. Mobile fitting at your own location and extras such as alignment are quoted upfront — no surprises at the till.", "ar": "التوصيل والتركيب في مركز الشريك المعتمد مشمول ومجاني. أما التركيب المتنقل والخدمات الإضافية كالترصيص فيتم تحديد أسعارها بوضوح مسبقاً."}
+                        "question": {"en": "How much do tyres cost in Dubai and Abu Dhabi?"},
+                        "answer": {"en": "It depends on your size and brand tier. A common sedan size like 205/55 R16 costs less than a large SUV size like 285/50 R20, and budget, mid-range and premium differ within the same size. See our price table above, and WhatsApp your exact size for today’s price."}
                     },
                     {
-                        "question": {"en": "Are the tyres new and date-fresh?", "ar": "هل الإطارات جديدة وتاريخ إنتاجها حديث؟"},
-                        "answer": {"en": "Yes. Every tyre is brand new with a recent manufacturing date, sourced through authorised channels, and eligible tyres carry manufacturer-backed warranty.", "ar": "نعم. كل إطار جديد تماماً ومرفق بتاريخ إنتاج حديث، ومستورد عبر الوكلاء الرسميين مع ضمان المصنع."}
+                        "question": {"en": "Is fitting included in the price?"},
+                        "answer": {"en": "Fitting at one of our partner centres is free and included, along with delivery, mounting, balancing, new valves and disposal of your old tyres. Mobile fitting at your own location is charged as a call-out fee on top of the tyre price, always confirmed on WhatsApp before we dispatch a van."}
                     },
                     {
-                        "question": {"en": "Which emirates does TyresVision cover?", "ar": "ما هي الإمارات التي تغطيها تايرز فيجن؟"},
-                        "answer": {"en": "Dubai, Abu Dhabi, Sharjah, Ajman and the rest of the UAE, through a network of fitting centres and mobile vans.", "ar": "دبي، أبوظبي، الشارقة، عجمان وكافة إمارات الدولة عبر شبكة واسعة من مراكز الخدمة والفانات المتنقلة."}
+                        "question": {"en": "Do you really match other tyre prices?"},
+                        "answer": {"en": "Yes. Find the same tyre — same brand, size and manufacturing year — cheaper anywhere in the UAE and send us a screenshot on WhatsApp. We’ll match it or beat it. Compare fitted prices, because many quotes look cheaper until fitting and balancing get added at the counter."}
                     },
                     {
-                        "question": {"en": "Can TyresVision handle a company fleet?", "ar": "هل توفرون خدمات لأساطيل الشركات؟"},
-                        "answer": {"en": "Yes — fleet pricing, consolidated invoicing and scheduled on-site visits are available. Call and ask for the fleet desk.", "ar": "نعم — نوفر أسعاراً مخصصة للأساطيل، فواتير موحدة، وزيارات صيانة مجدولة في موقعك. تواصل مع قسم الأساطيل."}
+                        "question": {"en": "How do I find my tyre size?"},
+                        "answer": {"en": "It’s moulded into the sidewall and looks like <strong>235/55 R19 105W</strong>. 235 is the width in mm, 55 is the sidewall height as a percentage of that width, R19 is the wheel diameter in inches, and 105W is the load index and speed rating. Send a photo on WhatsApp, or just your car’s make, model and year."}
                     },
                     {
-                        "question": {"en": "What if I need help right now?", "ar": "ماذا لو احتجت للمساعدة فوراً؟"},
-                        "answer": {"en": "Message TyresVision on WhatsApp at <a href=\"https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote.\" target=\"_blank\">+971 50 506 9575</a> or call the same number.", "ar": "راسل تايرز فيجن على واتساب على الرقم <a href=\"https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote.\" target=\"_blank\">9575 506 50 971+</a> أو اتصل على نفس الرقم."}
+                        "question": {"en": "Are your tyres new and date-fresh?"},
+                        "answer": {"en": "Yes. Every tyre is brand new from authorised UAE channels with a recent DOT date code that we show you before fitting. The last four digits are the week and year — 1226 means week 12 of 2026. This matters more here than in cooler countries, because heat degrades rubber long before tread wears out."}
+                    },
+                    {
+                        "question": {"en": "Can I get tyres delivered and fitted the same day?"},
+                        "answer": {"en": "Usually yes. Most popular UAE sizes are in stock, so message before 12 PM and we can normally fit the same day across Dubai and Abu Dhabi. Rarer sizes may need 24–48 hours — we’ll tell you honestly which yours is when we quote."}
+                    },
+                    {
+                        "question": {"en": "Do you deliver to Abu Dhabi as well as Dubai?"},
+                        "answer": {"en": "Yes. We deliver free to partner centres across both emirates, and our mobile vans cover most of Abu Dhabi including Al Reem Island, Khalifa City, Yas Island, Mohammed Bin Zayed City and Musaffah, alongside full Dubai coverage. Send a location pin and we’ll confirm immediately."}
+                    },
+                    {
+                        "question": {"en": "Can you fit tyres at my home or office?"},
+                        "answer": {"en": "Yes, for a call-out fee confirmed before we dispatch. Our vans fit tyres in villa driveways, apartment car parks, office bays and mall parking across Dubai and Abu Dhabi. We need a safe, level spot with room to work beside the car. Tell us if your building has height limits or access approval."}
+                    },
+                    {
+                        "question": {"en": "How long does tyre fitting take?"},
+                        "answer": {"en": "A set of four takes about 30–40 minutes at your location once the technician arrives, including balancing and a final torque check. At a partner centre, allow around 45–60 minutes including waiting. A single tyre is usually around 15 minutes."}
+                    },
+                    {
+                        "question": {"en": "Which tyre brand is best for UAE heat?"},
+                        "answer": {"en": "There’s no single answer. Premium makers like Michelin, Bridgestone, Continental and Pirelli hold up best on sustained high-temperature tarmac and long highway runs. For city driving, mid-range brands like Hankook, Yokohama and Falken give most of the performance for less. Tell us how you drive and we’ll advise honestly."}
+                    },
+                    {
+                        "question": {"en": "Do you sell tyres for SUVs and 4x4s?"},
+                        "answer": {"en": "Yes, and SUV and 4x4 sizes are the biggest part of what we sell. We stock the common Land Cruiser, Patrol, Prado, Pajero, Explorer and Tahoe fitments in highway, all-terrain and mud-terrain patterns. Tell us whether you stay on tarmac or actually drive in sand."}
+                    },
+                    {
+                        "question": {"en": "Do you have EV and run-flat tyres?"},
+                        "answer": {"en": "Yes to both. EVs are heavier and need a higher load rating plus low rolling resistance to protect range, so we match to the OE specification rather than just the size — Tesla Model 3 and Model Y sizes are stocked. Run-flats need the right equipment; our vans carry it."}
+                    },
+                    {
+                        "question": {"en": "What happens to my old tyres?"},
+                        "answer": {"en": "We take them away and dispose of them through licensed recycling channels at no extra charge. It’s included in every fitted price, whether at a centre or at your location."}
+                    },
+                    {
+                        "question": {"en": "Can you supply tyres to a company fleet?"},
+                        "answer": {"en": "Yes. We offer fleet pricing, consolidated monthly invoicing and scheduled on-site visits so your vehicles never leave the yard. Cars, pickups and light commercials across Dubai and Abu Dhabi. Message us on WhatsApp and ask for the fleet desk."}
+                    },
+                    {
+                        "question": {"en": "How do I pay for my tyres?"},
+                        "answer": {"en": "Cash, card or bank transfer on completion. There’s no online checkout and no deposit — you confirm the price on WhatsApp, we do the job, you pay when it’s finished."}
                     }
                 ]
             }, ensure_ascii=False),

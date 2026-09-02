@@ -2024,8 +2024,8 @@ def register_visionadmin_api_routes(app):
             },
             'initials': (data.get('initials') or 'SK').strip(),
             'role': data.get('role') if isinstance(data.get('role'), dict) else {
-                'en': (data.get('role_en') or data.get('role') or 'Tyre Selection Specialist, TyresCart').strip(),
-                'ar': (data.get('role_ar') or 'أخصائي اختيار الإطارات، تايرز كارت').strip()
+                'en': (data.get('role_en') or data.get('role') or 'Tyre Selection Specialist, TyresVision').strip(),
+                'ar': (data.get('role_ar') or 'أخصائي اختيار الإطارات، تايرز فيجن').strip()
             },
             'bio': data.get('bio') if isinstance(data.get('bio'), dict) else {
                 'en': (data.get('bio_en') or data.get('bio') or data.get('description_en') or '').strip(),

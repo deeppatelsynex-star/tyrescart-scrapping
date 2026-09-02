@@ -49,7 +49,7 @@ window.AdminShared = (function () {
   // Structured console error logger for debugging
   const logError = (context, error, extraDetails = null) => {
     console.error(
-      `%c[TyresCart Error: ${context}]`,
+      `%c[TyresVision Error: ${context}]`,
       'background: #be123c; color: #fff; font-weight: bold; padding: 2px 6px; border-radius: 4px;',
       error,
       extraDetails || ''
@@ -58,7 +58,7 @@ window.AdminShared = (function () {
 
   const logWarn = (context, message, extraDetails = null) => {
     console.warn(
-      `%c[TyresCart Warning: ${context}]`,
+      `%c[TyresVision Warning: ${context}]`,
       'background: #d97706; color: #fff; font-weight: bold; padding: 2px 6px; border-radius: 4px;',
       message,
       extraDetails || ''

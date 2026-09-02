@@ -17,7 +17,7 @@ SUPPORTED_API_VERSIONS = ["v1", "1.0", "1.0.0"]
 DEPRECATED_API_VERSIONS = []
 
 API_MODULE_MANIFEST = {
-    "name": "TyresCart Executive REST API",
+    "name": "TyresVision Executive REST API",
     "version": API_VERSION,
     "api_version_tag": API_RELEASE_TAG,
     "release_date": API_RELEASE_DATE,

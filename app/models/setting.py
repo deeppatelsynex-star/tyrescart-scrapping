@@ -1,4 +1,4 @@
-﻿import json
+import json
 from db import get_connection
 
 DEFAULT_REVIEWER_SETTINGS = {
@@ -9,12 +9,12 @@ DEFAULT_REVIEWER_SETTINGS = {
     },
     "initials": "SK",
     "role": {
-        "en": "Tyre Selection Specialist, TyresCart",
-        "ar": "أخصائي اختيار الإطارات، تايرز كارت"
+        "en": "Tyre Selection Specialist, TyresVision",
+        "ar": "أخصائي اختيار الإطارات، تايرز فيجن"
     },
     "bio": {
-        "en": "Sharvil Kumar oversees operations at TyresCart, helping customers find tyres that match their vehicle and budget. He ensures a smooth purchasing experience and trusted installation support.",
-        "ar": "يشرف شارفيل كومار على العمليات في تايرز كارت، لمساعدة العملاء في العثور على الإطارات المثالية التي تتطابق مع سياراتهم وميزانيتهم، مع ضمان تجربة شراء سلسة وخدمة تركيب معتمدة وموثوقة."
+        "en": "Sharvil Kumar oversees operations at TyresVision, helping customers find tyres that match their vehicle and budget. He ensures a smooth purchasing experience and trusted installation support.",
+        "ar": "يشرف شارفيل كومار على العمليات في تايرز فيجن، لمساعدة العملاء في العثور على الإطارات المثالية التي تتطابق مع سياراتهم وميزانيتهم، مع ضمان تجربة شراء سلسة وخدمة تركيب معتمدة وموثوقة."
     }
 }
 
