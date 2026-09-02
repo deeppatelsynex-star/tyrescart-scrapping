@@ -1,0 +1,1042 @@
+{% extends "visionadmin/base.html" %}
+
+{% block title %}Dynamic Attributes &amp; Sizing - VisionAdmin{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="visionAttributesApp()" x-init="initData()">
+
+  <!-- Top Hero Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 text-[11px] font-black uppercase tracking-wider rounded-lg bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]">E-Commerce Engine</span>
+        <span class="text-xs text-slate-400 font-semibold">• Dynamic EAV &amp; Scope Hierarchy</span>
+      </div>
+      <h1 class="text-2xl font-black text-[#0E1108] tracking-tight mt-1">Attributes &amp; Sizing Studio</h1>
+      <p class="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">Manage typed attributes, vehicle tyre dimensions, EU label parameters, and scoped attribute sets.</p>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <template x-if="activeTab === 'sets'">
+          <button 
+            type="button" 
+            @click="openCreateSetModal()" 
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Add Attribute Set</span>
+          </button>
+        </template>
+        <template x-if="activeTab === 'attributes'">
+          <button 
+            type="button" 
+            @click="openCreateModal()" 
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Add New Attribute</span>
+          </button>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="flex items-center gap-2 border-b border-[#E8EDE4] pb-2">
+    <button 
+      type="button" 
+      @click="activeTab = 'attributes'" 
+      :class="activeTab === 'attributes' ? 'bg-[#58B31B] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
+      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
+    >
+      Attributes List (<span x-text="attributes.length"></span>)
+    </button>
+    <button 
+      type="button" 
+      @click="activeTab = 'sets'" 
+      :class="activeTab === 'sets' ? 'bg-[#58B31B] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
+      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
+    >
+      Attribute Sets (<span x-text="attributeSets.length"></span>)
+    </button>
+    <button 
+      type="button" 
+      @click="activeTab = 'trash'" 
+      :class="activeTab === 'trash' ? 'bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3]' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
+      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-1.5"
+    >
+      <span>🗑️ Trash</span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'trash' ? 'bg-[#FFE4E6] text-[#E11D48]' : 'bg-slate-100 text-slate-600'" x-text="trashAttributes.length"></span>
+    </button>
+  </div>
+
+  <!-- TAB 1: ATTRIBUTES LIST TABLE -->
+  <div x-show="activeTab === 'attributes'" class="space-y-4">
+    <!-- Filter bar -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-[#E8EDE4]">
+      <div class="relative w-full sm:w-80">
+        <input 
+          type="text" 
+          x-model="searchQuery" 
+          placeholder="Filter by code or label..." 
+          class="w-full pl-9 pr-4 py-2 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#35760F]"
+        />
+        <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <select x-model="scopeFilter" class="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
+          <option value="">All Scopes</option>
+          <option value="global">Global</option>
+          <option value="website">Website</option>
+          <option value="store">Store</option>
+          <option value="store_view">Store View</option>
+        </select>
+        <select x-model="typeFilter" class="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
+          <option value="">All Types</option>
+          <option value="select">Select / Dropdown</option>
+          <option value="text">Text</option>
+          <option value="number">Numeric</option>
+          <option value="boolean">Boolean (Yes/No)</option>
+          <option value="multiselect">Multiselect</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Data Table Container -->
+    <div x-show="attributes.length > 0" class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
+      <div class="overflow-x-auto">
+        <table id="attributesTable" class="w-full text-left text-xs">
+          <thead class="bg-slate-50/80 border-b border-[#E8EDE4] text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">
+            <tr>
+              <th class="px-5 py-3.5">Code</th>
+              <th class="px-5 py-3.5">Name (EN / AR)</th>
+              <th class="px-5 py-3.5">Data Type</th>
+              <th class="px-5 py-3.5">Scope Level</th>
+              <th class="px-5 py-3.5 text-center">Filterable</th>
+              <th class="px-5 py-3.5 text-center">Required</th>
+              <th class="px-5 py-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#F1F5F0]">
+            <template x-for="attr in paginatedAttributes" :key="attr.id">
+              <tr class="hover:bg-[#F9FCF8] transition-colors">
+                <td class="px-5 py-3.5 font-mono font-bold text-slate-800" x-text="attr.code"></td>
+                <td class="px-5 py-3.5">
+                  <div class="font-bold text-[#0E1108]" x-text="formatAttrName(attr)"></div>
+                  <div class="text-[10px] text-slate-400 font-medium" dir="rtl" x-text="formatAttrArabic(attr)"></div>
+                </td>
+                <td class="px-5 py-3.5">
+                  <span 
+                    class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase"
+                    :class="{
+                      'bg-blue-50 text-blue-700': attr.type === 'select' || attr.type === 'multiselect',
+                      'bg-emerald-50 text-emerald-700': attr.type === 'number',
+                      'bg-slate-100 text-slate-700': attr.type === 'text',
+                      'bg-purple-50 text-purple-700': attr.type === 'boolean'
+                    }"
+                    x-text="attr.type"
+                  ></span>
+                  <template x-if="attr.unit">
+                    <span class="ml-1 text-[10px] font-mono text-slate-400" x-text="`(${attr.unit})`"></span>
+                  </template>
+                </td>
+                <td class="px-5 py-3.5">
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold uppercase" x-text="attr.scope"></span>
+                </td>
+                <td class="px-5 py-3.5 text-center">
+                  <span class="text-xs font-bold" :class="attr.is_filterable ? 'text-[#35760F]' : 'text-slate-300'" x-text="attr.is_filterable ? '✓ Yes' : '—'"></span>
+                </td>
+                <td class="px-5 py-3.5 text-center">
+                  <span class="text-xs font-bold" :class="attr.is_required ? 'text-rose-600' : 'text-slate-300'" x-text="attr.is_required ? '● Required' : 'Optional'"></span>
+                </td>
+                <td class="px-5 py-3.5 text-right space-x-1 whitespace-nowrap">
+                  <button 
+                    type="button" 
+                    @click="viewAttribute(attr)" 
+                    class="p-1.5 rounded-lg text-slate-500 hover:text-[#35760F] hover:bg-[#EAF7E2] transition cursor-pointer"
+                    title="Inspect Attribute"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                  <button 
+                    type="button" 
+                    @click="openEditModal(attr)" 
+                    class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+                    title="Edit Attribute"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button 
+                    type="button" 
+                    @click="deleteAttribute(attr)" 
+                    class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                    title="Delete Attribute"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+
+        <!-- Alpine Pagination Bar -->
+        <div class="px-5 py-3.5 bg-slate-50/50 border-t border-[#E8EDE4] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-semibold text-slate-500">
+          <div class="flex items-center gap-2">
+            <span>Show</span>
+            <select x-model.number="perPage" @change="page = 1" class="px-3 py-1 text-xs">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            <span>entries &nbsp;|&nbsp; Showing <span class="font-bold text-[#0E1108]" x-text="filteredAttributes.length === 0 ? 0 : (page - 1) * perPage + 1"></span> to <span class="font-bold text-[#0E1108]" x-text="Math.min(page * perPage, filteredAttributes.length)"></span> of <span class="font-bold text-[#0E1108]" x-text="filteredAttributes.length"></span> attributes</span>
+          </div>
+
+          <div class="flex items-center gap-1" x-show="totalPages > 1">
+            <button type="button" @click="if (page > 1) page--" :disabled="page === 1" :class="page === 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-200 cursor-pointer'" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold transition">
+              Previous
+            </button>
+            <span class="px-3 py-1.5 text-xs font-bold text-[#0E1108]">
+              Page <span x-text="page"></span> of <span x-text="totalPages"></span>
+            </span>
+            <button type="button" @click="if (page < totalPages) page++" :disabled="page === totalPages" :class="page === totalPages ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-200 cursor-pointer'" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold transition">
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State when catalog has 0 attributes -->
+    <div x-show="attributes.length === 0" class="bg-white rounded-3xl border border-[#E8EDE4] p-12 text-center shadow-xs">
+      <div class="w-12 h-12 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center mx-auto mb-3">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      </div>
+      <h4 class="font-black text-sm text-[#0E1108]">No Attributes in Catalog</h4>
+      <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Database is clean. Click "+ Add New Attribute" to create your first dynamic attribute.</p>
+    </div>
+  </div>
+
+  <!-- TAB 2: ATTRIBUTE SETS -->
+  <div x-show="activeTab === 'sets'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <template x-for="set in attributeSets" :key="set.id">
+      <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-xs flex flex-col justify-between hover:border-[#58B31B]/40 transition">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-0.5 rounded-full bg-[#EAF7E2] text-[#35760F] text-[10px] font-black uppercase">Set #<span x-text="set.id"></span></span>
+            <span class="text-xs font-mono text-slate-400" x-text="`${set.groups_count || 0} Groups`"></span>
+          </div>
+          <h3 class="text-base font-black text-[#0E1108] mt-3" x-text="set.name"></h3>
+          <p class="text-xs text-slate-500 font-medium mt-1" x-text="set.description || 'Pre-configured schema groups for vehicle sizing and EU labeling.'"></p>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-[#F1F5F0] flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <button 
+              type="button" 
+              @click="openEditSetModal(set)" 
+              class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+              title="Edit Attribute Set"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button 
+              type="button" 
+              @click="deleteAttributeSet(set)" 
+              class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+              title="Delete Attribute Set"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+          <button 
+            type="button" 
+            @click="loadSetSchema(set.id)" 
+            class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#EAF7E2] hover:text-[#35760F] text-slate-700 text-xs font-bold transition cursor-pointer"
+          >
+            Inspect Form Schema ↗
+          </button>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- TAB 3: ATTRIBUTES TRASH TABLE -->
+  <div x-show="activeTab === 'trash'" class="space-y-4">
+    <div class="bg-white rounded-3xl border border-[#FECDD3] overflow-hidden shadow-xs">
+      <div class="p-4 bg-rose-50/60 border-b border-rose-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          <span class="font-black text-rose-900 text-xs sm:text-sm">Archived &amp; Soft-Deleted Attributes</span>
+        </div>
+        <span class="text-xs text-rose-700 font-bold" x-text="`${trashAttributes.length} items in trash`"></span>
+      </div>
+      <div x-show="trashAttributes.length > 0" class="overflow-x-auto">
+        <table id="trashAttributesTable" class="w-full text-left text-xs">
+          <thead class="bg-[#F9FCF8] text-slate-400 font-bold uppercase text-[10px] border-b border-[#F1F5F0]">
+            <tr>
+              <th class="px-5 py-3.5">Code</th>
+              <th class="px-5 py-3.5">Name / Label</th>
+              <th class="px-5 py-3.5">Data Type</th>
+              <th class="px-5 py-3.5">Scope</th>
+              <th class="px-5 py-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#F1F5F0]">
+            <template x-for="attr in trashAttributes" :key="attr.id">
+              <tr class="hover:bg-rose-50/30 transition-colors">
+                <td class="px-5 py-3.5 font-mono font-bold text-slate-800" x-text="attr.code"></td>
+                <td class="px-5 py-3.5">
+                  <div class="font-bold text-[#0E1108]" x-text="formatAttrName(attr)"></div>
+                  <div class="text-[10px] text-slate-400" dir="rtl" x-text="formatAttrArabic(attr)"></div>
+                </td>
+                <td class="px-5 py-3.5">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-slate-100 text-slate-700" x-text="attr.type"></span>
+                </td>
+                <td class="px-5 py-3.5">
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold uppercase" x-text="attr.scope"></span>
+                </td>
+                <td class="px-5 py-3.5 text-right">
+                  <button 
+                    type="button" 
+                    @click="restoreAttribute(attr)" 
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#EAF7E2] hover:bg-[#D1E7C4] text-[#35760F] text-xs font-bold transition cursor-pointer"
+                    title="Restore Attribute"
+                  >
+                    <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    <span>Restore</span>
+                  </button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+      <div x-show="trashAttributes.length === 0" class="p-12 text-center text-slate-400">
+        Trash is empty. No soft-deleted attributes.
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKING ADD / EDIT ATTRIBUTE SET MODAL -->
+  <div x-show="showSetModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showSetModal = false">
+      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
+        <div>
+          <h3 class="text-base font-black text-[#0E1108]" x-text="setForm.id ? 'Edit Attribute Set: ' + setForm.name : 'Create New Attribute Set'"></h3>
+          <p class="text-xs text-slate-400">Schema blueprint grouping dynamic attributes for vehicle &amp; product catalogs.</p>
+        </div>
+        <button type="button" @click="showSetModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+      </div>
+
+      <form @submit.prevent="saveAttributeSet()" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Set Name *</label>
+          <input type="text" x-model="setForm.name" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold" placeholder="e.g. Electric Vehicle (EV) Tyres">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Slug / Code</label>
+          <input type="text" x-model="setForm.slug" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono" placeholder="e.g. ev_tyres (auto-generated if blank)">
+        </div>
+
+        <template x-if="!setForm.id">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Clone Schema Groups From (Optional)</label>
+            <select x-model="setForm.clone_from_id" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold">
+              <option value="">None (Create Blank Set with General Group)</option>
+              <template x-for="s in attributeSets" :key="s.id">
+                <option :value="s.id" x-text="`Inherit from: ${s.name} (#${s.id})`"></option>
+              </template>
+            </select>
+            <p class="text-[11px] text-slate-400 mt-1">Inherits all schema groups and attribute mappings from the selected template.</p>
+          </div>
+        </template>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Description</label>
+          <textarea x-model="setForm.description" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="e.g. Specialized acoustic ratings, high load capacity, and rolling resistance."></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#F1F5F0]">
+          <button type="button" @click="showSetModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 cursor-pointer">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] shadow-xs cursor-pointer" x-text="setForm.id ? 'Save Changes' : 'Create Set'"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- WORKING ADD / EDIT ATTRIBUTE MODAL -->
+  <div x-show="showCreateModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto" @click.away="showCreateModal = false">
+      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
+        <div>
+          <h3 class="text-base font-black text-[#0E1108]" x-text="form.id ? 'Edit Attribute: ' + form.code : 'Add New Dynamic Attribute'"></h3>
+          <p class="text-xs text-slate-400">EAV Attribute definition with multi-store scoping and options.</p>
+        </div>
+        <button type="button" @click="showCreateModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+      </div>
+
+      <form @submit.prevent="saveAttribute()" class="space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Attribute Code *</label>
+            <input 
+              type="text" 
+              x-model="form.code" 
+              :disabled="!!form.id" 
+              :class="form.id ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''"
+              required 
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono" 
+              placeholder="e.g. wet_grip"
+            >
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Data Type *</label>
+            <select x-model="form.type" :disabled="!!form.id" :class="form.id ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold">
+              <option value="select">Select / Dropdown</option>
+              <option value="multiselect">Multiselect</option>
+              <option value="text">Single-line Text</option>
+              <option value="number">Numeric</option>
+              <option value="boolean">Boolean (Yes/No)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Attribute Name (English) *</label>
+          <input type="text" x-model="form.name_en" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold" placeholder="e.g. Wet Grip Rating">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Attribute Name (Arabic)</label>
+          <input type="text" x-model="form.name_ar" dir="rtl" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold" placeholder="تصنيف التماسك على الأسطح الرطبة">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Scope Level</label>
+            <select x-model="form.scope" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold">
+              <option value="global">Global (Universal)</option>
+              <option value="website">Website Scoped</option>
+              <option value="store">Store Scoped</option>
+              <option value="store_view">Store View / Locale</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Unit of Measure (Optional)</label>
+            <input type="text" x-model="form.unit" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs" placeholder="e.g. dB, mm, kg, km/h">
+          </div>
+        </div>
+
+        <!-- Dynamic Options Repeater (For Select / Multiselect) -->
+        <template x-if="form.type === 'select' || form.type === 'multiselect'">
+          <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-slate-700">Predefined Select Options</span>
+              <button type="button" @click="addOption()" class="text-xs font-bold text-[#35760F] hover:underline cursor-pointer">+ Add Option</button>
+            </div>
+            <div class="space-y-2 max-h-36 overflow-y-auto">
+              <template x-for="(opt, idx) in form.options" :key="idx">
+                <div class="flex items-center gap-2">
+                  <input type="text" x-model="opt.value" placeholder="Option Value (e.g. A, B, XL)" class="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold">
+                  <button type="button" @click="removeOption(idx)" class="text-slate-400 hover:text-rose-600 px-1 text-sm font-bold">✕</button>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <!-- Feature Flags Toggles -->
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" x-model="form.is_filterable" class="w-4 h-4 rounded text-[#58B31B]">
+            <span class="text-xs font-bold text-slate-700">Filterable on Storefront</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" x-model="form.is_required" class="w-4 h-4 rounded text-[#58B31B]">
+            <span class="text-xs font-bold text-slate-700">Required Field</span>
+          </label>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-4 border-t border-[#F1F5F0]">
+          <button type="button" @click="showCreateModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 cursor-pointer">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] shadow-xs cursor-pointer" x-text="form.id ? 'Save Changes' : 'Create Attribute'"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- INSPECT ATTRIBUTE DETAILS MODAL -->
+  <div x-show="showDetailModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showDetailModal = false">
+      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
+        <div>
+          <h3 class="text-base font-black text-[#0E1108]" x-text="selectedAttr ? formatAttrName(selectedAttr) : 'Attribute Details'"></h3>
+          <p class="text-xs font-mono text-slate-400" x-text="selectedAttr ? `Code: ${selectedAttr.code}` : ''"></p>
+        </div>
+        <button type="button" @click="showDetailModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
+      </div>
+
+      <template x-if="selectedAttr">
+        <div class="space-y-3 text-xs">
+          <div class="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-2xl">
+            <div>
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Type</span>
+              <span class="font-bold text-slate-800 uppercase" x-text="selectedAttr.type"></span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Scope</span>
+              <span class="font-bold text-slate-800 uppercase" x-text="selectedAttr.scope"></span>
+            </div>
+          </div>
+
+          <template x-if="selectedAttr.options && selectedAttr.options.length">
+            <div>
+              <span class="text-xs font-black text-slate-700 block mb-1.5">Configured Options</span>
+              <div class="flex flex-wrap gap-1.5">
+                <template x-for="opt in selectedAttr.options" :key="opt.id || opt.value">
+                  <span class="px-2.5 py-1 rounded-lg bg-[#EAF7E2] text-[#35760F] font-bold text-xs" x-text="opt.value || opt"></span>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <div class="flex items-center justify-end pt-3 border-t border-[#F1F5F0]">
+        <button type="button" @click="showDetailModal = false" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHEMA GROUPS & ATTRIBUTES BUILDER / INSPECTOR MODAL -->
+  <div x-show="showSchemaModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto" @click.away="showSchemaModal = false">
+      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-base font-black text-[#0E1108]" x-text="selectedSchema ? selectedSchema.name : 'Form Schema Builder'"></h3>
+            <span class="px-2 py-0.5 rounded-full bg-[#EAF7E2] text-[#35760F] text-[10px] font-black uppercase">Active Schema Builder</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">Assign, reorder, or remove dynamic attributes across schema groups.</p>
+        </div>
+        <button type="button" @click="showSchemaModal = false" class="text-slate-400 hover:text-slate-700 text-base cursor-pointer">✕</button>
+      </div>
+
+      <!-- Add New Group Toolbar -->
+      <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+        <div class="flex items-center gap-2 flex-1">
+          <input 
+            type="text" 
+            x-model="newGroupName" 
+            placeholder="New Group Name (e.g. Electric Vehicle Specs)" 
+            class="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#35760F]"
+          >
+          <button 
+            type="button" 
+            @click="addGroupToCurrentSet()" 
+            class="px-3.5 py-1.5 rounded-xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs font-bold transition shadow-2xs cursor-pointer whitespace-nowrap"
+          >
+            + Add Group
+          </button>
+        </div>
+      </div>
+
+      <template x-if="selectedSchema">
+        <div class="space-y-4 text-xs">
+          <template x-for="(group, gIdx) in selectedSchema.groups" :key="group.id || gIdx">
+            <div class="p-4 bg-slate-50/90 rounded-2xl border border-slate-200/80 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                  <span class="font-black text-[#0E1108] text-xs" x-text="formatGroupName(group)"></span>
+                  <span class="text-[10px] font-mono text-slate-400" x-text="`(${group.code})`"></span>
+                </div>
+                <span class="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600 text-[10px] font-bold" x-text="`${group.attributes ? group.attributes.length : 0} Attributes`"></span>
+              </div>
+
+              <!-- Group Attributes Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <template x-for="attr in group.attributes" :key="attr.id">
+                  <div class="p-2.5 bg-white rounded-xl border border-slate-200/80 flex items-center justify-between shadow-2xs group hover:border-slate-300">
+                    <div class="min-w-0 flex-1 pr-2">
+                      <div class="font-bold text-[#0E1108] truncate" x-text="formatAttrName(attr)"></div>
+                      <div class="text-[10px] font-mono text-slate-400 truncate" x-text="attr.code"></div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-blue-50 text-blue-700" x-text="attr.type"></span>
+                      <template x-if="attr.unit">
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-slate-100 text-slate-600" x-text="attr.unit"></span>
+                      </template>
+                      <button 
+                        type="button" 
+                        @click="removeAttributeFromGroup(group.id, attr.id, formatAttrName(attr))" 
+                        class="p-1 rounded-md text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                        title="Remove from this group"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                </template>
+                <div x-show="!group.attributes || group.attributes.length === 0" class="col-span-2 py-3 text-center text-slate-400 italic">
+                  No attributes assigned to this group yet.
+                </div>
+              </div>
+
+              <!-- Inline Assign Attribute to Group Controls -->
+              <div class="pt-2 border-t border-slate-200/60 flex items-center gap-2">
+                <select 
+                  x-model="selectedAttrToAdd[group.id]" 
+                  class="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700"
+                >
+                  <option value="">Select an attribute to add to this group...</option>
+                  <template x-for="a in getAvailableAttrsForGroup(group)" :key="a.id">
+                    <option :value="a.id" x-text="`${formatAttrName(a)} (${a.code})`"></option>
+                  </template>
+                </select>
+                <button 
+                  type="button" 
+                  @click="addAttributeToGroup(group.id)" 
+                  class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-black text-white text-xs font-bold transition cursor-pointer whitespace-nowrap"
+                >
+                  + Add to Group
+                </button>
+              </div>
+
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <div class="flex items-center justify-end pt-3 border-t border-[#F1F5F0]">
+        <button type="button" @click="showSchemaModal = false" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer">Close</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function visionAttributesApp() {
+  return {
+    activeTab: 'attributes',
+    searchQuery: '',
+    scopeFilter: '',
+    typeFilter: '',
+    attributes: [],
+    trashAttributes: [],
+    attributeSets: [],
+    showCreateModal: false,
+    showSetModal: false,
+    showDetailModal: false,
+    showSchemaModal: false,
+    selectedAttr: null,
+    selectedSchema: null,
+    selectedAttrToAdd: {},
+    page: 1,
+    perPage: 10,
+    newGroupName: '',
+    setForm: {
+      id: null,
+      name: '',
+      slug: '',
+      description: '',
+      clone_from_id: ''
+    },
+    form: {
+      id: null,
+      code: '',
+      name_en: '',
+      name_ar: '',
+      type: 'select',
+      scope: 'global',
+      unit: '',
+      is_filterable: true,
+      is_required: false,
+      options: [{ value: 'A' }, { value: 'B' }, { value: 'C' }]
+    },
+
+    async initData() {
+      try {
+        const [attrRes, setRes] = await Promise.all([
+          fetch('/visionadmin/api/attributes'),
+          fetch('/visionadmin/api/attribute-sets')
+        ]);
+        const attrData = await attrRes.json();
+        const setData = await setRes.json();
+        if (attrData.attributes) this.attributes = attrData.attributes || [];
+        if (attrData.trash) this.trashAttributes = attrData.trash || [];
+        if (setData.attribute_sets) this.attributeSets = setData.attribute_sets || [];
+      } catch (err) {
+        console.error('Error loading attributes data:', err);
+      }
+    },
+
+    get totalPages() {
+      return Math.ceil(this.filteredAttributes.length / this.perPage) || 1;
+    },
+
+    get paginatedAttributes() {
+      const start = (this.page - 1) * this.perPage;
+      return this.filteredAttributes.slice(start, start + this.perPage);
+    },
+
+    get filteredAttributes() {
+      return this.attributes.filter(a => {
+        const q = this.searchQuery.toLowerCase();
+        const matchQ = !q || 
+          (a.code && a.code.toLowerCase().includes(q)) ||
+          (a.name_en && a.name_en.toLowerCase().includes(q)) ||
+          (a.name && typeof a.name === 'string' && a.name.toLowerCase().includes(q));
+        const matchScope = !this.scopeFilter || a.scope === this.scopeFilter;
+        const matchType = !this.typeFilter || a.type === this.typeFilter;
+        return matchQ && matchScope && matchType;
+      });
+    },
+
+    formatAttrName(attr) {
+      if (!attr) return '';
+      if (attr.name_en) return attr.name_en;
+      if (typeof attr.name === 'object' && attr.name !== null) {
+        return attr.name.en || attr.name.ar || attr.code;
+      }
+      if (typeof attr.name === 'string') {
+        try {
+          const parsed = JSON.parse(attr.name);
+          return parsed.en || parsed.ar || attr.name;
+        } catch (e) {
+          return attr.name;
+        }
+      }
+      return attr.code || '';
+    },
+
+    formatAttrArabic(attr) {
+      if (!attr) return '';
+      if (attr.name_ar) return attr.name_ar;
+      if (typeof attr.name === 'object' && attr.name !== null) {
+        return attr.name.ar || '';
+      }
+      if (typeof attr.name === 'string') {
+        try {
+          const parsed = JSON.parse(attr.name);
+          return parsed.ar || '';
+        } catch (e) {}
+      }
+      return '';
+    },
+
+    openCreateModal() {
+      this.form = {
+        id: null,
+        code: '',
+        name_en: '',
+        name_ar: '',
+        type: 'select',
+        scope: 'global',
+        unit: '',
+        is_filterable: true,
+        is_required: false,
+        options: [{ value: 'A' }, { value: 'B' }]
+      };
+      this.showCreateModal = true;
+    },
+
+    async openEditModal(attr) {
+      let options = [];
+      try {
+        const res = await fetch(`/visionadmin/api/attributes/${attr.id}`);
+        const d = await res.json();
+        if (d.attribute && d.attribute.options) {
+          options = d.attribute.options.map(o => ({ value: o.value || o }));
+        }
+      } catch (e) {}
+
+      this.form = {
+        id: attr.id,
+        code: attr.code,
+        name_en: this.formatAttrName(attr),
+        name_ar: this.formatAttrArabic(attr),
+        type: attr.type || 'select',
+        scope: attr.scope || 'global',
+        unit: attr.unit || '',
+        is_filterable: !!attr.is_filterable,
+        is_required: !!attr.is_required,
+        options: options.length ? options : [{ value: 'A' }, { value: 'B' }]
+      };
+      this.showCreateModal = true;
+    },
+
+    async deleteAttribute(attr) {
+      const confirmMsg = `Are you sure you want to move attribute '${attr.code}' to trash?`;
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch(`/visionadmin/api/attributes/${attr.id}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          await this.initData();
+          if (window.showToast) window.showToast(`Attribute '${attr.code}' moved to trash.`, 'success');
+        } else {
+          alert(data.error || 'Failed to delete attribute.');
+        }
+      } catch (e) {
+        console.error('Delete attribute error:', e);
+      }
+    },
+
+    async restoreAttribute(attr) {
+      try {
+        const res = await fetch(`/visionadmin/api/attributes/${attr.id}/restore`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (data.success) {
+          await this.initData();
+          if (window.showToast) window.showToast(`Attribute '${attr.code}' restored to active list!`, 'success');
+        } else {
+          alert(data.error || 'Failed to restore attribute.');
+        }
+      } catch (e) {
+        console.error('Restore attribute error:', e);
+      }
+    },
+
+    addOption() {
+      this.form.options.push({ value: '' });
+    },
+
+    removeOption(idx) {
+      this.form.options.splice(idx, 1);
+    },
+
+    async saveAttribute() {
+      try {
+        const payload = {
+          code: this.form.code,
+          name: { en: this.form.name_en, ar: this.form.name_ar },
+          type: this.form.type,
+          scope: this.form.scope,
+          unit: this.form.unit || null,
+          is_filterable: this.form.is_filterable,
+          is_required: this.form.is_required,
+          options: this.form.options.map(o => o.value).filter(Boolean)
+        };
+
+        const method = this.form.id ? 'PUT' : 'POST';
+        const url = this.form.id ? `/visionadmin/api/attributes/${this.form.id}` : '/visionadmin/api/attributes';
+
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success || data.id) {
+          this.showCreateModal = false;
+          await this.initData();
+          if (window.showToast) window.showToast(this.form.id ? 'Attribute updated successfully!' : 'Attribute created successfully!', 'success');
+        } else {
+          alert(data.error || 'Failed to save attribute.');
+        }
+      } catch (err) {
+        console.error('Save attribute error:', err);
+      }
+    },
+
+    viewAttribute(attr) {
+      this.selectedAttr = attr;
+      this.showDetailModal = true;
+    },
+
+    formatGroupName(g) {
+      if (!g) return '';
+      if (typeof g.name === 'object' && g.name !== null) {
+        return g.name.en || g.name.ar || g.code || 'Schema Group';
+      }
+      if (typeof g.name === 'string' && g.name.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(g.name);
+          return parsed.en || parsed.ar || g.name;
+        } catch(e) {}
+      }
+      return g.name || g.code || 'Schema Group';
+    },
+
+    async loadSetSchema(setId) {
+      try {
+        const res = await fetch(`/visionadmin/api/catalog/form-schema/${setId}`);
+        const data = await res.json();
+        if (data.schema) {
+          this.selectedSchema = data.schema;
+          this.showSchemaModal = true;
+        } else {
+          alert('No schema groups configured for this set.');
+        }
+      } catch (err) {
+        console.error('Failed to load schema:', err);
+        alert('Failed to load schema from server.');
+      }
+    },
+
+    openCreateSetModal() {
+      this.setForm = {
+        id: null,
+        name: '',
+        slug: '',
+        description: '',
+        clone_from_id: ''
+      };
+      this.showSetModal = true;
+    },
+
+    openEditSetModal(set) {
+      this.setForm = {
+        id: set.id,
+        name: set.name || '',
+        slug: set.slug || '',
+        description: set.description || '',
+        clone_from_id: ''
+      };
+      this.showSetModal = true;
+    },
+
+    async saveAttributeSet() {
+      try {
+        const payload = {
+          name: this.setForm.name,
+          slug: this.setForm.slug,
+          description: this.setForm.description,
+          clone_from_id: this.setForm.clone_from_id || null
+        };
+
+        const method = this.setForm.id ? 'PUT' : 'POST';
+        const url = this.setForm.id ? `/visionadmin/api/attribute-sets/${this.setForm.id}` : '/visionadmin/api/attribute-sets';
+
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success || data.id) {
+          this.showSetModal = false;
+          await this.initData();
+          if (window.showToast) window.showToast(this.setForm.id ? 'Attribute set updated successfully!' : 'Attribute set created successfully!', 'success');
+        } else {
+          alert(data.error || 'Failed to save attribute set.');
+        }
+      } catch (err) {
+        console.error('Save attribute set error:', err);
+      }
+    },
+
+    async deleteAttributeSet(set) {
+      const confirmMsg = `Are you sure you want to move attribute set '${set.name}' to trash?`;
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch(`/visionadmin/api/attribute-sets/${set.id}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          await this.initData();
+          if (window.showToast) window.showToast(`Attribute set '${set.name}' moved to trash.`, 'success');
+        } else {
+          alert(data.error || 'Failed to delete attribute set.');
+        }
+      } catch (e) {
+        console.error('Delete attribute set error:', e);
+      }
+    },
+
+    getAvailableAttrsForGroup(group) {
+      if (!group || !this.attributes) return [];
+      const assignedIds = new Set((group.attributes || []).map(a => a.id));
+      return this.attributes.filter(a => !assignedIds.has(a.id));
+    },
+
+    async addAttributeToGroup(groupId) {
+      const attrId = this.selectedAttrToAdd[groupId];
+      if (!attrId) {
+        alert('Please select an attribute from the dropdown first.');
+        return;
+      }
+      try {
+        const res = await fetch(`/visionadmin/api/attribute-groups/${groupId}/attributes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ attribute_id: parseInt(attrId), sort_order: 10 })
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.selectedAttrToAdd[groupId] = '';
+          await this.loadSetSchema(this.selectedSchema.id);
+          if (window.showToast) window.showToast('Attribute added to group successfully!', 'success');
+        } else {
+          alert(data.error || 'Failed to add attribute to group.');
+        }
+      } catch (e) {
+        console.error('Add attribute to group error:', e);
+      }
+    },
+
+    async removeAttributeFromGroup(groupId, attrId, attrName) {
+      const confirmMsg = `Remove attribute '${attrName || attrId}' from this group?`;
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch(`/visionadmin/api/attribute-groups/${groupId}/attributes/${attrId}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          await this.loadSetSchema(this.selectedSchema.id);
+          if (window.showToast) window.showToast('Attribute removed from group.', 'success');
+        } else {
+          alert(data.error || 'Failed to remove attribute.');
+        }
+      } catch (e) {
+        console.error('Remove attribute from group error:', e);
+      }
+    },
+
+    async addGroupToCurrentSet() {
+      const name = (this.newGroupName || '').trim();
+      if (!name) {
+        alert('Please enter a name for the new schema group.');
+        return;
+      }
+      if (!this.selectedSchema || !this.selectedSchema.id) return;
+
+      try {
+        const res = await fetch(`/visionadmin/api/attribute-sets/${this.selectedSchema.id}/groups`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: { en: name, ar: name } })
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.newGroupName = '';
+          await this.loadSetSchema(this.selectedSchema.id);
+          await this.initData();
+          if (window.showToast) window.showToast(`Group '${name}' added to set!`, 'success');
+        } else {
+          alert(data.error || 'Failed to add group.');
+        }
+      } catch (e) {
+        console.error('Add group to set error:', e);
+      }
+    }
+  };
+}
+</script>
+{% endblock %}

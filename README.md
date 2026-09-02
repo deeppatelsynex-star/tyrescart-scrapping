@@ -1,4 +1,4 @@
-# TyresCart Scraping Dashboard
+# TyresVision Scraping Dashboard
 
 A Flask web dashboard for scraping tyre product data from [pitstoparabia.com](https://www.pitstoparabia.com).
 Authenticated users start scraping jobs from the browser — by uploading a CSV/JSON
@@ -13,7 +13,7 @@ framework — server-rendered Jinja templates + vanilla JS.
 
 - **Login / session auth** with bcrypt password hashing, per-email rate limiting,
   and "Remember me" (persistent vs. browser-session cookies).
-- **Forgot / reset password** via emailed single-use links (sent through [Resend](https://resend.com)).
+- **Forgot / reset password** via emailed single-use links (sent through SMTP).
 - **User Management & Trash** — role-based (`SuperAdmin` / `Admin` / `User`),
   soft-delete only (no permanent delete), searchable/sortable DataTables.
 - **Flexible scraper input** — start a job by:
@@ -35,15 +35,14 @@ framework — server-rendered Jinja templates + vanilla JS.
 |---|---|
 | Backend | Flask, PyMySQL, bcrypt, python-dotenv |
 | Scraping | Scrapy, scrapy-xlsx, openpyxl |
-| Email | Resend (`resend` PyPI package) |
+| Email | Native Python `smtplib` (SMTP SSL/TLS) |
 | Database | MySQL (Railway-hosted by default; local MySQL as an optional fallback) |
-| Frontend | Server-rendered Jinja templates, vanilla JS, Tailwind (via CDN), DataTables |
+| Frontend | Server-rendered Jinja templates, Alpine.js, vanilla JS, Tailwind (via CDN), DataTables |
 
 ## Prerequisites
 
 - Python 3.10+ (a `venv/` is expected at the project root — see below)
 - A MySQL server/database (Railway or local)
-- A [Resend](https://resend.com) API key (optional — only needed for password-reset emails)
 
 ## Setup
 
@@ -58,7 +57,7 @@ venv\Scripts\pip install -r requirements.txt        # Windows
 venv\Scripts\python -m playwright install chromium  # one-time browser download, needed by scan.py
 
 copy .env.example .env      # Windows -- or `cp .env.example .env`
-# then edit .env with real DB / Resend credentials
+# then edit .env with real DB credentials
 ```
 
 ### Environment variables (`.env`)
@@ -66,12 +65,7 @@ copy .env.example .env      # Windows -- or `cp .env.example .env`
 | Variable | Required | Purpose |
 |---|---|---|
 | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | Yes | MySQL connection (Railway by default; a commented-out local-MySQL block is included as a fallback) |
-| `RESEND_API_KEY`, `MAIL_FROM` | No | Needed only to send "forgot password" emails; without them `/forgot-password` still responds but logs a failure instead of sending mail |
 | `FLASK_SECRET_KEY` | Recommended outside dev | Session signing key — set this in any environment that restarts the process, or sessions won't survive a restart |
-
-A sandbox-tier Resend key can only deliver to its own verified address and is
-capped at a low daily quota until a sending domain is verified in the Resend
-dashboard.
 
 ### Database
 

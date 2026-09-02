@@ -7,16 +7,34 @@ Scraper Development Guide
 {% block ExtraHead %}
 <link rel="stylesheet" href="/static/internal.css" />
 <style>
-  .guide-code { position: relative; }
-  .guide-copy-btn {
-    position: absolute; top: .5rem; right: .5rem;
-    font-size: .7rem; font-weight: 600; letter-spacing: .02em;
-    padding: .25rem .6rem; border-radius: .5rem;
-    background: rgba(255,255,255,.08); color: #cbd5e1;
-    border: 1px solid rgba(255,255,255,.15); cursor: pointer;
+  .guide-code {
+    position: relative;
   }
-  .guide-copy-btn:hover { background: rgba(255,255,255,.16); color: #fff; }
-  .guide-toc a.is-active { color: #059669; background: #ecfdf5; }
+
+  .guide-copy-btn {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+    padding: .25rem .6rem;
+    border-radius: .5rem;
+    background: rgba(255, 255, 255, .08);
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, .15);
+    cursor: pointer;
+  }
+
+  .guide-copy-btn:hover {
+    background: rgba(255, 255, 255, .16);
+    color: #fff;
+  }
+
+  .guide-toc a.is-active {
+    color: #059669;
+    background: #ecfdf5;
+  }
 </style>
 {% endblock ExtraHead %}
 
@@ -25,24 +43,40 @@ Scraper Development Guide
   <div class="mx-auto max-w-6xl gap-6 lg:flex lg:items-start">
 
     <!-- In-page table of contents -->
-    <nav class="guide-toc mb-6 ml-0 shrink-0 rounded-2xl border border-slate-200 bg-white p-3 text-sm lg:sticky lg:top-0 lg:mb-0 lg:w-56">
+    <nav
+      class="guide-toc mb-6 ml-0 shrink-0 rounded-2xl border border-slate-200 bg-white p-3 text-sm lg:sticky lg:top-0 lg:mb-0 lg:w-56">
       <p class="mb-1.5 px-1.5 text-xs mt-4 font-semibold uppercase tracking-wide text-slate-400">On this page</p>
       <ul class="space-y-1.5 mb-3 mx-3">
-        <li><a href="#overview" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Overview &amp; architecture</a></li>
-        <li><a href="#structure" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Script structure</a></li>
-        <li><a href="#runtime-args" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Runtime arguments</a></li>
-        <li><a href="#settings" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Settings &amp; xlsx output</a></li>
-        <li><a href="#url-status" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">URL status protocol</a></li>
-        <li><a href="#request-tracking" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Request tracking</a></li>
-        <li><a href="#entry-routing" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Entry URL routing</a></li>
-        <li><a href="#listing" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Listing &amp; pagination</a></li>
-        <li><a href="#detail" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Detail extraction</a></li>
-        <li><a href="#helpers" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Helpers &amp; entry point</a></li>
-        <li><a href="#template" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Complete template</a></li>
-        <li><a href="#keep-vs-customize" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Keep vs. customize</a></li>
-        <li><a href="#quick-guide" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">7-step quick guide</a></li>
-        <li><a href="#compatibility" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Compatibility rule</a></li>
-        <li><a href="#troubleshooting" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Troubleshooting</a></li>
+        <li><a href="#overview" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Overview &amp;
+            architecture</a></li>
+        <li><a href="#structure" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Script
+            structure</a></li>
+        <li><a href="#runtime-args" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Runtime
+            arguments</a></li>
+        <li><a href="#settings" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Settings &amp;
+            xlsx output</a></li>
+        <li><a href="#url-status" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">URL status
+            protocol</a></li>
+        <li><a href="#request-tracking" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Request
+            tracking</a></li>
+        <li><a href="#entry-routing" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Entry URL
+            routing</a></li>
+        <li><a href="#listing" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Listing &amp;
+            pagination</a></li>
+        <li><a href="#detail" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Detail
+            extraction</a></li>
+        <li><a href="#helpers" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Helpers &amp; entry
+            point</a></li>
+        <li><a href="#template" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Complete
+            template</a></li>
+        <li><a href="#keep-vs-customize" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Keep vs.
+            customize</a></li>
+        <li><a href="#quick-guide" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">7-step quick
+            guide</a></li>
+        <li><a href="#compatibility" class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Compatibility
+            rule</a></li>
+        <li><a href="#troubleshooting"
+            class="block rounded-lg px-1.5 py-1 text-slate-600 hover:bg-slate-50">Troubleshooting</a></li>
       </ul>
     </nav>
 
@@ -91,7 +125,8 @@ Web Application  (reads status lines live, serves the finished file for download
 
         <div class="guide-code mt-3">
           <button type="button" class="guide-copy-btn" data-copy-target="code-structure">Copy</button>
-          <pre id="code-structure" class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>from scrapy import Spider, Request, Selector
+          <pre id="code-structure"
+            class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>from scrapy import Spider, Request, Selector
 from scrapy.crawler import CrawlerProcess
 
 
@@ -151,18 +186,29 @@ if __name__ == "__main__":
 python your_scraper.py  /tmp/scrapers/job_ab12cd34_listing_output.xlsx  /tmp/scrapers/job_ab12cd34_listing.csv</pre>
         <table class="mt-3 w-full overflow-hidden rounded-xl border border-slate-200 text-sm">
           <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <tr><th class="px-4 py-2">Argument</th><th class="px-4 py-2">Meaning</th></tr>
+            <tr>
+              <th class="px-4 py-2">Argument</th>
+              <th class="px-4 py-2">Meaning</th>
+            </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            <tr><td class="px-4 py-2 font-mono text-xs">sys.argv[1]</td><td class="px-4 py-2">The exact path your finished <code>.xlsx</code> must be written to.</td></tr>
-            <tr><td class="px-4 py-2 font-mono text-xs">sys.argv[2]</td><td class="px-4 py-2">A CSV of seed URLs, one per line, no header — the first column is the URL.</td></tr>
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs">sys.argv[1]</td>
+              <td class="px-4 py-2">The exact path your finished <code>.xlsx</code> must be written to.</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs">sys.argv[2]</td>
+              <td class="px-4 py-2">A CSV of seed URLs, one per line, no header — the first column is the URL.</td>
+            </tr>
           </tbody>
         </table>
 
-        <p class="mt-4 text-sm text-slate-600">From the reference script — read both with a fallback default so the file also still runs standalone during local testing:</p>
+        <p class="mt-4 text-sm text-slate-600">From the reference script — read both with a fallback default so the file
+          also still runs standalone during local testing:</p>
         <div class="guide-code mt-2">
           <button type="button" class="guide-copy-btn" data-copy-target="code-args">Copy</button>
-          <pre id="code-args" class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code># OUTPUT FILE
+          <pre id="code-args"
+            class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code># OUTPUT FILE
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 today = datetime.now().strftime("%d-%m-%Y")
 
@@ -206,7 +252,8 @@ csv_file = sys.argv[2] if len(sys.argv) > 2 else os.path.join(
         </p>
         <div class="guide-code mt-2">
           <button type="button" class="guide-copy-btn" data-copy-target="code-settings">Copy</button>
-          <pre id="code-settings" class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>custom_settings = {
+          <pre id="code-settings"
+            class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>custom_settings = {
     "FEED_EXPORTERS": {
         "xlsx": "scrapy_xlsx.XlsxItemExporter"
     },
@@ -224,15 +271,22 @@ csv_file = sys.argv[2] if len(sys.argv) > 2 else os.path.join(
 }</code></pre>
         </div>
         <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-600">
-          <li><code>FEED_EXPORTERS</code> registers the xlsx format with Scrapy (needs the <code>scrapy-xlsx</code> package installed).</li>
-          <li><code>FEEDS</code> is the actual export target — the dict key is the file path, so it must be the <code>output_file</code> variable, evaluated after you've already resolved <code>sys.argv[1]</code> above it.</li>
-          <li>Every dict/list your parse methods <code>yield</code> becomes one row — the column headers come from the first item's keys, in order, so use an <code>OrderedDict</code> if column order matters (see "Detail extraction").</li>
-          <li><code>DOWNLOAD_DELAY</code> / <code>CONCURRENT_REQUESTS</code> are yours to tune per target site; they don't affect app compatibility.</li>
+          <li><code>FEED_EXPORTERS</code> registers the xlsx format with Scrapy (needs the <code>scrapy-xlsx</code>
+            package installed).</li>
+          <li><code>FEEDS</code> is the actual export target — the dict key is the file path, so it must be the
+            <code>output_file</code> variable, evaluated after you've already resolved <code>sys.argv[1]</code> above
+            it.</li>
+          <li>Every dict/list your parse methods <code>yield</code> becomes one row — the column headers come from the
+            first item's keys, in order, so use an <code>OrderedDict</code> if column order matters (see "Detail
+            extraction").</li>
+          <li><code>DOWNLOAD_DELAY</code> / <code>CONCURRENT_REQUESTS</code> are yours to tune per target site; they
+            don't affect app compatibility.</li>
         </ul>
         <p class="mt-3 text-sm text-slate-600">If you'd rather export CSV or JSON instead of xlsx, swap the
           <code>FEEDS</code> format accordingly (Scrapy supports <code>"csv"</code> and <code>"json"</code>
           natively, no extra package needed) — just make sure the path you write to is still exactly
-          <code>output_file</code>, whatever its extension.</p>
+          <code>output_file</code>, whatever its extension.
+        </p>
       </section>
 
       <section id="url-status" class="rounded-2xl border border-slate-200 bg-white p-6">
@@ -251,20 +305,36 @@ URL_STATUS|https://example.com/product/1|blocked|https://example.com|product</pr
 
         <div class="guide-code mt-3">
           <button type="button" class="guide-copy-btn" data-copy-target="code-emit">Copy</button>
-          <pre id="code-emit" class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>def emit_status(self, url, status, parent=None, url_type=None):
+          <pre id="code-emit"
+            class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>def emit_status(self, url, status, parent=None, url_type=None):
     print(f"URL_STATUS|{url}|{status}|{parent or ''}|{url_type or ''}")</code></pre>
         </div>
 
         <h3 class="mt-5 text-sm font-semibold text-slate-800">Supported statuses</h3>
         <table class="mt-2 w-full overflow-hidden rounded-xl border border-slate-200 text-sm">
           <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <tr><th class="px-4 py-2">Status</th><th class="px-4 py-2">Meaning</th></tr>
+            <tr>
+              <th class="px-4 py-2">Status</th>
+              <th class="px-4 py-2">Meaning</th>
+            </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            <tr><td class="px-4 py-2 font-mono text-xs">pending</td><td class="px-4 py-2">URL has been discovered/queued, not yet requested.</td></tr>
-            <tr><td class="px-4 py-2 font-mono text-xs">running</td><td class="px-4 py-2">The request for this URL is currently in flight.</td></tr>
-            <tr><td class="px-4 py-2 font-mono text-xs">done</td><td class="px-4 py-2">Finished successfully (item extracted, or page fully processed).</td></tr>
-            <tr><td class="px-4 py-2 font-mono text-xs">blocked</td><td class="px-4 py-2">Request failed, or the site returned a 403 / blocked response.</td></tr>
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs">pending</td>
+              <td class="px-4 py-2">URL has been discovered/queued, not yet requested.</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs">running</td>
+              <td class="px-4 py-2">The request for this URL is currently in flight.</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs">done</td>
+              <td class="px-4 py-2">Finished successfully (item extracted, or page fully processed).</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs">blocked</td>
+              <td class="px-4 py-2">Request failed, or the site returned a 403 / blocked response.</td>
+            </tr>
           </tbody>
         </table>
         <div class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -276,7 +346,8 @@ URL_STATUS|https://example.com/product/1|blocked|https://example.com|product</pr
         <p class="mt-2 text-sm text-slate-600"><code>parent</code> tells the app which URL discovered this
           one, so it can render a tree instead of a flat list; <code>url_type</code> is just a small label
           for the UI badge. The reference script uses <code>root</code> (a seed URL from the CSV),
-          <code>listing</code> (a paginated category page), and <code>product</code> (a detail page):</p>
+          <code>listing</code> (a paginated category page), and <code>product</code> (a detail page):
+        </p>
         <pre class="mt-2 overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200">Root URL (url_type="root", no parent)
    │
    ├── Listing page 2   (url_type="listing", parent=root)
@@ -285,7 +356,8 @@ URL_STATUS|https://example.com/product/1|blocked|https://example.com|product</pr
    └── Product URL 3    (url_type="product", parent=root)</pre>
         <div class="guide-code mt-2">
           <button type="button" class="guide-copy-btn" data-copy-target="code-parent">Copy</button>
-          <pre id="code-parent" class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>self.emit_status(product_url, 'pending', parent=source_url, url_type='product')</code></pre>
+          <pre id="code-parent"
+            class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>self.emit_status(product_url, 'pending', parent=source_url, url_type='product')</code></pre>
         </div>
       </section>
 
@@ -298,7 +370,8 @@ URL_STATUS|https://example.com/product/1|blocked|https://example.com|product</pr
         </p>
         <div class="guide-code mt-2">
           <button type="button" class="guide-copy-btn" data-copy-target="code-tracking">Copy</button>
-          <pre id="code-tracking" class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>def __init__(self, *args, **kwargs):
+          <pre id="code-tracking"
+            class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
     self.pending_requests = {}      # source_url -> count of in-flight child requests
     self.failed_sources = set()
@@ -335,18 +408,38 @@ def finish_source_request(self, source_url):
         <h3 class="mt-5 text-sm font-semibold text-slate-800">Request creation fields</h3>
         <table class="mt-2 w-full overflow-hidden rounded-xl border border-slate-200 text-sm">
           <tbody class="divide-y divide-slate-100">
-            <tr><td class="px-4 py-2 font-mono text-xs">callback</td><td class="px-4 py-2">Where the response goes on success (<code>parse_listing</code>, <code>parse_detail</code>, ...).</td></tr>
-            <tr><td class="px-4 py-2 font-mono text-xs">errback</td><td class="px-4 py-2"><code>request_failed</code> — reports <code>blocked</code> and still closes out the tracking counter, so a failed request never leaves its source URL stuck at "running" forever.</td></tr>
-            <tr><td class="px-4 py-2 font-mono text-xs">meta.source_url</td><td class="px-4 py-2">Which root URL this request ultimately belongs to — read back via <code>self.source_url(response)</code>.</td></tr>
-            <tr><td class="px-4 py-2 font-mono text-xs">meta.display_url</td><td class="px-4 py-2">The URL to actually show/emit status for (usually the request's own URL).</td></tr>
-            <tr><td class="px-4 py-2 font-mono text-xs">dont_filter</td><td class="px-4 py-2"><code>True</code> — Scrapy's default duplicate-URL filter would otherwise silently drop a legitimately-revisited URL (e.g. pagination).</td></tr>
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs">callback</td>
+              <td class="px-4 py-2">Where the response goes on success (<code>parse_listing</code>,
+                <code>parse_detail</code>, ...).</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs">errback</td>
+              <td class="px-4 py-2"><code>request_failed</code> — reports <code>blocked</code> and still closes out the
+                tracking counter, so a failed request never leaves its source URL stuck at "running" forever.</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs">meta.source_url</td>
+              <td class="px-4 py-2">Which root URL this request ultimately belongs to — read back via
+                <code>self.source_url(response)</code>.</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs">meta.display_url</td>
+              <td class="px-4 py-2">The URL to actually show/emit status for (usually the request's own URL).</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2 font-mono text-xs">dont_filter</td>
+              <td class="px-4 py-2"><code>True</code> — Scrapy's default duplicate-URL filter would otherwise silently
+                drop a legitimately-revisited URL (e.g. pagination).</td>
+            </tr>
           </tbody>
         </table>
 
         <h3 class="mt-5 text-sm font-semibold text-slate-800">Error handling</h3>
         <div class="guide-code mt-2">
           <button type="button" class="guide-copy-btn" data-copy-target="code-error">Copy</button>
-          <pre id="code-error" class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>def request_failed(self, failure):
+          <pre id="code-error"
+            class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>def request_failed(self, failure):
     source_url = self.source_url(failure)
     self.emit_status(self.display_url(failure), 'blocked')
     self.failed_sources.add(source_url)
@@ -367,7 +460,8 @@ def finish_source_request(self, source_url):
         </p>
         <div class="guide-code mt-2">
           <button type="button" class="guide-copy-btn" data-copy-target="code-entry">Copy</button>
-          <pre id="code-entry" class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>def parse_input_url(self, response):
+          <pre id="code-entry"
+            class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>def parse_input_url(self, response):
     is_product_page = bool(response.css(
         'h1[itemprop="name"], .product-info-price, #product-addtocart-button'
     ).get())
@@ -393,7 +487,8 @@ def finish_source_request(self, source_url):
           from your target site. The pattern (find links, track them, follow the next page) is what to keep.</p>
         <div class="guide-code mt-2">
           <button type="button" class="guide-copy-btn" data-copy-target="code-listing">Copy</button>
-          <pre id="code-listing" class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>product_links = response.css('a.product-item-link::attr(href)').getall()
+          <pre id="code-listing"
+            class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>product_links = response.css('a.product-item-link::attr(href)').getall()
 
 for link in product_links:
     product_url = response.urljoin(link)
@@ -412,7 +507,8 @@ if next_page:
     self.emit_status(next_page_url, 'pending', parent=source_url, url_type='listing')
     yield self.make_tracked_request(next_page_url, source_url, self.parse_listing)</code></pre>
         </div>
-        <pre class="mt-2 overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200">Listing Page 1 → next → Listing Page 2 → next → Listing Page 3 → no next → finished</pre>
+        <pre
+          class="mt-2 overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200">Listing Page 1 → next → Listing Page 2 → next → Listing Page 3 → no next → finished</pre>
       </section>
 
       <section id="detail" class="rounded-2xl border border-slate-200 bg-white p-6">
@@ -423,7 +519,8 @@ if next_page:
         </p>
         <div class="guide-code mt-2">
           <button type="button" class="guide-copy-btn" data-copy-target="code-detail">Copy</button>
-          <pre id="code-detail" class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>item = OrderedDict()
+          <pre id="code-detail"
+            class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>item = OrderedDict()
 item['Product Name'] = response.css('h1::text').get('').strip()
 item['Price'] = response.css('.price::text').get('').strip()
 item['Category'] = response.css('.breadcrumb .active::text').get('').strip()
@@ -446,7 +543,8 @@ yield item</code></pre>
         </p>
         <div class="guide-code mt-2">
           <button type="button" class="guide-copy-btn" data-copy-target="code-main">Copy</button>
-          <pre id="code-main" class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>if __name__ == "__main__":
+          <pre id="code-main"
+            class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>if __name__ == "__main__":
     process = CrawlerProcess(MyScraper.custom_settings)
     process.crawl(MyScraper)
     process.start()</code></pre>
@@ -466,7 +564,8 @@ yield item</code></pre>
           marked sections with your target site's logic.</p>
         <div class="guide-code mt-2">
           <button type="button" class="guide-copy-btn" data-copy-target="code-template">Copy</button>
-          <pre id="code-template" class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>import os
+          <pre id="code-template"
+            class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-slate-200"><code>import os
 import sys
 import csv
 from datetime import datetime
@@ -591,19 +690,63 @@ if __name__ == "__main__":                                             # KEEP
         <div class="mt-2 overflow-x-auto">
           <table class="w-full overflow-hidden rounded-xl border border-slate-200 text-sm">
             <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <tr><th class="px-4 py-2">Section</th><th class="px-4 py-2">Keep / Customize</th><th class="px-4 py-2">Why</th></tr>
+              <tr>
+                <th class="px-4 py-2">Section</th>
+                <th class="px-4 py-2">Keep / Customize</th>
+                <th class="px-4 py-2">Why</th>
+              </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr><td class="px-4 py-2 font-mono text-xs">Spider class + CrawlerProcess</td><td class="px-4 py-2 font-semibold text-emerald-700">Keep</td><td class="px-4 py-2">Required Scrapy structure the app's launch command relies on.</td></tr>
-              <tr><td class="px-4 py-2 font-mono text-xs">name</td><td class="px-4 py-2 font-semibold text-indigo-700">Customize</td><td class="px-4 py-2">Give your scraper a unique spider name.</td></tr>
-              <tr><td class="px-4 py-2 font-mono text-xs">sys.argv[1] / sys.argv[2]</td><td class="px-4 py-2 font-semibold text-emerald-700">Keep</td><td class="px-4 py-2">The app's output path and input CSV path.</td></tr>
-              <tr><td class="px-4 py-2 font-mono text-xs">custom_settings / FEEDS</td><td class="px-4 py-2 font-semibold text-amber-700">Keep structure, tune values</td><td class="px-4 py-2">Controls how/where Scrapy exports items.</td></tr>
-              <tr><td class="px-4 py-2 font-mono text-xs">emit_status() / URL_STATUS format</td><td class="px-4 py-2 font-semibold text-emerald-700">Keep exactly</td><td class="px-4 py-2">The app's live-progress parser depends on this exact shape.</td></tr>
-              <tr><td class="px-4 py-2 font-mono text-xs">start() / start_requests()</td><td class="px-4 py-2 font-semibold text-amber-700">Customize carefully</td><td class="px-4 py-2">Must still read the input CSV the app gave you.</td></tr>
-              <tr><td class="px-4 py-2 font-mono text-xs">parse_input_url()</td><td class="px-4 py-2 font-semibold text-indigo-700">Customize</td><td class="px-4 py-2">Detect your own site's page types.</td></tr>
-              <tr><td class="px-4 py-2 font-mono text-xs">parse_listing() / parse_detail()</td><td class="px-4 py-2 font-semibold text-indigo-700">Customize</td><td class="px-4 py-2">Entirely website-specific.</td></tr>
-              <tr><td class="px-4 py-2 font-mono text-xs">CSS/XPath selectors</td><td class="px-4 py-2 font-semibold text-indigo-700">Customize</td><td class="px-4 py-2">Every website is different.</td></tr>
-              <tr><td class="px-4 py-2 font-mono text-xs">Output item fields</td><td class="px-4 py-2 font-semibold text-indigo-700">Customize</td><td class="px-4 py-2">Depends on what data you actually need.</td></tr>
+              <tr>
+                <td class="px-4 py-2 font-mono text-xs">Spider class + CrawlerProcess</td>
+                <td class="px-4 py-2 font-semibold text-emerald-700">Keep</td>
+                <td class="px-4 py-2">Required Scrapy structure the app's launch command relies on.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2 font-mono text-xs">name</td>
+                <td class="px-4 py-2 font-semibold text-indigo-700">Customize</td>
+                <td class="px-4 py-2">Give your scraper a unique spider name.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2 font-mono text-xs">sys.argv[1] / sys.argv[2]</td>
+                <td class="px-4 py-2 font-semibold text-emerald-700">Keep</td>
+                <td class="px-4 py-2">The app's output path and input CSV path.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2 font-mono text-xs">custom_settings / FEEDS</td>
+                <td class="px-4 py-2 font-semibold text-amber-700">Keep structure, tune values</td>
+                <td class="px-4 py-2">Controls how/where Scrapy exports items.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2 font-mono text-xs">emit_status() / URL_STATUS format</td>
+                <td class="px-4 py-2 font-semibold text-emerald-700">Keep exactly</td>
+                <td class="px-4 py-2">The app's live-progress parser depends on this exact shape.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2 font-mono text-xs">start() / start_requests()</td>
+                <td class="px-4 py-2 font-semibold text-amber-700">Customize carefully</td>
+                <td class="px-4 py-2">Must still read the input CSV the app gave you.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2 font-mono text-xs">parse_input_url()</td>
+                <td class="px-4 py-2 font-semibold text-indigo-700">Customize</td>
+                <td class="px-4 py-2">Detect your own site's page types.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2 font-mono text-xs">parse_listing() / parse_detail()</td>
+                <td class="px-4 py-2 font-semibold text-indigo-700">Customize</td>
+                <td class="px-4 py-2">Entirely website-specific.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2 font-mono text-xs">CSS/XPath selectors</td>
+                <td class="px-4 py-2 font-semibold text-indigo-700">Customize</td>
+                <td class="px-4 py-2">Every website is different.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2 font-mono text-xs">Output item fields</td>
+                <td class="px-4 py-2 font-semibold text-indigo-700">Customize</td>
+                <td class="px-4 py-2">Depends on what data you actually need.</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -612,13 +755,28 @@ if __name__ == "__main__":                                             # KEEP
       <section id="quick-guide" class="rounded-2xl border border-slate-200 bg-white p-6">
         <h2 class="text-lg font-bold text-slate-900">7-step quick guide</h2>
         <ol class="mt-2 space-y-2 text-sm text-slate-700">
-          <li><span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">1</span>Copy the template above.</li>
-          <li><span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">2</span>Change the Spider's <code>name</code>.</li>
-          <li><span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">3</span>Keep <code>sys.argv[1]</code> for the output path.</li>
-          <li><span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">4</span>Keep <code>sys.argv[2]</code> for the input CSV.</li>
-          <li><span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">5</span>Replace the CSS/XPath selectors with your target site's.</li>
-          <li><span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">6</span>Add the data fields you actually need.</li>
-          <li><span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">7</span>Test it locally (<code>python your_scraper.py out.xlsx urls.csv</code>), then upload it on the <a href="/tcsadmin" class="font-semibold text-emerald-700 underline">Files</a> page.</li>
+          <li><span
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">1</span>Copy
+            the template above.</li>
+          <li><span
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">2</span>Change
+            the Spider's <code>name</code>.</li>
+          <li><span
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">3</span>Keep
+            <code>sys.argv[1]</code> for the output path.</li>
+          <li><span
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">4</span>Keep
+            <code>sys.argv[2]</code> for the input CSV.</li>
+          <li><span
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">5</span>Replace
+            the CSS/XPath selectors with your target site's.</li>
+          <li><span
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">6</span>Add
+            the data fields you actually need.</li>
+          <li><span
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">7</span>Test
+            it locally (<code>python your_scraper.py out.xlsx urls.csv</code>), then upload it on the <a
+              href="/tcsadmin" class="font-semibold text-emerald-700 underline">Files</a> page.</li>
         </ol>
       </section>
 
@@ -662,23 +820,32 @@ if __name__ == "__main__":                                             # KEEP
         <div class="mt-2 space-y-4 text-sm">
           <div>
             <p class="font-semibold text-slate-800">Output file not found</p>
-            <p class="text-slate-600">Cause: your script finished but never wrote to <code>sys.argv[1]</code>. Fix: make sure <code>FEEDS</code> uses the <code>output_file</code> variable, or that you explicitly save to that exact path.</p>
+            <p class="text-slate-600">Cause: your script finished but never wrote to <code>sys.argv[1]</code>. Fix: make
+              sure <code>FEEDS</code> uses the <code>output_file</code> variable, or that you explicitly save to that
+              exact path.</p>
           </div>
           <div>
             <p class="font-semibold text-slate-800">Wrong output path</p>
-            <p class="text-slate-600">Cause: the script created a file somewhere else (e.g. a hardcoded name). Fix: always resolve the path from <code>sys.argv[1]</code>, never a literal string.</p>
+            <p class="text-slate-600">Cause: the script created a file somewhere else (e.g. a hardcoded name). Fix:
+              always resolve the path from <code>sys.argv[1]</code>, never a literal string.</p>
           </div>
           <div>
             <p class="font-semibold text-slate-800">Progress tree stays empty</p>
-            <p class="text-slate-600">Cause: your script never prints <code>URL_STATUS</code> lines. This is optional — Start/Stop and the Running/Finished status still work without it, you just won't get a per-URL tree.</p>
+            <p class="text-slate-600">Cause: your script never prints <code>URL_STATUS</code> lines. This is optional —
+              Start/Stop and the Running/Finished status still work without it, you just won't get a per-URL tree.</p>
           </div>
           <div>
             <p class="font-semibold text-slate-800">A URL is stuck at "running" forever</p>
-            <p class="text-slate-600">Cause: a request for that source URL failed without going through <code>errback</code>/<code>finish_source_request</code>, so its pending-request counter never reaches zero. Fix: make sure every request that can fail has an <code>errback</code> that still calls <code>finish_source_request</code>.</p>
+            <p class="text-slate-600">Cause: a request for that source URL failed without going through
+              <code>errback</code>/<code>finish_source_request</code>, so its pending-request counter never reaches
+              zero. Fix: make sure every request that can fail has an <code>errback</code> that still calls
+              <code>finish_source_request</code>.</p>
           </div>
           <div>
             <p class="font-semibold text-slate-800">Script exits immediately, no output, no error</p>
-            <p class="text-slate-600">Cause: usually an exception raised before <code>CrawlerProcess.start()</code> is reached (e.g. reading <code>sys.argv[2]</code> when it wasn't given). Test locally first with both arguments supplied.</p>
+            <p class="text-slate-600">Cause: usually an exception raised before <code>CrawlerProcess.start()</code> is
+              reached (e.g. reading <code>sys.argv[2]</code> when it wasn't given). Test locally first with both
+              arguments supplied.</p>
           </div>
         </div>
       </section>

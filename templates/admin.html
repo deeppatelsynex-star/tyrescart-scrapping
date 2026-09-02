@@ -7,8 +7,8 @@ User Management
 {% block HeaderActions %}
 <button id="admin-new-user-btn" type="button"
   class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
-  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-    stroke-linecap="round" stroke-linejoin="round">
+  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+    stroke-linejoin="round">
     <line x1="12" y1="5" x2="12" y2="19" />
     <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
@@ -29,11 +29,13 @@ User Management
 <div class="content flex-1 overflow-auto p-6">
   <div class="space-y-6 min-h-full">
     <section class="bg-white shadow-sm border border-slate-200 rounded-[1.5rem] overflow-hidden">
-      <div id="admin-error" class="hidden m-6 mb-0 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3"></div>
+      <div id="admin-error"
+        class="hidden m-6 mb-0 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3"></div>
 
       <div class="overflow-x-auto p-6">
         <div class="relative">
-          <div id="admin-loading" class="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-white/90 py-14 text-sm text-slate-400">
+          <div id="admin-loading"
+            class="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-white/90 py-14 text-sm text-slate-400">
             <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -41,18 +43,18 @@ User Management
             <span>Loading users…</span>
           </div>
           <table id="users-table" class="w-full text-sm" style="width:100%">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Created Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Created Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
           </table>
         </div>
       </div>
@@ -63,17 +65,31 @@ User Management
 <!-- View user modal -->
 <div id="admin-view-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
-    <button type="button" data-close-modal class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
+    <button type="button" data-close-modal
+      class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
     <div class="flex flex-col items-center text-center gap-2">
-      <span id="admin-view-avatar" class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-semibold overflow-hidden">?</span>
+      <span id="admin-view-avatar"
+        class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-semibold overflow-hidden">?</span>
       <h3 id="admin-view-name" class="text-base font-bold text-slate-900">—</h3>
       <p id="admin-view-email" class="text-xs text-slate-500">—</p>
     </div>
     <dl class="mt-5 space-y-2 text-sm">
-      <div class="flex justify-between"><dt class="text-slate-500">Role</dt><dd id="admin-view-role" class="font-medium text-slate-800">—</dd></div>
-      <div class="flex justify-between"><dt class="text-slate-500">Status</dt><dd id="admin-view-status" class="font-medium text-slate-800">—</dd></div>
-      <div class="flex justify-between"><dt class="text-slate-500">Created</dt><dd id="admin-view-created" class="font-medium text-slate-800">—</dd></div>
-      <div id="admin-view-deleted-row" class="hidden flex justify-between"><dt class="text-slate-500">Deleted</dt><dd id="admin-view-deleted" class="font-medium text-slate-800">—</dd></div>
+      <div class="flex justify-between">
+        <dt class="text-slate-500">Role</dt>
+        <dd id="admin-view-role" class="font-medium text-slate-800">—</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-slate-500">Status</dt>
+        <dd id="admin-view-status" class="font-medium text-slate-800">—</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-slate-500">Created</dt>
+        <dd id="admin-view-created" class="font-medium text-slate-800">—</dd>
+      </div>
+      <div id="admin-view-deleted-row" class="hidden flex justify-between">
+        <dt class="text-slate-500">Deleted</dt>
+        <dd id="admin-view-deleted" class="font-medium text-slate-800">—</dd>
+      </div>
     </dl>
   </div>
 </div>
@@ -81,9 +97,11 @@ User Management
 <!-- Create/Edit user modal -->
 <div id="admin-user-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
-    <button type="button" data-close-modal class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
+    <button type="button" data-close-modal
+      class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
     <h3 id="admin-modal-title" class="text-base font-bold text-slate-900 mb-4">New User</h3>
-    <div id="admin-modal-error" class="hidden mb-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs px-3 py-2"></div>
+    <div id="admin-modal-error"
+      class="hidden mb-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs px-3 py-2"></div>
     <form id="admin-user-form" class="space-y-3">
       <input type="hidden" id="admin-user-id" value="" />
       <div>
@@ -103,16 +121,21 @@ User Management
             class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           <button type="button" data-toggle-password="admin-user-password" tabindex="-1"
             class="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 hover:text-slate-600 cursor-pointer">
-            <svg class="icon-eye-open w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+            <svg class="icon-eye-open w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+              stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
             </svg>
-            <svg class="icon-eye-closed hidden w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+            <svg class="icon-eye-closed hidden w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+              viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
             </svg>
           </button>
         </div>
-        <p id="admin-user-password-hint" class="hidden mt-1 text-[11px] text-slate-400">Leave blank to keep the current password.</p>
+        <p id="admin-user-password-hint" class="hidden mt-1 text-[11px] text-slate-400">Leave blank to keep the current
+          password.</p>
       </div>
       <div>
         <label class="block text-xs font-medium text-slate-600 mb-1">Role</label>
@@ -138,10 +161,12 @@ User Management
 <!-- Delete confirmation modal -->
 <div id="admin-delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
-    <button type="button" data-close-modal class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
+    <button type="button" data-close-modal
+      class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
     <h3 class="text-base font-bold text-slate-900 mb-2">Delete user?</h3>
     <p id="admin-delete-text" class="text-sm text-slate-500 mb-4">This will move this account to Trash.</p>
-    <div id="admin-delete-error" class="hidden mb-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs px-3 py-2"></div>
+    <div id="admin-delete-error"
+      class="hidden mb-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs px-3 py-2"></div>
     <div class="flex gap-2">
       <button type="button" data-close-modal
         class="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">Cancel</button>

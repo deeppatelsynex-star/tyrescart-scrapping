@@ -1,0 +1,480 @@
+/* visionadmin.css - VisionAdmin Executive Content Studio Design System */
+:root {
+  --green:        #58B31B;
+  --green-bright: #68C927;
+  --green-deep:   #35760F;
+  --green-tint:   #EFF9E6;
+  --ink:          #0E1108;
+  --slate:        #4C5548;
+  --line:         #E3E7DE;
+  --bg:           #FFFFFF;
+  --bg-soft:      #F6F8F3;
+  --radius:       14px;
+
+  --brand-green: #58B31B;
+  --brand-green-bright: #68C927;
+  --brand-green-deep: #35760F;
+  --brand-green-tint: #EFF9E6;
+  --brand-green-subtle: #F2FAF0;
+  --brand-ink: #0E1108;
+  --brand-ink-light: #1E293B;
+  --brand-slate: #64748B;
+  --brand-slate-light: #94A3B8;
+  --brand-line: #E8EDE4;
+  --brand-line-light: #F1F5F0;
+  --brand-bg: #F8FAF7;
+  --brand-card-bg: #FFFFFF;
+  --brand-radius-sm: 12px;
+  --brand-radius: 18px;
+  --brand-radius-lg: 24px;
+  --brand-shadow-sm: 0 1px 3px rgba(14, 17, 8, 0.04);
+  --brand-shadow: 0 10px 30px -10px rgba(14, 17, 8, 0.05), 0 0 0 1px rgba(232, 237, 228, 0.8);
+  --brand-shadow-hover: 0 18px 40px -12px rgba(88, 179, 27, 0.12), 0 0 0 1px rgba(88, 179, 27, 0.3);
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: var(--brand-bg);
+  color: var(--brand-ink-light);
+}
+
+/* Sidebar Active & Navigation Tokens */
+.va-sidebar-active-pill {
+  background-color: var(--brand-green-tint) !important;
+  color: var(--brand-ink) !important;
+}
+
+.va-nav-active {
+  background-color: var(--brand-green-tint) !important;
+  color: var(--brand-ink) !important;
+}
+
+/* Status Badges */
+.va-badge-published {
+  background-color: #EAF7E2;
+  color: var(--brand-green-deep);
+  border: 1px solid #C8E8B8;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.va-badge-draft {
+  background-color: #FEF3C7;
+  color: #D97706;
+  border: 1px solid #FDE68A;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.va-badge-archived {
+  background-color: #FFE4E6;
+  color: #E11D48;
+  border: 1px solid #FECDD3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Buttons */
+.btn-brand-green {
+  background-color: var(--brand-green);
+  color: #FFFFFF;
+  font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-brand-green:hover {
+  background-color: var(--brand-green-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -4px rgba(88, 179, 27, 0.35);
+}
+
+.btn-brand-white {
+  background-color: #FFFFFF;
+  color: var(--brand-ink);
+  border: 1px solid var(--brand-line);
+  font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-brand-white:hover {
+  border-color: var(--brand-green);
+  color: var(--brand-green-deep);
+  background-color: var(--brand-green-subtle);
+  transform: translateY(-1px);
+}
+
+.va-btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.15s ease;
+  border: 1px solid var(--brand-line);
+  background: #FFFFFF;
+  color: var(--brand-ink);
+}
+
+.va-btn-pill:hover {
+  border-color: #CBD5E1;
+  background-color: #F8FAFC;
+  transform: translateY(-1px);
+}
+
+.va-btn-pill-green {
+  color: var(--brand-green-deep);
+  border-color: #D1E7C4;
+  background: #FFFFFF;
+}
+
+.va-btn-pill-green:hover {
+  background: var(--brand-green-tint);
+  border-color: var(--brand-green);
+  color: var(--brand-green-deep);
+}
+
+.va-btn-pill-rose {
+  color: #E11D48;
+  border-color: #FECDD3;
+  background: #FFFFFF;
+}
+
+.va-btn-pill-rose:hover {
+  background: #FFF1F2;
+  border-color: #F43F5E;
+}
+
+/* Card Styling */
+.va-card {
+  background: var(--brand-card-bg);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--brand-radius-lg);
+  box-shadow: var(--brand-shadow);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.va-card:hover {
+  border-color: #D5DFCE;
+  box-shadow: var(--brand-shadow-hover);
+}
+
+/* CKEditor Contents Minimum Height */
+.cke_contents {
+  min-height: 200px !important;
+}
+
+.cke_inner .cke_contents iframe {
+  min-height: 200px !important;
+}
+
+/* ==========================================================================
+   Global Command Search Component
+   ========================================================================== */
+.va-search-container {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+}
+
+.va-search-input {
+  width: 100%;
+  height: 44px;
+  background-color: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding-left: 40px;
+  padding-right: 36px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.va-search-input::placeholder {
+  color: var(--slate);
+  font-weight: 500;
+}
+
+.va-search-input:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(88, 179, 27, 0.12), 0 4px 14px rgba(88, 179, 27, 0.08);
+  background-color: #FFFFFF;
+}
+
+.va-search-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  background-color: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 36px -4px rgba(14, 17, 8, 0.12), 0 0 0 1px rgba(14, 17, 8, 0.03);
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.va-search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.va-search-item:hover,
+.va-search-item.va-search-selected {
+  background-color: var(--green-tint);
+}
+
+.va-search-item:hover .va-search-title,
+.va-search-item.va-search-selected .va-search-title {
+  color: var(--green-deep);
+}
+
+.va-search-match {
+  color: var(--green-deep);
+  background-color: var(--green-tint);
+  font-weight: 700;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.va-search-badge-active {
+  background-color: var(--green-tint);
+  color: var(--green-deep);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.va-search-badge-inactive {
+  background-color: #FEF3C7;
+  color: #B45309;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ========================================================================== */
+/* VisionAdmin DataTables Theme Styling                                       */
+/* ========================================================================== */
+.dataTables_wrapper {
+  font-family: inherit;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+  float: none;
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_paginate {
+  margin-left: auto;
+}
+
+.dataTables_wrapper .dataTables_filter label,
+.dataTables_wrapper .dataTables_length label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+  border: 1px solid #E8EDE4;
+  background-color: #FFFFFF;
+  border-radius: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  outline: none;
+  color: #0E1108;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  width: 14rem;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus,
+.dataTables_wrapper .dataTables_length select:focus {
+  border-color: #58B31B;
+  box-shadow: 0 0 0 3px rgba(88, 179, 27, 0.15);
+}
+
+table.dataTable {
+  flex: 1 1 100%;
+  margin: 0 !important;
+  border-collapse: separate !important;
+  border-spacing: 0;
+  border: none !important;
+}
+
+table.dataTable thead th {
+  border-bottom: 1px solid #E8EDE4 !important;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748B;
+  padding: 0.75rem 1rem !important;
+}
+
+table.dataTable tbody td {
+  border-bottom: 1px solid #F1F5F0 !important;
+  padding: 0.85rem 1rem !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  padding: 0.35rem 0.75rem;
+  margin-left: 0.25rem;
+  border-radius: 0.65rem;
+  border: 1px solid #E8EDE4 !important;
+  background: #FFFFFF !important;
+  color: #475569 !important;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: #EFF9E6 !important;
+  color: #35760F !important;
+  border-color: #C8E8B8 !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: #58B31B !important;
+  color: #FFFFFF !important;
+  border-color: #58B31B !important;
+  box-shadow: 0 2px 6px rgba(88, 179, 27, 0.25);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #F8FAF7 !important;
+}
+
+/* ==========================================================================
+   VisionAdmin Signature Pill Dropdowns
+   Matches green-pill trigger with dot, chevron, and floating card menu
+   ========================================================================== */
+
+/* Native select fallback styling across VisionAdmin */
+select:not(.no-va-select):not(.hidden) {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #FFFFFF !important;
+  border: 1.5px solid #58B31B !important;
+  border-radius: 9999px !important;
+  padding: 0.5rem 2.5rem 0.5rem 2.25rem !important;
+  font-family: inherit !important;
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  color: #0E1108 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
+  cursor: pointer !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
+  background-image: 
+    radial-gradient(circle 3.5px, #58B31B 100%, transparent 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2335760F' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-position: left 0.85rem center, right 0.85rem center !important;
+  background-size: 7px 7px, 15px 15px !important;
+}
+
+select:not(.no-va-select):not(.hidden):hover {
+  border-color: #35760F !important;
+  background-color: #F8FAF7 !important;
+}
+
+select:not(.no-va-select):not(.hidden):focus {
+  border-color: #35760F !important;
+  box-shadow: 0 0 0 3px rgba(88, 179, 27, 0.2) !important;
+}
+
+/* Custom Dropdown Trigger */
+.va-custom-dropdown-trigger {
+  border: 1.5px solid #58B31B !important;
+  border-radius: 9999px !important;
+  padding: 0.55rem 0.875rem 0.55rem 1rem !important;
+  background-color: #FFFFFF;
+  color: #0E1108;
+  font-weight: 800;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.va-custom-dropdown-trigger:hover {
+  border-color: #35760F !important;
+  background-color: #F8FAF7;
+}
+
+.va-custom-dropdown-trigger[aria-expanded="true"] {
+  border-color: #35760F !important;
+  box-shadow: 0 0 0 3px rgba(88, 179, 27, 0.2);
+}
+
+/* Custom Dropdown Floating Menu */
+.va-custom-dropdown-menu {
+  border-radius: 1.25rem !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid #E8EDE4 !important;
+  box-shadow: 0 16px 40px -12px rgba(14, 17, 8, 0.15), 0 0 0 1px rgba(232, 237, 228, 0.8) !important;
+  z-index: 9999 !important;
+}
+
+.va-option-btn {
+  font-family: inherit;
+}
+
+
+

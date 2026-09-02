@@ -1,0 +1,239 @@
+{% extends 'Client/layout.html' %}
+
+{% block title %}
+  {% if locale == 'ar' %}
+    دليل ونصائح العناية بالإطارات وشراؤها في الإمارات | مدونة تايرز فيجن
+  {% else %}
+    Tyre Care &amp; Buying Guides | TyresVision Blog
+  {% endif %}
+{% endblock %}
+
+{% block meta_description %}
+  {% if locale == 'ar' %}
+    إرشادات ونصائح عملية وموثوقة حول مقاسات الإطارات، الصيانة، واختيار الطقم المناسب لطرقات وحرارة صيف الإمارات من خبراء تايرز فيجن.
+  {% else %}
+    Straight answers on tyre sizing, maintenance, and buying the right set for UAE roads and heat — from the team behind TyresVision.
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div x-data="blogListing({ locale: '{{ locale or 'en' }}', category: '{{ selected_category or '' }}' })" x-init="init()">
+  <span id="top"></span>
+
+  <!-- ================= 1. BRAND HERO BANNER ================= -->
+  <section class="blog-hero-banner">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow">
+          {% if locale == 'ar' %}قاعدة معرفة تايرز فيجن{% else %}TyresVision Knowledge Base{% endif %}
+        </span>
+        
+        <h1>
+          {% if locale == 'ar' %}
+            استكشف مدونتنا — نصائح الإطارات <em>وصيانة السيارات</em>
+          {% else %}
+            Explore Our Blog — Tyre Advice &amp; <em>Car Maintenance</em>
+          {% endif %}
+        </h1>
+        
+        <p class="lead">
+          {% if locale == 'ar' %}
+            إرشادات عملية ونصائح موثوقة حول اختيار الإطارات، مواصفات دول الخليج، والعناية في حرارة الصيف مع خدمة التركيب المتنقل في دبي، أبوظبي والشارقة.
+          {% else %}
+            Straight, practical answers on tyre selection, GCC specifications, summer heat care, and mobile fitting across Dubai, Abu Dhabi &amp; Sharjah.
+          {% endif %}
+        </p>
+      </div>
+      
+      <!-- Glassmorphic Category Filter Pills (Alpine-controlled) -->
+      <div class="blog-filter-pills" role="tablist" aria-label="Blog categories">
+        <button type="button" class="filter-btn" :class="{ 'active': !currentCategory }" @click="setCategory('')">
+          {% if locale == 'ar' %}جميع المقالات{% else %}All Articles{% endif %}
+        </button>
+        {% for cat in categories %}
+          <button type="button" class="filter-btn" :class="{ 'active': currentCategory.toLowerCase() === '{{ cat }}'.toLowerCase() }" @click="setCategory('{{ cat }}')">
+            {{ cat }}
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2. BREADCRUMB & 4-COL BLOG GRID ================= -->
+  <section style="padding-top:16px; padding-bottom:72px;">
+    <div class="wrap">
+      
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+        <a href="/">{% if locale == 'ar' %}الرئيسية{% else %}Home{% endif %}</a>
+        <span class="sep">/</span>
+        <span class="current">{% if locale == 'ar' %}المدونة{% else %}Blog{% endif %}</span>
+      </nav>
+
+      <!-- Loading State Indicator -->
+      <div x-show="loading" class="center" style="padding:60px 0;">
+        <span class="eyebrow">{% if locale == 'ar' %}جاري التحميل{% else %}Loading Articles{% endif %}</span>
+        <p class="lead">{% if locale == 'ar' %}جاري تحميل أحدث مقالات الإطارات من الخادم...{% else %}Fetching latest tyre guides from the API...{% endif %}</p>
+      </div>
+
+      <!-- Error State Container -->
+      <div x-show="error" class="center" style="padding:60px 0;" x-cloak>
+        <span class="eyebrow">{% if locale == 'ar' %}تنبيه{% else %}Notice{% endif %}</span>
+        <h3>{% if locale == 'ar' %}تعذر تحميل المقالات{% else %}Unable to load blog articles{% endif %}</h3>
+        <p class="lead" style="margin-bottom:16px;">{% if locale == 'ar' %}يرجى التحقق من اتصالك بالإنترنت أو إعادة المحاولة.{% else %}Please check your connection or try again.{% endif %}</p>
+        <button type="button" class="btn btn-wa" @click="loadBlogs(currentPage, currentCategory)">
+          {% if locale == 'ar' %}إعادة المحاولة{% else %}Retry{% endif %}
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div x-show="!loading && !error && blogs.length === 0" class="center" style="padding:48px 0;" x-cloak>
+        <span class="eyebrow">{% if locale == 'ar' %}تنبيه{% else %}Notice{% endif %}</span>
+        <p class="lead">{% if locale == 'ar' %}لا توجد مقالات متاحة في هذا القسم حالياً.{% else %}No articles found in this category.{% endif %}</p>
+      </div>
+
+      <!-- Dynamic 4-Column Card Grid (Alpine-powered) -->
+      <div x-show="!loading && !error && blogs.length > 0" class="blog-grid-4col" x-cloak>
+        <template x-for="blog in blogs" :key="blog.id || blog.slug">
+          <a class="post-card" :href="blog.url || ('/' + locale + '/blog/' + encodeURIComponent(blog.slug))" :aria-label="blog.title">
+            <div class="post-card-thumb">
+              <!-- Date Badge -->
+              <span class="post-date-pill" x-text="blog.published_at || '24 Aug 2026'"></span>
+              
+              <!-- Optional Feature Badge Pill -->
+              <template x-if="blog.badge || (blog.slug && blog.slug.includes('air'))">
+                <span class="post-badge-pill" x-text="blog.badge || 'AIR'"></span>
+              </template>
+              <template x-if="!blog.badge && !(blog.slug && blog.slug.includes('air')) && blog.category && (blog.category.toLowerCase().includes('buying') || blog.category.includes('شراء'))">
+                <span class="post-badge-pill" style="background:linear-gradient(135deg, #10B981 0%, #059669 100%);" x-text="locale === 'ar' ? 'دليل' : 'GUIDE'"></span>
+              </template>
+
+              <!-- Cover Image -->
+              <img :src="blog.cover_image_url || blog.image || '/static/assets/online-tyres-shop-dubai.png'" :alt="blog.title" loading="lazy">
+            </div>
+
+            <div class="post-card-body">
+              <h3 class="post-card-title" x-text="blog.title"></h3>
+              <div class="post-divider" aria-hidden="true"></div>
+              <p class="post-card-desc" x-text="blog.short_description || blog.excerpt || ''"></p>
+            </div>
+          </a>
+        </template>
+      </div>
+
+      <!-- Pagination Bar (Alpine-powered) -->
+      <div x-show="pagination && pagination.num_pages > 1" class="pagination-bar" x-cloak>
+        <div class="pagination-info" x-text="paginationInfoText"></div>
+        <div class="pagination-controls">
+          <button type="button" class="page-link page-arrow" x-show="pagination && pagination.has_prev" @click="goToPage(pagination.prev_num)" aria-label="Previous">&lsaquo;</button>
+          <template x-for="pNum in (pagination ? pagination.num_pages : 0)" :key="pNum">
+            <button type="button" class="page-link" :class="{ 'active': pNum === currentPage }" @click="goToPage(pNum)" x-text="pNum"></button>
+          </template>
+          <button type="button" class="page-link page-arrow" x-show="pagination && pagination.has_next" @click="goToPage(pagination.next_num)" aria-label="Next">&rsaquo;</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<!-- ================= ALPINE.JS BLOG LISTING COMPONENT SCRIPT ================= -->
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('blogListing', (config) => ({
+    locale: config.locale || 'en',
+    currentCategory: config.category || '',
+    currentPage: 1,
+    loading: true,
+    error: false,
+    blogs: [],
+    pagination: null,
+
+    get paginationInfoText() {
+      if (!this.pagination) return '';
+      const p = this.pagination;
+      return this.locale === 'ar'
+        ? `عرض ${p.start} إلى ${p.end} من إجمالي ${p.total} مقال`
+        : `Items ${p.start} to ${p.end} of ${p.total} total`;
+    },
+
+    init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      this.currentCategory = urlParams.get('category') || config.category || '';
+      this.currentPage = parseInt(urlParams.get('page') || '1', 10);
+      this.loadBlogs(this.currentPage, this.currentCategory);
+
+      window.addEventListener('popstate', () => {
+        const p = new URLSearchParams(window.location.search);
+        this.currentCategory = p.get('category') || '';
+        this.currentPage = parseInt(p.get('page') || '1', 10);
+        this.loadBlogs(this.currentPage, this.currentCategory, false);
+      });
+    },
+
+    setCategory(cat) {
+      this.currentCategory = cat || '';
+      this.currentPage = 1;
+      this.syncUrl();
+      this.loadBlogs(1, this.currentCategory);
+    },
+
+    goToPage(pageNum) {
+      this.currentPage = pageNum;
+      this.syncUrl();
+      this.loadBlogs(pageNum, this.currentCategory);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    syncUrl() {
+      const url = new URL(window.location.href);
+      if (this.currentCategory && this.currentCategory.trim()) {
+        url.searchParams.set('category', this.currentCategory.trim());
+      } else {
+        url.searchParams.delete('category');
+      }
+      if (this.currentPage > 1) {
+        url.searchParams.set('page', this.currentPage);
+      } else {
+        url.searchParams.delete('page');
+      }
+      window.history.pushState({}, '', url.toString());
+    },
+
+    async loadBlogs(page = 1, category = this.currentCategory, updateHistory = true) {
+      this.loading = true;
+      this.error = false;
+
+      try {
+        const url = new URL('/api/blogs', window.location.origin);
+        url.searchParams.set('locale', this.locale);
+        url.searchParams.set('page', page);
+        url.searchParams.set('per_page', 12);
+        if (category && category.trim()) {
+          url.searchParams.set('category', category.trim());
+        }
+
+        const res = await fetch(url.toString(), {
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!res.ok) throw new Error('API failed with status ' + res.status);
+        const data = await res.json();
+
+        if (data.success && Array.isArray(data.blogs)) {
+          this.blogs = data.blogs;
+          this.pagination = data.pagination || null;
+        } else {
+          this.blogs = [];
+          this.pagination = null;
+        }
+      } catch (err) {
+        console.error('Alpine blogListing error:', err);
+        this.error = true;
+      } finally {
+        this.loading = false;
+      }
+    }
+  }));
+});
+</script>
+{% endblock %}

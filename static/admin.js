@@ -49,7 +49,7 @@ window.AdminShared = (function () {
   // Structured console error logger for debugging
   const logError = (context, error, extraDetails = null) => {
     console.error(
-      `%c[TyresCart Error: ${context}]`,
+      `%c[TyresVision Error: ${context}]`,
       'background: #be123c; color: #fff; font-weight: bold; padding: 2px 6px; border-radius: 4px;',
       error,
       extraDetails || ''
@@ -58,7 +58,7 @@ window.AdminShared = (function () {
 
   const logWarn = (context, message, extraDetails = null) => {
     console.warn(
-      `%c[TyresCart Warning: ${context}]`,
+      `%c[TyresVision Warning: ${context}]`,
       'background: #d97706; color: #fff; font-weight: bold; padding: 2px 6px; border-radius: 4px;',
       message,
       extraDetails || ''
@@ -217,8 +217,11 @@ window.AdminShared = (function () {
     if (!isoString) return null;
     const d = new Date(isoString);
     if (isNaN(d.getTime())) return null;
+    // en-GB with numeric day/month/year yields "DD/MM/YYYY" -- swap the
+    // slashes for dashes to match the DD-MM-YYYY convention used everywhere.
+    const dmy = d.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata', day: '2-digit', month: '2-digit', year: 'numeric' });
     return {
-      datePart: d.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' }),
+      datePart: dmy.replace(/\//g, '-'),
       timePart: d.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }),
     };
   }

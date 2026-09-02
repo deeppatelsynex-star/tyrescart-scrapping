@@ -236,6 +236,10 @@
           render: (data, type, row) => (type === 'display' ? Shared.dateTimeHtml(row.updateDateRaw) : (row.updateDateRaw || '')),
         },
         {
+          data: null,
+          render: (data, type, row) => (type === 'display' ? (row.lastUsedRaw ? Shared.dateTimeHtml(row.lastUsedRaw) : '<span class="text-xs text-slate-400 font-medium">—</span>') : (row.lastUsedRaw || '')),
+        },
+        {
           data: null, orderable: false, searchable: false, className: 'text-right',
           render: (data, type, row) => (type === 'display' ? actionsCellHtml(row) : ''),
         },

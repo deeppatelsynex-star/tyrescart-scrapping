@@ -1,0 +1,419 @@
+{% extends 'Client/layout.html' %}
+
+{% block title %}
+  {{ post.title }} | {% if locale == 'ar' %}مدونة تايرز فيجن{% else %}TyresVision Blog{% endif %}
+{% endblock %}
+
+{% block meta_description %}{{ post.short_description or (post.title ~ ' — expert advice and tyre guide for UAE drivers.') }}{% endblock %}
+
+{% block content %}
+<span id="top"></span>
+
+<!-- ================= MAIN CONTAINER ================= -->
+<section style="padding-top:24px; padding-bottom:72px;">
+  <div class="wrap">
+    
+    <!-- Breadcrumb: Home > Blog > Category > Title -->
+    <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span class="sep">&rsaquo;</span>
+      <a href="/blog">Blog</a>
+      <span class="sep">&rsaquo;</span>
+      <a href="/blog?category={{ post.category | urlencode }}">{{ post.category }}</a>
+      <span class="sep">&rsaquo;</span>
+      <span class="current" style="max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; vertical-align:bottom;">{{ post.title }}</span>
+    </nav>
+
+    <!-- 2-Column Grid (Main Article Column + Right Sidebar Widgets) -->
+    <div class="detail-page-layout">
+      
+      <!-- LEFT COLUMN: Main Article Body -->
+      <article class="detail-main-col">
+        
+        <!-- Category Badge Pill -->
+        <a href="/blog?category={{ post.category | urlencode }}" class="category-badge-pill">
+          {{ post.category }}
+        </a>
+
+        <!-- Main Article Headline -->
+        <h1 class="detail-title">
+          {{ post.title }}
+        </h1>
+
+        <!-- Meta Info Byline Row -->
+        <div class="detail-meta-row">
+          <!-- Published Date -->
+          <div class="meta-item">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>{{ post.published_at }}</span>
+          </div>
+
+          <!-- Reading Time -->
+          <div class="meta-item">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>{{ post.read_time }}</span>
+          </div>
+        </div>
+
+        <!-- Featured Hero Cover Image -->
+        <div class="detail-cover-hero">
+          <img src="{{ post.cover_image_url }}" alt="{{ post.title }}">
+        </div>
+
+        <!-- Reviewed By Author / Expert Box Container (Rendered dynamically via JS) -->
+        <div id="reviewed-by-container"></div>
+
+        <!-- Article Prose Content -->
+        <div class="article-prose">
+          
+          <div id="overview">
+            <p class="lead" style="font-size:1.15rem; line-height:1.75; color:var(--ink); font-weight:500; margin-bottom:24px;">
+              {{ post.short_description }}
+            </p>
+          </div>
+
+          {% if post.content %}
+            {{ post.content | safe }}
+          {% else %}
+            <h2 id="benefits">
+              {% if locale == 'ar' %}أهم النصائح والفوائد لقائدي السيارات{% else %}Top Tyre Care &amp; Safety Guidelines{% endif %}
+            </h2>
+            <p>
+              {% if locale == 'ar' %}
+                تتطلب القيادة في مناخ الخليج العربي اهتماماً خاصاً بضغط الإطارات وحالتها الفنية. إليك أهم المعايير التي يوصي بها خبراؤنا:
+              {% else %}
+                Driving in extreme UAE summer conditions requires special attention to tyre temperature, pressure retention, and tread integrity.
+              {% endif %}
+            </p>
+
+            <!-- Green Checkmark Feature List -->
+            <ul class="check-list">
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" clip-rule="evenodd"/></svg>
+                <div>
+                  <strong>{% if locale == 'ar' %}ضغط الإطار المنتظم:{% else %}Optimal Inflation Pressure:{% endif %}</strong> 
+                  {% if locale == 'ar' %}يجب فحص ضغط الهواء شهرياً والإطار بارد تماماً لمنع ارتفاع الحرارة المفاجئ.{% else %}Check pressures monthly when tyres are cold to prevent heat buildup on highways.{% endif %}
+                </div>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" clip-rule="evenodd"/></svg>
+                <div>
+                  <strong>{% if locale == 'ar' %}مواصفات دول الخليج (GCC Specs):{% else %}GCC Certified Compounds:{% endif %}</strong> 
+                  {% if locale == 'ar' %}تأكد من وجود تصنيف درجات الحرارة Temperature A لتحمل حرارة الإسفلت العالية.{% else %}Ensure tyres feature Temperature Grade A ratings to withstand intense tarmac friction.{% endif %}
+                </div>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" clip-rule="evenodd"/></svg>
+                <div>
+                  <strong>{% if locale == 'ar' %}تدوير الإطارات الدوري:{% else %}Regular Tyre Rotation:{% endif %}</strong> 
+                  {% if locale == 'ar' %}يساعد تدوير الإطارات كل 10,000 كم في تحقيق التآكل المتوازن وإطالة عمر الطقم.{% else %}Rotate tyres every 10,000 km to guarantee uniform tread wear across front and rear axles.{% endif %}
+                </div>
+              </li>
+              <li>
+                <svg class="check-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" clip-rule="evenodd"/></svg>
+                <div>
+                  <strong>{% if locale == 'ar' %}التركيب والترصيص الاحترافي:{% else %}Professional Mobile Balancing:{% endif %}</strong> 
+                  {% if locale == 'ar' %}الترصيص الدقيق يمنع اهتزاز المقود ويحافظ على سلامة نظام التعليق والمكابح.{% else %}Laser balancing eliminates high-speed steering vibrations and protects suspension components.{% endif %}
+                </div>
+              </li>
+            </ul>
+
+            <h2 id="conclusion">
+              {% if locale == 'ar' %}الخاتمة والتوصيات{% else %}Conclusion &amp; Next Steps{% endif %}
+            </h2>
+            <p>
+              {% if locale == 'ar' %}
+                سلامتك على الطريق تبدأ من جودة واختيار الإطارات المناسبة. إذا كنت بحاجة إلى استشارة أو فحص مجاني لمقاس إطارات سيارتك، فإن فريق تايرز فيجن جاهز لمساعدتك عبر واتساب فوراً.
+              {% else %}
+                Safe and smooth driving across the UAE begins with the right set of tyres. If you need sizing guidance or instant quotes across 60+ premium brands, WhatsApp our specialists today.
+              {% endif %}
+            </p>
+          {% endif %}
+
+        </div>
+
+        <!-- Blog FAQs Accordion Container (Rendered dynamically via JS) -->
+        <div id="blog-faqs-container"></div>
+
+        <!-- Social Share Row -->
+        <div class="share-section">
+          <div class="share-label">
+            {% if locale == 'ar' %}شارك هذا المقال{% else %}Share this article{% endif %}
+          </div>
+          <div class="share-buttons-row">
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url | urlencode }}" target="_blank" rel="noopener" class="share-btn btn-fb" aria-label="Share on Facebook">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="https://twitter.com/intent/tweet?text={{ post.title | urlencode }}&url={{ request.url | urlencode }}" target="_blank" rel="noopener" class="share-btn btn-tw" aria-label="Share on X (Twitter)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.url | urlencode }}&title={{ post.title | urlencode }}" target="_blank" rel="noopener" class="share-btn btn-in" aria-label="Share on LinkedIn">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451c.979 0 1.778-.773 1.778-1.729V1.73C24 .774 23.205 0 22.225 0z"/></svg>
+            </a>
+            <a href="https://wa.me/?text={{ (post.title ~ ' ' ~ request.url) | urlencode }}" target="_blank" rel="noopener" class="share-btn btn-wa" aria-label="Share on WhatsApp">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+            </a>
+            <a href="mailto:?subject={{ post.title | urlencode }}&body={{ request.url | urlencode }}" class="share-btn btn-mail" aria-label="Share via Email">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Previous / Next Article Navigation Card -->
+        <div class="prev-next-nav-card">
+          <!-- Previous Blog -->
+          {% if prev_post %}
+          <a href="{{ prev_post.url }}" class="prev-next-item">
+            <div class="prev-next-thumb">
+              <img src="{{ prev_post.cover_image_url }}" alt="{{ prev_post.title }}">
+            </div>
+            <div class="prev-next-text">
+              <span class="prev-next-sub">{% if locale == 'ar' %}&rarr; المقال السابق{% else %}&larr; Previous Blog{% endif %}</span>
+              <p class="prev-next-title">{{ prev_post.title }}</p>
+            </div>
+          </a>
+          {% else %}
+          <div class="prev-next-item" style="opacity:.6;">
+            <div class="prev-next-text">
+              <span class="prev-next-sub">{% if locale == 'ar' %}بداية المدونة{% else %}Start of Blog{% endif %}</span>
+              <p class="prev-next-title">{% if locale == 'ar' %}أنت في المقال الأول{% else %}You are at the first article{% endif %}</p>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Next Blog -->
+          {% if next_post %}
+          <a href="{{ next_post.url }}" class="prev-next-item next">
+            <div class="prev-next-text">
+              <span class="prev-next-sub">{% if locale == 'ar' %}المقال التالي &larr;{% else %}Next Blog &rarr;{% endif %}</span>
+              <p class="prev-next-title">{{ next_post.title }}</p>
+            </div>
+            <div class="prev-next-thumb">
+              <img src="{{ next_post.cover_image_url }}" alt="{{ next_post.title }}">
+            </div>
+          </a>
+          {% else %}
+          <div class="prev-next-item next" style="opacity:.6;">
+            <div class="prev-next-text">
+              <span class="prev-next-sub">{% if locale == 'ar' %}نهاية المدونة{% else %}End of Blog{% endif %}</span>
+              <p class="prev-next-title">{% if locale == 'ar' %}أحدث مقال تم نشره{% else %}Latest article published{% endif %}</p>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+      </article>
+
+      <!-- RIGHT COLUMN: Sidebar Widgets (Related Blogs + Categories) -->
+      <aside class="detail-sidebar">
+        
+        <!-- Widget 1: Related Blogs -->
+        <div class="sidebar-card">
+          <h3 class="widget-title-accent">
+            {% if locale == 'ar' %}مقالات ذات صلة{% else %}Related Blogs{% endif %}
+          </h3>
+          
+          <div class="related-blogs-list">
+            {% if related_posts and related_posts | length > 0 %}
+              {% for rp in related_posts %}
+              <a href="{{ rp.url }}" class="related-blog-row">
+                <div class="related-blog-thumb">
+                  <img src="{{ rp.cover_image_url }}" alt="{{ rp.title }}">
+                </div>
+                <div class="related-blog-content">
+                  <h4 class="related-blog-title">{{ rp.title }}</h4>
+                  <span class="related-blog-date">{{ rp.published_at }}</span>
+                </div>
+              </a>
+              {% endfor %}
+            {% else %}
+              <!-- Fallback related items -->
+              <a href="/blog" class="related-blog-row">
+                <div class="related-blog-thumb">
+                  <img src="/static/assets/online-tyres-shop-dubai.png" alt="Tyre Guide">
+                </div>
+                <div class="related-blog-content">
+                  <h4 class="related-blog-title">How to Choose the Right Tyres in UAE</h4>
+                  <span class="related-blog-date">August 24, 2026</span>
+                </div>
+              </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Widget 2: Categories -->
+        <div class="sidebar-card">
+          <h3 class="widget-title-accent">
+            Categories
+          </h3>
+
+          <div class="sidebar-cat-list">
+            {% for cat in categories %}
+            <a href="/blog?category={{ cat.name | urlencode }}" class="sidebar-cat-row">
+              <span class="sidebar-cat-name">{{ cat.name }}</span>
+              <span class="sidebar-cat-count">{{ cat.count }}</span>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= JSON DATA PAYLOADS & JAVASCRIPT RENDERING ================= -->
+<script type="application/json" id="detail-blog-data">
+  {{ post | tojson | safe }}
+</script>
+
+<script type="application/json" id="detail-reviewer-data">
+  {{ reviewer | tojson | safe }}
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const locale = '{{ locale }}';
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // -------------------------------------------------------------
+    // 1. DYNAMIC REVIEWER CARD RENDERING VIA JS
+    // -------------------------------------------------------------
+    try {
+      const reviewerScript = document.getElementById('detail-reviewer-data');
+      const blogScript = document.getElementById('detail-blog-data');
+      const reviewerContainer = document.getElementById('reviewed-by-container');
+
+      if (reviewerScript && reviewerContainer) {
+        const reviewer = JSON.parse(reviewerScript.textContent || '{}');
+        const post = JSON.parse(blogScript ? blogScript.textContent : '{}');
+
+        if (reviewer && (reviewer.enabled === true || reviewer.enabled === 'true' || reviewer.enabled === 'Yes')) {
+          const initials = escapeHtml(reviewer.initials || 'SK');
+          const name = escapeHtml(reviewer.name || 'Sharvil Kumar');
+          const role = escapeHtml(reviewer.role || 'Tyre Selection Specialist, TyresVision');
+          const bio = escapeHtml(reviewer.bio || '');
+          const reviewedDate = escapeHtml(post.reviewed_at || post.published_at || '');
+
+          const labelText = locale === 'ar' ? 'تمت المراجعة بواسطة' : 'REVIEWED BY';
+          const dateText = locale === 'ar' ? `تمت المراجعة في ${reviewedDate}` : `Reviewed on ${reviewedDate}`;
+
+          reviewerContainer.innerHTML = `
+            <div class="reviewed-by-card">
+              <div class="reviewed-by-badge-avatar">
+                <span>${initials}</span>
+              </div>
+              <div class="reviewed-by-content">
+                <div class="reviewed-by-top">
+                  <div class="reviewed-by-headings">
+                    <span class="reviewed-by-label">${labelText}</span>
+                    <h4 class="reviewed-by-name">${name}</h4>
+                  </div>
+                  <div class="reviewed-by-date-badge">
+                    <span>${dateText}</span>
+                  </div>
+                </div>
+                <p class="reviewed-by-role">${role}</p>
+                <p class="reviewed-by-bio">${bio}</p>
+              </div>
+            </div>
+          `;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to render reviewer section via JS:', err);
+    }
+
+    // -------------------------------------------------------------
+    // 2. DYNAMIC FAQS ACCORDION RENDERING VIA JS
+    // -------------------------------------------------------------
+    try {
+      const blogScript = document.getElementById('detail-blog-data');
+      const faqsContainer = document.getElementById('blog-faqs-container');
+
+      if (blogScript && faqsContainer) {
+        const post = JSON.parse(blogScript.textContent || '{}');
+        const rawFaqs = Array.isArray(post.faqs) ? post.faqs : [];
+        const faqs = rawFaqs.filter(f => f && f.question && String(f.question).trim().length > 0);
+
+        if (faqs.length > 0) {
+          const sectionTitle = locale === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions';
+          
+          let itemsHtml = '';
+          faqs.forEach((faq, idx) => {
+            const isFirst = idx === 0;
+            const qText = escapeHtml(faq.question);
+            const aText = escapeHtml(faq.answer || '');
+
+            itemsHtml += `
+              <div class="faq-item ${isFirst ? 'active' : ''}">
+                <button type="button" class="faq-question-btn" aria-expanded="${isFirst ? 'true' : 'false'}">
+                  <span class="faq-q-text">${qText}</span>
+                  <span class="faq-chevron-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                  </span>
+                </button>
+                <div class="faq-answer-panel">
+                  <div class="faq-answer-inner">
+                    <div class="faq-answer-content">${aText}</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+
+          faqsContainer.innerHTML = `
+            <div class="blog-faqs-wrap">
+              <div class="blog-faqs-head">
+                <h3 class="blog-faqs-title">${sectionTitle}</h3>
+              </div>
+              <div class="blog-faqs-accordion">
+                ${itemsHtml}
+              </div>
+            </div>
+          `;
+
+          // Interactive Smooth Accordion Event Listeners
+          const faqItems = faqsContainer.querySelectorAll('.faq-item');
+          faqItems.forEach(item => {
+            const btn = item.querySelector('.faq-question-btn');
+            if (!btn) return;
+
+            btn.addEventListener('click', function() {
+              const isOpen = item.classList.contains('active');
+
+              faqItems.forEach(otherItem => {
+                if (otherItem !== item) {
+                  otherItem.classList.remove('active');
+                  const otherBtn = otherItem.querySelector('.faq-question-btn');
+                  if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+                }
+              });
+
+              if (isOpen) {
+                item.classList.remove('active');
+                btn.setAttribute('aria-expanded', 'false');
+              } else {
+                item.classList.add('active');
+                btn.setAttribute('aria-expanded', 'true');
+              }
+            });
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to render FAQs via JS:', err);
+    }
+  });
+</script>
+{% endblock %}

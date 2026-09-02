@@ -1,0 +1,106 @@
+{% extends 'Client/layout.html' %}
+
+{% block title %}
+  {% if page and page.title %}
+    {{ page.title }} | {% if locale == 'ar' %}تايرز فيجن الإمارات{% else %}TyresVision UAE{% endif %}
+  {% else %}
+    {% if locale == 'ar' %}من نحن | تايرز فيجن الإمارات — إطارات أصلية وخدمة موثوقة{% else %}About Us | TyresVision UAE — Driven by Confidence, Built for the Road{% endif %}
+  {% endif %}
+{% endblock %}
+
+{% block meta_description %}
+  {% if page and page.meta_description %}
+    {{ page.meta_description }}
+  {% else %}
+    {% if locale == 'ar' %}في تايرز فيجن، نقدم إطارات سيارات أصلية معتمدة، وأسعار شفافة، وخدمة تركيب متنقلة عند باب منزلك أو في مراكزنا المعتمدة في كافة أنحاء الإمارات.{% else %}At TyresVision, we deliver premium tyres that combine cutting-edge technology, superior performance, and lasting reliability across the UAE.{% endif %}
+  {% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+@media(min-width: 960px) {
+  .hero-2col-layout {
+    grid-template-columns: 1.15fr 0.95fr !important;
+    gap: 56px !important;
+  }
+}
+.skeleton-pulse {
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}
+.hero-db-content h1 {
+  color: #ffffff !important;
+  font-size: clamp(2rem, 3.8vw, 2.75rem) !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+  margin-bottom: 16px !important;
+}
+.hero-db-content h2, .hero-db-content h3 {
+  color: var(--brand-glow, #34d399) !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  margin-top: 18px !important;
+  margin-bottom: 8px !important;
+}
+.hero-db-content p {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 1.02rem !important;
+  line-height: 1.75 !important;
+  margin-bottom: 14px !important;
+}
+.hero-db-content strong {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+.hero-db-content ul, .hero-db-content ol {
+  margin: 12px 0 16px 20px;
+  color: rgba(255, 255, 255, 0.85);
+}
+.hero-db-content li {
+  margin-bottom: 6px;
+}
+.stat-animated .about-stat-icon-wrap {
+  animation: statIconPulse 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stat-animated .about-stat-number {
+  animation: statNumberPop 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes statIconPulse {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes statNumberPop {
+  0% { transform: translateY(12px); opacity: 0.2; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<span id="top"></span>
+
+<!-- Dynamic Sections Root Container (Rendered purely dynamically via client-page-sections.js) -->
+<div id="dynamic-sections-root" data-slug="{{ (page.slug if page else slug) or 'about-us' }}" data-locale="{{ locale or 'en' }}">
+  <!-- Clean Loading Placeholder -->
+  <section class="about-hero-dark" style="min-height: 360px; display: flex; align-items: center;">
+    <div class="wrap" style="width: 100%;">
+      <div style="display:flex; flex-direction:column; gap:16px; max-width:760px;">
+        <div class="skeleton-pulse" style="width: 140px; height: 16px; background: rgba(255,255,255,0.1); border-radius: 8px;"></div>
+        <div class="skeleton-pulse" style="width: 85%; height: 44px; background: rgba(255,255,255,0.12); border-radius: 12px;"></div>
+        <div class="skeleton-pulse" style="width: 95%; height: 18px; background: rgba(255,255,255,0.08); border-radius: 6px;"></div>
+        <div class="skeleton-pulse" style="width: 75%; height: 18px; background: rgba(255,255,255,0.08); border-radius: 6px;"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/client-page-sections.js?v={{ range(10000, 99999) | random }}"></script>
+{% endblock %}
+
