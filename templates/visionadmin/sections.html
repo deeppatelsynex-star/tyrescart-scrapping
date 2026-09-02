@@ -388,18 +388,25 @@
       </div>
 
       <!-- Language Selector Tabs -->
-      <div class="flex items-center justify-between border-b border-[#E8EDE4] pb-3">
-        <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700">Section Content</span>
-        <div class="flex items-center gap-1 bg-[#F6F8F3] border border-[#E8EDE4] p-1 rounded-xl text-xs font-black">
-          <button type="button" id="tab-en" class="px-3 py-1 rounded-lg bg-white text-[#0E1108] shadow-2xs transition">🇬🇧 English</button>
-          <button type="button" id="tab-ar" class="px-3 py-1 rounded-lg text-slate-500 hover:text-[#0E1108] transition">🇦🇪 Arabic (العربية)</button>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-2xl bg-[#F4F7F2] border border-[#DCE4D6]">
+        <div>
+          <span class="text-xs font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
+            <span>✏️</span> Section Headings &amp; Bilingual Content
+          </span>
+          <p class="text-[10px] text-slate-500 font-medium">Switch language tab to edit English or Arabic headings.</p>
+        </div>
+        <div class="flex items-center gap-1 bg-white border border-[#DCE4D6] p-1 rounded-xl shadow-2xs">
+          <button type="button" id="tab-en" class="px-3.5 py-1.5 rounded-lg bg-[#0E1108] text-white text-xs font-black transition">🇬🇧 English</button>
+          <button type="button" id="tab-ar" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-[#0E1108] hover:bg-slate-100 text-xs font-black transition">🇦🇪 Arabic (العربية)</button>
         </div>
       </div>
 
       <!-- General Title & Subtitle Fields -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1">Section Subtitle / Eyebrow</label>
+          <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
+            <span>🏷️</span> Section Subtitle / Eyebrow (Optional)
+          </label>
           <div id="wrap-subtitle-en">
             <input type="text" id="form-subtitle-en" placeholder="e.g. ABOUT US, OUR STORY, VALUES" class="w-full px-3.5 py-2.5 rounded-xl border border-[#E8EDE4] text-xs font-bold text-slate-800 bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition" />
           </div>
@@ -409,7 +416,9 @@
         </div>
 
         <div>
-          <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1">Section Title / Headline *</label>
+          <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
+            <span>📌</span> Main Section Title / Heading *
+          </label>
           <div id="wrap-title-en">
             <input type="text" id="form-title-en" placeholder="e.g. Driven by Confidence, Built for the Road." class="w-full px-3.5 py-2.5 rounded-xl border border-[#E8EDE4] text-xs font-bold text-slate-800 bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none transition" required />
           </div>
@@ -419,31 +428,11 @@
         </div>
       </div>
 
-      <!-- Meta Title & Meta Description (SEO / Section Metadata) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4]">
-        <div>
-          <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1">Meta Title</label>
-          <div id="wrap-meta-title-en">
-            <input type="text" id="form-meta-title-en" placeholder="Meta title for SEO / section..." class="w-full px-3.5 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none" />
-          </div>
-          <div id="wrap-meta-title-ar" class="hidden">
-            <input type="text" id="form-meta-title-ar" dir="rtl" placeholder="عنوان الميتا (SEO)..." class="w-full px-3.5 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none text-right" />
-          </div>
-        </div>
-        <div>
-          <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1">Meta Description</label>
-          <div id="wrap-meta-desc-en">
-            <input type="text" id="form-meta-desc-en" placeholder="Meta description snippet..." class="w-full px-3.5 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none" />
-          </div>
-          <div id="wrap-meta-desc-ar" class="hidden">
-            <input type="text" id="form-meta-desc-ar" dir="rtl" placeholder="وصف الميتا (SEO)..." class="w-full px-3.5 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none text-right" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Description / Prose Content Field -->
+      <!-- Description / Rich Prose Content Field -->
       <div id="field-content-wrap" class="space-y-1.5">
-        <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700">Section Description / Content</label>
+        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+          <span>📝</span> Section Description / Intro Lead (Optional)
+        </label>
         <div id="wrap-content-en">
           <textarea id="form-content-en" name="form-content-en" rows="4" placeholder="Enter rich paragraph text..." class="w-full px-3.5 py-2.5 rounded-xl border border-[#E8EDE4] text-xs font-semibold bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none"></textarea>
         </div>
@@ -452,11 +441,104 @@
         </div>
       </div>
 
+      <!-- Composable Blocks Engine Canvas -->
+      <div id="field-composable-blocks-wrap" class="p-4 rounded-2xl bg-[#F4F7F2] border-2 border-[#58B31B]/40 space-y-4 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#DCE4D6]">
+          <div>
+            <div class="text-xs font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-2">
+              <span class="text-base">🧩</span>
+              <span>Composable Blocks Canvas</span>
+              <span class="px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 text-[10px] font-black">Modular Builder</span>
+            </div>
+            <p class="text-[11px] text-slate-600 font-medium mt-0.5">Click any block below to immediately add it to your section. You can reorder and combine as many as you need.</p>
+          </div>
+        </div>
+
+        <!-- Quick-Add Block Palette Buttons -->
+        <div class="p-3 bg-white rounded-xl border border-[#DCE4D6]">
+          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-700 mb-2">Click to Add Blocks to this Section:</label>
+          <div class="flex flex-wrap gap-2" id="block-quick-palette">
+            <button type="button" class="btn-palette-add inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAF7] hover:bg-[#58B31B] hover:text-white border border-[#DCE4D6] text-xs font-extrabold text-[#0E1108] transition shadow-2xs cursor-pointer" data-block-type="metrics_strip">
+              <span>📊</span> <span>+ Metric Counters</span>
+            </button>
+            <button type="button" class="btn-palette-add inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAF7] hover:bg-[#58B31B] hover:text-white border border-[#DCE4D6] text-xs font-extrabold text-[#0E1108] transition shadow-2xs cursor-pointer" data-block-type="cards_grid">
+              <span>🃏</span> <span>+ Cards Grid</span>
+            </button>
+            <button type="button" class="btn-palette-add inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAF7] hover:bg-[#58B31B] hover:text-white border border-[#DCE4D6] text-xs font-extrabold text-[#0E1108] transition shadow-2xs cursor-pointer" data-block-type="chips_cloud">
+              <span>🏷️</span> <span>+ Chips / Sizes</span>
+            </button>
+            <button type="button" class="btn-palette-add inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAF7] hover:bg-[#58B31B] hover:text-white border border-[#DCE4D6] text-xs font-extrabold text-[#0E1108] transition shadow-2xs cursor-pointer" data-block-type="comparison_split">
+              <span>⚖️</span> <span>+ Comparison Cards</span>
+            </button>
+            <button type="button" class="btn-palette-add inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAF7] hover:bg-[#58B31B] hover:text-white border border-[#DCE4D6] text-xs font-extrabold text-[#0E1108] transition shadow-2xs cursor-pointer" data-block-type="process_steps">
+              <span>🔢</span> <span>+ Step Timeline</span>
+            </button>
+            <button type="button" class="btn-palette-add inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAF7] hover:bg-[#58B31B] hover:text-white border border-[#DCE4D6] text-xs font-extrabold text-[#0E1108] transition shadow-2xs cursor-pointer" data-block-type="accordion_faq">
+              <span>❓</span> <span>+ FAQ Accordion</span>
+            </button>
+            <button type="button" class="btn-palette-add inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAF7] hover:bg-[#58B31B] hover:text-white border border-[#DCE4D6] text-xs font-extrabold text-[#0E1108] transition shadow-2xs cursor-pointer" data-block-type="reviews_slider">
+              <span>⭐</span> <span>+ Customer Reviews</span>
+            </button>
+            <button type="button" class="btn-palette-add inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAF7] hover:bg-[#58B31B] hover:text-white border border-[#DCE4D6] text-xs font-extrabold text-[#0E1108] transition shadow-2xs cursor-pointer" data-block-type="media_story">
+              <span>🖼️</span> <span>+ Media &amp; Story</span>
+            </button>
+            <button type="button" class="btn-palette-add inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAF7] hover:bg-[#58B31B] hover:text-white border border-[#DCE4D6] text-xs font-extrabold text-[#0E1108] transition shadow-2xs cursor-pointer" data-block-type="pricing_matrix">
+              <span>💰</span> <span>+ Tyre Prices Table</span>
+            </button>
+            <button type="button" class="btn-palette-add inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAF7] hover:bg-[#58B31B] hover:text-white border border-[#DCE4D6] text-xs font-extrabold text-[#0E1108] transition shadow-2xs cursor-pointer" data-block-type="cta_actions">
+              <span>🔘</span> <span>+ Action Buttons</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Stack of added blocks -->
+        <div id="composable-blocks-container" class="space-y-3 pt-1">
+          <!-- Dynamic block cards inserted via JS -->
+        </div>
+      </div>
+
+      <!-- Structured Data (Legacy JSON Builder / Card Items) -->
+      <div id="field-structured-data-wrap" class="p-4 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] space-y-3">
+        <div class="flex items-center justify-between">
+          <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700" id="structured-data-title">Repeatable Items / Cards (JSON Data)</label>
+          <button type="button" id="btn-add-repeater-item" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0E1108] hover:bg-slate-800 text-white text-[11px] font-extrabold transition shadow-2xs cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Add Item</span>
+          </button>
+        </div>
+        <div id="repeater-items-list" class="space-y-2.5">
+          <!-- Dynamic Repeater Cards inserted via JS -->
+        </div>
+      </div>
+
+      <!-- Button CTA Fields (Conditional) -->
+      <div id="field-button-wrap" class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4]">
+        <div>
+          <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1.5">
+            <span>🔘</span> Bottom Button Text
+          </label>
+          <div id="wrap-btn-text-en">
+            <input type="text" id="form-btn-text-en" placeholder="e.g. Contact Us Today →" class="w-full px-3.5 py-2.5 rounded-xl border border-[#E8EDE4] text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none" />
+          </div>
+          <div id="wrap-btn-text-ar" class="hidden">
+            <input type="text" id="form-btn-text-ar" dir="rtl" placeholder="مثال: تواصل معنا اليوم ←" class="w-full px-3.5 py-2.5 rounded-xl border border-[#E8EDE4] text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none text-right" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-1.5">
+            <span>🔗</span> Button Link / URL
+          </label>
+          <input type="text" id="form-btn-url" placeholder="e.g. https://wa.me/971505069575 or #how" class="w-full px-3.5 py-2.5 rounded-xl border border-[#E8EDE4] text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none" />
+        </div>
+      </div>
+
       <!-- Media & Image Field (Conditional) -->
       <div id="field-image-wrap" class="p-4 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] space-y-3">
         <div class="flex items-center justify-between">
-          <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700">Section Image / Visual</label>
-          <span class="text-[10px] text-slate-400 font-bold">Recommended: PNG / WEBP / JPG</span>
+          <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+            <span>🖼️</span> Section Image / Visual (Optional)
+          </label>
+          <span class="text-[10px] text-slate-400 font-bold">PNG / WEBP / JPG</span>
         </div>
         <div class="flex flex-col sm:flex-row items-center gap-3">
           <div class="w-24 h-24 sm:w-28 sm:h-24 rounded-2xl bg-slate-900 border border-[#E8EDE4] p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-inner" id="preview-image-box">
@@ -488,97 +570,43 @@
         </div>
       </div>
 
-      <!-- Button CTA Fields (Conditional) -->
-      <div id="field-button-wrap" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1">Button Text</label>
-          <div id="wrap-btn-text-en">
-            <input type="text" id="form-btn-text-en" placeholder="e.g. Contact Us Today →" class="w-full px-3.5 py-2.5 rounded-xl border border-[#E8EDE4] text-xs font-bold text-slate-800 bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none" />
+      <!-- Collapsible SEO & Meta Details -->
+      <details class="group rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] overflow-hidden">
+        <summary class="flex items-center justify-between p-3.5 cursor-pointer font-extrabold text-xs text-slate-700 select-none hover:bg-slate-100 transition">
+          <div class="flex items-center gap-2">
+            <span>🌐</span>
+            <span>SEO &amp; Meta Information (Optional)</span>
           </div>
-          <div id="wrap-btn-text-ar" class="hidden">
-            <input type="text" id="form-btn-text-ar" dir="rtl" placeholder="مثال: تواصل معنا اليوم ←" class="w-full px-3.5 py-2.5 rounded-xl border border-[#E8EDE4] text-xs font-bold text-slate-800 bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none text-right" />
-          </div>
-        </div>
-        <div>
-          <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-700 mb-1">Button URL / Link</label>
-          <input type="text" id="form-btn-url" placeholder="e.g. https://wa.me/... or /#why or #top" class="w-full px-3.5 py-2.5 rounded-xl border border-[#E8EDE4] text-xs font-bold text-slate-800 bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 focus:border-[#58B31B] outline-none" />
-        </div>
-      </div>
-
-      <!-- Composable Blocks Engine Canvas -->
-      <div id="field-composable-blocks-wrap" class="p-4 rounded-2xl bg-[#F4F7F2] border border-[#DCE4D6] space-y-3">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#DCE4D6]">
+          <span class="text-slate-400 group-open:rotate-180 transition-transform text-xs">▼</span>
+        </summary>
+        <div class="p-4 pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-[#E8EDE4] bg-white">
           <div>
-            <div class="text-[12px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
-              <span>🧩</span>
-              <span>Composable Blocks Stack (Stack &amp; Combine Elements Freely)</span>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1">Meta Title</label>
+            <div id="wrap-meta-title-en">
+              <input type="text" id="form-meta-title-en" placeholder="Meta title for SEO..." class="w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none" />
             </div>
-            <p class="text-[10px] text-slate-500 font-medium">Add cards, metrics, chips, FAQs, or buttons in any order into this section.</p>
+            <div id="wrap-meta-title-ar" class="hidden">
+              <input type="text" id="form-meta-title-ar" dir="rtl" placeholder="عنوان الميتا (SEO)..." class="w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none text-right" />
+            </div>
           </div>
-          <div class="relative inline-block text-left" id="dropdown-add-block-container">
-            <button type="button" id="btn-open-block-palette" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#00A650] hover:bg-[#008f45] text-white text-[11px] font-extrabold transition shadow-2xs cursor-pointer">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span>+ Add Block to Section</span>
-            </button>
-            <div id="block-palette-menu" class="hidden absolute right-0 mt-2 w-56 rounded-2xl bg-white shadow-xl border border-[#E8EDE4] z-50 py-1.5 text-xs font-bold text-[#0E1108]">
-              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="metrics_strip">
-                <span>📊</span> <span>Statistic Metrics Strip</span>
-              </button>
-              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="cards_grid">
-                <span>🃏</span> <span>Cards Grid (3 or 4 cols)</span>
-              </button>
-              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="chips_cloud">
-                <span>🏷️</span> <span>Interactive Chips / Sizes</span>
-              </button>
-              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="comparison_split">
-                <span>⚖️</span> <span>Service Comparison Cards</span>
-              </button>
-              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="process_steps">
-                <span>🔢</span> <span>Step Timeline (Flow)</span>
-              </button>
-              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="accordion_faq">
-                <span>❓</span> <span>Accordion FAQ List</span>
-              </button>
-              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="reviews_slider">
-                <span>⭐</span> <span>Customer Reviews Grid</span>
-              </button>
-              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="media_story">
-                <span>🖼️</span> <span>Media &amp; Narrative Story</span>
-              </button>
-              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="pricing_matrix">
-                <span>💰</span> <span>Tyre Pricing Matrix</span>
-              </button>
-              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="cta_actions">
-                <span>🔘</span> <span>Action Buttons Row</span>
-              </button>
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1">Meta Description</label>
+            <div id="wrap-meta-desc-en">
+              <input type="text" id="form-meta-desc-en" placeholder="Meta description snippet..." class="w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none" />
+            </div>
+            <div id="wrap-meta-desc-ar" class="hidden">
+              <input type="text" id="form-meta-desc-ar" dir="rtl" placeholder="وصف الميتا (SEO)..." class="w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none text-right" />
             </div>
           </div>
         </div>
-        
-        <!-- Stack of added blocks -->
-        <div id="composable-blocks-container" class="space-y-3">
-          <!-- Dynamic block cards inserted via JS -->
-        </div>
-      </div>
-
-      <!-- Structured Data (JSON Builder / Card Items) -->
-      <div id="field-structured-data-wrap" class="p-4 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] space-y-3">
-        <div class="flex items-center justify-between">
-          <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700" id="structured-data-title">Repeatable Items / Cards (JSON Data)</label>
-          <button type="button" id="btn-add-repeater-item" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0E1108] hover:bg-slate-800 text-white text-[11px] font-extrabold transition shadow-2xs">
-            <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>Add Item</span>
-          </button>
-        </div>
-        <div id="repeater-items-list" class="space-y-2.5">
-          <!-- Dynamic Repeater Cards inserted via JS -->
-        </div>
-      </div>
+      </details>
 
       <!-- Section Styling & Theme Options -->
       <div class="p-4 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] space-y-3">
         <div class="flex items-center justify-between">
-          <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700">Section Styling &amp; Theme (Optional)</label>
+          <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+            <span>🎨</span> Section Styling &amp; Theme (Optional)
+          </label>
           <span class="text-[10px] text-slate-400 font-bold">Custom layout &amp; spacing</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">

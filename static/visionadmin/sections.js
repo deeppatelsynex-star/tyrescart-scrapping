@@ -305,7 +305,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const newUrl = window.location.pathname + '?page=' + encodeURIComponent(currentPageSlug);
     window.history.pushState({ page: currentPageSlug }, '', newUrl);
 
-    loadAvailablePages();
+      // Attach Quick-Add Block Palette Buttons listener
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-palette-add');
+    if (btn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const bType = btn.dataset.blockType;
+      if (bType) {
+        addComposableBlock(bType);
+      }
+    }
+  });
+
+  loadAvailablePages();
     fetchSections();
   }
 
@@ -800,23 +813,418 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+    document.querySelectorAll('.type-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const radio = card.querySelector('input[name="section_type"]');
+      if (radio) {
+        setSelectedType(radio.value);
+      }
+    });
+  });
+
   document.querySelectorAll('input[name="section_type"]').forEach(r => {
     r.addEventListener('change', () => {
       setSelectedType(r.value);
     });
   });
 
-  function applyTypeFormRules(type) {
+  
+  // ---------------------------------------------------------------------------
+  // COMPOSABLE BLOCK ENGINE METHODS
+  // ---------------------------------------------------------------------------
+  function addComposableBlock(bType) {
+    let newBlock = { type: bType };
+    if (bType === 'metrics_strip') {
+      newBlock.heading = 'Key Statistics';
+      newBlock.items = [
+        { number: '16+', label: { en: 'Car Care Services', ar: 'خدمة صيانة سيارات' } },
+        { number: '25+', label: { en: 'Partner Centres', ar: 'مركز شريك معتمد' } },
+        { number: '30 min', label: { en: 'Average Mobile Van Fit', ar: 'متوسط وقت التركيب' } }
+      ];
+    } else if (bType === 'cards_grid') {
+      newBlock.heading = 'Service Highlights';
+      newBlock.columns = 3;
+      newBlock.items = [
+        { icon: 'shield', tag: 'GUARANTEED', title: { en: 'Certified Fitting', ar: 'تركيب معتمد' }, description: { en: 'Installed by verified technicians across the UAE.', ar: 'تركيب بواسطة فنيين معتمدين في كافة أنحاء الإمارات.' } },
+        { icon: 'dollar', tag: 'BEST PRICE', title: { en: 'Transparent Pricing', ar: 'أسعار واضحة' }, description: { en: 'No hidden callout or fitting fees.', ar: 'بدون أي رسوم خفية إضافية.' } },
+        { icon: 'truck', tag: 'CONVENIENT', title: { en: 'Mobile Van Service', ar: 'خدمة الفان المتنقل' }, description: { en: 'We come to your villa or apartment parking.', ar: 'نصل إلى باب منزلك أو مقر عملك.' } }
+      ];
+    } else if (bType === 'chips_cloud') {
+      newBlock.heading = 'Popular Sizes & Vehicles';
+      newBlock.chips = ['195/65 R15', '205/55 R16', '215/55 R17', '225/45 R17', 'Nissan Patrol', 'Toyota Land Cruiser'];
+    } else if (bType === 'comparison_split') {
+      newBlock.heading = 'Choose Your Fitting Option';
+      newBlock.options = [
+        { tag: 'FREE FITTING', heading: 'Partner Centre Fitting', description: 'Mounting, balancing and new valves included free at 25+ centres.', button_text: 'Book Centre', wa_msg: 'Hi TyresVision, I would like to book free fitting at a partner centre.' },
+        { tag: 'MOBILE VAN', heading: 'Mobile Van at Your Doorstep', description: 'Fully equipped tyre van visits your location across UAE.', button_text: 'Book Mobile Van', wa_msg: 'Hi TyresVision, I would like to book mobile van fitting at my location.' }
+      ];
+    } else if (bType === 'process_steps') {
+      newBlock.heading = 'How It Works';
+      newBlock.items = [
+        { step_number: 1, title: { en: 'Share Tyre Size', ar: 'أرسل مقاس الإطار' }, description: { en: 'WhatsApp us your car model or tyre size.', ar: 'راسلنا على واتساب بمقاس إطاراتك.' } },
+        { step_number: 2, title: { en: 'Confirm Best Quote', ar: 'أكد أفضل سعر' }, description: { en: 'Transparent quote with zero surprises.', ar: 'عرض سعر واضح بدون أي رسوم خفية.' } },
+        { step_number: 3, title: { en: 'Fitted at Your Convenience', ar: 'التركيب أينما كنت' }, description: { en: 'At a verified centre or via our mobile van.', ar: 'في المركز أو بواسطة الفان المتنقل.' } }
+      ];
+    } else if (bType === 'accordion_faq') {
+      newBlock.heading = 'Frequently Asked Questions';
+      newBlock.items = [
+        { question: { en: 'How soon can my tyres be fitted?', ar: 'ما هي سرعة تركيب الإطارات؟' }, answer: { en: 'Same-day mobile van dispatch and partner centre fitting are available across Dubai, Abu Dhabi and Sharjah.', ar: 'التركيب في نفس اليوم متوفر في المراكز المعتمدة وعبر الفان المتنقل في كافة أنحاء الإمارات.' } }
+      ];
+    } else if (bType === 'reviews_slider') {
+      newBlock.heading = 'Customer Feedback';
+      newBlock.items = [
+        { rating: 5, author: 'Sultan Al-Marzouqi', location: 'Dubai Marina', quote: 'Excellent service! The mobile van arrived on time and fitted four tyres right in my villa parking.' }
+      ];
+    } else if (bType === 'media_story') {
+      newBlock.title = 'Precision Tyre Installation & Alignment';
+      newBlock.subtitle = 'EXPERT WORKMANSHIP';
+      newBlock.content = '<p>Every tyre purchased includes complimentary precision digital wheel balancing and brand new safety valve stems.</p>';
+      newBlock.image = '';
+      newBlock.image_position = 'right';
+      newBlock.button_text = 'Chat on WhatsApp';
+      newBlock.button_url = 'https://wa.me/971505069575';
+    } else if (bType === 'pricing_matrix') {
+      newBlock.heading = 'Tyre Starting Prices';
+      newBlock.items = [
+        { size: '205/55 R16', common_on: 'Corolla, Civic, Elantra', budget: 'AED 180', mid_range: 'AED 265', premium: 'AED 390' },
+        { size: '265/65 R17', common_on: 'Prado, Pajero, Fortuner', budget: 'AED 310', mid_range: 'AED 430', premium: 'AED 620' }
+      ];
+    } else if (bType === 'cta_actions') {
+      newBlock.buttons = [
+        { text: 'WhatsApp for Quote', url: 'https://wa.me/971505069575', variant: 'whatsapp' },
+        { text: 'Call Tyre Expert', url: 'tel:+971505069575', variant: 'phone' }
+      ];
+      newBlock.note = 'Instant response within minutes • Open 7 days a week';
+    }
+
+    composableBlocks.push(newBlock);
+    renderComposableBlocks();
+    showToast(`Added ${bType.replace('_', ' ').toUpperCase()} block!`);
+  }
+
+  function renderComposableBlocks() {
+    const cContainer = document.getElementById('composable-blocks-container');
+    if (!cContainer) return;
+
+    if (!composableBlocks || composableBlocks.length === 0) {
+      cContainer.innerHTML = '<div class="p-4 text-center text-slate-400 bg-white rounded-xl border-2 border-dashed border-[#DCE4D6] text-xs font-semibold">No composable blocks added yet. Click any button in the palette above to add cards, metrics, chips, or FAQ.</div>';
+      return;
+    }
+
+    const BLOCK_META = {
+      metrics_strip: { label: 'Statistic Metrics Strip', icon: '📊', color: 'text-indigo-600' },
+      cards_grid: { label: 'Cards Grid', icon: '🃏', color: 'text-emerald-600' },
+      chips_cloud: { label: 'Interactive Chips / Sizes', icon: '🏷️', color: 'text-amber-600' },
+      comparison_split: { label: 'Comparison Split Cards', icon: '⚖️', color: 'text-blue-600' },
+      process_steps: { label: 'Step Timeline Flow', icon: '🔢', color: 'text-purple-600' },
+      accordion_faq: { label: 'Accordion FAQ List', icon: '❓', color: 'text-rose-600' },
+      reviews_slider: { label: 'Customer Reviews Grid', icon: '⭐', color: 'text-amber-500' },
+      media_story: { label: 'Media & Narrative Story', icon: '🖼️', color: 'text-cyan-600' },
+      pricing_matrix: { label: 'Tyre Pricing Matrix Table', icon: '💰', color: 'text-emerald-700' },
+      cta_actions: { label: 'Action Buttons Group', icon: '🔘', color: 'text-slate-800' }
+    };
+
+    cContainer.innerHTML = composableBlocks.map((block, bIdx) => {
+      const meta = BLOCK_META[block.type] || { label: block.type, icon: '🧱', color: 'text-slate-700' };
+      let innerHtml = '';
+
+      if (block.type === 'metrics_strip') {
+        const mList = block.items || [];
+        innerHtml = `
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-[10px] font-black uppercase tracking-wider text-slate-600">Metric Counters (${mList.length})</label>
+              <button type="button" class="btn-add-comp-subitem text-[11px] font-bold text-[#58B31B] hover:underline cursor-pointer" data-bidx="${bIdx}" data-subtype="metric">+ Add Metric</button>
+            </div>
+            <div class="space-y-2">
+              ${mList.map((m, mIdx) => `
+                <div class="flex items-center gap-2 p-2 bg-[#F8FAF7] rounded-xl border border-[#E8EDE4]">
+                  <input type="text" placeholder="Number (e.g. 16+)" class="comp-input w-24 px-2.5 py-1.5 rounded-lg border border-[#E8EDE4] text-xs font-black bg-white" data-bidx="${bIdx}" data-subidx="${mIdx}" data-prop="number" value="${m.number || ''}" />
+                  <input type="text" placeholder="Label EN (e.g. Services)" class="comp-input flex-1 px-2.5 py-1.5 rounded-lg border border-[#E8EDE4] text-xs font-bold bg-white" data-bidx="${bIdx}" data-subidx="${mIdx}" data-prop="label_en" value="${typeof m.label === 'object' ? (m.label.en || '') : (m.label || '')}" />
+                  <input type="text" dir="rtl" placeholder="Label AR (عربي)" class="comp-input flex-1 px-2.5 py-1.5 rounded-lg border border-[#E8EDE4] text-xs font-bold bg-white text-right" data-bidx="${bIdx}" data-subidx="${mIdx}" data-prop="label_ar" value="${typeof m.label === 'object' ? (m.label.ar || '') : ''}" />
+                  <button type="button" class="btn-del-comp-subitem text-rose-500 hover:text-rose-700 text-xs px-2 cursor-pointer" data-bidx="${bIdx}" data-subidx="${mIdx}">✕</button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (block.type === 'cards_grid') {
+        const cList = block.items || [];
+        innerHtml = `
+          <div class="space-y-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-600 mb-1">Block Title</label>
+                <input type="text" class="comp-block-heading w-full px-3 py-1.5 rounded-lg border border-[#E8EDE4] text-xs font-bold bg-white" data-bidx="${bIdx}" value="${block.heading || ''}" placeholder="e.g. Why Choose TyresVision" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-600 mb-1">Columns</label>
+                <select class="comp-block-cols w-full px-3 py-1.5 rounded-lg border border-[#E8EDE4] text-xs font-bold bg-white" data-bidx="${bIdx}">
+                  <option value="2" ${block.columns === 2 ? 'selected' : ''}>2 Columns</option>
+                  <option value="3" ${block.columns === 3 || !block.columns ? 'selected' : ''}>3 Columns (Standard)</option>
+                  <option value="4" ${block.columns === 4 ? 'selected' : ''}>4 Columns</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <label class="text-[10px] font-black uppercase text-slate-600">Cards (${cList.length})</label>
+              <button type="button" class="btn-add-comp-subitem text-[11px] font-bold text-[#58B31B] hover:underline cursor-pointer" data-bidx="${bIdx}" data-subtype="card">+ Add Card</button>
+            </div>
+            <div class="space-y-2">
+              ${cList.map((c, cIdx) => `
+                <div class="p-2.5 bg-[#F8FAF7] rounded-xl border border-[#E8EDE4] space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-slate-700">Card #${cIdx + 1}</span>
+                    <button type="button" class="btn-del-comp-subitem text-rose-500 hover:text-rose-700 text-xs cursor-pointer" data-bidx="${bIdx}" data-subidx="${cIdx}">Remove</button>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input type="text" placeholder="Icon (shield, dollar, truck, clock, zap, award, tyre)" class="comp-card-icon px-2.5 py-1.5 rounded-lg border border-[#E8EDE4] text-xs bg-white" data-bidx="${bIdx}" data-subidx="${cIdx}" value="${c.icon || 'shield'}" />
+                    <input type="text" placeholder="Title EN" class="comp-card-title-en px-2.5 py-1.5 rounded-lg border border-[#E8EDE4] text-xs font-bold bg-white" data-bidx="${bIdx}" data-subidx="${cIdx}" value="${typeof c.title === 'object' ? (c.title.en || '') : (c.title || '')}" />
+                    <input type="text" dir="rtl" placeholder="Title AR" class="comp-card-title-ar px-2.5 py-1.5 rounded-lg border border-[#E8EDE4] text-xs font-bold bg-white text-right" data-bidx="${bIdx}" data-subidx="${cIdx}" value="${typeof c.title === 'object' ? (c.title.ar || '') : ''}" />
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input type="text" placeholder="Description EN" class="comp-card-desc-en px-2.5 py-1.5 rounded-lg border border-[#E8EDE4] text-xs bg-white" data-bidx="${bIdx}" data-subidx="${cIdx}" value="${typeof c.description === 'object' ? (c.description.en || '') : (c.description || '')}" />
+                    <input type="text" dir="rtl" placeholder="Description AR" class="comp-card-desc-ar px-2.5 py-1.5 rounded-lg border border-[#E8EDE4] text-xs bg-white text-right" data-bidx="${bIdx}" data-subidx="${cIdx}" value="${typeof c.description === 'object' ? (c.description.ar || '') : ''}" />
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (block.type === 'chips_cloud') {
+        const chipsStr = Array.isArray(block.chips) ? block.chips.join(' · ') : (block.chips || '');
+        innerHtml = `
+          <div class="space-y-2">
+            <div>
+              <label class="block text-[10px] font-black uppercase text-slate-600 mb-1">Group Heading</label>
+              <input type="text" class="comp-block-heading w-full px-3 py-1.5 rounded-lg border border-[#E8EDE4] text-xs font-bold bg-white" data-bidx="${bIdx}" value="${block.heading || ''}" placeholder="e.g. Popular tyre sizes in the UAE" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-black uppercase text-slate-600 mb-1">Chips (separated by ' · ' or commas)</label>
+              <textarea rows="2" class="comp-block-chips w-full px-3 py-1.5 rounded-lg border border-[#E8EDE4] text-xs bg-white font-medium" data-bidx="${bIdx}">${chipsStr}</textarea>
+            </div>
+          </div>
+        `;
+      } else if (block.type === 'cta_actions') {
+        const bButtons = block.buttons || [];
+        innerHtml = `
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-[10px] font-black uppercase text-slate-600">Action Buttons</label>
+              <button type="button" class="btn-add-comp-subitem text-[11px] font-bold text-[#58B31B] hover:underline cursor-pointer" data-bidx="${bIdx}" data-subtype="button">+ Add Button</button>
+            </div>
+            <div class="space-y-2">
+              ${bButtons.map((b, btnIdx) => `
+                <div class="flex items-center gap-2 p-2 bg-[#F8FAF7] rounded-xl border border-[#E8EDE4]">
+                  <input type="text" placeholder="Button Text" class="comp-btn-text flex-1 px-2.5 py-1.5 rounded-lg border border-[#E8EDE4] text-xs font-bold bg-white" data-bidx="${bIdx}" data-subidx="${btnIdx}" value="${typeof b.text === 'object' ? (b.text.en || '') : (b.text || '')}" />
+                  <input type="text" placeholder="URL / Link" class="comp-btn-url flex-1 px-2.5 py-1.5 rounded-lg border border-[#E8EDE4] text-xs bg-white" data-bidx="${bIdx}" data-subidx="${btnIdx}" value="${b.url || ''}" />
+                  <select class="comp-btn-variant w-28 px-2 py-1.5 rounded-lg border border-[#E8EDE4] text-xs bg-white font-bold" data-bidx="${bIdx}" data-subidx="${btnIdx}">
+                    <option value="whatsapp" ${b.variant === 'whatsapp' ? 'selected' : ''}>WhatsApp</option>
+                    <option value="phone" ${b.variant === 'phone' ? 'selected' : ''}>Phone Call</option>
+                    <option value="primary" ${b.variant === 'primary' ? 'selected' : ''}>Dark Button</option>
+                  </select>
+                  <button type="button" class="btn-del-comp-subitem text-rose-500 hover:text-rose-700 text-xs px-1 cursor-pointer" data-bidx="${bIdx}" data-subidx="${btnIdx}">✕</button>
+                </div>
+              `).join('')}
+            </div>
+            <div>
+              <label class="block text-[10px] font-black uppercase text-slate-600 mb-1">Footer Note (Optional)</label>
+              <input type="text" class="comp-block-note w-full px-3 py-1.5 rounded-lg border border-[#E8EDE4] text-xs bg-white" data-bidx="${bIdx}" value="${block.note || ''}" placeholder="e.g. Open 7 days across Dubai & Abu Dhabi" />
+            </div>
+          </div>
+        `;
+      } else {
+        innerHtml = `
+          <div>
+            <label class="block text-[10px] font-black uppercase text-slate-600 mb-1">Block Heading / Title</label>
+            <input type="text" class="comp-block-heading w-full px-3 py-1.5 rounded-lg border border-[#E8EDE4] text-xs font-bold bg-white" data-bidx="${bIdx}" value="${block.heading || block.title || ''}" placeholder="Enter heading..." />
+          </div>
+        `;
+      }
+
+      return `
+        <div class="p-3.5 bg-white rounded-2xl border-2 border-[#DCE4D6] shadow-sm space-y-3" data-block-index="${bIdx}">
+          <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
+            <span class="text-xs font-black text-[#0E1108] flex items-center gap-2">
+              <span class="text-base">${meta.icon}</span>
+              <span>Block #${bIdx + 1}: ${meta.label}</span>
+            </span>
+            <div class="flex items-center gap-1.5">
+              <button type="button" class="btn-move-block-up p-1 px-2 rounded-lg text-slate-500 hover:text-[#0E1108] hover:bg-slate-100 text-xs font-black transition cursor-pointer" data-bidx="${bIdx}" title="Move Up" ${bIdx === 0 ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>▲</button>
+              <button type="button" class="btn-move-block-down p-1 px-2 rounded-lg text-slate-500 hover:text-[#0E1108] hover:bg-slate-100 text-xs font-black transition cursor-pointer" data-bidx="${bIdx}" title="Move Down" ${bIdx === composableBlocks.length - 1 ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>▼</button>
+              <button type="button" class="btn-remove-composable-block ml-2 px-2.5 py-1 rounded-lg text-rose-600 hover:bg-rose-50 text-xs font-black transition cursor-pointer" data-bidx="${bIdx}">Remove</button>
+            </div>
+          </div>
+          ${innerHtml}
+        </div>
+      `;
+    }).join('');
+
+    attachComposableListeners();
+  }
+
+  function attachComposableListeners() {
+    const cContainer = document.getElementById('composable-blocks-container');
+    if (!cContainer) return;
+
+    cContainer.querySelectorAll('.btn-remove-composable-block').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.bidx);
+        collectComposableBlocks();
+        composableBlocks.splice(idx, 1);
+        renderComposableBlocks();
+      });
+    });
+
+    cContainer.querySelectorAll('.btn-move-block-up').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.bidx);
+        if (idx > 0) {
+          collectComposableBlocks();
+          const temp = composableBlocks[idx];
+          composableBlocks[idx] = composableBlocks[idx - 1];
+          composableBlocks[idx - 1] = temp;
+          renderComposableBlocks();
+        }
+      });
+    });
+
+    cContainer.querySelectorAll('.btn-move-block-down').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.bidx);
+        if (idx < composableBlocks.length - 1) {
+          collectComposableBlocks();
+          const temp = composableBlocks[idx];
+          composableBlocks[idx] = composableBlocks[idx + 1];
+          composableBlocks[idx + 1] = temp;
+          renderComposableBlocks();
+        }
+      });
+    });
+
+    cContainer.querySelectorAll('.btn-add-comp-subitem').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const bIdx = parseInt(btn.dataset.bidx);
+        const subType = btn.dataset.subtype;
+        collectComposableBlocks();
+        if (!composableBlocks[bIdx].items) composableBlocks[bIdx].items = [];
+
+        if (subType === 'metric') {
+          composableBlocks[bIdx].items.push({ number: '10+', label: { en: 'New Metric', ar: 'إحصائية جديدة' } });
+        } else if (subType === 'card') {
+          composableBlocks[bIdx].items.push({ icon: 'shield', tag: 'FEATURE', title: { en: 'New Feature', ar: 'ميزة جديدة' }, description: { en: 'Description text...', ar: 'وصف...' } });
+        } else if (subType === 'button') {
+          if (!composableBlocks[bIdx].buttons) composableBlocks[bIdx].buttons = [];
+          composableBlocks[bIdx].buttons.push({ text: 'New Button', url: 'https://wa.me/971505069575', variant: 'whatsapp' });
+        }
+        renderComposableBlocks();
+      });
+    });
+
+    cContainer.querySelectorAll('.btn-del-comp-subitem').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const bIdx = parseInt(btn.dataset.bidx);
+        const subIdx = parseInt(btn.dataset.subidx);
+        collectComposableBlocks();
+        if (composableBlocks[bIdx].items) {
+          composableBlocks[bIdx].items.splice(subIdx, 1);
+        } else if (composableBlocks[bIdx].buttons) {
+          composableBlocks[bIdx].buttons.splice(subIdx, 1);
+        }
+        renderComposableBlocks();
+      });
+    });
+  }
+
+  function collectComposableBlocks() {
+    const cContainer = document.getElementById('composable-blocks-container');
+    if (!cContainer) return composableBlocks;
+    const blockEls = cContainer.querySelectorAll('[data-block-index]');
+    blockEls.forEach((el, bIdx) => {
+      if (!composableBlocks[bIdx]) return;
+      const b = composableBlocks[bIdx];
+
+      const hEl = el.querySelector('.comp-block-heading');
+      if (hEl) b.heading = hEl.value.trim();
+
+      const colsEl = el.querySelector('.comp-block-cols');
+      if (colsEl) b.columns = parseInt(colsEl.value) || 3;
+
+      const chipsEl = el.querySelector('.comp-block-chips');
+      if (chipsEl) {
+        b.chips = chipsEl.value.split(/·|,|
+/).map(c => c.trim()).filter(Boolean);
+      }
+
+      const noteEl = el.querySelector('.comp-block-note');
+      if (noteEl) b.note = noteEl.value.trim();
+
+      if (b.type === 'metrics_strip' && b.items) {
+        b.items.forEach((m, mIdx) => {
+          const numEl = el.querySelector(`.comp-input[data-subidx="${mIdx}"][data-prop="number"]`);
+          const lEnEl = el.querySelector(`.comp-input[data-subidx="${mIdx}"][data-prop="label_en"]`);
+          const lArEl = el.querySelector(`.comp-input[data-subidx="${mIdx}"][data-prop="label_ar"]`);
+          if (numEl) m.number = numEl.value.trim();
+          if (lEnEl || lArEl) {
+            m.label = {
+              en: lEnEl ? lEnEl.value.trim() : '',
+              ar: lArEl ? lArEl.value.trim() : ''
+            };
+          }
+        });
+      }
+
+      if (b.type === 'cards_grid' && b.items) {
+        b.items.forEach((c, cIdx) => {
+          const icEl = el.querySelector(`.comp-card-icon[data-subidx="${cIdx}"]`);
+          const tEnEl = el.querySelector(`.comp-card-title-en[data-subidx="${cIdx}"]`);
+          const tArEl = el.querySelector(`.comp-card-title-ar[data-subidx="${cIdx}"]`);
+          const dEnEl = el.querySelector(`.comp-card-desc-en[data-subidx="${cIdx}"]`);
+          const dArEl = el.querySelector(`.comp-card-desc-ar[data-subidx="${cIdx}"]`);
+          if (icEl) c.icon = icEl.value.trim() || 'shield';
+          c.title = { en: tEnEl ? tEnEl.value.trim() : '', ar: tArEl ? tArEl.value.trim() : '' };
+          c.description = { en: dEnEl ? dEnEl.value.trim() : '', ar: dArEl ? dArEl.value.trim() : '' };
+        });
+      }
+
+      if (b.type === 'cta_actions' && b.buttons) {
+        b.buttons.forEach((btnObj, btnIdx) => {
+          const tEl = el.querySelector(`.comp-btn-text[data-subidx="${btnIdx}"]`);
+          const uEl = el.querySelector(`.comp-btn-url[data-subidx="${btnIdx}"]`);
+          const vEl = el.querySelector(`.comp-btn-variant[data-subidx="${btnIdx}"]`);
+          if (tEl) btnObj.text = tEl.value.trim();
+          if (uEl) btnObj.url = uEl.value.trim();
+          if (vEl) btnObj.variant = vEl.value;
+        });
+      }
+    });
+
+    return composableBlocks;
+  }
+
+    function applyTypeFormRules(type) {
     const imageWrap = document.getElementById('field-image-wrap');
     const imagePosWrap = document.getElementById('field-image-pos-wrap');
     const btnWrap = document.getElementById('field-button-wrap');
     const structWrap = document.getElementById('field-structured-data-wrap');
     const structTitle = document.getElementById('structured-data-title');
+    const fieldComposableWrap = document.getElementById('field-composable-blocks-wrap');
 
-    imageWrap.classList.remove('hidden');
-    imagePosWrap.classList.remove('hidden');
-    btnWrap.classList.remove('hidden');
-    structWrap.classList.remove('hidden');
+    if (type === 'custom') {
+      if (structWrap) structWrap.classList.add('hidden');
+      if (fieldComposableWrap) fieldComposableWrap.classList.remove('hidden');
+      if (imageWrap) imageWrap.classList.remove('hidden');
+      if (imagePosWrap) imagePosWrap.classList.remove('hidden');
+      if (btnWrap) btnWrap.classList.remove('hidden');
+      renderComposableBlocks();
+      return;
+    }
+
+    if (fieldComposableWrap) fieldComposableWrap.classList.add('hidden');
+    if (imageWrap) imageWrap.classList.remove('hidden');
+    if (imagePosWrap) imagePosWrap.classList.remove('hidden');
+    if (btnWrap) btnWrap.classList.remove('hidden');
+    if (structWrap) structWrap.classList.remove('hidden');
 
     if (type === 'hero') {
       structTitle.textContent = 'Hero Badges & Trust Highlights';
@@ -1477,6 +1885,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateImagePreview('');
     repeaterItems = [];
     extraSectionData = {};
+    composableBlocks = [];
+    renderComposableBlocks();
     formSortOrder.value = allSections.length + 1;
     formIsActive.checked = true;
     renderRepeaterItems();
@@ -1742,6 +2152,19 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       btnSaveSection.disabled = false;
       btnSaveSection.innerHTML = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span>Save Section</span>';
+    }
+  });
+
+    // Attach Quick-Add Block Palette Buttons listener
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-palette-add');
+    if (btn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const bType = btn.dataset.blockType;
+      if (bType) {
+        addComposableBlock(bType);
+      }
     }
   });
 
