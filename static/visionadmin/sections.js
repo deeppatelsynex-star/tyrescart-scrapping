@@ -67,6 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
       tagColor: 'bg-emerald-500',
       desc: 'Browse Tyres by Sizes, Vehicles, and Brand Tiers' 
     },
+    coverage: { 
+      label: 'Delivery & Fitting Coverage', 
+      shortLabel: 'Coverage', 
+      emoji: '📍', 
+      badgeBg: 'bg-teal-50 text-teal-800 border-teal-200/80',
+      tagColor: 'bg-teal-500',
+      desc: 'Partner Centres, Mobile Vans & Area Coverage Chips' 
+    },
     brands: { 
       label: 'Brands List', 
       shortLabel: 'Brands', 
@@ -551,6 +559,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const count = Array.isArray(g.chips) ? g.chips.length : 0;
             return `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200/80">📂 ${g.heading || 'Group'} (${count})</span>`;
           });
+        } else if (sec.section_type === 'coverage' && Array.isArray(sec.section_data.areas) && sec.section_data.areas.length > 0) {
+          itemsCount = sec.section_data.areas.length;
+          chipList = sec.section_data.areas.map(a => {
+            const count = Array.isArray(a.chips) ? a.chips.length : 0;
+            return `<span class="px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 text-[10px] font-bold border border-teal-200/80">📍 ${a.heading || a.emirate || 'Area'} (${count})</span>`;
+          });
         }
 
         if (chipList.length > 0) {
@@ -807,6 +821,11 @@ document.addEventListener('DOMContentLoaded', () => {
       imageWrap.classList.add('hidden');
       imagePosWrap.classList.add('hidden');
       btnWrap.classList.add('hidden');
+    } else if (type === 'coverage') {
+      structTitle.textContent = 'Delivery & Fitting Coverage Areas';
+      imageWrap.classList.add('hidden');
+      imagePosWrap.classList.add('hidden');
+      btnWrap.classList.add('hidden');
     } else if (type === 'brands') {
       structTitle.textContent = 'Brand Names List';
       imageWrap.classList.add('hidden');
@@ -975,6 +994,33 @@ document.addEventListener('DOMContentLoaded', () => {
             <div>
               <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Chips (separated by " · " or commas)</label>
               <textarea rows="2" placeholder="e.g. 195/65 R15 · 205/55 R16 · 215/55 R17" class="rep-shopby-chips w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-medium bg-[#F8FAF7] focus:bg-white outline-none">${chipsVal}</textarea>
+            </div>
+          </div>
+        `;
+      } else if (type === 'coverage') {
+        const chipsVal = Array.isArray(item.chips) ? item.chips.join(' · ') : (item.chips || '');
+        return `
+          <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
+              <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                <span>Area Group #${i + 1}: ${item.heading || 'New Area'}</span>
+              </span>
+              <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Area Group Heading</label>
+                <input type="text" placeholder="e.g. Dubai coverage" class="rep-cov-heading w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none" value="${item.heading || ''}" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Emirate / Region</label>
+                <input type="text" placeholder="e.g. Dubai" class="rep-cov-emirate w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none" value="${item.emirate || ''}" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Locations / Areas (separated by " · " or commas)</label>
+              <textarea rows="3" placeholder="e.g. Dubai Marina · JLT · JBR · Palm Jumeirah" class="rep-cov-chips w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-medium bg-[#F8FAF7] focus:bg-white outline-none">${chipsVal}</textarea>
             </div>
           </div>
         `;
@@ -1159,6 +1205,8 @@ document.addEventListener('DOMContentLoaded', () => {
       repeaterItems.push({ size: '205/55 R16', common_on: { en: 'Civic, Jetta, Cerato', ar: 'سيفيك، جيتا، سيراتو' }, budget: 'AED —', mid_range: 'AED —', premium: 'AED —' });
     } else if (type === 'shop_by') {
       repeaterItems.push({ heading: 'New Group', type: 'size', chips: [] });
+    } else if (type === 'coverage') {
+      repeaterItems.push({ heading: 'New Area Coverage', emirate: 'Dubai', chips: [] });
     } else {
       repeaterItems.push({ icon: 'shield', title: { en: 'Card Title', ar: 'عنوان البطاقة' }, description: { en: 'Description', ar: 'الوصف' } });
     }
@@ -1256,6 +1304,20 @@ document.addEventListener('DOMContentLoaded', () => {
           items.push({
             heading: heading,
             type: groupType,
+            chips: chips
+          });
+        }
+      } else if (type === 'coverage') {
+        const heading = row.querySelector('.rep-cov-heading')?.value.trim() || '';
+        const emirate = row.querySelector('.rep-cov-emirate')?.value.trim() || '';
+        const rawChips = row.querySelector('.rep-cov-chips')?.value || '';
+        const chips = rawChips.split(/[·,\n]/)
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+        if (heading || chips.length > 0) {
+          items.push({
+            heading: heading,
+            emirate: emirate || heading,
             chips: chips
           });
         }
@@ -1453,6 +1515,8 @@ document.addEventListener('DOMContentLoaded', () => {
       repeaterItems = JSON.parse(JSON.stringify(sData.features));
     } else if (sData.groups && Array.isArray(sData.groups)) {
       repeaterItems = JSON.parse(JSON.stringify(sData.groups));
+    } else if (sData.areas && Array.isArray(sData.areas)) {
+      repeaterItems = JSON.parse(JSON.stringify(sData.areas));
     } else {
       repeaterItems = [];
     }
@@ -1542,6 +1606,29 @@ document.addEventListener('DOMContentLoaded', () => {
       sectionData.rows = repData;
     } else if (sectionType === 'shop_by') {
       sectionData.groups = repData;
+    } else if (sectionType === 'coverage') {
+      sectionData.areas = repData;
+      if (!sectionData.options && extraSectionData && extraSectionData.options) {
+        sectionData.options = extraSectionData.options;
+      }
+      if (!sectionData.options) {
+        sectionData.options = [
+          {
+            tag: "FREE Delivery & Fitting",
+            heading: "Free fitting at a partner centre",
+            description: "Choose any centre on our network and we deliver your tyres there free of charge. Fitting, balancing, new valves and disposal of your old tyres are all included at no extra cost — the price we quote on WhatsApp is the price you pay.",
+            button_text: "Book at Partner Centre",
+            wa_msg: "Hi TyresVision, I'd like to book free tyre fitting at a partner centre."
+          },
+          {
+            tag: "Mobile Van Service",
+            heading: "Mobile van fitting at your location — call-out fee applies",
+            description: "Our fully equipped vans fit your tyres at your villa, apartment car park, office bay or roadside. The van service carries a call-out fee on top of the tyre price, which we always confirm before dispatch so there are no surprises. Mounting, balancing, valves and old-tyre disposal are included in the job.",
+            button_text: "Book Mobile Van",
+            wa_msg: "Hi TyresVision, I'd like to book mobile van fitting at my location."
+          }
+        ];
+      }
     } else if (sectionType === 'hero') {
       if (repData.length > 0) sectionData.badges = repData;
     } else {
