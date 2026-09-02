@@ -14,42 +14,4 @@
     </image:image>
   </url>
 
-  <!-- About Us -->
-  <url>
-    <loc>https://www.tyresvision.com/about-us</loc>
-    <lastmod>2026-09-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Blog Listing -->
-  <url>
-    <loc>https://www.tyresvision.com/blog</loc>
-    <lastmod>2026-09-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Blog Articles -->
-  <url>
-    <loc>https://www.tyresvision.com/blog/how-to-choose-the-right-tyres-for-your-car</loc>
-    <lastmod>2026-09-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://www.tyresvision.com/blog/how-hot-weather-affects-your-car-tyres</loc>
-    <lastmod>2026-09-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://www.tyresvision.com/blog/how-to-choose-the-right-tyres-for-your-vehicle</loc>
-    <lastmod>2026-09-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
 </urlset>
