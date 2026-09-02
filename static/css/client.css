@@ -118,7 +118,7 @@ p {
 }
 
 section {
-  padding: clamp(52px, 7vw, 88px) 0
+  padding: clamp(34px, 4.5vw, 54px) 0;
 }
 
 .eyebrow {
@@ -485,7 +485,7 @@ header {
   color: #fff;
   position: relative;
   overflow: hidden;
-  padding: clamp(54px, 8vw, 100px) 0 clamp(52px, 7vw, 86px);
+  padding: clamp(38px, 5.5vw, 64px) 0 clamp(34px, 5vw, 52px);
 }
 
 .hero::after {
@@ -751,7 +751,7 @@ header {
   background: 
     radial-gradient(1200px 500px at 50% 0%, rgba(88, 179, 27, 0.05), transparent 70%),
     linear-gradient(180deg, #FFFFFF 0%, #F8FAF6 100%);
-  padding: clamp(60px, 8vw, 100px) 0;
+  padding: clamp(36px, 5vw, 56px) 0;
   position: relative;
   overflow: hidden;
 }
@@ -4102,7 +4102,7 @@ html[dir="rtl"] .category-badge-pill {
 /* ---------------- 6.2 SHOP BY SIZE / VEHICLE / BRAND ---------------- */
 .shop-by-section {
   background: #ffffff;
-  padding: 80px 0;
+  padding: clamp(34px, 4.5vw, 52px) 0;
   border-top: 1px solid var(--line);
 }
 
@@ -4190,7 +4190,7 @@ html[dir="rtl"] .category-badge-pill {
 /* ---------------- 6.3 DELIVERY AND FITTING COVERAGE ---------------- */
 .coverage-section {
   background: var(--bg-alt, #F8FAF7);
-  padding: 84px 0;
+  padding: clamp(34px, 4.5vw, 52px) 0;
   border-top: 1px solid var(--line);
 }
 
@@ -4274,7 +4274,7 @@ html[dir="rtl"] .category-badge-pill {
 
 /* ---------------- 6.4 HOW TO CHOOSE THE RIGHT TYRES IN THE UAE ---------------- */
 .advice-section {
-  padding: 84px 0;
+  padding: clamp(34px, 4.5vw, 52px) 0;
   background: #ffffff;
   border-top: 1px solid var(--line);
 }
