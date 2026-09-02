@@ -1,0 +1,15 @@
+<!-- Block: Statistics / Metrics Counter Strip -->
+<div class="dynamic-metrics-block" style="margin-top:20px;margin-bottom:24px;">
+  {% set metric_items = block['items'] if ('items' in block and block['items']) else (block['metrics'] if ('metrics' in block and block['metrics']) else []) %}
+  {% if metric_items %}
+  <div class="stats-inner" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:16px;background:var(--bg-soft, #F6F8F3);border:1px solid var(--line);border-radius:18px;padding:20px 24px;text-align:center;">
+    {% for m in metric_items %}
+    {% set m_label = m.label.ar if (is_ar and m.label and m.label.ar) else (m.label.en if (m.label and m.label.en) else (m.label or m.heading or '')) %}
+    <div class="stat" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <b style="font-size:clamp(1.6rem, 2.5vw, 2.2rem);font-weight:900;color:var(--green-deep);line-height:1;margin-bottom:4px;letter-spacing:-0.03em;">{{ m.number }}</b>
+      <span style="font-size:0.85rem;color:var(--slate);font-weight:700;">{{ m_label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>

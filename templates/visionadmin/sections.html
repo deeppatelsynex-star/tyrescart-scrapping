@@ -375,6 +375,15 @@
             </div>
           </label>
 
+          <label class="type-card flex items-center gap-2.5 p-3 rounded-2xl border-2 border-[#E8EDE4] bg-white hover:bg-[#F8FAF7] cursor-pointer transition">
+            <input type="radio" name="section_type" value="custom" class="hidden" />
+            <div class="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center text-xs font-black">🧩</div>
+            <div>
+              <div class="font-black text-[#0E1108] text-xs">Composable Section</div>
+              <div class="text-[10px] text-slate-500">Stack any blocks freely</div>
+            </div>
+          </label>
+
         </div>
       </div>
 
@@ -496,6 +505,62 @@
         </div>
       </div>
 
+      <!-- Composable Blocks Engine Canvas -->
+      <div id="field-composable-blocks-wrap" class="p-4 rounded-2xl bg-[#F4F7F2] border border-[#DCE4D6] space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#DCE4D6]">
+          <div>
+            <div class="text-[12px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
+              <span>🧩</span>
+              <span>Composable Blocks Stack (Stack &amp; Combine Elements Freely)</span>
+            </div>
+            <p class="text-[10px] text-slate-500 font-medium">Add cards, metrics, chips, FAQs, or buttons in any order into this section.</p>
+          </div>
+          <div class="relative inline-block text-left" id="dropdown-add-block-container">
+            <button type="button" id="btn-open-block-palette" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#00A650] hover:bg-[#008f45] text-white text-[11px] font-extrabold transition shadow-2xs cursor-pointer">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>+ Add Block to Section</span>
+            </button>
+            <div id="block-palette-menu" class="hidden absolute right-0 mt-2 w-56 rounded-2xl bg-white shadow-xl border border-[#E8EDE4] z-50 py-1.5 text-xs font-bold text-[#0E1108]">
+              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="metrics_strip">
+                <span>📊</span> <span>Statistic Metrics Strip</span>
+              </button>
+              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="cards_grid">
+                <span>🃏</span> <span>Cards Grid (3 or 4 cols)</span>
+              </button>
+              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="chips_cloud">
+                <span>🏷️</span> <span>Interactive Chips / Sizes</span>
+              </button>
+              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="comparison_split">
+                <span>⚖️</span> <span>Service Comparison Cards</span>
+              </button>
+              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="process_steps">
+                <span>🔢</span> <span>Step Timeline (Flow)</span>
+              </button>
+              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="accordion_faq">
+                <span>❓</span> <span>Accordion FAQ List</span>
+              </button>
+              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="reviews_slider">
+                <span>⭐</span> <span>Customer Reviews Grid</span>
+              </button>
+              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="media_story">
+                <span>🖼️</span> <span>Media &amp; Narrative Story</span>
+              </button>
+              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="pricing_matrix">
+                <span>💰</span> <span>Tyre Pricing Matrix</span>
+              </button>
+              <button type="button" class="btn-palette-add w-full text-left px-3.5 py-2 hover:bg-[#F8FAF7] flex items-center gap-2.5 transition" data-block-type="cta_actions">
+                <span>🔘</span> <span>Action Buttons Row</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Stack of added blocks -->
+        <div id="composable-blocks-container" class="space-y-3">
+          <!-- Dynamic block cards inserted via JS -->
+        </div>
+      </div>
+
       <!-- Structured Data (JSON Builder / Card Items) -->
       <div id="field-structured-data-wrap" class="p-4 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] space-y-3">
         <div class="flex items-center justify-between">
@@ -507,6 +572,37 @@
         </div>
         <div id="repeater-items-list" class="space-y-2.5">
           <!-- Dynamic Repeater Cards inserted via JS -->
+        </div>
+      </div>
+
+      <!-- Section Styling & Theme Options -->
+      <div class="p-4 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] space-y-3">
+        <div class="flex items-center justify-between">
+          <label class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700">Section Styling &amp; Theme (Optional)</label>
+          <span class="text-[10px] text-slate-400 font-bold">Custom layout &amp; spacing</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-600 mb-1">Background Theme</label>
+            <select id="form-theme-bg" class="w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-white outline-none">
+              <option value="default">Default White (#ffffff)</option>
+              <option value="soft">Soft Tint (#F6F8F3)</option>
+              <option value="dark">Dark Hero Gradient</option>
+              <option value="custom">Custom Color / Hex</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-600 mb-1">Vertical Padding</label>
+            <select id="form-theme-pad" class="w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-white outline-none">
+              <option value="compact">Compact (Tight Spacing)</option>
+              <option value="standard" selected>Standard Balanced Spacing</option>
+              <option value="spacious">Spacious (Open Layout)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-600 mb-1">Custom CSS Class / Tag</label>
+            <input type="text" id="form-theme-class" placeholder="e.g. car-services-special" class="w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-white outline-none" />
+          </div>
         </div>
       </div>
 

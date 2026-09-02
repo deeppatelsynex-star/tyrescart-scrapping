@@ -1,0 +1,27 @@
+<!-- Block: Tyre Pricing Matrix -->
+<div class="dynamic-pricing-block" style="margin-top:24px;margin-bottom:24px;overflow-x:auto;">
+  {% set rows = block['items'] if ('items' in block and block['items']) else (block['rows'] if ('rows' in block and block['rows']) else []) %}
+  <table class="prices-table" style="width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;">
+    <thead>
+      <tr style="background:var(--bg-soft, #F6F8F3);border-bottom:1px solid var(--line);text-align:left;">
+        <th style="padding:14px 18px;font-size:0.8rem;font-weight:800;text-transform:uppercase;color:var(--slate);">Tyre Size</th>
+        <th style="padding:14px 18px;font-size:0.8rem;font-weight:800;text-transform:uppercase;color:var(--slate);">Common On</th>
+        <th style="padding:14px 18px;font-size:0.8rem;font-weight:800;text-transform:uppercase;color:var(--slate);">Budget From</th>
+        <th style="padding:14px 18px;font-size:0.8rem;font-weight:800;text-transform:uppercase;color:var(--slate);">Mid-Range From</th>
+        <th style="padding:14px 18px;font-size:0.8rem;font-weight:800;text-transform:uppercase;color:var(--slate);">Premium From</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      {% set c_on = r.common_on.ar if (is_ar and r.common_on and r.common_on.ar) else (r.common_on.en if (r.common_on and r.common_on.en) else (r.common_on or '')) %}
+      <tr style="border-bottom:1px solid var(--line);">
+        <td style="padding:14px 18px;font-family:monospace;font-weight:800;font-size:0.92rem;color:var(--ink);">{{ r.size }}</td>
+        <td style="padding:14px 18px;font-size:0.88rem;color:var(--slate);">{{ c_on }}</td>
+        <td style="padding:14px 18px;font-weight:800;color:var(--ink);">{{ r.budget or 'AED —' }}</td>
+        <td style="padding:14px 18px;font-weight:800;color:var(--ink);">{{ r.mid_range or 'AED —' }}</td>
+        <td style="padding:14px 18px;font-weight:800;color:var(--green-deep);">{{ r.premium or 'AED —' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

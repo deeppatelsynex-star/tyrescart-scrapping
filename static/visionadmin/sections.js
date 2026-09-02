@@ -7,8 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let allSections = [];
   let currentLocaleTab = 'en';
   let deleteSectionId = null;
-  let repeaterItems = [];
+    let repeaterItems = [];
   let extraSectionData = {};
+  let composableBlocks = [];
 
   const TYPE_METADATA = {
     hero: { 
@@ -123,6 +124,14 @@ document.addEventListener('DOMContentLoaded', () => {
       tagColor: 'bg-blue-500',
       desc: 'Narrative Story with Media & Floating Badge' 
     },
+    custom: { 
+      label: 'Composable Custom Section', 
+      shortLabel: 'Composable', 
+      emoji: '🧩', 
+      badgeBg: 'bg-violet-50 text-violet-800 border-violet-200/80',
+      tagColor: 'bg-violet-500',
+      desc: 'Stack any combination of Cards, Metrics, Chips, FAQs, and CTAs freely' 
+    },
     mission_vision: { 
       label: 'Mission & Team', 
       shortLabel: 'Mission', 
@@ -192,7 +201,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Repeater Items List
   const repeaterList = document.getElementById('repeater-items-list');
-  const btnAddRepeaterItem = document.getElementById('btn-add-repeater-item');
+    const btnAddRepeaterItem = document.getElementById('btn-add-repeater-item');
+
+  // Composable Blocks DOM Elements
+  const fieldComposableWrap = document.getElementById('field-composable-blocks-wrap');
+  const composableContainer = document.getElementById('composable-blocks-container');
+  const btnOpenBlockPalette = document.getElementById('btn-open-block-palette');
+  const blockPaletteMenu = document.getElementById('block-palette-menu');
+  const formThemeBg = document.getElementById('form-theme-bg');
+  const formThemePad = document.getElementById('form-theme-pad');
+  const formThemeClass = document.getElementById('form-theme-class');
 
   // Delete Modal
   const deleteModal = document.getElementById('delete-modal');
@@ -1504,6 +1522,19 @@ document.addEventListener('DOMContentLoaded', () => {
     formIsActive.checked = Boolean(sec.is_active);
 
     const sData = sec.section_data || {};
+    // Unpack composable blocks & theme
+    if (sData.blocks && Array.isArray(sData.blocks)) {
+      composableBlocks = JSON.parse(JSON.stringify(sData.blocks));
+    } else if (sData.extra_blocks && Array.isArray(sData.extra_blocks)) {
+      composableBlocks = JSON.parse(JSON.stringify(sData.extra_blocks));
+    } else {
+      composableBlocks = [];
+    }
+    renderComposableBlocks();
+
+    if (formThemeBg) formThemeBg.value = sData.theme?.bg_style || 'default';
+    if (formThemePad) formThemePad.value = sData.theme?.padding_y || 'standard';
+    if (formThemeClass) formThemeClass.value = sData.theme?.custom_class || '';
     extraSectionData = JSON.parse(JSON.stringify(sData));
 
     if (sData.metrics && Array.isArray(sData.metrics)) {
@@ -1600,6 +1631,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const repData = collectRepeaterItems();
     const sectionData = Object.assign({}, extraSectionData);
+    // Save theme
+    sectionData.theme = {
+      bg_style: formThemeBg?.value || 'default',
+      padding_y: formThemePad?.value || 'standard',
+      custom_class: formThemeClass?.value?.trim() || ''
+    };
+
+    // Save composable blocks
+    const collectedBlocks = collectComposableBlocks();
+    if (collectedBlocks && collectedBlocks.length > 0) {
+      sectionData.blocks = collectedBlocks;
+      sectionData.extra_blocks = collectedBlocks;
+    } else {
+      delete sectionData.blocks;
+      delete sectionData.extra_blocks;
+    }
 
     if (sectionType === 'stats') {
       sectionData.metrics = repData;

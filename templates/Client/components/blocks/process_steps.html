@@ -1,0 +1,18 @@
+<!-- Block: Step-by-Step Process Flow -->
+<div class="dynamic-steps-block" style="margin-top:28px;margin-bottom:28px;">
+  {% set step_items = block['items'] if ('items' in block and block['items']) else (block['steps'] if ('steps' in block and block['steps']) else []) %}
+  <div class="grid g4" style="gap:16px;margin-top:18px;">
+    {% for s in step_items %}
+    {% set s_title = s.title.ar if (is_ar and s.title and s.title.ar) else (s.title.en if (s.title and s.title.en) else (s.title or '')) %}
+    {% set s_desc = s.description.ar if (is_ar and s.description and s.description.ar) else (s.description.en if (s.description and s.description.en) else (s.description or s.desc or '')) %}
+    <div class="step-card p-5" style="background:#fff;border:1px solid var(--line);border-radius:16px;position:relative;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span class="step-num" style="width:32px;height:32px;border-radius:50%;background:var(--green);color:#fff;font-weight:900;font-size:0.85rem;display:flex;align-items:center;justify-content:center;">{{ loop.index }}</span>
+        {% if s.time %}<span style="font-size:0.75rem;font-weight:700;color:var(--slate);">{{ s.time }}</span>{% endif %}
+      </div>
+      <h4 style="font-size:1.02rem;font-weight:800;color:var(--ink);margin:0 0 6px;">{{ s_title }}</h4>
+      <p style="font-size:0.88rem;color:var(--slate);line-height:1.5;margin:0;">{{ s_desc }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>

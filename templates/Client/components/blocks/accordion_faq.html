@@ -1,0 +1,19 @@
+<!-- Block: Accordion FAQ -->
+<div class="dynamic-faq-block" style="max-width:840px;margin-inline:auto;margin-top:24px;margin-bottom:24px;">
+  {% set faq_items = block['items'] if ('items' in block and block['items']) else (block['faqs'] if ('faqs' in block and block['faqs']) else []) %}
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    {% for f in faq_items %}
+    {% set f_q = f.question.ar if (is_ar and f.question and f.question.ar) else (f.question.en if (f.question and f.question.en) else (f.question or '')) %}
+    {% set f_a = f.answer.ar if (is_ar and f.answer and f.answer.ar) else (f.answer.en if (f.answer and f.answer.en) else (f.answer or '')) %}
+    <details style="background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;padding:16px 20px;" {% if loop.first and block.open_first %}open{% endif %}>
+      <summary style="font-weight:800;color:var(--ink);font-size:0.98rem;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;">
+        <span>{{ f_q }}</span>
+        <span style="font-size:1.2rem;color:var(--green);font-weight:900;margin-left:12px;">+</span>
+      </summary>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line);color:var(--slate);font-size:0.92rem;line-height:1.6;">
+        {{ f_a | safe }}
+      </div>
+    </details>
+    {% endfor %}
+  </div>
+</div>
