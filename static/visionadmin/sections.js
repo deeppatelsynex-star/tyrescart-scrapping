@@ -1152,8 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const chipsEl = el.querySelector('.comp-block-chips');
       if (chipsEl) {
-        b.chips = chipsEl.value.split(/·|,|
-/).map(c => c.trim()).filter(Boolean);
+        b.chips = chipsEl.value.split(/[·,\n]/).map(c => c.trim()).filter(Boolean);
       }
 
       const noteEl = el.querySelector('.comp-block-note');

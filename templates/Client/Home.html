@@ -409,43 +409,7 @@
       </section>
 
     {% elif sec.section_type == 'shop_by' %}
-      <!-- ================= 6.2 SHOP BY SIZE, VEHICLE & BRAND ================= -->
-      <section id="shop-by" class="shop-by-section" x-data="{
-        activeTab: (window.location.hash === '#brands' || window.location.hash === '#shop-by') ? 'brand' : 'all',
-        setTab(tab) {
-          this.activeTab = tab;
-          if (tab === 'brand') {
-            this.$nextTick(() => {
-              const el = document.getElementById('brands');
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-          }
-        },
-        init() {
-          const checkHash = () => {
-            if (window.location.hash === '#brands') {
-              this.activeTab = 'brand';
-              this.$nextTick(() => {
-                const el = document.getElementById('brands');
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              });
-            }
-          };
-          window.addEventListener('hashchange', checkHash);
-          if (window.location.hash === '#brands') {
-            setTimeout(checkHash, 150);
-          }
-          document.querySelectorAll('a[href*=\"#brands\"]').forEach(link => {
-            link.addEventListener('click', () => {
-              this.activeTab = 'brand';
-              this.$nextTick(() => {
-                const el = document.getElementById('brands');
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              });
-            });
-          });
-        }
-      }">
+      <section id="shop-by" class="shop-by-section" x-data="shopByFilter()">
         <div class="wrap">
           <div class="center">
             {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
@@ -547,6 +511,46 @@
           {% endfor %}
         </div>
       </section>
+      <script>
+        function shopByFilter() {
+          return {
+            activeTab: (window.location.hash === '#brands' || window.location.hash === '#shop-by') ? 'brand' : 'all',
+            setTab(tab) {
+              this.activeTab = tab;
+              if (tab === 'brand') {
+                this.$nextTick(() => {
+                  const el = document.getElementById('brands');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+              }
+            },
+            init() {
+              const scrollToBrands = () => {
+                if (window.location.hash === '#brands') {
+                  this.activeTab = 'brand';
+                  this.$nextTick(() => {
+                    const el = document.getElementById('brands');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  });
+                }
+              };
+              window.addEventListener('hashchange', scrollToBrands);
+              if (window.location.hash === '#brands') {
+                setTimeout(scrollToBrands, 150);
+              }
+              document.querySelectorAll('a[href*="#brands"]').forEach(link => {
+                link.addEventListener('click', () => {
+                  this.activeTab = 'brand';
+                  this.$nextTick(() => {
+                    const el = document.getElementById('brands');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  });
+                });
+              });
+            }
+          };
+        }
+      </script>
 
     {% elif sec.section_type == 'coverage' %}
       <!-- ================= 6.3 DELIVERY AND FITTING COVERAGE ================= -->
