@@ -409,57 +409,20 @@
       </section>
 
     {% elif sec.section_type == 'shop_by' %}
-      <section id="shop-by" class="shop-by-section" x-data="shopByFilter()">
+      <!-- ================= 6.2 SHOP BY SIZE, VEHICLE & BRAND ================= -->
+      <section id="shop-by" class="shop-by-section">
         <div class="wrap">
           <div class="center">
             {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
             <h2>{{ sec.section_title }}</h2>
             {% if sec.content %}<p class="lead">{{ sec.content | safe }}</p>{% endif %}
-
-            <!-- Category Filter Tabs (All / Brands / Sizes / Vehicles) -->
-            <div class="shop-by-tabs-wrapper">
-              <button type="button" 
-                      @click="setTab('all')" 
-                      :class="activeTab === 'all' ? 'shop-tab-active' : ''"
-                      class="shop-tab-btn">
-                <span class="tab-icon-dot"></span>
-                <span>All Options</span>
-              </button>
-              <button type="button" 
-                      @click="setTab('brand')" 
-                      :class="activeTab === 'brand' ? 'shop-tab-active' : ''"
-                      class="shop-tab-btn"
-                      id="tab-btn-brands">
-                <span class="tab-icon-dot"></span>
-                <span>⭐ Tyres by Brand (Premium &amp; All)</span>
-              </button>
-              <button type="button" 
-                      @click="setTab('size')" 
-                      :class="activeTab === 'size' ? 'shop-tab-active' : ''"
-                      class="shop-tab-btn">
-                <span class="tab-icon-dot"></span>
-                <span>📏 Tyres by Size</span>
-              </button>
-              <button type="button" 
-                      @click="setTab('vehicle')" 
-                      :class="activeTab === 'vehicle' ? 'shop-tab-active' : ''"
-                      class="shop-tab-btn">
-                <span class="tab-icon-dot"></span>
-                <span>🚗 Tyres by Vehicle</span>
-              </button>
-            </div>
           </div>
 
           {% set groups = sec.section_data.groups if sec.section_data and sec.section_data.groups else [] %}
           {% for g in groups %}
-          {% set is_brand_group = (g.type == 'brand') or ('brand' in (g.heading|lower)) %}
-          {% set is_size_group = (g.type == 'size') or ('size' in (g.heading|lower)) %}
-          {% set is_vehicle_group = (g.type == 'vehicle') or ('vehicle' in (g.heading|lower)) %}
-          {% set is_premium_brand = is_brand_group and ('premium' in (g.heading|lower) or g.tier == 'premium') %}
+          {% set is_premium_brand = ('brand' in (g.heading|lower) and 'premium' in (g.heading|lower)) or (g.type == 'brand' and g.tier == 'premium') %}
 
           <div class="shop-by-group {% if is_premium_brand %}brand-premium-group{% endif %}"
-               x-show="activeTab === 'all' || (activeTab === 'brand' && {{ 'true' if is_brand_group else 'false' }}) || (activeTab === 'size' && {{ 'true' if is_size_group else 'false' }}) || (activeTab === 'vehicle' && {{ 'true' if is_vehicle_group else 'false' }})"
-               x-transition.opacity.duration.200ms
                {% if is_premium_brand %}id="brands"{% endif %}>
             <div class="shop-by-group-header">
               <h3 class="shop-by-group-title">
@@ -511,46 +474,6 @@
           {% endfor %}
         </div>
       </section>
-      <script>
-        function shopByFilter() {
-          return {
-            activeTab: (window.location.hash === '#brands' || window.location.hash === '#shop-by') ? 'brand' : 'all',
-            setTab(tab) {
-              this.activeTab = tab;
-              if (tab === 'brand') {
-                this.$nextTick(() => {
-                  const el = document.getElementById('brands');
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                });
-              }
-            },
-            init() {
-              const scrollToBrands = () => {
-                if (window.location.hash === '#brands') {
-                  this.activeTab = 'brand';
-                  this.$nextTick(() => {
-                    const el = document.getElementById('brands');
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  });
-                }
-              };
-              window.addEventListener('hashchange', scrollToBrands);
-              if (window.location.hash === '#brands') {
-                setTimeout(scrollToBrands, 150);
-              }
-              document.querySelectorAll('a[href*="#brands"]').forEach(link => {
-                link.addEventListener('click', () => {
-                  this.activeTab = 'brand';
-                  this.$nextTick(() => {
-                    const el = document.getElementById('brands');
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  });
-                });
-              });
-            }
-          };
-        }
-      </script>
 
     {% elif sec.section_type == 'coverage' %}
       <!-- ================= 6.3 DELIVERY AND FITTING COVERAGE ================= -->
