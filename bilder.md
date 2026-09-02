@@ -610,6 +610,57 @@ Enable any administrator to:
 
 ---
 
+### 1.3 Concrete User Case Study: Using a "Statistic Metric" inside "Car Care Services"
+
+**The User's Real-World Need:**
+> *"For example, `Statistic Metric #1` is in the `stats` (Statistics Grid) section, but I want to use this exact metric component inside `services` (Car Care Services). That is my issue."*
+
+#### Why the Current System Fails on This:
+In the current codebase:
+1. **The Admin Modal is Siloed (`static/visionadmin/sections.js:901-981`)**:
+   - When `section_type == 'stats'`, the repeater *only* renders `Metric Number` and `Metric Label`.
+   - When `section_type == 'services'`, the repeater *only* renders `Service Name`.
+   - An admin cannot add a `Statistic Metric` into the `services` section because the code checks `if (type === 'stats')` vs `if (type === 'services')` and forbids cross-pollination.
+2. **The Database Serialization is Siloed (`sections.js:1604-1623`)**:
+   - `stats` only saves `section_data.metrics`.
+   - `services` only saves `section_data.services`.
+3. **The Frontend Template is Siloed (`templates/Client/Home.html:269-285`)**:
+   - The `services` section in `Home.html` only loops through `sec.section_data.services`. It does not even look for or render metrics.
+
+#### How the Composable Block Solution Solves It (100% Zero-Code):
+Under the new **Composable Block Engine**:
+1. In VisionAdmin, the admin edits or creates the **Car Care Services** section.
+2. In the Section Canvas, the admin clicks **"+ Add Block"**:
+   - **Block 1 (Metrics Strip)**: Admin adds Metric #1 (`16+` / `Car Care Services`), Metric #2 (`25+` / `Partner Locations`), Metric #3 (`30 min` / `Fast Service`).
+   - **Block 2 (Cards / Services Grid)**: Admin adds the 16 service cards (Tyre Fitting, 3D Alignment, Balancing, etc.).
+   - **Block 3 (CTA Buttons)**: Admin adds a WhatsApp button ("Inquire about car services").
+3. The Admin can drag to reorder: want the metrics strip *above* the services? Or *below* the services? Just drag it!
+4. The database stores:
+   ```json
+   {
+     "blocks": [
+       {
+         "type": "metrics_strip",
+         "items": [
+           { "number": "16+", "label": { "en": "Car Care Services", "ar": "خدمة صيانة سيارات" } },
+           { "number": "25+", "label": { "en": "Partner Locations", "ar": "موقع شريك" } }
+         ]
+       },
+       {
+         "type": "cards_grid",
+         "columns": 4,
+         "items": [
+           { "title": { "en": "Tyre Fitting", "ar": "تركيب الإطارات" } },
+           { "title": { "en": "3D Wheel Alignment", "ar": "ميزان ليزر 3D" } }
+         ]
+       }
+     ]
+   }
+   ```
+5. The frontend's universal block loop (`{% for block in sec.section_data.blocks %}`) renders the metrics band AND the services cards seamlessly inside the Car Care Services section. **Zero code touched.**
+
+---
+
 ## 2. The Architectural Solution: Composable Block Engine
 
 Instead of treating a Section as a **rigid, single-purpose type**, the system transitions to a **Container + Modular Block Stack** model (used by modern headless CMS engines like Strapi Dynamic Zones, Webflow, and Shopify Sections).
