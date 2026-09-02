@@ -4522,22 +4522,6 @@ details summary span:last-child {
   }
 }
 
-.badge-premium-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  background: #EFF7EA;
-  color: #2F6F0F;
-  border: 1px solid #C8E3B6;
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-left: 8px;
-}
-
 .brand-premium-group {
   scroll-margin-top: 90px;
 }
