@@ -75,6 +75,14 @@ document.addEventListener('DOMContentLoaded', () => {
       tagColor: 'bg-teal-500',
       desc: 'Partner Centres, Mobile Vans & Area Coverage Chips' 
     },
+    advice: { 
+      label: 'Tyre Buying Advice', 
+      shortLabel: 'Advice', 
+      emoji: '💡', 
+      badgeBg: 'bg-indigo-50 text-indigo-800 border-indigo-200/80',
+      tagColor: 'bg-indigo-500',
+      desc: '6 Buying Guide & Tyre Advice Cards' 
+    },
     brands: { 
       label: 'Brands List', 
       shortLabel: 'Brands', 
@@ -823,6 +831,11 @@ document.addEventListener('DOMContentLoaded', () => {
       btnWrap.classList.add('hidden');
     } else if (type === 'coverage') {
       structTitle.textContent = 'Delivery & Fitting Coverage Areas';
+      imageWrap.classList.add('hidden');
+      imagePosWrap.classList.add('hidden');
+      btnWrap.classList.add('hidden');
+    } else if (type === 'advice') {
+      structTitle.textContent = 'Advice Guide Cards (6 Cards)';
       imageWrap.classList.add('hidden');
       imagePosWrap.classList.add('hidden');
       btnWrap.classList.add('hidden');
@@ -1629,6 +1642,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         ];
       }
+    } else if (sectionType === 'advice') {
+      sectionData.cards = repData;
     } else if (sectionType === 'hero') {
       if (repData.length > 0) sectionData.badges = repData;
     } else {

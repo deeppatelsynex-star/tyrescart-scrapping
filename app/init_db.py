@@ -1086,6 +1086,89 @@ def seed_default_home_sections(cursor):
         ),
         (
             "home",
+            "advice",
+            json.dumps({"en": "How to Choose the Right Tyres in the UAE", "ar": "كيف تختار الإطارات المناسبة لسيارتك في الإمارات"}, ensure_ascii=False),
+            json.dumps({"en": "Expert Tyre Advice", "ar": "نصائح وإرشادات الخبراء"}, ensure_ascii=False),
+            json.dumps({"en": "Practical advice from UAE tyre specialists to help you choose the right tyre compound, rating and brand for our climate — without overpaying.", "ar": "إرشادات عملية من خبراء إطارات الإمارات لمساعدتك في اختيار التركيبة والتصنيف الأنسب لمناخنا دون دفع مبالغ إضافية غير ضرورية."}, ensure_ascii=False),
+            None,
+            "right",
+            None,
+            None,
+            json.dumps({
+                "cards": [
+                    {
+                        "icon": "clock",
+                        "title": {
+                            "en": "Check the manufacturing date, not just the tread",
+                            "ar": "تحقق من تاريخ الصنع، وليس فقط عمق النقشة"
+                        },
+                        "description": {
+                            "en": "The last four digits of the DOT code on the sidewall are the week and year of manufacture, so 1226 means week 12 of 2026. UAE heat ages rubber faster than tread wears down, so a tyre made three years ago is already partway through its life before you fit it. Always ask for the date code.",
+                            "ar": "آخر أربعة أرقام من رمز DOT على جدار الإطار تشير إلى أسبوع وسنة الصنع (مثلاً 1226 تعني الأسبوع 12 من سنة 2026). حرارة الإمارات تؤدي لتقادم المطاط بسرعة حتى لو كان المداس سليماً. اطلب دائماً رمز تاريخ الصنع."
+                        }
+                    },
+                    {
+                        "icon": "shield",
+                        "title": {
+                            "en": "Match the load and speed rating to your car",
+                            "ar": "طابق مؤشر الحمولة والسرعة مع مواصفات سيارتك"
+                        },
+                        "description": {
+                            "en": "The 105W after your tyre size is the load index and speed rating. Fitting a lower rating to save money is the most common and most dangerous saving people make in this market, especially on heavy SUVs carrying a full family down the E11.",
+                            "ar": "الرمز مثل 105W بعد مقاس الإطار هو مؤشر الحمولة ومعدل السرعة. اختيار تصنيف أقل لتوفير المال هو الخيار الأكثر خطورة في سوقنا، خاصة لسيارات الدفع الرباعي الثقيلة أثناء القيادة على الطرق السريعة مثل شارع الشيخ زايد E11."
+                        }
+                    },
+                    {
+                        "icon": "dollar",
+                        "title": {
+                            "en": "Premium isn’t always right, budget isn’t always wrong",
+                            "ar": "الفئة الفاخرة ليست دائماً الأنسب، والاقتصادية ليست خاطئة دائماً"
+                        },
+                        "description": {
+                            "en": "If you cover 30,000 km a year on the highway, premium compounds pay for themselves in wear and braking distance. If you do 8,000 km of city driving, a good mid-range tyre is the smarter buy. We’ll tell you honestly which one you are.",
+                            "ar": "إذا كنت تقطع 30,000 كم سنوياً على الطرق السريعة، فإن الإطارات الفاخرة تستحق قيمتها في استدامة التآكل ومسافة الكبح. أما إذا كنت تقطع 8,000 كم داخل المدينة، فالإطار المتوسط هو الخيار الأذكى. سنخبرك بكل أمانة بالخيار الأنسب لك."
+                        }
+                    },
+                    {
+                        "icon": "zap",
+                        "title": {
+                            "en": "How UAE heat changes the maths",
+                            "ar": "كيف تغير حرارة صيف الإمارات المعادلة"
+                        },
+                        "description": {
+                            "en": "Sustained 45–50 °C tarmac means heat resistance matters more here than it does in Europe. Look for tyres rated for high ambient temperatures, and don’t choose on tread pattern alone.",
+                            "ar": "تصل حرارة الإسفلت إلى 45-50 درجة مئوية، مما يجعل مقاومة الحرارة أهم بكثير مما هي عليه في أوروبا. ابحث دائماً عن إطارات مصممة لدرجات الحرارة المحيطة العالية ولا تكتفِ بالنظر إلى شكل النقشة فقط."
+                        }
+                    },
+                    {
+                        "icon": "award",
+                        "title": {
+                            "en": "When to replace your tyres",
+                            "ar": "متى يجب تبديل إطاراتك"
+                        },
+                        "description": {
+                            "en": "Replace at the 1.6 mm legal minimum, or sooner if you see sidewall cracking, bulges or uneven wear. Most UAE drivers should replace at 3–5 years regardless of how much tread is left.",
+                            "ar": "استبدل الإطار عند وصول عمق المداس إلى الحد القانوني الأدنى 1.6 مم، أو قبل ذلك في حال ظهور تشققات في الجدار الجانبي أو انتفاخات أو تآكل غير منتظم. يُنصح معظم سائقي الإمارات باستبدال الإطارات كل 3 إلى 5 سنوات بغض النظر عن عمق المداس المتبقي."
+                        }
+                    },
+                    {
+                        "icon": "truck",
+                        "title": {
+                            "en": "What a “fully fitted” price should include",
+                            "ar": "ما الذي يجب أن يشمله السعر \"الشامل للتركيب\""
+                        },
+                        "description": {
+                            "en": "A real fitted price covers delivery, mounting, balancing, new valves and disposal of the old tyres. If a quote doesn’t say so, ask — that is where the surprise charges live.",
+                            "ar": "السعر الحقيقي الشامل للتركيب يغطي التوصيل، التركيب، الترصيص، بلوف جديدة، والتخلص من الإطارات القديمة. إذا كان العرض لا يذكر ذلك صراحة، اسأل عنه — فهناك تكمن الرسوم المخفية غير المتوقعة."
+                        }
+                    }
+                ]
+            }, ensure_ascii=False),
+            9,
+            1
+        ),
+        (
+            "home",
             "brands",
             json.dumps({"en": "The names you trust, the prices you don’t expect", "ar": "العلامات التي تثق بها، بالأسعار التي لا تتوقعها"}, ensure_ascii=False),
             json.dumps({"en": "60+ brands in stock", "ar": "+60 علامة تجارية في المخزون"}, ensure_ascii=False),
@@ -1102,7 +1185,7 @@ def seed_default_home_sections(cursor):
                     "Sumitomo", "Zeetex", "+40 more"
                 ]
             }, ensure_ascii=False),
-            9,
+            10,
             1
         ),
         (
@@ -1146,7 +1229,7 @@ def seed_default_home_sections(cursor):
                     }
                 ]
             }, ensure_ascii=False),
-            10,
+            11,
             1
         ),
         (
@@ -1187,7 +1270,7 @@ def seed_default_home_sections(cursor):
                     }
                 ]
             }, ensure_ascii=False),
-            11,
+            12,
             1
         ),
         (
@@ -1208,7 +1291,7 @@ def seed_default_home_sections(cursor):
                     "ar": "مفتوح يومياً — اتصل أو راسلنا في أي وقت وسنرد عليك بسرعة فائقة."
                 }
             }, ensure_ascii=False),
-            12,
+            13,
             1
         )
     ]

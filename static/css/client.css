@@ -4272,6 +4272,24 @@ html[dir="rtl"] .category-badge-pill {
   margin-top: 48px;
 }
 
+/* ---------------- 6.4 HOW TO CHOOSE THE RIGHT TYRES IN THE UAE ---------------- */
+.advice-section {
+  padding: 84px 0;
+  background: #ffffff;
+  border-top: 1px solid var(--line);
+}
+
+.advice-card {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.advice-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--green);
+  box-shadow: 0 12px 32px rgba(104, 201, 39, 0.12);
+}
+
+
 
 
 
