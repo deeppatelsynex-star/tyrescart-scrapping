@@ -767,6 +767,127 @@ def seed_default_home_sections(cursor):
         ),
         (
             "home",
+            "price_table",
+            json.dumps({"en": "Tyre Prices in Dubai and Abu Dhabi", "ar": "أسعار الإطارات في دبي وأبوظبي"}, ensure_ascii=False),
+            json.dumps({"en": "TYRE PRICES", "ar": "أسعار الإطارات"}, ensure_ascii=False),
+            json.dumps({"en": "Starting prices for the sizes UAE drivers buy most, fitted at a partner centre — delivery, mounting, balancing, valves and old-tyre disposal all included. Send your size on WhatsApp for an exact price on your vehicle.", "ar": "أسعار تبدأ للمقاسات الأكثر طلباً في الإمارات، مع التركيب في مركز شريك — يشمل التوصيل، التركيب، الترصيص، البلوف والتخلص من الإطارات القديمة. أرسل مقاس إطارك عبر واتساب للحصول على السعر الدقيق لسيارتك."}, ensure_ascii=False),
+            None,
+            "right",
+            json.dumps({"en": "Send Size on WhatsApp", "ar": "أرسل المقاس عبر واتساب"}, ensure_ascii=False),
+            "https://wa.me/971505065575?text=Hi%20TyresVision%2C%20I%27d%20like%20a%20price%20for%20my%20tyre%20size.",
+            json.dumps({
+                "value_cards": [
+                    {
+                        "icon": "truck",
+                        "title": {"en": "FREE Delivery", "ar": "توصيل مجاني"},
+                        "subtitle": {"en": "Across Dubai & Abu Dhabi", "ar": "في دبي وأبوظبي"}
+                    },
+                    {
+                        "icon": "tool",
+                        "title": {"en": "Fitting Included", "ar": "التركيب مشمول"},
+                        "subtitle": {"en": "Mounting, Balancing & Valves", "ar": "فك وتركيب وترصيص وبلوف"}
+                    },
+                    {
+                        "icon": "recycle",
+                        "title": {"en": "Old Tyre Disposal", "ar": "التخلص من الإطارات القديمة"},
+                        "subtitle": {"en": "Eco-friendly & included", "ar": "صديق للبيئة ومجاني"}
+                    },
+                    {
+                        "icon": "shield",
+                        "title": {"en": "Warranty Covered", "ar": "ضمان شامل"},
+                        "subtitle": {"en": "Genuine products only", "ar": "منتجات أصلية 100%"}
+                    }
+                ],
+                "rows": [
+                    {
+                        "size": "195/65 R15",
+                        "common_on": {"en": "Corolla, Sunny, Elantra", "ar": "كورولا، صني، إلنترا"},
+                        "budget": "AED —",
+                        "mid_range": "AED —",
+                        "premium": "AED —"
+                    },
+                    {
+                        "size": "205/55 R16",
+                        "common_on": {"en": "Civic, Jetta, Cerato", "ar": "سيفيك، جيتا، سيراتو"},
+                        "budget": "AED —",
+                        "mid_range": "AED —",
+                        "premium": "AED —"
+                    },
+                    {
+                        "size": "215/60 R17",
+                        "common_on": {"en": "Camry, Accord, Sonata", "ar": "كامري، أكورد، سوناتا"},
+                        "budget": "AED —",
+                        "mid_range": "AED —",
+                        "premium": "AED —"
+                    },
+                    {
+                        "size": "225/65 R17",
+                        "common_on": {"en": "RAV4, Tucson, Sportage", "ar": "راف 4، توسان، سبورتاج"},
+                        "budget": "AED —",
+                        "mid_range": "AED —",
+                        "premium": "AED —"
+                    },
+                    {
+                        "size": "235/55 R19",
+                        "common_on": {"en": "Explorer, Edge, XC60", "ar": "إكسبلورر، إيدج، إكس سي 60"},
+                        "budget": "AED —",
+                        "mid_range": "AED —",
+                        "premium": "AED —"
+                    },
+                    {
+                        "size": "265/65 R17",
+                        "common_on": {"en": "Prado, Fortuner, Hilux", "ar": "برادو، فورتشنر، هايلوكس"},
+                        "budget": "AED —",
+                        "mid_range": "AED —",
+                        "premium": "AED —"
+                    },
+                    {
+                        "size": "275/60 R20",
+                        "common_on": {"en": "Land Cruiser, Tahoe", "ar": "لاندكروزر، تاهو"},
+                        "budget": "AED —",
+                        "mid_range": "AED —",
+                        "premium": "AED —"
+                    },
+                    {
+                        "size": "285/50 R20",
+                        "common_on": {"en": "Patrol, Armada", "ar": "باترول، أرمادا"},
+                        "budget": "AED —",
+                        "mid_range": "AED —",
+                        "premium": "AED —"
+                    },
+                    {
+                        "size": "275/45 R20",
+                        "common_on": {"en": "Range Rover, X5, GLE", "ar": "رينج روفر، إكس 5، جي إل إي"},
+                        "budget": "AED —",
+                        "mid_range": "AED —",
+                        "premium": "AED —"
+                    },
+                    {
+                        "size": "255/45 R19",
+                        "common_on": {"en": "Tesla Model Y, EQC", "ar": "تسلا موديل واي، إي كيو سي"},
+                        "budget": "AED —",
+                        "mid_range": "AED —",
+                        "premium": "AED —"
+                    }
+                ],
+                "small_print": {
+                    "en": "Prices are per tyre, fitted at a partner centre. Mobile van fitting at your own location is available for an additional call-out fee, confirmed before we dispatch. Updated September 2026. Stock and pricing change — WhatsApp for today’s price.",
+                    "ar": "الأسعار للإطار الواحد مع التركيب في مركز شريك. تتوفر خدمة التركيب المتنقل عند موقعك مقابل رسوم إضافية يتم تأكيدها قبل التحرك. تم التحديث سبتمبر 2026. الأسعار والمخزون يتغيران — راسلنا عبر واتساب لمعرفة سعر اليوم."
+                },
+                "call_button": {
+                    "text": "+971 50 506 5575",
+                    "url": "tel:+971505065575"
+                },
+                "trust_text": {
+                    "en": "Partner centres near you • Expert fitting",
+                    "ar": "مراكز شركاء قريبة منك • تركيب احترافي"
+                }
+            }, ensure_ascii=False),
+            4,
+            1
+        ),
+        (
+            "home",
             "services",
             json.dumps({"en": "More than tyres", "ar": "أكثر من مجرد إطارات"}, ensure_ascii=False),
             json.dumps({"en": "Full car care", "ar": "عناية متكاملة بسيارتك"}, ensure_ascii=False),
@@ -795,7 +916,7 @@ def seed_default_home_sections(cursor):
                     {"name": {"en": "Mobile van visit", "ar": "زيارة الفان المتنقل"}}
                 ]
             }, ensure_ascii=False),
-            4,
+            5,
             1
         ),
         (
@@ -842,7 +963,7 @@ def seed_default_home_sections(cursor):
                     "call_url": "tel:+971505069575"
                 }
             }, ensure_ascii=False),
-            5,
+            6,
             1
         ),
         (
@@ -863,7 +984,7 @@ def seed_default_home_sections(cursor):
                     "Sumitomo", "Zeetex", "+40 more"
                 ]
             }, ensure_ascii=False),
-            6,
+            7,
             1
         ),
         (
@@ -907,7 +1028,7 @@ def seed_default_home_sections(cursor):
                     }
                 ]
             }, ensure_ascii=False),
-            7,
+            8,
             1
         ),
         (
@@ -948,7 +1069,7 @@ def seed_default_home_sections(cursor):
                     }
                 ]
             }, ensure_ascii=False),
-            8,
+            9,
             1
         ),
         (
@@ -969,7 +1090,7 @@ def seed_default_home_sections(cursor):
                     "ar": "مفتوح يومياً — اتصل أو راسلنا في أي وقت وسنرد عليك بسرعة فائقة."
                 }
             }, ensure_ascii=False),
-            9,
+            10,
             1
         )
     ]

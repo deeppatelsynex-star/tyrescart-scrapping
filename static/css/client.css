@@ -744,6 +744,296 @@ header {
   }
 }
 
+/* ============================================================
+   TYRE PRICES MATRIX & VALUE CARDS (Antigravity Spatial Design)
+   ============================================================ */
+.price-section {
+  background: 
+    radial-gradient(1200px 500px at 50% 0%, rgba(88, 179, 27, 0.05), transparent 70%),
+    linear-gradient(180deg, #FFFFFF 0%, #F8FAF6 100%);
+  padding: clamp(60px, 8vw, 100px) 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 4 Guarantee / Value Cards */
+.price-guarantees-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 40px;
+  margin-bottom: 32px;
+}
+
+@media (min-width: 900px) {
+  .price-guarantees-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+}
+
+.price-guarantee-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #FFFFFF;
+  border: 1px solid #E8EDE4;
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 16px rgba(14, 17, 8, 0.03);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease;
+}
+
+.price-guarantee-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(88, 179, 27, 0.10);
+  border-color: rgba(88, 179, 27, 0.4);
+}
+
+.pg-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #EFF9E6;
+  color: #35760F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.price-guarantee-card:hover .pg-icon {
+  transform: scale(1.08) rotate(3deg);
+  background: #E4F5D8;
+}
+
+.pg-text {
+  min-width: 0;
+}
+
+.pg-title {
+  font-size: 0.94rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.pg-sub {
+  font-size: 0.78rem;
+  color: var(--slate);
+  margin-top: 3px;
+  line-height: 1.2;
+}
+
+/* Price Table Card Container */
+.price-table-card {
+  background: #FFFFFF;
+  border: 1px solid #E3E7DE;
+  border-radius: 20px;
+  box-shadow: 0 12px 36px rgba(14, 17, 8, 0.05);
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.3s ease;
+}
+
+.price-table-card:hover {
+  box-shadow: 0 20px 48px rgba(14, 17, 8, 0.08);
+}
+
+.price-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Table Design */
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.94rem;
+  min-width: 720px;
+}
+
+/* Table Header */
+.price-table thead th {
+  background: #58B31B;
+  color: #FFFFFF;
+  padding: 16px 20px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border: none;
+  user-select: none;
+}
+
+.price-table thead th:first-child {
+  border-top-left-radius: 19px;
+}
+
+.price-table thead th:last-child {
+  border-top-right-radius: 19px;
+}
+
+.th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.th-content svg {
+  opacity: 0.92;
+  flex-shrink: 0;
+}
+
+/* Table Body */
+.price-table tbody tr {
+  border-bottom: 1px solid #F0F4EC;
+  transition: background-color 0.15s ease;
+}
+
+.price-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.price-table tbody tr:nth-child(even) {
+  background-color: #FAFCF8;
+}
+
+.price-table tbody tr:hover {
+  background-color: #F2F8EC;
+}
+
+.price-table td {
+  padding: 14px 20px;
+  vertical-align: middle;
+}
+
+/* Column Styling */
+.td-size {
+  width: 18%;
+  white-space: nowrap;
+}
+
+.size-pill {
+  font-family: var(--font), monospace;
+  font-weight: 800;
+  font-size: 0.96rem;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.td-common {
+  width: 31%;
+  color: var(--slate);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.td-price {
+  width: 17%;
+  white-space: nowrap;
+}
+
+.price-val {
+  font-weight: 700;
+  color: #1E293B;
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+}
+
+/* Small Print Under Table */
+.price-table-note {
+  font-size: 0.82rem;
+  color: #64748B;
+  text-align: center;
+  max-width: 82ch;
+  margin: 18px auto 0 auto;
+  line-height: 1.55;
+}
+
+/* Action Cluster */
+.price-action-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.price-btn-wa {
+  padding: 14px 28px;
+  font-size: 0.98rem;
+  box-shadow: 0 4px 16px rgba(88, 179, 27, 0.28);
+}
+
+.price-btn-wa:hover {
+  box-shadow: 0 8px 24px rgba(88, 179, 27, 0.38);
+}
+
+.btn-call-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: #FFFFFF;
+  border: 1.5px solid #CBD6C0;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-call-outline:hover {
+  transform: translateY(-2px);
+  background: #F8FAF6;
+  border-color: var(--ink);
+  box-shadow: 0 4px 14px rgba(14, 17, 8, 0.08);
+}
+
+.price-trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--slate);
+  margin-left: 6px;
+}
+
+.price-trust-badge svg {
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 640px) {
+  .price-guarantees-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .price-guarantee-card {
+    padding: 12px 14px;
+  }
+
+  .price-action-cluster {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .price-action-cluster .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* ---------------- SERVICES ---------------- */
 .services {
   background: var(--bg-soft)

@@ -35,6 +35,14 @@ document.addEventListener('DOMContentLoaded', () => {
       tagColor: 'bg-purple-500',
       desc: '6 Value Cards with Icons + WhatsApp/Call' 
     },
+    price_table: { 
+      label: 'Tyre Price Table', 
+      shortLabel: 'Prices', 
+      emoji: '💰', 
+      badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
+      tagColor: 'bg-emerald-500',
+      desc: 'Vehicle & Tyre Size Price Matrix with Value Cards' 
+    },
     services: { 
       label: 'Car Care Services', 
       shortLabel: 'Services', 
@@ -524,6 +532,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const txt = typeof raw === 'object' ? (raw.en || raw.ar || Object.values(raw)[0] || '') : String(raw || '');
             return `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-semibold border border-emerald-200/80">✓ ${txt}</span>`;
           });
+        } else if (Array.isArray(sec.section_data.rows) && sec.section_data.rows.length > 0) {
+          itemsCount = sec.section_data.rows.length;
+          chipList = sec.section_data.rows.map(r => {
+            return `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200/80 font-mono">🛞 ${r.size || ''}</span>`;
+          });
         }
 
         if (chipList.length > 0) {
@@ -763,6 +776,10 @@ document.addEventListener('DOMContentLoaded', () => {
       structTitle.textContent = 'Why / Value Cards (6 Cards)';
       imageWrap.classList.add('hidden');
       btnWrap.classList.add('hidden');
+    } else if (type === 'price_table') {
+      structTitle.textContent = 'Tyre Sizes & Starting Prices Matrix';
+      imageWrap.classList.add('hidden');
+      imagePosWrap.classList.add('hidden');
     } else if (type === 'services') {
       structTitle.textContent = 'Car Care Services List';
       imageWrap.classList.add('hidden');
@@ -852,6 +869,50 @@ document.addEventListener('DOMContentLoaded', () => {
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Label (Arabic) *</label>
                 <input type="text" dir="rtl" placeholder="مثال: علامة تجارية" class="rep-head-ar w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-right bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 outline-none" value="${typeof item.label === 'object' ? (item.label.ar || '') : (item.heading?.ar || '')}" />
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (type === 'price_table') {
+        const commonEn = typeof item.common_on === 'object' ? (item.common_on?.en || '') : (item.common_on || '');
+        const commonAr = typeof item.common_on === 'object' ? (item.common_on?.ar || '') : '';
+        return `
+          <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
+              <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                <span>Tyre Size Row #${i + 1}</span>
+              </span>
+              <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Tyre Size (e.g. 195/65 R15) *</label>
+                <input type="text" placeholder="e.g. 195/65 R15" class="rep-size font-mono w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none" value="${item.size || ''}" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Common On (EN)</label>
+                  <input type="text" placeholder="Corolla, Sunny..." class="rep-common-en w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs bg-[#F8FAF7] focus:bg-white outline-none" value="${commonEn}" />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Common On (AR)</label>
+                  <input type="text" dir="rtl" placeholder="كورولا، صني..." class="rep-common-ar w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs text-right bg-[#F8FAF7] focus:bg-white outline-none" value="${commonAr}" />
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Budget From</label>
+                <input type="text" placeholder="AED —" class="rep-budget w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none" value="${item.budget || 'AED —'}" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Mid-Range From</label>
+                <input type="text" placeholder="AED —" class="rep-mid w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none" value="${item.mid_range || 'AED —'}" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Premium From</label>
+                <input type="text" placeholder="AED —" class="rep-prem w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none" value="${item.premium || 'AED —'}" />
               </div>
             </div>
           </div>
@@ -1044,6 +1105,8 @@ document.addEventListener('DOMContentLoaded', () => {
       repeaterItems.push({ rating: 5, author: { en: 'Verified customer', ar: 'عميل موثوق' }, quote: { en: 'Great service!', ar: 'خدمة ممتازة!' } });
     } else if (type === 'how_it_works') {
       repeaterItems.push({ step_number: repeaterItems.length + 1, icon: 'phone', title: { en: 'Step Title', ar: 'عنوان الخطوة' }, description: { en: 'Description', ar: 'الوصف' } });
+    } else if (type === 'price_table') {
+      repeaterItems.push({ size: '205/55 R16', common_on: { en: 'Civic, Jetta, Cerato', ar: 'سيفيك، جيتا، سيراتو' }, budget: 'AED —', mid_range: 'AED —', premium: 'AED —' });
     } else {
       repeaterItems.push({ icon: 'shield', title: { en: 'Card Title', ar: 'عنوان البطاقة' }, description: { en: 'Description', ar: 'الوصف' } });
     }
@@ -1112,6 +1175,22 @@ document.addEventListener('DOMContentLoaded', () => {
             icon: icon,
             title: { en: titleEn, ar: titleAr || titleEn },
             description: { en: descEn, ar: descAr || descEn }
+          });
+        }
+      } else if (type === 'price_table') {
+        const size = row.querySelector('.rep-size')?.value.trim() || '';
+        const cEn = row.querySelector('.rep-common-en')?.value.trim() || '';
+        const cAr = row.querySelector('.rep-common-ar')?.value.trim() || cEn;
+        const budget = row.querySelector('.rep-budget')?.value.trim() || 'AED —';
+        const mid = row.querySelector('.rep-mid')?.value.trim() || 'AED —';
+        const prem = row.querySelector('.rep-prem')?.value.trim() || 'AED —';
+        if (size) {
+          items.push({
+            size: size,
+            common_on: { en: cEn, ar: cAr },
+            budget: budget,
+            mid_range: mid,
+            premium: prem
           });
         }
       } else {
@@ -1302,6 +1381,8 @@ document.addEventListener('DOMContentLoaded', () => {
       repeaterItems = JSON.parse(JSON.stringify(sData.faqs));
     } else if (sData.badges && Array.isArray(sData.badges)) {
       repeaterItems = JSON.parse(JSON.stringify(sData.badges));
+    } else if (sData.rows && Array.isArray(sData.rows)) {
+      repeaterItems = JSON.parse(JSON.stringify(sData.rows));
     } else if (sData.features && Array.isArray(sData.features)) {
       repeaterItems = JSON.parse(JSON.stringify(sData.features));
     } else {
@@ -1389,6 +1470,8 @@ document.addEventListener('DOMContentLoaded', () => {
       sectionData.reviews = repData;
     } else if (sectionType === 'faq') {
       sectionData.faqs = repData;
+    } else if (sectionType === 'price_table') {
+      sectionData.rows = repData;
     } else if (sectionType === 'hero') {
       if (repData.length > 0) sectionData.badges = repData;
     } else {
