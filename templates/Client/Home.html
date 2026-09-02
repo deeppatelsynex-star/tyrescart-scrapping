@@ -37,8 +37,8 @@
 
           {% set qc = sec.section_data.quote_card if sec.section_data and sec.section_data.quote_card else {} %}
           <div class="quote-card">
-            <h3>{{ qc.title or ('احصل على سعر إطاراتك في دقائق' if locale == 'ar' else 'Get your tyre price in minutes') }}</h3>
-            <p class="sub">{{ qc.subtitle or ('أرسل لنا مقاس إطاراتك — وسنرد عليك عبر واتساب بالخيارات والأسعار.' if locale == 'ar' else 'Send us your size — we’ll reply on WhatsApp with options and prices.') }}</p>
+            <h3>{{ qc.title or ('احصل على سعر إطاراتك في دقائق' if locale == 'ar' else 'Buy tyres online — price in minute') }}</h3>
+            <p class="sub">{{ qc.subtitle or ('أرسل لنا مقاس إطاراتك — وسنرد عليك عبر واتساب بالخيارات والأسعار.' if locale == 'ar' else 'Send us your size — we’ll reply with tyre prices for Dubai & Abu Dhabi.') }}</p>
             <form id="quoteForm" novalidate>
               <div class="field">
                 <label for="tyreSize">{% if locale == 'ar' %}مقاس الإطار (مثال: 235/55 R19){% else %}Tyre size (e.g. 235/55 R19){% endif %}</label>
