@@ -181,14 +181,14 @@ def _render_blog_detail(slug, locale):
                 prev_post = {
                     'title': all_published[idx - 1].get_title(locale),
                     'slug': all_published[idx - 1].slug,
-                    'cover_image_url': all_published[idx - 1].image or '/static/assets/online-tyres-shop-dubai.png',
+                    'cover_image_url': all_published[idx - 1].image or '/static/assets/images/online-tyres-shop-dubai.png',
                     'url': f"/{locale}/blog/{all_published[idx - 1].slug}" if locale in ('en', 'ar') else f"/blog/{all_published[idx - 1].slug}"
                 }
             if idx < len(all_published) - 1:
                 next_post = {
                     'title': all_published[idx + 1].get_title(locale),
                     'slug': all_published[idx + 1].slug,
-                    'cover_image_url': all_published[idx + 1].image or '/static/assets/online-tyres-shop-dubai.png',
+                    'cover_image_url': all_published[idx + 1].image or '/static/assets/images/online-tyres-shop-dubai.png',
                     'url': f"/{locale}/blog/{all_published[idx + 1].slug}" if locale in ('en', 'ar') else f"/blog/{all_published[idx + 1].slug}"
                 }
             break
@@ -198,7 +198,7 @@ def _render_blog_detail(slug, locale):
         prev_post = {
             'title': other_blogs[0].get_title(locale),
             'slug': other_blogs[0].slug,
-            'cover_image_url': other_blogs[0].image or '/static/assets/online-tyres-shop-dubai.png',
+            'cover_image_url': other_blogs[0].image or '/static/assets/images/online-tyres-shop-dubai.png',
             'url': f"/{locale}/blog/{other_blogs[0].slug}"
         }
 
@@ -208,7 +208,7 @@ def _render_blog_detail(slug, locale):
         related_posts.append({
             'title': b.get_title(locale),
             'slug': b.slug,
-            'cover_image_url': b.image or '/static/assets/online-tyres-shop-dubai.png',
+            'cover_image_url': b.image or '/static/assets/images/online-tyres-shop-dubai.png',
             'published_at': b.published_at.strftime('%d-%m-%Y') if b.published_at else '24-08-2026',
             'url': f"/{locale}/blog/{b.slug}" if locale in ('en', 'ar') else f"/blog/{b.slug}"
         })
@@ -241,7 +241,7 @@ def _render_blog_detail(slug, locale):
         'content': blog.get_content(locale),
         'short_description': blog.get_short_desc(locale),
         'category': cat_name,
-        'cover_image_url': blog.image or '/static/assets/online-tyres-shop-dubai.png',
+        'cover_image_url': blog.image or '/static/assets/images/online-tyres-shop-dubai.png',
         'published_at': published_str,
         'reviewed_at': reviewed_str,
         'read_time': '5 min read' if locale != 'ar' else 'قراءة 5 دقائق',
@@ -307,7 +307,7 @@ def _build_about_us_context(page, locale='en'):
         ),
         'cta_text': parsed_json.get('hero_cta_text') or ('استكشف قصتنا ومسيرتنا' if is_ar else 'Our Journey & Story'),
         'cta_link': parsed_json.get('hero_cta_link') or '#our-story',
-        'image': page_banner or parsed_json.get('hero_image') or '/static/assets/online-tyres-shop-dubai.png'
+        'image': page_banner or parsed_json.get('hero_image') or '/static/assets/images/online-tyres-shop-dubai.png'
     }
 
     # STORY SECTION
@@ -316,7 +316,7 @@ def _build_about_us_context(page, locale='en'):
         'title': parsed_json.get('story_title') or ('مدفوعون بالشفافية وسلامة الطريق' if is_ar else 'Driven by Transparency & Road Safety'),
         'badge_title': parsed_json.get('story_badge_title') or ('إطارات أصلية ١٠٠٪' if is_ar else '100% Genuine Tyres'),
         'badge_sub': parsed_json.get('story_badge_sub') or ('ضمان الوكيل وتواريخ حديثة' if is_ar else 'Official Warranty & GCC Spec'),
-        'image': parsed_json.get('story_image') or '/static/assets/online-tyres-shop-dubai.png',
+        'image': parsed_json.get('story_image') or '/static/assets/images/online-tyres-shop-dubai.png',
         'content_html': page_content if (page_content and len(page_content) > 60) else None,
         'p1': parsed_json.get('story_p1') or (
             'بدأت رحلتنا بإيمان بسيط: يجب أن يكون شراء وتركيب إطارات السيارات في دولة الإمارات تجربة شفافة ومريحة وموثوقة دون الحاجة لزيارة المناطق الصناعية ومقارنة الأسعار لساعات.'
@@ -408,7 +408,7 @@ def _build_about_us_context(page, locale='en'):
         ),
         'cta_text': parsed_json.get('team_cta_text') or ('تواصل مع فريقنا' if is_ar else 'Meet Our Team'),
         'cta_link': parsed_json.get('team_cta_link') or 'https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20would%20like%20to%20connect%20with%20your%20team.',
-        'image': parsed_json.get('team_image') or '/static/assets/online-tyres-shop-dubai.png'
+        'image': parsed_json.get('team_image') or '/static/assets/images/online-tyres-shop-dubai.png'
     }
 
     # ACTION CALLOUT BANNER
