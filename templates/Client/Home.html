@@ -206,20 +206,21 @@
           </div>
           {% endif %}
 
-          <!-- Main Tyre Prices Table Container -->
+          <!-- Main Tyre Prices Table Container (DataTables Responsive Expand/Collapse - Zero Horizontal Scroll) -->
           {% set p_rows = sec.section_data.rows if sec.section_data and sec.section_data.rows else [] %}
-          <div class="price-table-card">
+          <div class="price-table-card" x-data="{ expandedRow: null }">
             <div class="price-table-scroll">
-              <table class="price-table" aria-label="Tyre sizes and starting prices in UAE">
+              <table class="price-table responsive-price-table" aria-label="Tyre sizes and starting prices in UAE">
                 <thead>
                   <tr>
+                    <th scope="col" class="th-dtr-control dtr-mobile-only" aria-label="Expand row"></th>
                     <th scope="col" class="th-size">
                       <span class="th-content">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M4.93 4.93 9.17 9.17"/><path d="m14.83 14.83 4.24 4.24"/><path d="m19.07 4.93-4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
                         <span>Tyre size</span>
                       </span>
                     </th>
-                    <th scope="col" class="th-common">
+                    <th scope="col" class="th-common desktop-col">
                       <span class="th-content">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.1 10.7 2 11.1 2 11.5V16c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
                         <span>Common on</span>
@@ -231,13 +232,13 @@
                         <span>Budget from</span>
                       </span>
                     </th>
-                    <th scope="col" class="th-tier">
+                    <th scope="col" class="th-tier desktop-col">
                       <span class="th-content">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                         <span>Mid-range from</span>
                       </span>
                     </th>
-                    <th scope="col" class="th-tier">
+                    <th scope="col" class="th-tier desktop-col">
                       <span class="th-content">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
                         <span>Premium from</span>
@@ -247,21 +248,68 @@
                 </thead>
                 <tbody>
                   {% for r in p_rows %}
-                  <tr>
+                  {% set row_idx = loop.index0 %}
+                  <!-- Master Row -->
+                  <tr class="dtr-parent-row" 
+                      :class="expandedRow === {{ row_idx }} ? 'dtr-expanded' : ''"
+                      @click="expandedRow = expandedRow === {{ row_idx }} ? null : {{ row_idx }}">
+                    <td class="td-dtr-control dtr-mobile-only">
+                      <span class="dtr-control-btn" :aria-expanded="expandedRow === {{ row_idx }} ? 'true' : 'false'">
+                        <span class="dtr-icon" x-text="expandedRow === {{ row_idx }} ? '−' : '+'">+</span>
+                      </span>
+                    </td>
                     <td class="td-size">
                       <span class="size-pill">{{ r.size }}</span>
                     </td>
-                    <td class="td-common">
+                    <td class="td-common desktop-col">
                       {{ r.common_on.en if (r.common_on is mapping) else (r.common_on or '') }}
                     </td>
                     <td class="td-price">
                       <span class="price-val">{{ r.budget or 'AED —' }}</span>
                     </td>
-                    <td class="td-price">
+                    <td class="td-price desktop-col">
                       <span class="price-val">{{ r.mid_range or 'AED —' }}</span>
                     </td>
-                    <td class="td-price">
+                    <td class="td-price desktop-col">
                       <span class="price-val">{{ r.premium or 'AED —' }}</span>
+                    </td>
+                  </tr>
+
+                  <!-- Responsive Detail Child Row (Shown on Mobile when Expanded) -->
+                  <tr class="dtr-child-row dtr-mobile-only" x-show="expandedRow === {{ row_idx }}" x-cloak>
+                    <td colspan="3" class="dtr-child-td">
+                      <div class="dtr-child-details">
+                        <div class="dtr-detail-item">
+                          <span class="dtr-detail-title">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.1 10.7 2 11.1 2 11.5V16c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+                            Common on:
+                          </span>
+                          <span class="dtr-detail-value">{{ r.common_on.en if (r.common_on is mapping) else (r.common_on or 'Various models') }}</span>
+                        </div>
+                        <div class="dtr-detail-item">
+                          <span class="dtr-detail-title">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            Mid-range from:
+                          </span>
+                          <span class="dtr-detail-value price-val">{{ r.mid_range or 'AED —' }}</span>
+                        </div>
+                        <div class="dtr-detail-item">
+                          <span class="dtr-detail-title">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
+                            Premium from:
+                          </span>
+                          <span class="dtr-detail-value price-val text-[#58B31B]">{{ r.premium or 'AED —' }}</span>
+                        </div>
+                        <div class="dtr-detail-action">
+                          <a href="https://wa.me/971505069575?text={{ ('Hi TyresVision, I would like a price quote for tyre size ' ~ r.size) | urlencode }}" 
+                             target="_blank" 
+                             rel="noopener"
+                             class="dtr-wa-btn">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+                            <span>WhatsApp Quote for {{ r.size }}</span>
+                          </a>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                   {% endfor %}
@@ -362,19 +410,100 @@
 
     {% elif sec.section_type == 'shop_by' %}
       <!-- ================= 6.2 SHOP BY SIZE, VEHICLE & BRAND ================= -->
-      <section id="shop-by" class="shop-by-section">
+      <section id="shop-by" class="shop-by-section" x-data="{
+        activeTab: (window.location.hash === '#brands' || window.location.hash === '#shop-by') ? 'brand' : 'all',
+        setTab(tab) {
+          this.activeTab = tab;
+          if (tab === 'brand') {
+            this.$nextTick(() => {
+              const el = document.getElementById('brands');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+          }
+        },
+        init() {
+          const checkHash = () => {
+            if (window.location.hash === '#brands') {
+              this.activeTab = 'brand';
+              this.$nextTick(() => {
+                const el = document.getElementById('brands');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              });
+            }
+          };
+          window.addEventListener('hashchange', checkHash);
+          if (window.location.hash === '#brands') {
+            setTimeout(checkHash, 150);
+          }
+          document.querySelectorAll('a[href*=\"#brands\"]').forEach(link => {
+            link.addEventListener('click', () => {
+              this.activeTab = 'brand';
+              this.$nextTick(() => {
+                const el = document.getElementById('brands');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              });
+            });
+          });
+        }
+      }">
         <div class="wrap">
           <div class="center">
             {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
             <h2>{{ sec.section_title }}</h2>
             {% if sec.content %}<p class="lead">{{ sec.content | safe }}</p>{% endif %}
+
+            <!-- Category Filter Tabs (All / Brands / Sizes / Vehicles) -->
+            <div class="shop-by-tabs-wrapper">
+              <button type="button" 
+                      @click="setTab('all')" 
+                      :class="activeTab === 'all' ? 'shop-tab-active' : ''"
+                      class="shop-tab-btn">
+                <span class="tab-icon-dot"></span>
+                <span>All Options</span>
+              </button>
+              <button type="button" 
+                      @click="setTab('brand')" 
+                      :class="activeTab === 'brand' ? 'shop-tab-active' : ''"
+                      class="shop-tab-btn"
+                      id="tab-btn-brands">
+                <span class="tab-icon-dot"></span>
+                <span>⭐ Tyres by Brand (Premium &amp; All)</span>
+              </button>
+              <button type="button" 
+                      @click="setTab('size')" 
+                      :class="activeTab === 'size' ? 'shop-tab-active' : ''"
+                      class="shop-tab-btn">
+                <span class="tab-icon-dot"></span>
+                <span>📏 Tyres by Size</span>
+              </button>
+              <button type="button" 
+                      @click="setTab('vehicle')" 
+                      :class="activeTab === 'vehicle' ? 'shop-tab-active' : ''"
+                      class="shop-tab-btn">
+                <span class="tab-icon-dot"></span>
+                <span>🚗 Tyres by Vehicle</span>
+              </button>
+            </div>
           </div>
 
           {% set groups = sec.section_data.groups if sec.section_data and sec.section_data.groups else [] %}
           {% for g in groups %}
-          <div class="shop-by-group">
+          {% set is_brand_group = (g.type == 'brand') or ('brand' in (g.heading|lower)) %}
+          {% set is_size_group = (g.type == 'size') or ('size' in (g.heading|lower)) %}
+          {% set is_vehicle_group = (g.type == 'vehicle') or ('vehicle' in (g.heading|lower)) %}
+          {% set is_premium_brand = is_brand_group and ('premium' in (g.heading|lower) or g.tier == 'premium') %}
+
+          <div class="shop-by-group {% if is_premium_brand %}brand-premium-group{% endif %}"
+               x-show="activeTab === 'all' || (activeTab === 'brand' && {{ 'true' if is_brand_group else 'false' }}) || (activeTab === 'size' && {{ 'true' if is_size_group else 'false' }}) || (activeTab === 'vehicle' && {{ 'true' if is_vehicle_group else 'false' }})"
+               x-transition.opacity.duration.200ms
+               {% if is_premium_brand %}id="brands"{% endif %}>
             <div class="shop-by-group-header">
-              <h3 class="shop-by-group-title">{{ g.heading }}</h3>
+              <h3 class="shop-by-group-title">
+                {{ g.heading }}
+                {% if is_premium_brand %}
+                <span class="badge-premium-pill">Official UAE Warranty</span>
+                {% endif %}
+              </h3>
             </div>
             {% set chips = g.chips if g.chips else [] %}
             <div class="svc-grid shop-by-grid">
@@ -538,7 +667,7 @@
 
     {% elif sec.section_type == 'brands' %}
       <!-- ================= 6. BRANDS ================= -->
-      <section id="brands" class="brands">
+      <section id="brands-showcase" class="brands">
         <div class="wrap center">
           {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
           <h2>{{ sec.section_title }}</h2>

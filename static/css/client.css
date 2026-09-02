@@ -4342,3 +4342,287 @@ details summary span:last-child {
 
 
 
+
+
+/* ---------------------------------------------------------------------------
+   RESPONSIVE PRICE TABLE (DataTables Responsive Collapsible & Expand Pattern)
+   NO horizontal scrollbar on mobile!
+--------------------------------------------------------------------------- */
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.94rem;
+  transition: all 0.2s ease;
+}
+
+/* Control Column (+ / - DataTables icon) */
+.th-dtr-control,
+.td-dtr-control {
+  width: 44px;
+  min-width: 44px;
+  padding: 12px 6px 12px 14px !important;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.dtr-control-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #58B31B;
+  color: #FFFFFF;
+  border: none;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(88, 179, 27, 0.35);
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease;
+  user-select: none;
+  pointer-events: none;
+}
+
+.dtr-parent-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.dtr-parent-row:hover {
+  background-color: #F4F8F1 !important;
+}
+
+.dtr-parent-row.dtr-expanded {
+  background-color: #EFF7EA !important;
+  border-bottom: 1px dashed #D3E4C9 !important;
+}
+
+.dtr-parent-row.dtr-expanded .dtr-control-btn {
+  background: #0E1108;
+  transform: rotate(180deg);
+}
+
+/* Child Row Details Box */
+.dtr-child-row {
+  background-color: #F8FAF7 !important;
+  transition: all 0.2s ease;
+}
+
+.dtr-child-td {
+  padding: 0 16px 16px 16px !important;
+  border-bottom: 1px solid #E8EDE4 !important;
+}
+
+.dtr-child-details {
+  background: #FFFFFF;
+  border: 1px solid #DCE4D6;
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 14px rgba(14, 17, 8, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dtr-detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.88rem;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #F2F5EF;
+}
+
+.dtr-detail-item:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.dtr-detail-title {
+  font-weight: 700;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+}
+
+.dtr-detail-title svg {
+  color: #58B31B;
+}
+
+.dtr-detail-value {
+  font-weight: 800;
+  color: #0E1108;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.dtr-detail-action {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed #E2E8DC;
+}
+
+.dtr-wa-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: #00A650;
+  color: #FFFFFF !important;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 3px 10px rgba(0, 166, 80, 0.25);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.dtr-wa-btn:hover {
+  background: #008F45;
+  transform: translateY(-1px);
+}
+
+/* Desktop vs Mobile Rules */
+@media (min-width: 769px) {
+  .dtr-mobile-only {
+    display: none !important;
+  }
+  .desktop-col {
+    display: table-cell !important;
+  }
+  .price-table {
+    min-width: 720px;
+  }
+  .price-table-scroll {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .price-table-card {
+    border-radius: 16px;
+    margin: 0 -4px;
+  }
+  .price-table-scroll {
+    overflow-x: hidden !important; /* Zero horizontal scrollbar! */
+    width: 100% !important;
+  }
+  .price-table {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  .desktop-col {
+    display: none !important;
+  }
+  .dtr-mobile-only {
+    display: table-cell !important;
+  }
+  .dtr-child-row.dtr-mobile-only {
+    display: table-row !important;
+  }
+  .price-table thead th {
+    padding: 12px 14px;
+    font-size: 0.84rem;
+  }
+  .price-table td {
+    padding: 13px 14px;
+  }
+  .td-size {
+    width: auto !important;
+  }
+  .td-price {
+    width: auto !important;
+    text-align: right;
+  }
+  .th-tier {
+    text-align: right;
+  }
+  .th-content {
+    justify-content: flex-end;
+  }
+  .th-size .th-content {
+    justify-content: flex-start;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   SHOP-BY CATEGORY TABS & BRAND TARGET HIGHLIGHT
+--------------------------------------------------------------------------- */
+.shop-by-tabs-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  margin-bottom: 32px;
+}
+
+.shop-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  border: 1.5px solid #DCE4D6;
+  background: #FFFFFF;
+  color: #0E1108;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 6px rgba(14, 17, 8, 0.03);
+}
+
+.shop-tab-btn:hover {
+  border-color: #58B31B;
+  background: #F4F8F1;
+  color: #0E1108;
+  transform: translateY(-1px);
+}
+
+.shop-tab-btn.shop-tab-active {
+  background: #0E1108;
+  color: #FFFFFF !important;
+  border-color: #0E1108;
+  box-shadow: 0 4px 14px rgba(14, 17, 8, 0.16);
+}
+
+.shop-tab-btn.shop-tab-active .tab-icon-dot {
+  background: #58B31B;
+}
+
+.tab-icon-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94A3B8;
+  display: inline-block;
+  transition: background-color 0.18s ease;
+}
+
+.badge-premium-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  background: #EFF7EA;
+  color: #2F6F0F;
+  border: 1px solid #C8E3B6;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: 8px;
+}
+
+.brand-premium-group {
+  scroll-margin-top: 90px;
+}

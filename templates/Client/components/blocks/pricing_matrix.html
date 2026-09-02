@@ -1,27 +1,76 @@
 <!-- Block: Tyre Pricing Matrix -->
-<div class="dynamic-pricing-block" style="margin-top:24px;margin-bottom:24px;overflow-x:auto;">
+<div class="dynamic-pricing-block price-table-card" style="margin-top:24px;margin-bottom:24px;" x-data="{ expandedRow: null }">
   {% set rows = block['items'] if ('items' in block and block['items']) else (block['rows'] if ('rows' in block and block['rows']) else []) %}
-  <table class="prices-table" style="width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;">
-    <thead>
-      <tr style="background:var(--bg-soft, #F6F8F3);border-bottom:1px solid var(--line);text-align:left;">
-        <th style="padding:14px 18px;font-size:0.8rem;font-weight:800;text-transform:uppercase;color:var(--slate);">Tyre Size</th>
-        <th style="padding:14px 18px;font-size:0.8rem;font-weight:800;text-transform:uppercase;color:var(--slate);">Common On</th>
-        <th style="padding:14px 18px;font-size:0.8rem;font-weight:800;text-transform:uppercase;color:var(--slate);">Budget From</th>
-        <th style="padding:14px 18px;font-size:0.8rem;font-weight:800;text-transform:uppercase;color:var(--slate);">Mid-Range From</th>
-        <th style="padding:14px 18px;font-size:0.8rem;font-weight:800;text-transform:uppercase;color:var(--slate);">Premium From</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
-      {% set c_on = r.common_on.ar if (is_ar and r.common_on and r.common_on.ar) else (r.common_on.en if (r.common_on and r.common_on.en) else (r.common_on or '')) %}
-      <tr style="border-bottom:1px solid var(--line);">
-        <td style="padding:14px 18px;font-family:monospace;font-weight:800;font-size:0.92rem;color:var(--ink);">{{ r.size }}</td>
-        <td style="padding:14px 18px;font-size:0.88rem;color:var(--slate);">{{ c_on }}</td>
-        <td style="padding:14px 18px;font-weight:800;color:var(--ink);">{{ r.budget or 'AED —' }}</td>
-        <td style="padding:14px 18px;font-weight:800;color:var(--ink);">{{ r.mid_range or 'AED —' }}</td>
-        <td style="padding:14px 18px;font-weight:800;color:var(--green-deep);">{{ r.premium or 'AED —' }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="price-table-scroll">
+    <table class="price-table responsive-price-table" aria-label="Tyre pricing table">
+      <thead>
+        <tr>
+          <th scope="col" class="th-dtr-control dtr-mobile-only" aria-label="Expand row"></th>
+          <th scope="col" class="th-size">Tyre Size</th>
+          <th scope="col" class="th-common desktop-col">Common On</th>
+          <th scope="col" class="th-tier">Budget From</th>
+          <th scope="col" class="th-tier desktop-col">Mid-Range From</th>
+          <th scope="col" class="th-tier desktop-col">Premium From</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        {% set row_idx = loop.index0 %}
+        {% set c_on = r.common_on.ar if (is_ar and r.common_on and r.common_on.ar) else (r.common_on.en if (r.common_on and r.common_on.en) else (r.common_on or '')) %}
+        
+        <!-- Master Row -->
+        <tr class="dtr-parent-row"
+            :class="expandedRow === {{ row_idx }} ? 'dtr-expanded' : ''"
+            @click="expandedRow = expandedRow === {{ row_idx }} ? null : {{ row_idx }}">
+          <td class="td-dtr-control dtr-mobile-only">
+            <span class="dtr-control-btn" :aria-expanded="expandedRow === {{ row_idx }} ? 'true' : 'false'">
+              <span class="dtr-icon" x-text="expandedRow === {{ row_idx }} ? '−' : '+'">+</span>
+            </span>
+          </td>
+          <td class="td-size">
+            <span class="size-pill">{{ r.size }}</span>
+          </td>
+          <td class="td-common desktop-col">{{ c_on }}</td>
+          <td class="td-price">
+            <span class="price-val">{{ r.budget or 'AED —' }}</span>
+          </td>
+          <td class="td-price desktop-col">
+            <span class="price-val">{{ r.mid_range or 'AED —' }}</span>
+          </td>
+          <td class="td-price desktop-col">
+            <span class="price-val text-[#58B31B]">{{ r.premium or 'AED —' }}</span>
+          </td>
+        </tr>
+
+        <!-- Child Row (Mobile) -->
+        <tr class="dtr-child-row dtr-mobile-only" x-show="expandedRow === {{ row_idx }}" x-cloak>
+          <td colspan="3" class="dtr-child-td">
+            <div class="dtr-child-details">
+              <div class="dtr-detail-item">
+                <span class="dtr-detail-title">🚗 Common on:</span>
+                <span class="dtr-detail-value">{{ c_on or 'Various models' }}</span>
+              </div>
+              <div class="dtr-detail-item">
+                <span class="dtr-detail-title">⭐ Mid-range from:</span>
+                <span class="dtr-detail-value price-val">{{ r.mid_range or 'AED —' }}</span>
+              </div>
+              <div class="dtr-detail-item">
+                <span class="dtr-detail-title">👑 Premium from:</span>
+                <span class="dtr-detail-value price-val text-[#58B31B]">{{ r.premium or 'AED —' }}</span>
+              </div>
+              <div class="dtr-detail-action">
+                <a href="https://wa.me/971505069575?text={{ ('Hi TyresVision, I would like a price quote for tyre size ' ~ r.size) | urlencode }}" 
+                   target="_blank" 
+                   rel="noopener"
+                   class="dtr-wa-btn">
+                  <span>WhatsApp Quote for {{ r.size }}</span>
+                </a>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
