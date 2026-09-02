@@ -1024,6 +1024,68 @@ def seed_default_home_sections(cursor):
         ),
         (
             "home",
+            "coverage",
+            json.dumps({"en": "Delivery and Fitting Across Dubai and Abu Dhabi"}, ensure_ascii=False),
+            json.dumps({"en": "Delivery & Fitting Coverage"}, ensure_ascii=False),
+            json.dumps({"en": "Free delivery and free fitting at any of our 25+ partner centres across Dubai and Abu Dhabi. Prefer not to leave home? Our mobile vans come to you for a call-out fee, confirmed on WhatsApp before we dispatch. Not sure if we reach you? Send a location pin and we’ll confirm in a minute."}, ensure_ascii=False),
+            None,
+            "right",
+            None,
+            None,
+            json.dumps({
+                "options": [
+                    {
+                        "tag": "FREE Delivery & Fitting",
+                        "heading": "Free fitting at a partner centre",
+                        "description": "Choose any centre on our network and we deliver your tyres there free of charge. Fitting, balancing, new valves and disposal of your old tyres are all included at no extra cost — the price we quote on WhatsApp is the price you pay.",
+                        "button_text": "Book at Partner Centre",
+                        "wa_msg": "Hi TyresVision, I'd like to book free tyre fitting at a partner centre."
+                    },
+                    {
+                        "tag": "Mobile Van Service",
+                        "heading": "Mobile van fitting at your location — call-out fee applies",
+                        "description": "Our fully equipped vans fit your tyres at your villa, apartment car park, office bay or roadside. The van service carries a call-out fee on top of the tyre price, which we always confirm before dispatch so there are no surprises. Mounting, balancing, valves and old-tyre disposal are included in the job.",
+                        "button_text": "Book Mobile Van",
+                        "wa_msg": "Hi TyresVision, I'd like to book mobile van fitting at my location."
+                    }
+                ],
+                "areas": [
+                    {
+                        "heading": "Dubai coverage",
+                        "emirate": "Dubai",
+                        "chips": [
+                            "Dubai Marina", "JLT", "JBR", "Palm Jumeirah", "Business Bay", "Downtown", "DIFC",
+                            "Al Barsha", "Barsha Heights", "Jumeirah", "Umm Suqeim", "Al Quoz", "Deira", "Bur Dubai",
+                            "Al Nahda", "Mirdif", "Al Qusais", "Silicon Oasis", "Dubai Hills", "Arabian Ranches",
+                            "JVC", "Motor City", "Al Furjan", "Jebel Ali", "Dubai South", "Nad Al Sheba",
+                            "Al Warqa", "Umm Ramool", "Festival City"
+                        ]
+                    },
+                    {
+                        "heading": "Abu Dhabi coverage",
+                        "emirate": "Abu Dhabi",
+                        "chips": [
+                            "Corniche", "Al Khalidiyah", "Al Bateen", "Al Mushrif", "Al Nahyan", "Al Zahiyah",
+                            "Al Reem Island", "Al Maryah Island", "Saadiyat Island", "Yas Island", "Khalifa City A & B",
+                            "Al Raha Beach", "Mohammed Bin Zayed City", "Shakhbout City", "Al Shamkha", "Al Falah",
+                            "Masdar City", "Musaffah", "ICAD", "Baniyas", "Between the Two Bridges"
+                        ]
+                    },
+                    {
+                        "heading": "Sharjah, Ajman and the Northern Emirates",
+                        "emirate": "Northern Emirates",
+                        "chips": [
+                            "Al Nahda", "Al Majaz", "Al Khan", "Muwaileh", "Al Taawun", "Ajman",
+                            "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"
+                        ]
+                    }
+                ]
+            }, ensure_ascii=False),
+            8,
+            1
+        ),
+        (
+            "home",
             "brands",
             json.dumps({"en": "The names you trust, the prices you don’t expect", "ar": "العلامات التي تثق بها، بالأسعار التي لا تتوقعها"}, ensure_ascii=False),
             json.dumps({"en": "60+ brands in stock", "ar": "+60 علامة تجارية في المخزون"}, ensure_ascii=False),
@@ -1040,7 +1102,7 @@ def seed_default_home_sections(cursor):
                     "Sumitomo", "Zeetex", "+40 more"
                 ]
             }, ensure_ascii=False),
-            8,
+            9,
             1
         ),
         (
@@ -1084,7 +1146,7 @@ def seed_default_home_sections(cursor):
                     }
                 ]
             }, ensure_ascii=False),
-            9,
+            10,
             1
         ),
         (
@@ -1125,7 +1187,7 @@ def seed_default_home_sections(cursor):
                     }
                 ]
             }, ensure_ascii=False),
-            10,
+            11,
             1
         ),
         (
@@ -1146,7 +1208,7 @@ def seed_default_home_sections(cursor):
                     "ar": "مفتوح يومياً — اتصل أو راسلنا في أي وقت وسنرد عليك بسرعة فائقة."
                 }
             }, ensure_ascii=False),
-            11,
+            12,
             1
         )
     ]

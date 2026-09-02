@@ -380,6 +380,74 @@
         </div>
       </section>
 
+    {% elif sec.section_type == 'coverage' %}
+      <!-- ================= 6.3 DELIVERY AND FITTING COVERAGE ================= -->
+      <section id="coverage" class="coverage-section">
+        <div class="wrap">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle | safe }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+            {% if sec.content %}<p class="lead">{{ sec.content | safe }}</p>{% endif %}
+          </div>
+
+          <!-- 2 Service Choice Cards -->
+          {% set options = sec.section_data.options if sec.section_data and sec.section_data.options else [] %}
+          {% if options %}
+          <div class="coverage-options-grid">
+            {% for opt in options %}
+            <div class="coverage-option-card">
+              <div class="coverage-card-head">
+                <span class="coverage-tag {% if 'free' in (opt.tag|lower) %}coverage-tag-free{% endif %}">{{ opt.tag }}</span>
+                <h3>{{ opt.heading }}</h3>
+              </div>
+              <p class="coverage-card-desc">{{ opt.description }}</p>
+              <div class="coverage-card-action">
+                <a class="btn {% if 'free' in (opt.tag|lower) %}btn-wa{% else %}btn-ghost{% endif %} btn-sm"
+                   href="https://wa.me/971505069575?text={{ (opt.wa_msg or 'Hi TyresVision, I\'d like to ask about tyre delivery and fitting.') | urlencode }}"
+                   target="_blank"
+                   rel="noopener"
+                   data-enquiry-for="{{ opt.heading }}"
+                   data-form-type="coverage_option">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+                  <span>{{ opt.button_text or 'Book on WhatsApp' }}</span>
+                </a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Area Coverage Chip Grids -->
+          {% set areas = sec.section_data.areas if sec.section_data and sec.section_data.areas else [] %}
+          {% for a in areas %}
+          <div class="shop-by-group coverage-area-group">
+            <div class="shop-by-group-header">
+              <h3 class="shop-by-group-title">{{ a.heading }}</h3>
+            </div>
+            {% set chips = a.chips if a.chips else [] %}
+            <div class="svc-grid shop-by-grid">
+              {% for chip in chips %}
+                {% set wa_area_msg = "Hi TyresVision, do you deliver and fit tyres in " ~ chip ~ " (" ~ a.emirate ~ ")?" %}
+                <a class="svc chip-interactive"
+                   href="https://wa.me/971505069575?text={{ wa_area_msg | urlencode }}"
+                   target="_blank"
+                   rel="noopener"
+                   title="Confirm delivery & fitting in {{ chip }}"
+                   data-city="{{ a.emirate }}"
+                   data-location="{{ chip }}"
+                   data-enquiry-for="Area Fitting Enquiry ({{ chip }}, {{ a.emirate }})"
+                   data-form-type="coverage_area">
+                  <span class="dot" aria-hidden="true"></span>
+                  <span class="chip-text">{{ chip }}</span>
+                  <svg class="chip-wa-arrow" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
     {% elif sec.section_type == 'brands' %}
       <!-- ================= 6. BRANDS ================= -->
       <section id="brands" class="brands">

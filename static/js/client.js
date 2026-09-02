@@ -247,6 +247,15 @@
       ('WhatsApp Lead (' + (ctaText || 'CTA Button') + ')')
     );
 
+    var cityAttr = target.getAttribute('data-city') || (target.closest && target.closest('[data-city]') ? target.closest('[data-city]').getAttribute('data-city') : '') || '';
+    var locationAttr = target.getAttribute('data-location') || (target.closest && target.closest('[data-location]') ? target.closest('[data-location]').getAttribute('data-location') : '') || '';
+    var resolvedCity = 'UAE';
+    if (locationAttr && cityAttr) {
+      resolvedCity = locationAttr + ', ' + cityAttr;
+    } else if (locationAttr || cityAttr) {
+      resolvedCity = locationAttr || cityAttr;
+    }
+
     try {
       fetch('/api/v1/enquiry', {
         method: 'POST',
@@ -261,7 +270,7 @@
           tyre_size: tyreSize || '',
           vehicle: vehicle || '',
           spec: brand || '',
-          city: 'UAE'
+          city: resolvedCity
         })
       }).catch(function(err) {
         console.warn('Enquiry tracking error:', err);
