@@ -347,19 +347,23 @@ def register_visionadmin_routes(app):
     @app.route('/admin/products', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_products():
-        return render_template('visionadmin/products.html', page='products')
+        return render_template('visionadmin/products.html', page='products', is_catalog=True)
 
     @app.route('/visionadmin/catalog/brands', methods=['GET'])
     @app.route('/visionadmin/brands', methods=['GET'])
+    @app.route('/visonadmin/catalog/brands', methods=['GET'])
+    @app.route('/visonadmin/brands', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_brands():
-        return redirect('/visionadmin/catalog/products#brands')
+        return render_template('visionadmin/brands.html', page='brands', is_catalog=True)
 
     @app.route('/visionadmin/catalog/categories', methods=['GET'])
     @app.route('/visionadmin/categories', methods=['GET'])
+    @app.route('/visonadmin/catalog/categories', methods=['GET'])
+    @app.route('/visonadmin/categories', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_categories():
-        return redirect('/visionadmin/catalog/products#categories')
+        return render_template('visionadmin/categories.html', page='categories', is_catalog=True)
 
     @app.route('/visionadmin/attributes', methods=['GET'])
     @app.route('/visionadmin/catalog/attributes', methods=['GET'])

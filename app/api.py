@@ -3323,11 +3323,186 @@ def register_visionadmin_api_routes(app):
         brands = Brand.all_active()
         return jsonify({'success': True, 'brands': brands})
 
+    @app.route('/visionadmin/api/brands/paginate', methods=['GET'])
+    def visionadmin_api_paginate_brands():
+        """Paginated, searchable brands with product counts."""
+        try:
+            page = max(1, int(request.args.get('page', 1)))
+            per_page = max(1, min(100, int(request.args.get('per_page', 15))))
+            query = request.args.get('q', '').strip() or None
+            status = request.args.get('status', '').strip() or None
+
+            res = Brand.search_and_paginate(query=query, status=status, page=page, per_page=per_page)
+            return jsonify({'success': True, **res})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/brands/<int:brand_id>', methods=['GET'])
+    def visionadmin_api_get_brand(brand_id):
+        """Fetch single brand detail."""
+        brand = Brand.find_by_id(brand_id)
+        if not brand:
+            return jsonify({'success': False, 'error': 'Brand not found'}), 404
+        return jsonify({'success': True, 'brand': brand})
+
+    @app.route('/visionadmin/api/brands', methods=['POST'])
+    def visionadmin_api_create_brand():
+        """Create new brand."""
+        try:
+            data = request.get_json(force=True) or {}
+            if not (data.get('name') or '').strip():
+                return jsonify({'success': False, 'error': 'Brand name is required'}), 400
+
+            user_id = session.get('user_id')
+            brand_id = Brand.create(data, user_id=user_id)
+            return jsonify({'success': True, 'brand_id': brand_id, 'message': 'Brand created successfully!'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/brands/<int:brand_id>', methods=['PUT'])
+    def visionadmin_api_update_brand(brand_id):
+        """Update existing brand."""
+        try:
+            data = request.get_json(force=True) or {}
+            if not (data.get('name') or '').strip():
+                return jsonify({'success': False, 'error': 'Brand name is required'}), 400
+
+            user_id = session.get('user_id')
+            success = Brand.update(brand_id, data, user_id=user_id)
+            if not success:
+                return jsonify({'success': False, 'error': 'Brand not found or not modified'}), 404
+            return jsonify({'success': True, 'message': 'Brand updated successfully!'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/brands/<int:brand_id>', methods=['DELETE'])
+    def visionadmin_api_delete_brand(brand_id):
+        """Soft delete brand."""
+        try:
+            user_id = session.get('user_id')
+            success = Brand.delete(brand_id, user_id=user_id)
+            if not success:
+                return jsonify({'success': False, 'error': 'Brand not found'}), 404
+            return jsonify({'success': True, 'message': 'Brand deleted successfully!'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/upload-brand-logo', methods=['POST'])
+    def visionadmin_api_upload_brand_logo():
+        """Upload brand logo image."""
+        if 'logo' not in request.files and 'file' not in request.files and 'image' not in request.files:
+            return jsonify({'error': 'No file part in request.'}), 400
+        file = request.files.get('logo') or request.files.get('file') or request.files.get('image')
+        if not file or file.filename == '':
+            return jsonify({'error': 'No selected file.'}), 400
+
+        allowed = {'.png', '.jpg', '.jpeg', '.webp', '.svg'}
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in allowed:
+            return jsonify({'error': f'Invalid image type. Allowed: {", ".join(allowed)}'}), 400
+
+        upload_dir = os.path.join(BASE_DIR, 'static', 'uploads', 'brands')
+        os.makedirs(upload_dir, exist_ok=True)
+        unique_name = f"brand_{secrets.token_hex(8)}_{int(time.time())}{ext}"
+        target_path = os.path.join(upload_dir, unique_name)
+        file.save(target_path)
+
+        url = f"/static/uploads/brands/{unique_name}"
+        return jsonify({'success': True, 'url': url})
+
     @app.route('/visionadmin/api/catalog/categories', methods=['GET'])
     def visionadmin_api_list_categories():
         """Fetch all active categories for dropdown selection."""
         categories = Category.all_active()
         return jsonify({'success': True, 'categories': categories})
+
+    @app.route('/visionadmin/api/categories/paginate', methods=['GET'])
+    def visionadmin_api_paginate_categories():
+        """Paginated, searchable categories with product counts and parent names."""
+        try:
+            page = max(1, int(request.args.get('page', 1)))
+            per_page = max(1, min(100, int(request.args.get('per_page', 15))))
+            query = request.args.get('q', '').strip() or None
+            status = request.args.get('status', '').strip() or None
+            parent_id = int(request.args.get('parent_id')) if request.args.get('parent_id') else None
+
+            res = Category.search_and_paginate(query=query, status=status, parent_id=parent_id, page=page, per_page=per_page)
+            return jsonify({'success': True, **res})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/categories/<int:cat_id>', methods=['GET'])
+    def visionadmin_api_get_category(cat_id):
+        """Fetch single category detail."""
+        category = Category.find_by_id(cat_id)
+        if not category:
+            return jsonify({'success': False, 'error': 'Category not found'}), 404
+        return jsonify({'success': True, 'category': category})
+
+    @app.route('/visionadmin/api/categories', methods=['POST'])
+    def visionadmin_api_create_category():
+        """Create new category."""
+        try:
+            data = request.get_json(force=True) or {}
+            if not (data.get('name_en') or data.get('name') or '').strip():
+                return jsonify({'success': False, 'error': 'Category name is required'}), 400
+
+            user_id = session.get('user_id')
+            cat_id = Category.create(data, user_id=user_id)
+            return jsonify({'success': True, 'category_id': cat_id, 'message': 'Category created successfully!'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/categories/<int:cat_id>', methods=['PUT'])
+    def visionadmin_api_update_category(cat_id):
+        """Update existing category."""
+        try:
+            data = request.get_json(force=True) or {}
+            if not (data.get('name_en') or data.get('name') or '').strip():
+                return jsonify({'success': False, 'error': 'Category name is required'}), 400
+
+            user_id = session.get('user_id')
+            success = Category.update(cat_id, data, user_id=user_id)
+            if not success:
+                return jsonify({'success': False, 'error': 'Category not found or not modified'}), 404
+            return jsonify({'success': True, 'message': 'Category updated successfully!'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/categories/<int:cat_id>', methods=['DELETE'])
+    def visionadmin_api_delete_category(cat_id):
+        """Soft delete category."""
+        try:
+            user_id = session.get('user_id')
+            success = Category.delete(cat_id, user_id=user_id)
+            if not success:
+                return jsonify({'success': False, 'error': 'Category not found'}), 404
+            return jsonify({'success': True, 'message': 'Category deleted successfully!'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/upload-category-image', methods=['POST'])
+    def visionadmin_api_upload_category_image():
+        """Upload category image."""
+        if 'image' not in request.files and 'file' not in request.files:
+            return jsonify({'error': 'No file part in request.'}), 400
+        file = request.files.get('image') or request.files.get('file')
+        if not file or file.filename == '':
+            return jsonify({'error': 'No selected file.'}), 400
+
+        allowed = {'.png', '.jpg', '.jpeg', '.webp', '.svg'}
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in allowed:
+            return jsonify({'error': f'Invalid image type. Allowed: {", ".join(allowed)}'}), 400
+
+        upload_dir = os.path.join(BASE_DIR, 'static', 'uploads', 'categories')
+        os.makedirs(upload_dir, exist_ok=True)
+        unique_name = f"cat_{secrets.token_hex(8)}_{int(time.time())}{ext}"
+        target_path = os.path.join(upload_dir, unique_name)
+        file.save(target_path)
+
+        url = f"/static/uploads/categories/{unique_name}"
+        return jsonify({'success': True, 'url': url})
 
     @app.route('/visionadmin/api/upload-product-image', methods=['POST'])
     def visionadmin_api_upload_product_image():

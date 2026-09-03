@@ -1,46 +1,56 @@
 /* ============================================================
-   BRAND TOKENS — TyresVision (Oceanic Sky Palette)
-   ~Fresh Sky (#00a6fb)       - Vivid, clear cyan, highlights & pills
-   ~Steel Blue (#0582ca)      - Strong, cool blue, trusted primary
-   ~Baltic Blue (#006494)     - Deep oceanic hue, accessible text
-   ~Deep Space Blue (#003554) - Infinite dark cosmic blue
-   ~Ink Black (#051923)       - Ultra-dark with a hint of blue, inkwells
+   BRAND TOKENS — TyresVision (Royal Navy & Cyan Palette)
    ============================================================ */
 :root {
-  /* Core Brand Tokens */
-  --fresh-sky: #00a6fb;
-  --steel-blue: #0582ca;
-  --baltic-blue: #006494;
-  --deep-space: #003554;
-  --ink-black: #051923;
+  /* Brand */
+  --blue-primary: #0B4F9C;
+  --blue-brand: #1C5FAE;
+  --blue-bright: #168BEA;
+  --blue-cyan: #29C7F6;
 
-  /* Mapped Brand Roles */
-  --primary: #0582ca;
-  --primary-bright: #00a6fb;
-  --primary-deep: #006494;
-  --primary-tint: #e6f5fd;
+  /* Dark backgrounds */
+  --navy-deep: #001633;
+  --navy-primary: #021E45;
+  --navy-dark: #062B5C;
 
-  /* Backward-compatible brand mappings so all components adopt the new theme */
-  --green: #0582ca;          /* Primary brand accent: Steel Blue */
-  --green-bright: #00a6fb;   /* Active / Hover highlights: Fresh Sky */
-  --green-deep: #006494;     /* Accessible text on white: Baltic Blue */
-  --green-tint: #e6f5fd;     /* Icon wells & subtle badges: Fresh Sky Tint */
+  /* Interaction */
+  --blue-hover: #2878C7;
 
-  /* Preserved WhatsApp Green Tokens (Never turned to blue) */
+  /* Light backgrounds */
+  --blue-light: #EAF5FF;
+  --blue-soft: #F4F9FD;
+
+  /* Text */
+  --text-dark: #10243E;
+  --text-gray: #64748B;
+  --white: #FFFFFF;
+
+  /* Semantic Brand Mappings for TyresVision Client */
+  --primary: var(--blue-brand);
+  --primary-bright: var(--blue-cyan);
+  --primary-deep: var(--blue-primary);
+  --primary-tint: var(--blue-light);
+
+  --green: var(--blue-brand);          /* Primary brand accent: #1C5FAE */
+  --green-bright: var(--blue-cyan);    /* Highlights & active badges: #29C7F6 */
+  --green-deep: var(--blue-primary);   /* High-contrast text on white: #0B4F9C */
+  --green-tint: var(--blue-light);     /* Subtle wells & chips: #EAF5FF */
+
+  /* WhatsApp Brand Green - Strictly Preserved (Never changes to blue) */
   --wa-green: #25D366;
   --wa-green-hover: #20BA5C;
   --wa-green-deep: #128C7E;
   --wa-green-tint: #DCF8C6;
 
   /* Dark & Neutral Foundations */
-  --ink: #051923;            /* Ink Black */
-  --ink-2: #003554;          /* Deep Space Blue */
-  --slate: #435b6c;          /* Cool steel slate */
-  --line: #d3e2ec;           /* Subtle oceanic border line */
+  --ink: var(--navy-deep);             /* #001633 */
+  --ink-2: var(--navy-primary);        /* #021E45 */
+  --slate: var(--text-gray);           /* #64748B */
+  --line: #DCE8F5;                     /* Soft navy-tinted border */
   --bg: #FFFFFF;
-  --bg-soft: #f0f6fa;        /* Breezy light soft blue-gray */
+  --bg-soft: var(--blue-soft);         /* #F4F9FD */
   --radius: 14px;
-  --shadow: 0 1px 3px rgba(5, 25, 35, .06), 0 8px 24px rgba(0, 53, 84, .09);
+  --shadow: 0 1px 3px rgba(0, 22, 51, .06), 0 8px 24px rgba(2, 30, 69, .09);
   --maxw: 1280px;
   --font: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
 }
@@ -502,8 +512,8 @@ header {
 /* ---------------- HERO ---------------- */
 .hero {
   background:
-    radial-gradient(980px 440px at 86% -10%, rgba(0, 166, 251, .32), transparent 62%),
-    linear-gradient(168deg, var(--ink-black) 0%, var(--deep-space) 100%);
+    radial-gradient(980px 440px at 86% -10%, rgba(41, 199, 246, .28), transparent 62%),
+    linear-gradient(168deg, var(--navy-deep) 0%, var(--navy-primary) 50%, var(--navy-dark) 100%);
   color: #fff;
   position: relative;
   overflow: hidden;
@@ -515,12 +525,12 @@ header {
   position: absolute;
   inset: auto 0 0 0;
   height: 5px;
-  background: repeating-linear-gradient(90deg, var(--steel-blue) 0 26px, var(--fresh-sky) 26px 52px);
+  background: repeating-linear-gradient(90deg, var(--blue-brand) 0 26px, var(--blue-cyan) 26px 52px);
   opacity: .9;
 }
 
 .hero .eyebrow {
-  color: var(--fresh-sky);
+  color: var(--blue-cyan);
 }
 
 .hero h1 {
