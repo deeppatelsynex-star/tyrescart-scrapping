@@ -369,7 +369,7 @@
 
   <!-- WORKING ADD / EDIT ATTRIBUTE MODAL -->
   <div x-show="showCreateModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-    <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto" @click.away="showCreateModal = false">
+    <div class="bg-white rounded-3xl max-w-[89rem] w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto" style="max-width: 89rem;" @click.away="showCreateModal = false">
       <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
         <div>
           <h3 class="text-base font-black text-[#0E1108]" x-text="form.id ? 'Edit Attribute: ' + form.code : 'Add New Dynamic Attribute'"></h3>

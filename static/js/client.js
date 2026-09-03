@@ -106,7 +106,7 @@
       return;
     }
     var modal = document.getElementById('noticeModal');
-    if (modal && e.target === modal) {
+    if (modal && (e.target === modal || (e.target && e.target.classList && e.target.classList.contains('notice-modal-dialog')))) {
       window.closeNotice(e);
     }
   }, true); // Use capture phase so stopPropagation inside dialog won't block it!

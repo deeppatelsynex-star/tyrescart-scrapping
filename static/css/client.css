@@ -1482,7 +1482,118 @@ details .body p:last-child {
 
 html.modal-open,
 body.modal-open {
-  overflow: hidden
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* ---------------- MOBILE & TABLET MODAL ENHANCEMENTS ---------------- */
+@media (max-width: 820px) {
+  .notice-modal-overlay,
+  .notice-modal {
+    padding: 12px 10px;
+    align-items: center;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .notice-modal-dialog {
+    max-width: 100%;
+    width: 100%;
+    margin: auto;
+  }
+
+  .notice-modal .sheet,
+  .notice-modal-overlay .sheet,
+  .sheet {
+    max-height: calc(100dvh - 24px);
+    max-height: calc(100vh - 24px);
+    border-radius: 16px;
+    border-top-width: 4px;
+    width: 100%;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, .4);
+  }
+
+  .notice-modal .sheet-head {
+    padding: 16px 48px 12px 16px;
+  }
+
+  .notice-modal h2 {
+    font-size: 0.95rem;
+    line-height: 1.35;
+    gap: 8px;
+  }
+
+  .notice-modal h2 svg {
+    width: 17px;
+    height: 17px;
+    margin-top: 1px;
+  }
+
+  .notice-modal .stamp {
+    font-size: 0.68rem;
+    padding-left: 25px;
+  }
+
+  .notice-close {
+    top: 12px;
+    right: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #f8fafc;
+  }
+
+  .notice-modal .sheet-body {
+    padding: 14px 16px 6px;
+    overscroll-behavior: contain;
+  }
+
+  .notice-modal .sheet-body p {
+    font-size: 0.84rem;
+    line-height: 1.58;
+    margin: 0 0 11px;
+  }
+
+  .notice-modal .sheet-foot {
+    padding: 12px 16px 14px;
+    background: var(--bg-soft);
+  }
+
+  .notice-modal .sheet-foot .btn {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+}
+
+@media (max-height: 600px) {
+  .notice-modal-overlay,
+  .notice-modal {
+    padding: 6px;
+    align-items: flex-start;
+  }
+
+  .notice-modal .sheet,
+  .notice-modal-overlay .sheet,
+  .sheet {
+    max-height: calc(100dvh - 12px);
+    max-height: calc(100vh - 12px);
+  }
+
+  .notice-modal .sheet-head {
+    padding: 10px 42px 8px 14px;
+  }
+
+  .notice-modal .sheet-body {
+    padding: 10px 14px 4px;
+  }
+
+  .notice-modal .sheet-foot {
+    padding: 8px 14px 10px;
+  }
 }
 
 /* ---------------- FOOTER ---------------- */
