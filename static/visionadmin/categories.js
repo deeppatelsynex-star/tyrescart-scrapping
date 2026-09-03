@@ -279,7 +279,7 @@ function visionCategoriesApp() {
       }
       const toast = document.createElement('div');
       toast.className = `fixed bottom-5 right-5 z-[99999] px-5 py-3 rounded-2xl text-xs font-bold text-white shadow-xl transition-all duration-300 transform translate-y-0 ${
-        type === 'error' ? 'bg-rose-600' : 'bg-[#0B4F9C]'
+        type === 'error' ? 'bg-rose-600' : 'bg-[#0E1108] border border-[#58B31B]/40 text-[#58B31B]'
       }`;
       toast.textContent = message;
       document.body.appendChild(toast);
