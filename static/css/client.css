@@ -1477,7 +1477,7 @@ details .body p:last-child {
 
 .notice-modal-overlay.open,
 .notice-modal.open {
-  display: flex !important;
+  display: flex;
 }
 
 html.modal-open,

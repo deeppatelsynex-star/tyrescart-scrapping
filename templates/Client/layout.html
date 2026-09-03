@@ -609,12 +609,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
      x-show="noticeModalOpen" 
      x-transition.opacity.duration.200ms
      x-cloak 
-     @keydown.escape.window="noticeModalOpen = false"
+     @keydown.escape.window="noticeModalOpen = false; if (window.closeNotice) window.closeNotice(event);"
+     @click.self="noticeModalOpen = false; if (window.closeNotice) window.closeNotice(event);"
      role="dialog"
      aria-modal="true"
      aria-labelledby="notice-title"
      style="display:none;">
-  <div class="notice-modal-dialog" @click.stop>
+  <div class="notice-modal-dialog">
     <div class="sheet">
       <div class="sheet-head">
         <h2 id="notice-title">
@@ -622,7 +623,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           Important notice regarding ownership of this domain
         </h2>
         <p class="stamp">Last updated: [January 2026]</p>
-        <button type="button" class="notice-close" id="noticeClose" @click="noticeModalOpen = false" aria-label="Close notice">
+        <button type="button" class="notice-close" id="noticeClose" @click="noticeModalOpen = false; if (window.closeNotice) window.closeNotice(event);" onclick="if(window.closeNotice) window.closeNotice(event);" aria-label="Close notice">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </div>
@@ -640,7 +641,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
 
       <div class="sheet-foot">
-        <button type="button" class="btn btn-call" id="noticeClose2" @click="noticeModalOpen = false">Close</button>
+        <button type="button" class="btn btn-call" id="noticeClose2" @click="noticeModalOpen = false; if (window.closeNotice) window.closeNotice(event);" onclick="if(window.closeNotice) window.closeNotice(event);">Close</button>
       </div>
     </div>
   </div>

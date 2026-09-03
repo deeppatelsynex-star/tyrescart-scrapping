@@ -58,7 +58,7 @@
   }
 
   /* ---------- Ownership notice modal ---------- */
-  function openNotice(e) {
+  window.openNotice = function(e) {
     if (e && e.preventDefault) e.preventDefault();
     var body = document.body;
     if (window.Alpine && body._x_dataStack && body._x_dataStack.length) {
@@ -66,7 +66,7 @@
     }
     var m = document.getElementById('noticeModal');
     if (m) {
-      m.style.display = 'flex';
+      m.style.setProperty('display', 'flex', 'important');
       m.classList.add('open');
       m.removeAttribute('x-cloak');
     }
@@ -74,9 +74,9 @@
     document.body.classList.add('modal-open');
     var closeBtn = document.getElementById('noticeClose');
     if (closeBtn) closeBtn.focus();
-  }
+  };
 
-  function closeNotice(e) {
+  window.closeNotice = function(e) {
     if (e && e.preventDefault) e.preventDefault();
     var body = document.body;
     if (window.Alpine && body._x_dataStack && body._x_dataStack.length) {
@@ -84,32 +84,32 @@
     }
     var m = document.getElementById('noticeModal');
     if (m) {
-      m.style.display = 'none';
+      m.style.setProperty('display', 'none', 'important');
       m.classList.remove('open');
     }
     document.documentElement.classList.remove('modal-open');
     document.body.classList.remove('modal-open');
-  }
+  };
 
   // Bind click handlers globally (catches dynamically rendered or static triggers)
   document.addEventListener('click', function(e) {
     var trigger = e.target && e.target.closest && e.target.closest('a[href="#notice"], [data-notice]');
     if (trigger) {
       e.preventDefault();
-      openNotice();
+      window.openNotice(e);
       return;
     }
     var closeBtn = e.target && e.target.closest && e.target.closest('#noticeClose, #noticeClose2, [data-notice-close]');
     if (closeBtn) {
       e.preventDefault();
-      closeNotice();
+      window.closeNotice(e);
       return;
     }
     var modal = document.getElementById('noticeModal');
     if (modal && e.target === modal) {
-      closeNotice();
+      window.closeNotice(e);
     }
-  });
+  }, true); // Use capture phase so stopPropagation inside dialog won't block it!
 
   window.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
