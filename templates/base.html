@@ -88,6 +88,16 @@
             </svg>
           </a>
           {% endif %}
+
+          <a href="/visionadmin/catalog/products" title="Vision Admin Studio"
+            class="shell-navlink flex items-center justify-center w-12 h-12 rounded-2xl focus:outline-none {% if page in ['visionadmin', 'products'] %}is-active font-semibold{% else %}font-medium{% endif %} transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </a>
         </nav>
       </div>
 
@@ -238,13 +248,13 @@
                     </a>
                     {% endif %}
 
-                    <a href="/tcsadmin/reports" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition group">
+                    <a href="/visionadmin/catalog/products" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition group">
                       <svg class="w-4 h-4 text-slate-400 group-hover:text-[#388E3C] transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="20" x2="18" y2="10"/>
-                        <line x1="12" y1="20" x2="12" y2="4"/>
-                        <line x1="6" y1="20" x2="6" y2="14"/>
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/>
+                        <line x1="12" y1="17" x2="12" y2="21"/>
                       </svg>
-                      <span>Scraper Reports</span>
+                      <span>Vision Admin</span>
                     </a>
                   </div>
 

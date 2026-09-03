@@ -54,6 +54,9 @@ from db import get_connection
 from models.blog import Blog
 from models.page import Page
 from models.page_section import PageSection
+from models.product import Product
+from models.brand import Brand
+from models.category import Category
 from siteapp.clientroute import _get_locale
 from services.audit_service import log_activity, get_activity_logs, get_current_admin_user_id
 from services.store_context import StoreContext
@@ -3309,6 +3312,239 @@ def register_visionadmin_api_routes(app):
             offset=offset
         )
         return jsonify({'success': True, 'logs': logs, 'count': len(logs), 'page': page, 'limit': limit})
+
+    # =========================================================================
+    # 10. CATALOG & PRODUCT JSON API (/visionadmin/api/products & brands/categories)
+    # =========================================================================
+
+    @app.route('/visionadmin/api/brands', methods=['GET'])
+    def visionadmin_api_list_brands():
+        """Fetch all active tyre brands for dropdown selection."""
+        brands = Brand.all_active()
+        return jsonify({'success': True, 'brands': brands})
+
+    @app.route('/visionadmin/api/catalog/categories', methods=['GET'])
+    def visionadmin_api_list_categories():
+        """Fetch all active categories for dropdown selection."""
+        categories = Category.all_active()
+        return jsonify({'success': True, 'categories': categories})
+
+    @app.route('/visionadmin/api/upload-product-image', methods=['POST'])
+    def visionadmin_api_upload_product_image():
+        """Upload product hero or gallery image."""
+        if 'image' not in request.files and 'file' not in request.files:
+            return jsonify({'error': 'No file part in request.'}), 400
+        file = request.files.get('image') or request.files.get('file')
+        if not file or file.filename == '':
+            return jsonify({'error': 'No selected file.'}), 400
+
+        allowed = {'.png', '.jpg', '.jpeg', '.webp', '.svg'}
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in allowed:
+            return jsonify({'error': f'Invalid image type. Allowed: {", ".join(allowed)}'}), 400
+
+        upload_dir = os.path.join(BASE_DIR, 'static', 'uploads', 'products')
+        os.makedirs(upload_dir, exist_ok=True)
+        unique_name = f"prod_{secrets.token_hex(8)}_{int(time.time())}{ext}"
+        target_path = os.path.join(upload_dir, unique_name)
+        file.save(target_path)
+
+        url = f"/static/uploads/products/{unique_name}"
+        return jsonify({'success': True, 'url': url})
+
+    @app.route('/visionadmin/api/products', methods=['GET'])
+    @app.route('/visionadmin/api/v1/products', methods=['GET'])
+    def visionadmin_api_list_products():
+        """Fetch paginated products with full filtering, sorting, and stats."""
+        try:
+            page = max(1, int(request.args.get('page', 1)))
+            per_page = min(100, max(5, int(request.args.get('per_page', 25))))
+        except (ValueError, TypeError):
+            page = 1
+            per_page = 25
+
+        search = request.args.get('search')
+        brand_id = request.args.get('brand_id')
+        category_id = request.args.get('category_id')
+        status = request.args.get('status')
+        stock_status = request.args.get('stock_status')
+        vehicle_type = request.args.get('vehicle_type')
+        is_trash = request.args.get('trash') in ('1', 'true', 'yes')
+        sort_by = request.args.get('sort_by', 'created_at')
+        sort_dir = request.args.get('sort_dir', 'DESC')
+
+        bid = int(brand_id) if brand_id and str(brand_id).isdigit() else None
+        cid = int(category_id) if category_id and str(category_id).isdigit() else None
+
+        result = Product.paginate(
+            page=page,
+            per_page=per_page,
+            search=search,
+            brand_id=bid,
+            category_id=cid,
+            status=status if status else None,
+            stock_status=stock_status if stock_status else None,
+            vehicle_type=vehicle_type if vehicle_type else None,
+            is_trash=is_trash,
+            sort_by=sort_by,
+            sort_dir=sort_dir
+        )
+        counts = Product.get_counts()
+        result['counts'] = counts
+        return jsonify(result)
+
+    @app.route('/visionadmin/api/products/<int:prod_id>', methods=['GET'])
+    @app.route('/visionadmin/api/v1/products/<int:prod_id>', methods=['GET'])
+    def visionadmin_api_get_product(prod_id):
+        product = Product.find_by_id(prod_id, include_trash=True)
+        if not product:
+            return jsonify({'error': 'Product not found.'}), 404
+        return jsonify({'success': True, 'product': product})
+
+    @app.route('/visionadmin/api/products', methods=['POST'])
+    @app.route('/visionadmin/api/v1/products', methods=['POST'])
+    def visionadmin_api_create_product():
+        data = request.get_json(silent=True) or request.form.to_dict()
+        if not data:
+            return jsonify({'error': 'Invalid request body.'}), 400
+
+        sku = (data.get('sku') or '').strip().upper()
+        if not sku:
+            return jsonify({'error': 'Product SKU is required.'}), 400
+
+        if Product.find_by_sku(sku):
+            return jsonify({'error': f'Product with SKU \"{sku}\" already exists.'}), 409
+
+        name = data.get('display_name') or data.get('name_en') or data.get('name')
+        if not name:
+            return jsonify({'error': 'Product name is required.'}), 400
+
+        try:
+            price = float(data.get('price') or 0)
+            if price < 0:
+                return jsonify({'error': 'Price must be positive.'}), 400
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Invalid price value.'}), 400
+
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        new_id = Product.create(data, user_id=user_id)
+
+        log_activity(
+            entity_type='product',
+            entity_id=new_id,
+            action='create',
+            new_values={'sku': sku, 'name': name},
+            user_id=user_id
+        )
+
+        return jsonify({'success': True, 'id': new_id, 'message': 'Product created successfully.'}), 201
+
+    @app.route('/visionadmin/api/products/<int:prod_id>', methods=['PUT', 'POST'])
+    @app.route('/visionadmin/api/v1/products/<int:prod_id>', methods=['PUT', 'POST'])
+    def visionadmin_api_update_product(prod_id):
+        existing = Product.find_by_id(prod_id, include_trash=True)
+        if not existing:
+            return jsonify({'error': 'Product not found.'}), 404
+
+        data = request.get_json(silent=True) or request.form.to_dict()
+        if not data:
+            return jsonify({'error': 'Invalid request body.'}), 400
+
+        if 'sku' in data and data['sku']:
+            new_sku = data['sku'].strip().upper()
+            duplicate = Product.find_by_sku(new_sku, exclude_id=prod_id)
+            if duplicate:
+                return jsonify({'error': f'Product with SKU \"{new_sku}\" already exists.'}), 409
+
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        Product.update(prod_id, data, user_id=user_id)
+
+        log_activity(
+            entity_type='product',
+            entity_id=prod_id,
+            action='update',
+            old_values={'sku': existing.get('sku'), 'name': existing.get('display_name')},
+            new_values=data,
+            user_id=user_id
+        )
+
+        return jsonify({'success': True, 'message': 'Product updated successfully.'})
+
+    @app.route('/visionadmin/api/products/<int:prod_id>', methods=['DELETE'])
+    @app.route('/visionadmin/api/v1/products/<int:prod_id>', methods=['DELETE'])
+    def visionadmin_api_delete_product(prod_id):
+        existing = Product.find_by_id(prod_id)
+        if not existing:
+            return jsonify({'error': 'Product not found or already in trash.'}), 404
+
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        Product.soft_delete(prod_id, user_id=user_id)
+
+        log_activity(
+            entity_type='product',
+            entity_id=prod_id,
+            action='delete',
+            old_values={'sku': existing.get('sku')},
+            user_id=user_id
+        )
+
+        return jsonify({'success': True, 'message': 'Product moved to trash successfully.'})
+
+    @app.route('/visionadmin/api/products/<int:prod_id>/restore', methods=['POST'])
+    @app.route('/visionadmin/api/v1/products/<int:prod_id>/restore', methods=['POST'])
+    def visionadmin_api_restore_product(prod_id):
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        success = Product.restore(prod_id, user_id=user_id)
+        if not success:
+            return jsonify({'error': 'Product not found in trash.'}), 404
+
+        log_activity(
+            entity_type='product',
+            entity_id=prod_id,
+            action='restore',
+            user_id=user_id
+        )
+
+        return jsonify({'success': True, 'message': 'Product restored successfully.'})
+
+    @app.route('/visionadmin/api/products/<int:prod_id>/purge', methods=['DELETE', 'POST'])
+    @app.route('/visionadmin/api/v1/products/<int:prod_id>/purge', methods=['DELETE', 'POST'])
+    def visionadmin_api_purge_product(prod_id):
+        success = Product.purge(prod_id)
+        if not success:
+            return jsonify({'error': 'Product not found.'}), 404
+
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        log_activity(
+            entity_type='product',
+            entity_id=prod_id,
+            action='permanent_delete',
+            user_id=user_id
+        )
+
+        return jsonify({'success': True, 'message': 'Product permanently deleted.'})
+
+    @app.route('/visionadmin/api/products/bulk', methods=['POST'])
+    @app.route('/visionadmin/api/v1/products/bulk', methods=['POST'])
+    def visionadmin_api_bulk_products():
+        data = request.get_json(silent=True) or {}
+        action = data.get('action')
+        ids = data.get('ids') or []
+        if not action or not ids:
+            return jsonify({'error': 'Action and ids list are required.'}), 400
+
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        affected = Product.bulk_action(action, ids, user_id=user_id)
+
+        log_activity(
+            entity_type='product',
+            entity_id=None,
+            action=f'bulk_{action}',
+            new_values={'ids': ids, 'affected': affected},
+            user_id=user_id
+        )
+
+        return jsonify({'success': True, 'affected': affected, 'message': f'Bulk {action} applied to {affected} products.'})
 
 
 def register_client_api_routes(app):

@@ -1,0 +1,826 @@
+{% extends "visionadmin/base.html" %}
+
+{% block title %}Products Catalog - VisionAdmin{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="visionProductsApp()" x-init="initData()">
+
+  <!-- Top Hero Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 text-[11px] font-black uppercase tracking-wider rounded-lg bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]">Catalog Engine</span>
+        <span class="text-xs text-slate-400 font-semibold">• Tyre &amp; Automotive Inventory</span>
+      </div>
+      <h1 class="text-2xl font-black text-[#0E1108] tracking-tight mt-1">Products Catalog</h1>
+      <p class="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">Manage tyre products, stock availability, multi-tier pricing, vehicle sizing specs, and EU labels.</p>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button 
+        type="button" 
+        @click="openCreateModal()" 
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>Add New Product</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Metric / Stat Cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white p-5 rounded-2xl border border-[#E8EDE4] shadow-xs flex items-center justify-between">
+      <div>
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Active</span>
+        <h3 class="text-2xl font-black text-[#0E1108] mt-1" x-text="counts.total || 0">0</h3>
+      </div>
+      <div class="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-600">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-2xl border border-[#E8EDE4] shadow-xs flex items-center justify-between">
+      <div>
+        <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">In Stock</span>
+        <h3 class="text-2xl font-black text-emerald-700 mt-1" x-text="counts.in_stock || 0">0</h3>
+      </div>
+      <div class="w-11 h-11 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-2xl border border-[#E8EDE4] shadow-xs flex items-center justify-between">
+      <div>
+        <span class="text-[11px] font-bold text-rose-600 uppercase tracking-wider">Out of Stock</span>
+        <h3 class="text-2xl font-black text-rose-700 mt-1" x-text="counts.out_of_stock || 0">0</h3>
+      </div>
+      <div class="w-11 h-11 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+    </div>
+
+    <div class="bg-white p-5 rounded-2xl border border-[#E8EDE4] shadow-xs flex items-center justify-between">
+      <div>
+        <span class="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Inactive / Draft</span>
+        <h3 class="text-2xl font-black text-amber-700 mt-1" x-text="counts.inactive || 0">0</h3>
+      </div>
+      <div class="w-11 h-11 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Tab Controls -->
+  <div class="bg-white p-5 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-4">
+    <!-- Tab Switcher (Active / Out of Stock / Trash) -->
+    <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-[#F1F5F0]">
+      <div class="flex items-center gap-2">
+        <button 
+          type="button" 
+          @click="setTab('active')" 
+          :class="currentTab === 'active' ? 'bg-[#58B31B] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+          class="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer"
+        >
+          Active Catalog (<span x-text="counts.total || 0"></span>)
+        </button>
+        <button 
+          type="button" 
+          @click="setTab('out_of_stock')" 
+          :class="currentTab === 'out_of_stock' ? 'bg-[#58B31B] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+          class="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer"
+        >
+          Out of Stock (<span x-text="counts.out_of_stock || 0"></span>)
+        </button>
+        <button 
+          type="button" 
+          @click="setTab('trash')" 
+          :class="currentTab === 'trash' ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+          class="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer"
+        >
+          Trash (<span x-text="counts.trash || 0"></span>)
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 text-xs text-slate-500">
+        <span>Showing <strong x-text="products.length"></strong> of <strong x-text="totalItems"></strong> products</span>
+      </div>
+    </div>
+
+    <!-- Live Filters Row -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      <!-- Search Input -->
+      <div class="relative">
+        <input 
+          type="text" 
+          x-model.debounce.350ms="filters.search" 
+          placeholder="Search SKU, name, size..." 
+          class="w-full pl-9 pr-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#58B31B] focus:ring-2 focus:ring-[#58B31B]/20 outline-hidden transition"
+        />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+
+      <!-- Brand Filter -->
+      <select 
+        x-model="filters.brand_id" 
+        @change="fetchProducts()"
+        class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#58B31B] focus:ring-2 focus:ring-[#58B31B]/20 outline-hidden transition"
+      >
+        <option value="">All Brands</option>
+        <template x-for="b in brands" :key="b.id">
+          <option :value="b.id" x-text="b.name"></option>
+        </template>
+      </select>
+
+      <!-- Category Filter -->
+      <select 
+        x-model="filters.category_id" 
+        @change="fetchProducts()"
+        class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#58B31B] focus:ring-2 focus:ring-[#58B31B]/20 outline-hidden transition"
+      >
+        <option value="">All Categories</option>
+        <template x-for="c in categories" :key="c.id">
+          <option :value="c.id" x-text="c.name_en"></option>
+        </template>
+      </select>
+
+      <!-- Vehicle Type Filter -->
+      <select 
+        x-model="filters.vehicle_type" 
+        @change="fetchProducts()"
+        class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#58B31B] focus:ring-2 focus:ring-[#58B31B]/20 outline-hidden transition"
+      >
+        <option value="">All Vehicle Types</option>
+        <option value="car">Passenger Car</option>
+        <option value="suv">SUV / Crossover</option>
+        <option value="4x4">4x4 / Off-Road</option>
+        <option value="van">Van / Commercial</option>
+        <option value="ev">Electric Vehicle (EV)</option>
+        <option value="bike">Motorcycle / Bike</option>
+      </select>
+
+      <!-- Reset Button -->
+      <button 
+        type="button" 
+        @click="resetFilters()"
+        class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer flex items-center justify-center gap-1.5"
+      >
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        <span>Reset Filters</span>
+      </button>
+    </div>
+
+    <!-- Bulk Action Toolbar (Appears when items are selected) -->
+    <div x-show="selectedIds.length > 0" x-cloak class="p-3 bg-indigo-50/80 border border-indigo-200 rounded-2xl flex items-center justify-between flex-wrap gap-3 animate-fade-in">
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 text-xs font-black rounded-lg bg-indigo-600 text-white" x-text="selectedIds.length"></span>
+        <span class="text-xs font-bold text-indigo-900">products selected</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <select x-model="bulkActionChoice" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white border border-indigo-300 text-indigo-900 focus:ring-2 focus:ring-indigo-400 outline-hidden">
+          <option value="">Select Bulk Action...</option>
+          <template x-if="currentTab !== 'trash'">
+            <optgroup label="Status &amp; Stock">
+              <option value="in_stock">Mark as In Stock</option>
+              <option value="out_of_stock">Mark as Out of Stock</option>
+              <option value="active">Set Active</option>
+              <option value="inactive">Set Inactive</option>
+              <option value="delete">Move to Trash</option>
+            </optgroup>
+          </template>
+          <template x-if="currentTab === 'trash'">
+            <option value="restore">Restore Selected</option>
+          </template>
+        </select>
+
+        <button 
+          type="button" 
+          @click="applyBulkAction()" 
+          class="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition cursor-pointer"
+        >
+          Apply
+        </button>
+        <button 
+          type="button" 
+          @click="selectedIds = []" 
+          class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200 transition cursor-pointer"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products Main Table Card -->
+  <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
+    <!-- Loading State -->
+    <div x-show="loading" class="p-12 text-center text-slate-400 space-y-3">
+      <div class="inline-block w-8 h-8 border-3 border-[#58B31B] border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-xs font-bold text-slate-500">Loading catalog products...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div x-show="!loading && products.length === 0" class="p-16 text-center space-y-3">
+      <div class="w-16 h-16 rounded-3xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+        <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      </div>
+      <h3 class="text-base font-black text-slate-800">No products found</h3>
+      <p class="text-xs text-slate-500 max-w-sm mx-auto">No products match your current search or filter criteria. Try clearing filters or add a new product.</p>
+      <button type="button" @click="openCreateModal()" class="px-4 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-bold hover:bg-[#489915] transition cursor-pointer">
+        Add Product Now
+      </button>
+    </div>
+
+    <!-- Table View -->
+    <div x-show="!loading && products.length > 0" class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-slate-50/75 border-b border-[#E8EDE4] text-[11px] font-black uppercase tracking-wider text-slate-500">
+            <th class="p-4 w-10 text-center">
+              <input type="checkbox" @change="toggleSelectAll($event)" :checked="isAllSelected()" class="w-4 h-4 rounded-sm border-slate-300 text-[#58B31B] focus:ring-[#58B31B]" />
+            </th>
+            <th class="py-4 px-3">Product</th>
+            <th class="py-4 px-3">SKU</th>
+            <th class="py-4 px-3">Brand &amp; Category</th>
+            <th class="py-4 px-3">Tyre Specs</th>
+            <th class="py-4 px-3">Price (AED)</th>
+            <th class="py-4 px-3">Stock</th>
+            <th class="py-4 px-3">Status</th>
+            <th class="py-4 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[#F1F5F0] text-xs font-semibold">
+          <template x-for="p in products" :key="p.id">
+            <tr class="hover:bg-slate-50/60 transition group">
+              <!-- Row Checkbox -->
+              <td class="p-4 text-center">
+                <input type="checkbox" :value="p.id" x-model="selectedIds" class="w-4 h-4 rounded-sm border-slate-300 text-[#58B31B] focus:ring-[#58B31B]" />
+              </td>
+
+              <!-- Product (Image + Title) -->
+              <td class="py-3 px-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-xl border border-slate-200 bg-white p-1 shrink-0 overflow-hidden flex items-center justify-center">
+                    <img :src="p.image_path || '/static/assets/images/online-tyres-shop-dubai.png'" :alt="p.display_name" class="w-full h-full object-contain" onerror="this.src='/static/assets/images/online-tyres-shop-dubai.png'" />
+                  </div>
+                  <div class="min-w-0 max-w-xs">
+                    <a href="javascript:void(0)" @click="openViewModal(p)" class="font-extrabold text-slate-900 hover:text-[#58B31B] truncate block leading-tight" x-text="p.display_name || p.name_en"></a>
+                    <span class="text-[10px] text-slate-400 truncate block mt-0.5" x-text="p.slug"></span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- SKU -->
+              <td class="py-3 px-3">
+                <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-mono text-[11px] font-bold" x-text="p.sku"></span>
+              </td>
+
+              <!-- Brand & Category -->
+              <td class="py-3 px-3">
+                <div class="space-y-1">
+                  <span class="inline-block px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-extrabold" x-text="p.brand_name || 'Generic'"></span>
+                  <span class="text-[10px] text-slate-400 block truncate" x-text="p.category_name || 'Uncategorized'"></span>
+                </div>
+              </td>
+
+              <!-- Tyre Specs -->
+              <td class="py-3 px-3">
+                <div class="space-y-0.5">
+                  <span class="font-bold text-slate-800 text-xs block" x-text="p.tire_size_label || '—'"></span>
+                  <div class="flex items-center gap-1 flex-wrap text-[10px] text-slate-400 font-medium">
+                    <span x-text="p.tire_speed_rating ? 'Speed ' + p.tire_speed_rating : ''"></span>
+                    <span x-show="p.run_flat" class="px-1.5 py-0.2 rounded-xs bg-amber-100 text-amber-800 font-bold text-[9px]">RFT</span>
+                    <span x-show="p.ev_rated" class="px-1.5 py-0.2 rounded-xs bg-emerald-100 text-emerald-800 font-bold text-[9px]">EV</span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Price -->
+              <td class="py-3 px-3">
+                <div>
+                  <span class="font-black text-slate-900 text-sm" x-text="(p.sale_price || p.price).toFixed(2)"></span>
+                  <template x-if="p.sale_price && p.sale_price < p.price">
+                    <span class="text-[10px] text-slate-400 line-through block" x-text="p.price.toFixed(2)"></span>
+                  </template>
+                </div>
+              </td>
+
+              <!-- Stock -->
+              <td class="py-3 px-3">
+                <div class="space-y-1">
+                  <template x-if="p.stock_status === 'in_stock'">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                      <span x-text="p.stock_qty + ' in stock'"></span>
+                    </span>
+                  </template>
+                  <template x-if="p.stock_status === 'out_of_stock'">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800">
+                      <span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+                      <span>Out of stock</span>
+                    </span>
+                  </template>
+                  <template x-if="p.stock_status === 'backorder'">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                      <span>Backorder</span>
+                    </span>
+                  </template>
+                </div>
+              </td>
+
+              <!-- Status -->
+              <td class="py-3 px-3">
+                <template x-if="p.deleted_at">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">In Trash</span>
+                </template>
+                <template x-if="!p.deleted_at">
+                  <button 
+                    type="button" 
+                    @click="toggleStatus(p)" 
+                    class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold transition cursor-pointer"
+                    :class="p.status === 'active' ? 'bg-[#EAF7E2] text-[#35760F] hover:bg-[#d5edd0]' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'"
+                    x-text="p.status === 'active' ? 'Active' : 'Inactive'"
+                  ></button>
+                </template>
+              </td>
+
+              <!-- Actions -->
+              <td class="py-3 px-4 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  <template x-if="!p.deleted_at">
+                    <div class="flex items-center gap-1">
+                      <button 
+                        type="button" 
+                        @click="openViewModal(p)" 
+                        title="View Details"
+                        class="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+                      >
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      </button>
+                      <button 
+                        type="button" 
+                        @click="openEditModal(p)" 
+                        title="Edit Product"
+                        class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition cursor-pointer"
+                      >
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      </button>
+                      <button 
+                        type="button" 
+                        @click="deleteProduct(p)" 
+                        title="Move to Trash"
+                        class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                      >
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
+                    </div>
+                  </template>
+
+                  <template x-if="p.deleted_at">
+                    <div class="flex items-center gap-1">
+                      <button 
+                        type="button" 
+                        @click="restoreProduct(p)" 
+                        title="Restore Product"
+                        class="px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition cursor-pointer"
+                      >
+                        Restore
+                      </button>
+                      <button 
+                        type="button" 
+                        @click="purgeProduct(p)" 
+                        title="Permanent Delete"
+                        class="px-2.5 py-1 rounded-lg text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 transition cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </template>
+                </div>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div x-show="!loading && totalPages > 1" class="p-4 bg-slate-50/75 border-t border-[#E8EDE4] flex items-center justify-between flex-wrap gap-3">
+      <div class="text-xs font-bold text-slate-500">
+        Page <span x-text="currentPage"></span> of <span x-text="totalPages"></span>
+      </div>
+      <div class="flex items-center gap-1">
+        <button 
+          type="button" 
+          @click="prevPage()" 
+          :disabled="currentPage <= 1"
+          class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        >
+          &larr; Prev
+        </button>
+        <button 
+          type="button" 
+          @click="nextPage()" 
+          :disabled="currentPage >= totalPages"
+          class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        >
+          Next &rarr;
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: CREATE / EDIT PRODUCT (Tabbed Layout)                               -->
+  <!-- ========================================================================= -->
+  <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div @click.away="modalOpen = false" class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <!-- Modal Header -->
+      <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-wider text-[#58B31B]">Product Studio</span>
+          <h2 class="text-xl font-black text-slate-900" x-text="isEditMode ? 'Edit Product: ' + (form.display_name || form.sku) : 'Add New Tyre Product'"></h2>
+        </div>
+        <button type="button" @click="modalOpen = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Modal Tabs Navigation -->
+      <div class="flex items-center gap-2 px-6 pt-3 border-b border-slate-200 bg-white overflow-x-auto text-xs font-bold">
+        <button type="button" @click="formTab = 'basic'" :class="formTab === 'basic' ? 'border-[#58B31B] text-[#58B31B]' : 'border-transparent text-slate-500 hover:text-slate-900'" class="pb-3 border-b-2 transition whitespace-nowrap cursor-pointer">1. General Info</button>
+        <button type="button" @click="formTab = 'sizing'" :class="formTab === 'sizing' ? 'border-[#58B31B] text-[#58B31B]' : 'border-transparent text-slate-500 hover:text-slate-900'" class="pb-3 border-b-2 transition whitespace-nowrap cursor-pointer">2. Tyre Specs &amp; Sizing</button>
+        <button type="button" @click="formTab = 'pricing'" :class="formTab === 'pricing' ? 'border-[#58B31B] text-[#58B31B]' : 'border-transparent text-slate-500 hover:text-slate-900'" class="pb-3 border-b-2 transition whitespace-nowrap cursor-pointer">3. Pricing &amp; Stock</button>
+        <button type="button" @click="formTab = 'media'" :class="formTab === 'media' ? 'border-[#58B31B] text-[#58B31B]' : 'border-transparent text-slate-500 hover:text-slate-900'" class="pb-3 border-b-2 transition whitespace-nowrap cursor-pointer">4. Media &amp; Attributes</button>
+        <button type="button" @click="formTab = 'seo'" :class="formTab === 'seo' ? 'border-[#58B31B] text-[#58B31B]' : 'border-transparent text-slate-500 hover:text-slate-900'" class="pb-3 border-b-2 transition whitespace-nowrap cursor-pointer">5. SEO</button>
+      </div>
+
+      <!-- Modal Body (Tab Content) -->
+      <div class="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+        
+        <!-- Tab 1: General Info -->
+        <div x-show="formTab === 'basic'" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">SKU Code <span class="text-rose-500">*</span></label>
+              <input type="text" x-model="form.sku" placeholder="e.g. MICH-2055516-P4" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden uppercase" required />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Product Display Name <span class="text-rose-500">*</span></label>
+              <input type="text" x-model="form.display_name" placeholder="e.g. Michelin Primacy 4 205/55R16 91V" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" required />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Brand</label>
+              <select x-model="form.brand_id" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden">
+                <option value="">Select Brand</option>
+                <template x-for="b in brands" :key="b.id">
+                  <option :value="b.id" x-text="b.name"></option>
+                </template>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Category</label>
+              <select x-model="form.category_id" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden">
+                <option value="">Select Category</option>
+                <template x-for="c in categories" :key="c.id">
+                  <option :value="c.id" x-text="c.name_en"></option>
+                </template>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Vehicle Type</label>
+              <select x-model="form.vehicle_type" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden">
+                <option value="car">Passenger Car</option>
+                <option value="suv">SUV</option>
+                <option value="4x4">4x4 / Off-Road</option>
+                <option value="van">Van / Commercial</option>
+                <option value="ev">Electric Vehicle (EV)</option>
+                <option value="bike">Bike</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Short Excerpt / Summary</label>
+            <input type="text" x-model="form.short_desc_en" placeholder="Short description shown on search cards" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Full Description</label>
+            <textarea x-model="form.description_en" rows="3" placeholder="Detailed product specifications, performance notes, warranty details..." class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden"></textarea>
+          </div>
+        </div>
+
+        <!-- Tab 2: Tyre Specs & Sizing -->
+        <div x-show="formTab === 'sizing'" class="space-y-4">
+          <div class="p-4 bg-emerald-50/60 border border-emerald-200 rounded-2xl">
+            <span class="font-extrabold text-emerald-900 block mb-1">Dimension Quick Sizing</span>
+            <p class="text-[11px] text-emerald-700">Enter width, aspect ratio, and rim size to automatically generate the standard ISO tyre label (e.g. 205/55R16).</p>
+            <div class="grid grid-cols-4 gap-3 mt-3">
+              <div>
+                <label class="block font-bold text-emerald-900 mb-1">Width (mm)</label>
+                <input type="number" x-model="form.width" @input="calculateSizeLabel()" placeholder="205" class="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white font-bold outline-hidden" />
+              </div>
+              <div>
+                <label class="block font-bold text-emerald-900 mb-1">Aspect Ratio (%)</label>
+                <input type="number" x-model="form.aspect_ratio" @input="calculateSizeLabel()" placeholder="55" class="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white font-bold outline-hidden" />
+              </div>
+              <div>
+                <label class="block font-bold text-emerald-900 mb-1">Rim Size (in)</label>
+                <input type="number" x-model="form.rim_size" @input="calculateSizeLabel()" placeholder="16" class="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white font-bold outline-hidden" />
+              </div>
+              <div>
+                <label class="block font-bold text-emerald-900 mb-1">Size Label</label>
+                <input type="text" x-model="form.tire_size_label" placeholder="205/55R16" class="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white font-black text-emerald-800 outline-hidden" />
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Speed Rating</label>
+              <input type="text" x-model="form.tire_speed_rating" placeholder="e.g. V, W, Y" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden uppercase" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Load Index</label>
+              <input type="text" x-model="form.tire_load_index" placeholder="e.g. 91, 94" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Season / Tyre Type</label>
+              <select x-model="form.tire_type" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden">
+                <option value="summer">Summer (Standard GCC)</option>
+                <option value="all_season">All Season</option>
+                <option value="winter">Winter</option>
+                <option value="all_terrain">All Terrain (A/T)</option>
+                <option value="mud_terrain">Mud Terrain (M/T)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Tread Pattern Name</label>
+              <input type="text" x-model="form.tire_pattern" placeholder="e.g. Primacy 4, Turanza T005, P Zero" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">OEM Approval Mark / Brand</label>
+              <input type="text" x-model="form.oem_brand" placeholder="e.g. BMW (*), Porsche (N0), Mercedes (MO)" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
+            </div>
+          </div>
+
+          <!-- Feature Toggles -->
+          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-around flex-wrap gap-4">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" x-model="form.run_flat" class="w-4 h-4 text-[#58B31B] rounded-sm focus:ring-[#58B31B]" />
+              <span class="font-extrabold text-slate-800">Run-Flat (RFT)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" x-model="form.ev_rated" class="w-4 h-4 text-[#58B31B] rounded-sm focus:ring-[#58B31B]" />
+              <span class="font-extrabold text-slate-800">EV-Rated</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" x-model="form.oem_approved" class="w-4 h-4 text-[#58B31B] rounded-sm focus:ring-[#58B31B]" />
+              <span class="font-extrabold text-slate-800">OEM Homologated</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Tab 3: Pricing & Stock -->
+        <div x-show="formTab === 'pricing'" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Regular Selling Price (AED) <span class="text-rose-500">*</span></label>
+              <input type="number" step="0.01" x-model="form.price" placeholder="385.00" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:border-[#58B31B] outline-hidden" required />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Sale / Promotional Price (AED)</label>
+              <input type="number" step="0.01" x-model="form.sale_price" placeholder="Leave empty if not on sale" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:border-[#58B31B] outline-hidden" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">List / MSRP Reference Price (AED)</label>
+              <input type="number" step="0.01" x-model="form.list_price" placeholder="420.00" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:border-[#58B31B] outline-hidden" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Stock Quantity</label>
+              <input type="number" x-model="form.stock_qty" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:border-[#58B31B] outline-hidden" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Stock Status</label>
+              <select x-model="form.stock_status" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:border-[#58B31B] outline-hidden">
+                <option value="in_stock">In Stock</option>
+                <option value="out_of_stock">Out of Stock</option>
+                <option value="backorder">Backorder</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Cost Price (AED, Internal)</label>
+              <input type="number" step="0.01" x-model="form.cost_price" placeholder="Supplier cost" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:border-[#58B31B] outline-hidden" />
+            </div>
+          </div>
+
+          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+            <div>
+              <span class="font-extrabold text-slate-800 block">Pay Later Eligibility (Tabby / Tamara)</span>
+              <span class="text-[11px] text-slate-500">Allow customers to split payments into 4 installments on storefront checkout.</span>
+            </div>
+            <input type="checkbox" x-model="form.pay_later_eligible" class="w-5 h-5 text-[#58B31B] rounded-sm focus:ring-[#58B31B]" />
+          </div>
+        </div>
+
+        <!-- Tab 4: Media & Attributes -->
+        <div x-show="formTab === 'media'" class="space-y-4">
+          <!-- Main Hero Image -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Hero Image URL</label>
+            <div class="flex items-center gap-2">
+              <input type="text" x-model="form.image_path" placeholder="https://... or /static/uploads/..." class="flex-1 px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
+              <label class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer transition">
+                <span>Upload</span>
+                <input type="file" @change="uploadImage($event)" accept="image/*" class="hidden" />
+              </label>
+            </div>
+
+            <!-- Image Preview Box -->
+            <div x-show="form.image_path" class="mt-3 w-28 h-28 rounded-2xl border border-slate-200 bg-white p-2 flex items-center justify-center">
+              <img :src="form.image_path" alt="Preview" class="max-w-full max-h-full object-contain" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Country of Origin</label>
+              <input type="text" x-model="form.country_of_origin" placeholder="e.g. France, Japan, Germany" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Official Warranty (Months)</label>
+              <input type="number" x-model="form.warranty_months" placeholder="36" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Weight (kg)</label>
+              <input type="number" step="0.1" x-model="form.weight" placeholder="10.5" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Catalog Status</label>
+              <select x-model="form.status" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:border-[#58B31B] outline-hidden">
+                <option value="active">Active (Visible in Catalog)</option>
+                <option value="inactive">Inactive / Hidden</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Visibility Scope</label>
+              <select x-model="form.visibility" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-bold focus:border-[#58B31B] outline-hidden">
+                <option value="visible">Catalog &amp; Search</option>
+                <option value="catalog">Catalog Only</option>
+                <option value="search">Search Only</option>
+                <option value="not_visible">Not Visible Individually</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-around">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" x-model="form.is_featured" class="w-4 h-4 text-[#58B31B] rounded-sm focus:ring-[#58B31B]" />
+              <span class="font-extrabold text-slate-800">Featured on Homepage</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" x-model="form.is_new" class="w-4 h-4 text-[#58B31B] rounded-sm focus:ring-[#58B31B]" />
+              <span class="font-extrabold text-slate-800">New Arrival Badge</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Tab 5: SEO -->
+        <div x-show="formTab === 'seo'" class="space-y-4">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">SEO Meta Title</label>
+            <input type="text" x-model="form.meta_title_en" placeholder="Leave blank to auto-use product name" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">SEO Meta Description</label>
+            <textarea x-model="form.meta_desc_en" rows="3" placeholder="Search engine description preview (under 160 characters)" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden"></textarea>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Canonical URL (Optional Override)</label>
+            <input type="text" x-model="form.canonical_url" placeholder="https://www.tyresvision.com/tyres/..." class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-6 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <button type="button" @click="modalOpen = false" class="px-5 py-2.5 rounded-2xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          @click="saveProduct()" 
+          :disabled="isSubmitting"
+          class="px-6 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white font-black shadow-md hover:shadow-lg transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          <svg x-show="isSubmitting" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+          <span x-text="isEditMode ? 'Update Product' : 'Create Product'"></span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: VIEW PRODUCT DETAILS                                               -->
+  <!-- ========================================================================= -->
+  <div x-show="viewModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div @click.away="viewModalOpen = false" class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+      <template x-if="activeProduct">
+        <div>
+          <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div>
+              <span class="text-[10px] font-black uppercase text-[#58B31B] tracking-wider">Product Overview</span>
+              <h3 class="text-xl font-black text-slate-900 mt-0.5" x-text="activeProduct.display_name"></h3>
+              <p class="text-xs text-slate-400 font-mono" x-text="'SKU: ' + activeProduct.sku"></p>
+            </div>
+            <button type="button" @click="viewModalOpen = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <div class="p-6 space-y-4 text-xs">
+            <div class="flex items-center gap-4">
+              <div class="w-24 h-24 rounded-2xl border border-slate-200 bg-white p-2 shrink-0 flex items-center justify-center">
+                <img :src="activeProduct.image_path || '/static/assets/images/online-tyres-shop-dubai.png'" :alt="activeProduct.display_name" class="max-w-full max-h-full object-contain" />
+              </div>
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 font-black" x-text="activeProduct.brand_name || 'Generic Brand'"></span>
+                  <span class="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-black" x-text="activeProduct.category_name || 'Tyre'"></span>
+                </div>
+                <div class="text-base font-black text-slate-900">
+                  AED <span x-text="(activeProduct.sale_price || activeProduct.price).toFixed(2)"></span>
+                </div>
+                <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold" :class="activeProduct.stock_status === 'in_stock' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'" x-text="activeProduct.stock_status === 'in_stock' ? activeProduct.stock_qty + ' in stock' : 'Out of stock'"></span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl font-semibold">
+              <div>
+                <span class="text-[10px] text-slate-400 uppercase block">Tyre Size</span>
+                <span class="font-bold text-slate-900" x-text="activeProduct.tire_size_label || '—'"></span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 uppercase block">Pattern</span>
+                <span class="font-bold text-slate-900" x-text="activeProduct.tire_pattern || '—'"></span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 uppercase block">Speed &amp; Load</span>
+                <span class="font-bold text-slate-900" x-text="(activeProduct.tire_load_index || '') + ' ' + (activeProduct.tire_speed_rating || '')"></span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 uppercase block">Vehicle</span>
+                <span class="font-bold text-slate-900 uppercase" x-text="activeProduct.vehicle_type || 'car'"></span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 uppercase block">Origin</span>
+                <span class="font-bold text-slate-900" x-text="activeProduct.country_of_origin || '—'"></span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 uppercase block">Warranty</span>
+                <span class="font-bold text-slate-900" x-text="activeProduct.warranty_months ? activeProduct.warranty_months + ' Months' : '—'"></span>
+              </div>
+            </div>
+
+            <template x-if="activeProduct.description_en || activeProduct.description">
+              <div class="space-y-1">
+                <span class="text-[10px] text-slate-400 font-bold uppercase block">Description</span>
+                <p class="text-slate-600 leading-relaxed" x-text="typeof activeProduct.description === 'object' ? activeProduct.description.en : activeProduct.description"></p>
+              </div>
+            </template>
+          </div>
+
+          <div class="p-4 border-t border-slate-100 flex items-center justify-end bg-slate-50/50">
+            <button type="button" @click="viewModalOpen = false" class="px-5 py-2 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-900 transition cursor-pointer">
+              Close
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/visionadmin/products.js?v={{ range(10000, 99999) | random }}"></script>
+{% endblock %}

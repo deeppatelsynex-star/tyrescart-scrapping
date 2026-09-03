@@ -245,148 +245,272 @@
       </div>
 
       <!-- Main Navigation Menu -->
-      <div class="space-y-4">
-        
-        <!-- Group 1: CMS & Content -->
+      <div class="space-y-2 text-xs sm:text-sm font-semibold">
+
+        <!-- 1. CATALOG (ACCORDION - IMAGE 1) -->
+        {% set is_catalog = page in ['products', 'brands', 'categories', 'attributes', 'catalog'] %}
         <div class="space-y-1">
-          <span class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-1">CMS &amp; Content</span>
-
-          <!-- Pages -->
-          <a href="/visionadmin/pages" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'pages' %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+          <button type="button" onclick="toggleSidebarAccordion('catalog')"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if is_catalog %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
             <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'pages' %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              </div>
-              <span>Pages</span>
+              <svg class="w-4 h-4 {% if is_catalog %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+              </svg>
+              <span>Catalog</span>
             </div>
-            {% if page == 'pages' %}
-            <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
-            {% endif %}
-          </a>
+            <svg id="va-chevron-catalog" class="w-4 h-4 transition-transform duration-200 {% if is_catalog %}rotate-180 text-[#4F46E5]{% else %}text-slate-400{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
 
-          <!-- Sections List -->
-          <a href="/visionadmin/sections" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'sections' %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
-            <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'sections' %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              </div>
-              <span>Sections Builder</span>
-            </div>
-            {% if page == 'sections' %}
-            <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
-            {% endif %}
-          </a>
-
-          <!-- Blogs & Articles Link -->
-          <a href="/visionadmin/blogs" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'blogs' %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
-            <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'blogs' %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="6" x2="16" y2="6"/><line x1="9" y1="10" x2="16" y2="10"/></svg>
-              </div>
-              <span>Blogs &amp; Articles</span>
-            </div>
-            {% if page == 'blogs' %}
-            <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
-            {% endif %}
-          </a>
-        </div>
-
-        <!-- Group 2: Catalog & Dynamic Attributes -->
-        <div class="space-y-1">
-          <span class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-1">Catalog &amp; Sizing</span>
-
-          <!-- Attributes & Sizing -->
-          <a href="/visionadmin/attributes" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'attributes' %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
-            <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'attributes' %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>
-              </div>
+          <div id="va-menu-catalog" class="{% if not is_catalog %}hidden{% endif %} pl-9 pr-2 py-1 space-y-1">
+            <a href="/visionadmin/catalog/products" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold transition {% if page == 'products' %}text-[#4F46E5] font-extrabold bg-indigo-50/60{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+              <span>Products</span>
+              {% if page == 'products' %}<span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>{% endif %}
+            </a>
+            <a href="/visionadmin/catalog/brands" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold transition {% if page == 'brands' %}text-[#4F46E5] font-extrabold bg-indigo-50/60{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+              <span>Brands</span>
+              {% if page == 'brands' %}<span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>{% endif %}
+            </a>
+            <a href="/visionadmin/catalog/categories" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold transition {% if page == 'categories' %}text-[#4F46E5] font-extrabold bg-indigo-50/60{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+              <span>Categories</span>
+              {% if page == 'categories' %}<span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>{% endif %}
+            </a>
+            <a href="/visionadmin/attributes" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold transition {% if page == 'attributes' %}text-[#4F46E5] font-extrabold bg-indigo-50/60{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
               <span>Attributes &amp; Sizing</span>
-            </div>
-            {% if page == 'attributes' %}
-            <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
-            {% endif %}
-          </a>
-
-          <!-- Activity & Audit Logs -->
-          <a href="/visionadmin/audit-logs" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'audit_logs' %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
-            <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'audit_logs' %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              </div>
-              <span>Audit Trail</span>
-            </div>
-            {% if page == 'audit_logs' %}
-            <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
-            {% endif %}
-          </a>
+              {% if page == 'attributes' %}<span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>{% endif %}
+            </a>
+          </div>
         </div>
 
-        <!-- Group 3: Customer & Leads -->
+        <!-- 2. ORDERS (ACCORDION - IMAGE 1) -->
+        {% set is_orders = page in ['orders', 'transactions'] %}
         <div class="space-y-1">
-          <span class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-1">Customer &amp; Leads</span>
-
-          <!-- Customer & WhatsApp Enquiries Link -->
-          <a href="/visionadmin/enquiries" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page in ['enquiries', 'enquiry', 'leads'] %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+          <button type="button" onclick="toggleSidebarAccordion('orders')"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if is_orders %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
             <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page in ['enquiries', 'enquiry', 'leads'] %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/></svg>
-              </div>
-              <span>Enquiries</span>
+              <svg class="w-4 h-4 {% if is_orders %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>
+              </svg>
+              <span>Orders</span>
             </div>
-            <div class="flex items-center gap-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full {% if page in ['enquiries', 'enquiry', 'leads'] %}bg-[#D1E7C4] text-[#35760F]{% else %}bg-slate-100 text-slate-500{% endif %}">Leads</span>
-              {% if page in ['enquiries', 'enquiry', 'leads'] %}
-              <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
-              {% endif %}
-            </div>
-          </a>
+            <svg id="va-chevron-orders" class="w-4 h-4 transition-transform duration-200 {% if is_orders %}rotate-180 text-[#4F46E5]{% else %}text-slate-400{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="va-menu-orders" class="{% if not is_orders %}hidden{% endif %} pl-9 pr-2 py-1 space-y-1">
+            <a href="#orders-list" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>All Orders</span>
+            </a>
+            <a href="#transactions" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Transactions</span>
+            </a>
+          </div>
         </div>
 
-        <!-- Group 4: Administration & Settings -->
+        <!-- 3. CUSTOMERS (DIRECT LINK - IMAGE 1) -->
+        <a href="#customers" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if page == 'customers' %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+          <div class="flex items-center gap-3">
+            <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>Customers</span>
+          </div>
+        </a>
+
+        <!-- 4. ENQUIRIES (DIRECT LINK - IMAGE 1) -->
+        <a href="/visionadmin/enquiries" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if page in ['enquiries', 'enquiry', 'leads'] %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+          <div class="flex items-center gap-3">
+            <svg class="w-4 h-4 {% if page in ['enquiries', 'enquiry', 'leads'] %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/>
+            </svg>
+            <span>Enquiries</span>
+          </div>
+          {% if page in ['enquiries', 'enquiry', 'leads'] %}
+          <span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>
+          {% endif %}
+        </a>
+
+        <!-- 5. MARKETING (ACCORDION - IMAGE 1) -->
+        {% set is_marketing = page in ['marketing', 'campaigns', 'newsletter'] %}
         <div class="space-y-1">
-          <span class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-1">Administration</span>
-
-          <!-- Stores & Channels Link -->
-          <a href="/visionadmin/stores" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'stores' %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+          <button type="button" onclick="toggleSidebarAccordion('marketing')"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if is_marketing %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
             <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'stores' %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-              </div>
-              <span>Stores &amp; Channels</span>
+              <svg class="w-4 h-4 {% if is_marketing %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+              <span>Marketing</span>
             </div>
-            {% if page == 'stores' %}
-            <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
-            {% endif %}
-          </a>
+            <svg id="va-chevron-marketing" class="w-4 h-4 transition-transform duration-200 {% if is_marketing %}rotate-180 text-[#4F46E5]{% else %}text-slate-400{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="va-menu-marketing" class="{% if not is_marketing %}hidden{% endif %} pl-9 pr-2 py-1 space-y-1">
+            <a href="#campaigns" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Campaigns</span>
+            </a>
+            <a href="#subscribers" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Subscribers</span>
+            </a>
+          </div>
+        </div>
 
-          <!-- Admin Users Link -->
-          <a href="/visionadmin/users" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'users' %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+        <!-- 6. PROMOTIONS (ACCORDION - IMAGE 1) -->
+        {% set is_promotions = page in ['promotions', 'coupons', 'special_offers'] %}
+        <div class="space-y-1">
+          <button type="button" onclick="toggleSidebarAccordion('promotions')"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if is_promotions %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
             <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'users' %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              </div>
+              <svg class="w-4 h-4 {% if is_promotions %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/>
+              </svg>
+              <span>Promotions</span>
+            </div>
+            <svg id="va-chevron-promotions" class="w-4 h-4 transition-transform duration-200 {% if is_promotions %}rotate-180 text-[#4F46E5]{% else %}text-slate-400{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="va-menu-promotions" class="{% if not is_promotions %}hidden{% endif %} pl-9 pr-2 py-1 space-y-1">
+            <a href="#coupons" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Coupons &amp; Discs</span>
+            </a>
+            <a href="#special-offers" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Special Offers</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 7. CONTENT (ACCORDION - IMAGE 1 & 3) -->
+        {% set is_content = page in ['pages', 'sections', 'blogs', 'menus', 'faqs', 'email_templates', 'content'] %}
+        <div class="space-y-1">
+          <button type="button" onclick="toggleSidebarAccordion('content')"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if is_content %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+            <div class="flex items-center gap-3">
+              <svg class="w-4 h-4 {% if is_content %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span>Content</span>
+            </div>
+            <svg id="va-chevron-content" class="w-4 h-4 transition-transform duration-200 {% if is_content %}rotate-180 text-[#4F46E5]{% else %}text-slate-400{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+
+          <div id="va-menu-content" class="{% if not is_content %}hidden{% endif %} pl-9 pr-2 py-1 space-y-1">
+            <a href="/visionadmin/pages" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold transition {% if page == 'pages' %}text-[#4F46E5] font-extrabold bg-indigo-50/60{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+              <span>Pages</span>
+              {% if page == 'pages' %}<span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>{% endif %}
+            </a>
+            <a href="/visionadmin/sections" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold transition {% if page == 'sections' %}text-[#4F46E5] font-extrabold bg-indigo-50/60{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+              <span>Sections Builder</span>
+              {% if page == 'sections' %}<span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>{% endif %}
+            </a>
+            <a href="#menus" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Menus</span>
+            </a>
+            <a href="/visionadmin/blogs" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold transition {% if page == 'blogs' %}text-[#4F46E5] font-extrabold bg-indigo-50/60{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+              <span>Blogs</span>
+              {% if page == 'blogs' %}<span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>{% endif %}
+            </a>
+            <a href="#faqs" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>FAQs</span>
+            </a>
+            <a href="#email-templates" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Email Templates</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 8. STORES (DIRECT LINK - IMAGE 1) -->
+        <a href="/visionadmin/stores" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if page == 'stores' %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+          <div class="flex items-center gap-3">
+            <svg class="w-4 h-4 {% if page == 'stores' %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span>Stores</span>
+          </div>
+          {% if page == 'stores' %}
+          <span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>
+          {% endif %}
+        </a>
+
+        <!-- 9. INVENTORY (ACCORDION - IMAGE 1 & 2) -->
+        {% set is_inventory = page in ['inventory', 'sources', 'stocks', 'grid', 'low_stock', 'transfers', 'adjustments'] %}
+        <div class="space-y-1">
+          <button type="button" onclick="toggleSidebarAccordion('inventory')"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if is_inventory %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+            <div class="flex items-center gap-3">
+              <svg class="w-4 h-4 {% if is_inventory %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>
+              </svg>
+              <span>Inventory</span>
+            </div>
+            <svg id="va-chevron-inventory" class="w-4 h-4 transition-transform duration-200 {% if is_inventory %}rotate-180 text-[#4F46E5]{% else %}text-slate-400{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+
+          <div id="va-menu-inventory" class="{% if not is_inventory %}hidden{% endif %} pl-9 pr-2 py-1 space-y-1">
+            <a href="#sources" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Sources</span>
+            </a>
+            <a href="#stocks" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Stocks</span>
+            </a>
+            <a href="#inventory-grid" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Inventory Grid</span>
+            </a>
+            <a href="#low-stock" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Low Stock</span>
+            </a>
+            <a href="#transfers" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Transfers</span>
+            </a>
+            <a href="#adjustments" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
+              <span>Adjustments</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 10. ADMINISTRATION & SETTINGS -->
+        <div class="pt-3 border-t border-slate-100 space-y-1">
+          <span class="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-1">System &amp; Settings</span>
+
+          <!-- Staff Users -->
+          <a href="/visionadmin/users" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if page == 'users' %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+            <div class="flex items-center gap-3">
+              <svg class="w-4 h-4 {% if page == 'users' %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
               <span>Staff Users</span>
             </div>
-            {% if page == 'users' %}
-            <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
-            {% endif %}
+            {% if page == 'users' %}<span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>{% endif %}
           </a>
 
-          <!-- Settings Trigger Button -->
-          <a href="/visionadmin/settings" class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 {% if page == 'settings' %}bg-[#EAF7E2] text-[#0E1108]{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+          <!-- Settings -->
+          <a href="/visionadmin/settings" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if page == 'settings' %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
             <div class="flex items-center gap-3">
-              <div class="w-7 h-7 rounded-xl flex items-center justify-center {% if page == 'settings' %}bg-[#58B31B] text-white shadow-xs{% else %}bg-slate-100 text-slate-500 group-hover:bg-[#EAF7E2] group-hover:text-[#35760F]{% endif %} transition-all duration-300">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-              </div>
+              <svg class="w-4 h-4 {% if page == 'settings' %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
               <span>Settings</span>
             </div>
-            {% if page == 'settings' %}
-            <span class="w-2 h-2 rounded-full bg-[#58B31B] ring-4 ring-[#58B31B]/20"></span>
-            {% endif %}
+            {% if page == 'settings' %}<span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>{% endif %}
+          </a>
+
+          <!-- Audit Trail -->
+          <a href="/visionadmin/audit-logs" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if page == 'audit_logs' %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+            <div class="flex items-center gap-3">
+              <svg class="w-4 h-4 {% if page == 'audit_logs' %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span>Audit Trail</span>
+            </div>
+            {% if page == 'audit_logs' %}<span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>{% endif %}
+          </a>
+
+          <!-- Switch to Scraper Admin -->
+          <a href="/tcsadmin/docs/scraper" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all duration-200">
+            <div class="flex items-center gap-3">
+              <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <rect x="3" y="4" width="14" height="12" rx="2" />
+                <line x1="3" y1="8" x2="17" y2="8" />
+                <path d="M9 11l2 5 1.2-2.2L15 15l-6-4z" />
+              </svg>
+              <span>Scraper Engine</span>
+            </div>
+            <span class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">App</span>
           </a>
         </div>
       </div>
@@ -1386,6 +1510,18 @@
         }
       });
     }
+
+    // Sidebar Accordion Collapsible Controller
+    window.toggleSidebarAccordion = function(id) {
+      const panel = document.getElementById('va-menu-' + id);
+      const chevron = document.getElementById('va-chevron-' + id);
+      if (!panel) return;
+      const isHidden = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', !isHidden);
+      if (chevron) {
+        chevron.classList.toggle('rotate-180', isHidden);
+      }
+    };
   </script>
 
   <!-- Global Search Component Script -->
