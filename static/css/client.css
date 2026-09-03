@@ -1340,12 +1340,12 @@ details .body p:last-child {
 .notice-modal {
   border: 0;
   padding: 16px;
-  background: rgba(8, 12, 5, .72);
+  background: rgba(8, 12, 5, .75) !important;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 99999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1354,29 +1354,32 @@ details .body p:last-child {
 }
 
 .notice-modal::backdrop {
-  background: rgba(8, 12, 5, .72);
+  background: rgba(8, 12, 5, .75);
   backdrop-filter: blur(4px);
 }
 
-.notice-modal-dialog,
-.notice-modal .sheet {
+.notice-modal-dialog {
   max-width: min(720px, calc(100vw - 32px));
   width: 100%;
   margin: auto;
   position: relative;
-  z-index: 10000;
+  z-index: 100000;
 }
 
-.notice-modal .sheet {
-  background: #fff;
+.notice-modal .sheet,
+.notice-modal-overlay .sheet,
+.sheet {
+  background: #FFFFFF !important;
   border-radius: 16px;
   border-top: 5px solid var(--green);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, .42);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .5);
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 48px);
   overflow: hidden;
   text-align: left;
+  position: relative;
+  z-index: 100001;
 }
 
 .notice-modal .sheet-head {
