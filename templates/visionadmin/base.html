@@ -282,40 +282,7 @@
           </div>
         </div>
 
-        <!-- 2. ORDERS (ACCORDION - IMAGE 1) -->
-        {% set is_orders = page in ['orders', 'transactions'] %}
-        <div class="space-y-1">
-          <button type="button" onclick="toggleSidebarAccordion('orders')"
-            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if is_orders %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
-            <div class="flex items-center gap-3">
-              <svg class="w-4 h-4 {% if is_orders %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>
-              </svg>
-              <span>Orders</span>
-            </div>
-            <svg id="va-chevron-orders" class="w-4 h-4 transition-transform duration-200 {% if is_orders %}rotate-180 text-[#4F46E5]{% else %}text-slate-400{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="va-menu-orders" class="{% if not is_orders %}hidden{% endif %} pl-9 pr-2 py-1 space-y-1">
-            <a href="#orders-list" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>All Orders</span>
-            </a>
-            <a href="#transactions" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Transactions</span>
-            </a>
-          </div>
-        </div>
-
-        <!-- 3. CUSTOMERS (DIRECT LINK - IMAGE 1) -->
-        <a href="#customers" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if page == 'customers' %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
-          <div class="flex items-center gap-3">
-            <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-            </svg>
-            <span>Customers</span>
-          </div>
-        </a>
-
-        <!-- 4. ENQUIRIES (DIRECT LINK - IMAGE 1) -->
+        <!-- 2. ENQUIRIES (DIRECT LINK) -->
         <a href="/visionadmin/enquiries" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if page in ['enquiries', 'enquiry', 'leads'] %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
           <div class="flex items-center gap-3">
             <svg class="w-4 h-4 {% if page in ['enquiries', 'enquiry', 'leads'] %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -327,52 +294,6 @@
           <span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>
           {% endif %}
         </a>
-
-        <!-- 5. MARKETING (ACCORDION - IMAGE 1) -->
-        {% set is_marketing = page in ['marketing', 'campaigns', 'newsletter'] %}
-        <div class="space-y-1">
-          <button type="button" onclick="toggleSidebarAccordion('marketing')"
-            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if is_marketing %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
-            <div class="flex items-center gap-3">
-              <svg class="w-4 h-4 {% if is_marketing %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-              </svg>
-              <span>Marketing</span>
-            </div>
-            <svg id="va-chevron-marketing" class="w-4 h-4 transition-transform duration-200 {% if is_marketing %}rotate-180 text-[#4F46E5]{% else %}text-slate-400{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="va-menu-marketing" class="{% if not is_marketing %}hidden{% endif %} pl-9 pr-2 py-1 space-y-1">
-            <a href="#campaigns" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Campaigns</span>
-            </a>
-            <a href="#subscribers" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Subscribers</span>
-            </a>
-          </div>
-        </div>
-
-        <!-- 6. PROMOTIONS (ACCORDION - IMAGE 1) -->
-        {% set is_promotions = page in ['promotions', 'coupons', 'special_offers'] %}
-        <div class="space-y-1">
-          <button type="button" onclick="toggleSidebarAccordion('promotions')"
-            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if is_promotions %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
-            <div class="flex items-center gap-3">
-              <svg class="w-4 h-4 {% if is_promotions %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/>
-              </svg>
-              <span>Promotions</span>
-            </div>
-            <svg id="va-chevron-promotions" class="w-4 h-4 transition-transform duration-200 {% if is_promotions %}rotate-180 text-[#4F46E5]{% else %}text-slate-400{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div id="va-menu-promotions" class="{% if not is_promotions %}hidden{% endif %} pl-9 pr-2 py-1 space-y-1">
-            <a href="#coupons" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Coupons &amp; Discs</span>
-            </a>
-            <a href="#special-offers" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Special Offers</span>
-            </a>
-          </div>
-        </div>
 
         <!-- 7. CONTENT (ACCORDION - IMAGE 1 & 3) -->
         {% set is_content = page in ['pages', 'sections', 'blogs', 'menus', 'faqs', 'email_templates', 'content'] %}
@@ -397,18 +318,9 @@
               <span>Sections Builder</span>
               {% if page == 'sections' %}<span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>{% endif %}
             </a>
-            <a href="#menus" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Menus</span>
-            </a>
             <a href="/visionadmin/blogs" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold transition {% if page == 'blogs' %}text-[#4F46E5] font-extrabold bg-indigo-50/60{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
               <span>Blogs</span>
               {% if page == 'blogs' %}<span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>{% endif %}
-            </a>
-            <a href="#faqs" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>FAQs</span>
-            </a>
-            <a href="#email-templates" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Email Templates</span>
             </a>
           </div>
         </div>
@@ -425,42 +337,6 @@
           <span class="w-1.5 h-1.5 rounded-full bg-[#4F46E5]"></span>
           {% endif %}
         </a>
-
-        <!-- 9. INVENTORY (ACCORDION - IMAGE 1 & 2) -->
-        {% set is_inventory = page in ['inventory', 'sources', 'stocks', 'grid', 'low_stock', 'transfers', 'adjustments'] %}
-        <div class="space-y-1">
-          <button type="button" onclick="toggleSidebarAccordion('inventory')"
-            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if is_inventory %}bg-[#EEF2FF] text-[#4F46E5]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
-            <div class="flex items-center gap-3">
-              <svg class="w-4 h-4 {% if is_inventory %}text-[#4F46E5]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>
-              </svg>
-              <span>Inventory</span>
-            </div>
-            <svg id="va-chevron-inventory" class="w-4 h-4 transition-transform duration-200 {% if is_inventory %}rotate-180 text-[#4F46E5]{% else %}text-slate-400{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-
-          <div id="va-menu-inventory" class="{% if not is_inventory %}hidden{% endif %} pl-9 pr-2 py-1 space-y-1">
-            <a href="#sources" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Sources</span>
-            </a>
-            <a href="#stocks" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Stocks</span>
-            </a>
-            <a href="#inventory-grid" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Inventory Grid</span>
-            </a>
-            <a href="#low-stock" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Low Stock</span>
-            </a>
-            <a href="#transfers" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Transfers</span>
-            </a>
-            <a href="#adjustments" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition">
-              <span>Adjustments</span>
-            </a>
-          </div>
-        </div>
 
         <!-- 10. ADMINISTRATION & SETTINGS -->
         <div class="pt-3 border-t border-slate-100 space-y-1">

@@ -12,14 +12,23 @@
       <p class="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">Manage tyre, vehicle, and accessory categories</p>
     </div>
     
-    <div>
+    <div class="flex items-center gap-2.5">
+      <button 
+        type="button" 
+        @click="openCsvModal()" 
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold shadow-2xs transition cursor-pointer active:scale-95"
+      >
+        <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>Import CSV</span>
+      </button>
+
       <button 
         type="button" 
         @click="openCreateModal()" 
         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0B4F9C] hover:bg-[#1C5FAE] text-white text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer active:scale-95"
       >
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <span>+ Add Category</span>
+        <span>Add Category</span>
       </button>
     </div>
   </div>
@@ -30,6 +39,7 @@
       <input 
         type="text" 
         x-model="searchQuery" 
+        @input.debounce.300ms="loadCategories(1)"
         @keydown.enter="loadCategories(1)"
         placeholder="Search categories..." 
         class="w-full pl-4 pr-10 py-2.5 text-xs sm:text-sm font-medium border border-slate-200 rounded-xl focus:outline-none focus:border-[#0B4F9C] focus:ring-2 focus:ring-blue-100 transition"
@@ -394,6 +404,81 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- CSV Import Modal -->
+  <div 
+    x-show="csvModalOpen" 
+    x-cloak 
+    class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+  >
+    <div 
+      @click.away="csvModalOpen = false" 
+      class="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden flex flex-col"
+    >
+      <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-[#0B4F9C]">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div>
+            <h2 class="text-base font-black text-slate-900">Import Categories from CSV</h2>
+            <p class="text-xs text-slate-500 font-medium">Upload a CSV spreadsheet with category names, hierarchy, and SEO.</p>
+          </div>
+        </div>
+        <button type="button" @click="csvModalOpen = false" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 text-xl font-bold cursor-pointer">&times;</button>
+      </div>
+
+      <div class="p-6 space-y-5">
+        <div class="flex items-center justify-between p-3.5 rounded-xl bg-blue-50/60 border border-blue-100">
+          <div>
+            <span class="text-xs font-bold text-[#0B4F9C] block">Need a template?</span>
+            <span class="text-[11px] text-slate-600">Download the pre-formatted CSV template with example rows.</span>
+          </div>
+          <a 
+            href="/visionadmin/api/categories/sample-csv" 
+            class="px-3 py-1.5 rounded-lg bg-[#0B4F9C] text-white text-xs font-bold hover:bg-[#1C5FAE] transition inline-flex items-center gap-1.5"
+          >
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Download</span>
+          </a>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-2">Select CSV File (.csv)</label>
+          <input 
+            type="file" 
+            id="cat-csv-file-input"
+            accept=".csv,text/csv" 
+            @change="selectedCsvFile = $event.target.files[0]"
+            class="block w-full text-xs text-slate-500 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer border border-dashed border-slate-300 rounded-2xl p-4 bg-slate-50/50"
+          />
+        </div>
+
+        <template x-if="csvResult">
+          <div class="p-3.5 rounded-xl text-xs font-semibold" :class="csvResult.success ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'" x-text="csvResult.message"></div>
+        </template>
+      </div>
+
+      <div class="p-5 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50/50">
+        <button 
+          type="button" 
+          @click="csvModalOpen = false" 
+          class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-white text-xs font-bold transition cursor-pointer"
+        >
+          Close
+        </button>
+        <button 
+          type="button" 
+          :disabled="!selectedCsvFile || csvUploading" 
+          @click="submitCsvUpload()" 
+          class="px-6 py-2.5 rounded-xl bg-[#0B4F9C] hover:bg-[#1C5FAE] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+        >
+          <svg x-show="csvUploading" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+          <span x-text="csvUploading ? 'Importing...' : 'Upload & Import'"></span>
+        </button>
+      </div>
     </div>
   </div>
 

@@ -3410,6 +3410,87 @@ def register_visionadmin_api_routes(app):
         url = f"/static/uploads/brands/{unique_name}"
         return jsonify({'success': True, 'url': url})
 
+    @app.route('/visionadmin/api/brands/sample-csv', methods=['GET'])
+    def visionadmin_api_sample_brands_csv():
+        """Return downloadable sample CSV template for brands."""
+        import io
+        csv_text = "name,country,slug,logo,sort_order,status,is_featured,description_en,meta_title_en,meta_desc_en\n" \
+                   "Michelin,France,michelin,,1,active,1,\"Premium French tyre manufacturer known for longevity and performance.\",Buy Michelin Tyres UAE,Best deals on Michelin tyres in UAE\n" \
+                   "Bridgestone,Japan,bridgestone,,2,active,1,\"Japanese global tyre leader specializing in high-grip compounds.\",Buy Bridgestone Tyres UAE,Genuine Bridgestone tyres in Dubai\n"
+        output = io.BytesIO(csv_text.encode('utf-8'))
+        return send_file(output, mimetype='text/csv', as_attachment=True, download_name='brands_sample.csv')
+
+    @app.route('/visionadmin/api/brands/import-csv', methods=['POST'])
+    def visionadmin_api_import_brands_csv():
+        """Import multiple tyre brands from CSV file."""
+        import csv
+        import io
+        try:
+            if 'file' not in request.files:
+                return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+            file = request.files['file']
+            if not file or not file.filename:
+                return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+            stream = io.StringIO(file.stream.read().decode('utf-8', errors='ignore'))
+            reader = csv.DictReader(stream)
+
+            user_id = session.get('user_id')
+            imported = 0
+
+            for row in reader:
+                clean_row = {k.strip().lower(): v.strip() for k, v in row.items() if k}
+                name = clean_row.get('name') or clean_row.get('brand') or clean_row.get('brand_name') or ''
+                if not name:
+                    continue
+
+                slug = clean_row.get('slug') or Brand.slugify(name)
+                country = clean_row.get('country') or None
+                logo = clean_row.get('logo') or None
+                sort_order = int(clean_row.get('sort_order') or imported + 1)
+                status = clean_row.get('status') or 'active'
+                is_featured = 1 if clean_row.get('is_featured') in ['1', 'true', 'yes', 1] else 0
+                desc = clean_row.get('description_en') or clean_row.get('description') or None
+                meta_title = clean_row.get('meta_title_en') or clean_row.get('meta_title') or None
+                meta_desc = clean_row.get('meta_desc_en') or clean_row.get('meta_desc') or None
+
+                existing = Brand.find_by_slug(slug)
+                if existing:
+                    Brand.update(existing['id'], {
+                        'name': name,
+                        'slug': slug,
+                        'country': country or existing.get('country'),
+                        'logo': logo or existing.get('logo'),
+                        'sort_order': sort_order,
+                        'status': status,
+                        'is_featured': is_featured,
+                        'description_en': desc or existing.get('description_en'),
+                        'meta_title_en': meta_title or existing.get('meta_title_en'),
+                        'meta_desc_en': meta_desc or existing.get('meta_desc_en')
+                    }, user_id=user_id)
+                else:
+                    Brand.create({
+                        'name': name,
+                        'slug': slug,
+                        'country': country,
+                        'logo': logo,
+                        'sort_order': sort_order,
+                        'status': status,
+                        'is_featured': is_featured,
+                        'description_en': desc,
+                        'meta_title_en': meta_title,
+                        'meta_desc_en': meta_desc
+                    }, user_id=user_id)
+                imported += 1
+
+            return jsonify({
+                'success': True,
+                'imported': imported,
+                'message': f'Successfully imported {imported} brands from CSV!'
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'Failed to process CSV: {str(e)}'}), 500
+
     @app.route('/visionadmin/api/catalog/categories', methods=['GET'])
     def visionadmin_api_list_categories():
         """Fetch all active categories for dropdown selection."""
@@ -3504,6 +3585,83 @@ def register_visionadmin_api_routes(app):
         url = f"/static/uploads/categories/{unique_name}"
         return jsonify({'success': True, 'url': url})
 
+    @app.route('/visionadmin/api/categories/sample-csv', methods=['GET'])
+    def visionadmin_api_sample_categories_csv():
+        """Return downloadable sample CSV template for categories."""
+        import io
+        csv_text = "name_en,slug,sort_order,status,description_en,meta_title_en,meta_desc_en\n" \
+                   "Passenger Car Tyres,passenger-car-tyres,1,active,\"High-durability tyres designed for sedans, coupes, and city hatchbacks.\",Buy Car Tyres Online UAE,Wide range of passenger car tyres in Dubai\n" \
+                   "SUV & 4x4 Tyres,suv-4x4-tyres,2,active,\"All-terrain and highway tyres for crossovers and heavy-duty 4x4 SUVs.\",Buy SUV Tyres UAE,Best SUV 4x4 tyres for sand and highway\n"
+        output = io.BytesIO(csv_text.encode('utf-8'))
+        return send_file(output, mimetype='text/csv', as_attachment=True, download_name='categories_sample.csv')
+
+    @app.route('/visionadmin/api/categories/import-csv', methods=['POST'])
+    def visionadmin_api_import_categories_csv():
+        """Import multiple categories from CSV file."""
+        import csv
+        import io
+        try:
+            if 'file' not in request.files:
+                return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+            file = request.files['file']
+            if not file or not file.filename:
+                return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+            stream = io.StringIO(file.stream.read().decode('utf-8', errors='ignore'))
+            reader = csv.DictReader(stream)
+
+            user_id = session.get('user_id')
+            imported = 0
+
+            for row in reader:
+                clean_row = {k.strip().lower(): v.strip() for k, v in row.items() if k}
+                name_en = clean_row.get('name_en') or clean_row.get('name') or clean_row.get('category_name') or ''
+                if not name_en:
+                    continue
+
+                slug = clean_row.get('slug') or Category.slugify(name_en)
+                image = clean_row.get('image') or None
+                sort_order = int(clean_row.get('sort_order') or imported + 1)
+                status = clean_row.get('status') or 'active'
+                desc = clean_row.get('description_en') or clean_row.get('description') or None
+                meta_title = clean_row.get('meta_title_en') or clean_row.get('meta_title') or None
+                meta_desc = clean_row.get('meta_desc_en') or clean_row.get('meta_desc') or None
+
+                existing = Category.find_by_slug(slug)
+                if existing:
+                    Category.update(existing['id'], {
+                        'name_en': name_en,
+                        'slug': slug,
+                        'parent_id': existing.get('parent_id'),
+                        'image': image or existing.get('image'),
+                        'sort_order': sort_order,
+                        'status': status,
+                        'description_en': desc or existing.get('description_en'),
+                        'meta_title_en': meta_title or existing.get('meta_title_en'),
+                        'meta_desc_en': meta_desc or existing.get('meta_desc_en')
+                    }, user_id=user_id)
+                else:
+                    Category.create({
+                        'name_en': name_en,
+                        'slug': slug,
+                        'parent_id': None,
+                        'image': image,
+                        'sort_order': sort_order,
+                        'status': status,
+                        'description_en': desc,
+                        'meta_title_en': meta_title,
+                        'meta_desc_en': meta_desc
+                    }, user_id=user_id)
+                imported += 1
+
+            return jsonify({
+                'success': True,
+                'imported': imported,
+                'message': f'Successfully imported {imported} categories from CSV!'
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'Failed to process CSV: {str(e)}'}), 500
+
     @app.route('/visionadmin/api/upload-product-image', methods=['POST'])
     def visionadmin_api_upload_product_image():
         """Upload product hero or gallery image."""
@@ -3526,6 +3684,126 @@ def register_visionadmin_api_routes(app):
 
         url = f"/static/uploads/products/{unique_name}"
         return jsonify({'success': True, 'url': url})
+
+    @app.route('/visionadmin/api/products/sample-csv', methods=['GET'])
+    def visionadmin_api_sample_products_csv():
+        """Return downloadable sample CSV template for products."""
+        import io
+        csv_text = "sku,name,brand,category,price,sale_price,stock_qty,tire_size_label,tire_speed_rating,tire_load_index,tire_pattern,vehicle_type,country_of_origin\n" \
+                   "MICH-PS4-225-45R17,Pilot Sport 4 225/45 R17,Michelin,Passenger Car Tyres,520,480,24,225/45R17,Y,94,Pilot Sport 4,car,France\n" \
+                   "BS-TUR-205-55R16,Turanza T005 205/55 R16,Bridgestone,Passenger Car Tyres,380,350,18,205/55R16,V,91,Turanza T005,car,Japan\n"
+        output = io.BytesIO(csv_text.encode('utf-8'))
+        return send_file(output, mimetype='text/csv', as_attachment=True, download_name='products_sample.csv')
+
+    @app.route('/visionadmin/api/products/import-csv', methods=['POST'])
+    def visionadmin_api_import_products_csv():
+        """Import multiple products from CSV file."""
+        import csv
+        import io
+        try:
+            if 'file' not in request.files:
+                return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+            file = request.files['file']
+            if not file or not file.filename:
+                return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+            stream = io.StringIO(file.stream.read().decode('utf-8', errors='ignore'))
+            reader = csv.DictReader(stream)
+
+            user_id = session.get('user_id')
+            imported = 0
+
+            for row in reader:
+                clean_row = {k.strip().lower(): v.strip() for k, v in row.items() if k}
+                name = clean_row.get('name') or clean_row.get('display_name') or clean_row.get('product_name') or ''
+                sku = (clean_row.get('sku') or '').strip().upper()
+                if not name and not sku:
+                    continue
+
+                if not sku:
+                    sku = f"SKU-{secrets.token_hex(4).upper()}"
+                if not name:
+                    name = sku
+
+                # Brand lookup or creation
+                brand_name = clean_row.get('brand') or clean_row.get('brand_name') or ''
+                brand_id = None
+                if brand_name:
+                    b_slug = Brand.slugify(brand_name)
+                    existing_b = Brand.find_by_slug(b_slug)
+                    if existing_b:
+                        brand_id = existing_b['id']
+                    else:
+                        brand_id = Brand.create({'name': brand_name, 'slug': b_slug, 'status': 'active'}, user_id=user_id)
+
+                # Category lookup or creation
+                cat_name = clean_row.get('category') or clean_row.get('category_name') or ''
+                category_id = None
+                if cat_name:
+                    c_slug = Category.slugify(cat_name)
+                    existing_c = Category.find_by_slug(c_slug)
+                    if existing_c:
+                        category_id = existing_c['id']
+                    else:
+                        category_id = Category.create({'name_en': cat_name, 'slug': c_slug, 'status': 'active'}, user_id=user_id)
+
+                price = clean_row.get('price') or '0'
+                sale_price = clean_row.get('sale_price') or None
+                stock_qty = int(clean_row.get('stock_qty') or 10)
+                tire_size = clean_row.get('tire_size_label') or clean_row.get('tire_size') or ''
+                tire_speed = clean_row.get('tire_speed_rating') or None
+                tire_load = clean_row.get('tire_load_index') or None
+                tire_pattern = clean_row.get('tire_pattern') or None
+                vehicle_type = clean_row.get('vehicle_type') or 'car'
+                origin = clean_row.get('country_of_origin') or None
+
+                existing_p = Product.find_by_sku(sku)
+                if existing_p:
+                    Product.update(existing_p['id'], {
+                        'sku': sku,
+                        'display_name': name,
+                        'name_en': name,
+                        'brand_id': brand_id or existing_p.get('brand_id'),
+                        'category_id': category_id or existing_p.get('category_id'),
+                        'price': price,
+                        'sale_price': sale_price,
+                        'stock_qty': stock_qty,
+                        'stock_status': 'in_stock' if stock_qty > 0 else 'out_of_stock',
+                        'tire_size_label': tire_size or existing_p.get('tire_size_label'),
+                        'tire_speed_rating': tire_speed or existing_p.get('tire_speed_rating'),
+                        'tire_load_index': tire_load or existing_p.get('tire_load_index'),
+                        'tire_pattern': tire_pattern or existing_p.get('tire_pattern'),
+                        'vehicle_type': vehicle_type or existing_p.get('vehicle_type'),
+                        'country_of_origin': origin or existing_p.get('country_of_origin')
+                    }, user_id=user_id)
+                else:
+                    Product.create({
+                        'sku': sku,
+                        'display_name': name,
+                        'name_en': name,
+                        'brand_id': brand_id,
+                        'category_id': category_id,
+                        'price': price,
+                        'sale_price': sale_price,
+                        'stock_qty': stock_qty,
+                        'stock_status': 'in_stock' if stock_qty > 0 else 'out_of_stock',
+                        'tire_size_label': tire_size,
+                        'tire_speed_rating': tire_speed,
+                        'tire_load_index': tire_load,
+                        'tire_pattern': tire_pattern,
+                        'vehicle_type': vehicle_type,
+                        'country_of_origin': origin,
+                        'status': 'active'
+                    }, user_id=user_id)
+                imported += 1
+
+            return jsonify({
+                'success': True,
+                'imported': imported,
+                'message': f'Successfully imported {imported} products from CSV!'
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'Failed to process CSV: {str(e)}'}), 500
 
     @app.route('/visionadmin/api/products', methods=['GET'])
     @app.route('/visionadmin/api/v1/products', methods=['GET'])

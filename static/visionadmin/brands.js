@@ -16,6 +16,10 @@ function visionBrandsApp() {
     totalPages: 1,
     modalOpen: false,
     isEdit: false,
+    csvModalOpen: false,
+    selectedCsvFile: null,
+    csvUploading: false,
+    csvResult: null,
     form: {
       id: null,
       name: '',
@@ -204,6 +208,50 @@ function visionBrandsApp() {
       } catch (err) {
         console.error('Delete error:', err);
         this.showToast('Network error deleting brand.', 'error');
+      }
+    },
+
+    openCsvModal() {
+      this.csvModalOpen = true;
+      this.selectedCsvFile = null;
+      this.csvResult = null;
+      const el = document.getElementById('brand-csv-file-input');
+      if (el) el.value = '';
+    },
+
+    async submitCsvUpload() {
+      if (!this.selectedCsvFile) {
+        this.showToast('Please select a CSV file first.', 'error');
+        return;
+      }
+
+      this.csvUploading = true;
+      this.csvResult = null;
+      const fd = new FormData();
+      fd.append('file', this.selectedCsvFile);
+
+      try {
+        const res = await fetch('/visionadmin/api/brands/import-csv', {
+          method: 'POST',
+          body: fd
+        });
+        const data = await res.json();
+        this.csvResult = data;
+        if (data.success) {
+          this.showToast(data.message || `Successfully imported ${data.imported} brands!`, 'success');
+          this.loadBrands(1);
+          setTimeout(() => {
+            this.csvModalOpen = false;
+          }, 1800);
+        } else {
+          this.showToast(data.error || 'Failed to import CSV.', 'error');
+        }
+      } catch (err) {
+        console.error('CSV import error:', err);
+        this.csvResult = { success: false, message: 'Network error while importing CSV.' };
+        this.showToast('Network error while importing CSV.', 'error');
+      } finally {
+        this.csvUploading = false;
       }
     },
 

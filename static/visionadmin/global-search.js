@@ -40,7 +40,7 @@
         renderTypingState(query);
         searchDebounceTimeout = setTimeout(() => {
           performSearch(query);
-        }, 5000); // 5 seconds of inactivity before calling backend API
+        }, 250); // Fast 250ms debounce
       }
     });
 
