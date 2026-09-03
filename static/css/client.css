@@ -1336,19 +1336,35 @@ details .body p:last-child {
 }
 
 /* ---------------- OWNERSHIP NOTICE MODAL ---------------- */
+.notice-modal-overlay,
 .notice-modal {
   border: 0;
-  padding: 0;
-  background: transparent;
-  max-width: min(720px, calc(100vw - 32px));
-  width: 100%;
-  max-height: calc(100vh - 48px);
-  overflow: visible;
+  padding: 16px;
+  background: rgba(8, 12, 5, .72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .notice-modal::backdrop {
-  background: rgba(8, 12, 5, .62);
-  backdrop-filter: blur(3px)
+  background: rgba(8, 12, 5, .72);
+  backdrop-filter: blur(4px);
+}
+
+.notice-modal-dialog,
+.notice-modal .sheet {
+  max-width: min(720px, calc(100vw - 32px));
+  width: 100%;
+  margin: auto;
+  position: relative;
+  z-index: 10000;
 }
 
 .notice-modal .sheet {
@@ -1456,21 +1472,9 @@ details .body p:last-child {
   font-size: .93rem
 }
 
-/* Fallback when <dialog> is unsupported */
-.notice-modal.fb-open {
-  display: block;
-  position: fixed;
-  z-index: 200;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.fb-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(8, 12, 5, .62);
-  z-index: 190
+.notice-modal-overlay.open,
+.notice-modal.open {
+  display: flex !important;
 }
 
 html.modal-open,

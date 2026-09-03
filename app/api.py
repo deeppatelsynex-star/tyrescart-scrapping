@@ -2173,7 +2173,7 @@ def register_visionadmin_api_routes(app):
                             'id': sec_id,
                             'type': 'section',
                             'title': display_title,
-                            'slug': f"/en/{page_slug.lstrip('/')} ({sec_type})",
+                            'slug': f"/{page_slug.lstrip('/')} ({sec_type})",
                             'page_slug': page_slug,
                             'section_type': sec_type,
                             'snippet': snippet,
@@ -2209,7 +2209,7 @@ def register_visionadmin_api_routes(app):
                         'slug': pr.get('slug'),
                         'snippet': f"SKU: {pr['sku']} | Size: {pr.get('tire_size_label') or 'N/A'}",
                         'is_active': True,
-                        'url': f"/en/product/{pr.get('slug') or pr['id']}"
+                        'url': f"/product/{pr.get('slug') or pr['id']}"
                     })
         finally:
             conn.close()

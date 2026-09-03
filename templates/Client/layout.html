@@ -604,36 +604,47 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </main>
 
 <!-- ================= OWNERSHIP / NON-ASSOCIATION NOTICE (MODAL) ================= -->
-<dialog class="notice-modal" id="noticeModal" :class="{ 'fb-open': noticeModalOpen }" x-show="noticeModalOpen" x-transition.opacity.duration.250ms x-cloak aria-labelledby="notice-title">
-  <div class="sheet">
-    <div class="sheet-head">
-      <h2 id="notice-title">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L3 6v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-        Important notice regarding ownership of this domain
-      </h2>
-      <p class="stamp">Last updated: [January 2026]</p>
-      <button type="button" class="notice-close" id="noticeClose" @click="noticeModalOpen = false" aria-label="Close notice">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-      </button>
-    </div>
+<div class="notice-modal-overlay" 
+     id="noticeModal" 
+     x-show="noticeModalOpen" 
+     x-transition.opacity.duration.200ms
+     x-cloak 
+     @keydown.escape.window="noticeModalOpen = false"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="notice-title"
+     style="display:none;">
+  <div class="notice-modal-dialog" @click.stop>
+    <div class="sheet">
+      <div class="sheet-head">
+        <h2 id="notice-title">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2L3 6v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          Important notice regarding ownership of this domain
+        </h2>
+        <p class="stamp">Last updated: [January 2026]</p>
+        <button type="button" class="notice-close" id="noticeClose" @click="noticeModalOpen = false" aria-label="Close notice">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
 
-    <div class="sheet-body">
-      <p>The domain <strong>tyresvision.com</strong> was acquired by <strong>DSP Trade Hub FZ-LLC</strong> in <strong>[January 2026]</strong> through an arm&rsquo;s-length purchase of the domain name. The website now published at this address is owned and operated solely by DSP Trade Hub FZ-LLC.</p>
+      <div class="sheet-body">
+        <p>The domain <strong>tyresvision.com</strong> was acquired by <strong>DSP Trade Hub FZ-LLC</strong> in <strong>[January 2026]</strong> through an arm&rsquo;s-length purchase of the domain name. The website now published at this address is owned and operated solely by DSP Trade Hub FZ-LLC.</p>
 
-      <p>DSP Trade Hub FZ-LLC is a separate and independent legal entity. It has <strong>no association, affiliation, partnership, joint venture, agency, successor relationship or common ownership</strong> with any person, firm or company that previously owned this domain or operated a website or business under this or any similar name.</p>
+        <p>DSP Trade Hub FZ-LLC is a separate and independent legal entity. It has <strong>no association, affiliation, partnership, joint venture, agency, successor relationship or common ownership</strong> with any person, firm or company that previously owned this domain or operated a website or business under this or any similar name.</p>
 
-      <p>The transaction was limited to the domain name itself. <strong>No business, trading operation, goodwill, contracts, stock, customer accounts, employees, obligations or liabilities of any former operator were acquired or assumed</strong> by DSP Trade Hub FZ-LLC. Accordingly, DSP Trade Hub FZ-LLC does not accept and is not responsible for any debt, invoice, order, deposit, warranty, guarantee, refund, service commitment, claim or other obligation arising from the activities of any former operator, whether arising before or after the date of acquisition.</p>
+        <p>The transaction was limited to the domain name itself. <strong>No business, trading operation, goodwill, contracts, stock, customer accounts, employees, obligations or liabilities of any former operator were acquired or assumed</strong> by DSP Trade Hub FZ-LLC. Accordingly, DSP Trade Hub FZ-LLC does not accept and is not responsible for any debt, invoice, order, deposit, warranty, guarantee, refund, service commitment, claim or other obligation arising from the activities of any former operator, whether arising before or after the date of acquisition.</p>
 
-      <p>Any enquiry, claim or correspondence relating to a transaction, order or account with a former operator of this domain should be directed to that party, as DSP Trade Hub FZ-LLC holds no records of, and has no authority over, such matters.</p>
+        <p>Any enquiry, claim or correspondence relating to a transaction, order or account with a former operator of this domain should be directed to that party, as DSP Trade Hub FZ-LLC holds no records of, and has no authority over, such matters.</p>
 
-      <p>For any matter concerning TyresVision as operated by DSP Trade Hub FZ-LLC, please contact us on <br> <a href="tel:+971505069575" style="color:var(--green-deep);font-weight:700">+971 50 506 9575</a>.</p>
-    </div>
+        <p>For any matter concerning TyresVision as operated by DSP Trade Hub FZ-LLC, please contact us on <br> <a href="tel:+971505069575" style="color:var(--green-deep);font-weight:700">+971 50 506 9575</a>.</p>
+      </div>
 
-    <div class="sheet-foot">
-      <button type="button" class="btn btn-call" id="noticeClose2" @click="noticeModalOpen = false">Close</button>
+      <div class="sheet-foot">
+        <button type="button" class="btn btn-call" id="noticeClose2" @click="noticeModalOpen = false">Close</button>
+      </div>
     </div>
   </div>
-</dialog>
+</div>
 
 <!-- ================= FOOTER ================= -->
 <footer>

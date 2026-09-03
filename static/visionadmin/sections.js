@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
       pageSectionsTitle.textContent = currentPageSlug === 'home' ? 'Home Page Sections' : 'Page Sections';
     }
     if (linkViewLivePage) {
-      linkViewLivePage.href = currentPageSlug === 'home' ? '/en' : (currentPageSlug === 'about-us' ? '/en/about-us' : `/en/${currentPageSlug}`);
+      linkViewLivePage.href = currentPageSlug === 'home' ? '/' : (currentPageSlug === 'about-us' ? '/about-us' : `/${currentPageSlug}`);
     }
   }
 

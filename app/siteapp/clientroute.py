@@ -78,12 +78,8 @@ def home():
 @site_bp.route('/en/')
 @site_bp.route('/en/home')
 def home_en():
-    """Client storefront home landing page in English."""
-    session['site_locale'] = 'en'
-    sections = _get_home_sections('en')
-    resp = make_response(render_template('Client/Home.html', sections=sections, locale='en'))
-    resp.set_cookie('site_locale', 'en', max_age=31536000, path='/')
-    return resp
+    """Redirect legacy /en to root /."""
+    return redirect('/', code=301)
 
 
 @site_bp.route('/ar')
@@ -104,13 +100,8 @@ def home_ar():
 @site_bp.route('/en/blogs')
 @site_bp.route('/en/blogs/')
 def blog_en():
-    """English blog listing route: /en/blog."""
-    session['site_locale'] = 'en'
-    categories = Blog.distinct_categories()
-    selected_category = (request.args.get('category') or '').strip()
-    resp = make_response(render_template('Client/Blog.html', locale='en', categories=categories, selected_category=selected_category))
-    resp.set_cookie('site_locale', 'en', max_age=31536000, path='/')
-    return resp
+    """Redirect legacy /en/blog to /blog."""
+    return redirect('/blog', code=301)
 
 
 @site_bp.route('/ar/blog')
@@ -143,9 +134,8 @@ def blog_default():
 @site_bp.route('/en/blog/<slug>')
 @site_bp.route('/en/blogs/<slug>')
 def blog_detail_en(slug):
-    """English single blog detail route: /en/blog/<slug>."""
-    session['site_locale'] = 'en'
-    return _render_blog_detail(slug, 'en')
+    """Redirect legacy /en/blog/<slug> to /blog/<slug>."""
+    return redirect(f'/blog/{slug}', code=301)
 
 
 @site_bp.route('/ar/blog/<slug>')
@@ -434,13 +424,17 @@ def _build_about_us_context(page, locale='en'):
 
 
 @site_bp.route('/about-us')
-@site_bp.route('/en/about-us')
 def about_us():
-    locale = 'en' if request.path.startswith('/en') else _get_locale()
+    locale = _get_locale()
     page = Page.find_by_slug('about-us')
     resp = make_response(render_template('Client/AboutUs.html', page=page, slug='about-us', locale=locale))
     resp.set_cookie('site_locale', locale, max_age=31536000, path='/')
     return resp
+
+
+@site_bp.route('/en/about-us')
+def about_us_en_redirect():
+    return redirect('/about-us', code=301)
 
 
 @site_bp.route('/ar/about-us')
@@ -454,16 +448,12 @@ def about_us_ar():
 @site_bp.route('/en/page/<slug>')
 @site_bp.route('/en/<slug>')
 def page_detail_en(slug):
-    """Generic English CMS page reader with dynamic sections support."""
-    if slug in ('tcsadmin', 'visionadmin', 'visonadmin', 'admin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico', 'en', 'ar', 'blog', 'blogs'):
-        abort(404)
-    page = Page.find_by_slug(slug)
-    if page:
-        return render_template('Client/AboutUs.html', page=page, slug=slug, locale='en')
-    blog = Blog.find_by_slug(slug)
-    if blog:
-        return redirect(f'/en/blog/{slug}')
-    abort(404)
+    """Redirect legacy /en/<slug> to /<slug>."""
+    if slug in ('blog', 'blogs'):
+        return redirect('/blog', code=301)
+    if slug == 'about-us':
+        return redirect('/about-us', code=301)
+    return redirect(f'/{slug}', code=301)
 
 
 @site_bp.route('/ar/page/<slug>')
