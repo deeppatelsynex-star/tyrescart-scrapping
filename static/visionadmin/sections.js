@@ -1778,52 +1778,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setLocaleTab(locale) {
-    currentLocaleTab = locale;
-    if (locale === 'en') {
-      tabEn.className = 'px-3 py-1 rounded-lg bg-white text-[#0E1108] shadow-2xs transition';
-      tabAr.className = 'px-3 py-1 rounded-lg text-slate-500 hover:text-[#0E1108] transition';
-
-      document.getElementById('wrap-title-en').classList.remove('hidden');
-      document.getElementById('wrap-title-ar').classList.add('hidden');
-      document.getElementById('wrap-subtitle-en').classList.remove('hidden');
-      document.getElementById('wrap-subtitle-ar').classList.add('hidden');
-      const metaTitleEnWrap = document.getElementById('wrap-meta-title-en');
-      const metaTitleArWrap = document.getElementById('wrap-meta-title-ar');
-      const metaDescEnWrap = document.getElementById('wrap-meta-desc-en');
-      const metaDescArWrap = document.getElementById('wrap-meta-desc-ar');
-      if (metaTitleEnWrap) metaTitleEnWrap.classList.remove('hidden');
-      if (metaTitleArWrap) metaTitleArWrap.classList.add('hidden');
-      if (metaDescEnWrap) metaDescEnWrap.classList.remove('hidden');
-      if (metaDescArWrap) metaDescArWrap.classList.add('hidden');
-      document.getElementById('wrap-content-en').classList.remove('hidden');
-      document.getElementById('wrap-content-ar').classList.add('hidden');
-      document.getElementById('wrap-btn-text-en').classList.remove('hidden');
-      document.getElementById('wrap-btn-text-ar').classList.add('hidden');
-    } else {
-      tabAr.className = 'px-3 py-1 rounded-lg bg-white text-[#0E1108] shadow-2xs transition';
-      tabEn.className = 'px-3 py-1 rounded-lg text-slate-500 hover:text-[#0E1108] transition';
-
-      document.getElementById('wrap-title-ar').classList.remove('hidden');
-      document.getElementById('wrap-title-en').classList.add('hidden');
-      document.getElementById('wrap-subtitle-ar').classList.remove('hidden');
-      document.getElementById('wrap-subtitle-en').classList.add('hidden');
-      const metaTitleEnWrap = document.getElementById('wrap-meta-title-en');
-      const metaTitleArWrap = document.getElementById('wrap-meta-title-ar');
-      const metaDescEnWrap = document.getElementById('wrap-meta-desc-en');
-      const metaDescArWrap = document.getElementById('wrap-meta-desc-ar');
-      if (metaTitleArWrap) metaTitleArWrap.classList.remove('hidden');
-      if (metaTitleEnWrap) metaTitleEnWrap.classList.add('hidden');
-      if (metaDescArWrap) metaDescArWrap.classList.remove('hidden');
-      if (metaDescEnWrap) metaDescEnWrap.classList.add('hidden');
-      document.getElementById('wrap-content-ar').classList.remove('hidden');
-      document.getElementById('wrap-content-en').classList.add('hidden');
-      document.getElementById('wrap-btn-text-ar').classList.remove('hidden');
-      document.getElementById('wrap-btn-text-en').classList.add('hidden');
-    }
+    currentLocaleTab = 'en';
+    const titleEnWrap = document.getElementById('wrap-title-en');
+    if (titleEnWrap) titleEnWrap.classList.remove('hidden');
+    const subEnWrap = document.getElementById('wrap-subtitle-en');
+    if (subEnWrap) subEnWrap.classList.remove('hidden');
+    const contentEnWrap = document.getElementById('wrap-content-en');
+    if (contentEnWrap) contentEnWrap.classList.remove('hidden');
+    const btnTextEnWrap = document.getElementById('wrap-btn-text-en');
+    if (btnTextEnWrap) btnTextEnWrap.classList.remove('hidden');
   }
 
-  tabEn.addEventListener('click', () => setLocaleTab('en'));
-  tabAr.addEventListener('click', () => setLocaleTab('ar'));
+  if (tabEn) tabEn.addEventListener('click', () => setLocaleTab('en'));
 
   imageFileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -1901,21 +1867,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (formPageSlug) formPageSlug.value = sec.page_slug || currentPageSlug;
 
     formTitleEn.value = typeof sec.section_title === 'object' ? (sec.section_title.en || '') : (sec.section_title || '');
-    formTitleAr.value = typeof sec.section_title === 'object' ? (sec.section_title.ar || '') : '';
+    if (formTitleAr) formTitleAr.value = '';
 
     formSubtitleEn.value = typeof sec.section_subtitle === 'object' ? (sec.section_subtitle.en || '') : (sec.section_subtitle || '');
-    formSubtitleAr.value = typeof sec.section_subtitle === 'object' ? (sec.section_subtitle.ar || '') : '';
+    if (formSubtitleAr) formSubtitleAr.value = '';
 
     if (formMetaTitleEn) formMetaTitleEn.value = typeof sec.meta_title === 'object' ? (sec.meta_title?.en || '') : (sec.meta_title || '');
-    if (formMetaTitleAr) formMetaTitleAr.value = typeof sec.meta_title === 'object' ? (sec.meta_title?.ar || '') : '';
+    if (formMetaTitleAr) formMetaTitleAr.value = '';
 
     if (formMetaDescEn) formMetaDescEn.value = typeof sec.meta_description === 'object' ? (sec.meta_description?.en || '') : (sec.meta_description || '');
-    if (formMetaDescAr) formMetaDescAr.value = typeof sec.meta_description === 'object' ? (sec.meta_description?.ar || '') : '';
+    if (formMetaDescAr) formMetaDescAr.value = '';
 
     const rawContentEn = typeof sec.content === 'object' ? (sec.content.en || '') : (sec.content || '');
-    const rawContentAr = typeof sec.content === 'object' ? (sec.content.ar || '') : '';
     setEditorContent('form-content-en', rawContentEn);
-    setEditorContent('form-content-ar', rawContentAr);
+    if (document.getElementById('form-content-ar')) setEditorContent('form-content-ar', '');
 
     formImageUrl.value = sec.image || '';
     updateImagePreview(sec.image || '');
@@ -1924,7 +1889,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (imgPosRadio) imgPosRadio.checked = true;
 
     formBtnTextEn.value = typeof sec.button_text === 'object' ? (sec.button_text.en || '') : (sec.button_text || '');
-    formBtnTextAr.value = typeof sec.button_text === 'object' ? (sec.button_text.ar || '') : '';
+    if (formBtnTextAr) formBtnTextAr.value = '';
     formBtnUrl.value = sec.button_url || '';
 
     formSortOrder.value = sec.sort_order || 1;
@@ -2012,8 +1977,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const titleEn = formTitleEn.value.trim();
-    const titleAr = formTitleAr.value.trim() || titleEn;
-    if (!titleEn && !titleAr) {
+    const titleAr = titleEn;
+    if (!titleEn) {
       showToast('Section title is required.', 'error');
       setLocaleTab('en');
       formTitleEn.focus();
@@ -2021,19 +1986,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const subtitleEn = formSubtitleEn.value.trim();
-    const subtitleAr = formSubtitleAr.value.trim() || subtitleEn;
+    const subtitleAr = subtitleEn;
 
     const metaTitleEn = formMetaTitleEn ? formMetaTitleEn.value.trim() : '';
-    const metaTitleAr = formMetaTitleAr ? formMetaTitleAr.value.trim() : '';
+    const metaTitleAr = metaTitleEn;
 
     const metaDescEn = formMetaDescEn ? formMetaDescEn.value.trim() : '';
-    const metaDescAr = formMetaDescAr ? formMetaDescAr.value.trim() : '';
+    const metaDescAr = metaDescEn;
 
     const contentEn = getEditorContent('form-content-en').trim();
-    const contentAr = getEditorContent('form-content-ar').trim() || contentEn;
+    const contentAr = contentEn;
 
     const btnTextEn = formBtnTextEn.value.trim();
-    const btnTextAr = formBtnTextAr.value.trim() || btnTextEn;
+    const btnTextAr = btnTextEn;
     const btnUrl = formBtnUrl.value.trim();
 
     const imgPos = document.querySelector('input[name="image_position"]:checked')?.value || 'right';

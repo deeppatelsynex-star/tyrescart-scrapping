@@ -613,12 +613,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnSaveCat?.addEventListener('click', async () => {
     const name_en = catNameEnInput?.value.trim();
-    const name_ar = catNameArInput?.value.trim();
+    const name_ar = name_en;
     const slug = catSlugInput?.value.trim();
     const editId = catEditIdInput?.value;
 
     if (!name_en) {
-      alert('Please enter an English category name.');
+      alert('Please enter a category name.');
       catNameEnInput?.focus();
       return;
     }
@@ -654,7 +654,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (catEditIdInput) catEditIdInput.value = cat.id;
     if (catNameEnInput) catNameEnInput.value = cat.name_en || '';
-    if (catNameArInput) catNameArInput.value = cat.name_ar || '';
     if (catSlugInput) catSlugInput.value = cat.slug || '';
     if (catFormTitle) catFormTitle.textContent = `✏️ Edit Category: ${cat.name_en}`;
     if (btnSaveCatText) btnSaveCatText.textContent = 'Update Category';
@@ -693,28 +692,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modalTitle) modalTitle.textContent = isEdit ? 'Edit Blog Article' : 'Create New Blog Article';
     if (saveBtnText) saveBtnText.textContent = isEdit ? 'Save Changes' : 'Publish Article';
 
-    document.querySelector('.locale-tab[data-locale="en"]')?.click();
-
     if (isEdit && blog) {
       setVal('title_en', (typeof blog.title === 'object' ? blog.title?.en : blog.title) || '');
-      setVal('title_ar', (typeof blog.title === 'object' ? blog.title?.ar : '') || '');
       setVal('slug', blog.slug || '');
       setVal('status', blog.status || 'draft');
       setVal('short_description_en', (typeof blog.short_description === 'object' ? blog.short_description?.en : blog.short_description) || '');
-      setVal('short_description_ar', (typeof blog.short_description === 'object' ? blog.short_description?.ar : '') || '');
       setVal('meta_title_en', (typeof blog.meta_title === 'object' ? blog.meta_title?.en : '') || '');
-      setVal('meta_title_ar', (typeof blog.meta_title === 'object' ? blog.meta_title?.ar : '') || '');
       setVal('meta_desc_en', (typeof blog.meta_desc === 'object' ? blog.meta_desc?.en : '') || '');
-      setVal('meta_desc_ar', (typeof blog.meta_desc === 'object' ? blog.meta_desc?.ar : '') || '');
 
       loadCategories(blog.category_name || null, blog.category_id || null);
       setImagePreview(blog.image || '');
 
       const contentEnVal = (typeof blog.content === 'object' ? blog.content?.en : blog.content) || '';
-      const contentArVal = (typeof blog.content === 'object' ? blog.content?.ar : '') || '';
-
       setEditorContent('blog_content_en', contentEnVal);
-      setEditorContent('blog_content_ar', contentArVal);
 
       // Populate FAQ items
       blogFaqItems = Array.isArray(blog.faqs) ? JSON.parse(JSON.stringify(blog.faqs)) : [];
@@ -726,7 +716,6 @@ document.addEventListener('DOMContentLoaded', () => {
       setImagePreview('');
 
       setEditorContent('blog_content_en', '');
-      setEditorContent('blog_content_ar', '');
 
       blogFaqItems = [];
       renderFaqItems();
@@ -771,12 +760,10 @@ document.addEventListener('DOMContentLoaded', () => {
   saveBtn?.addEventListener('click', async () => {
     const editId = editIdInput?.value || '';
     const title_en = getVal('title_en');
-    const title_ar = getVal('title_ar');
     const slug = getVal('slug');
 
     if (!title_en) {
-      alert('Please provide an English article title.');
-      document.querySelector('.locale-tab[data-locale="en"]')?.click();
+      alert('Please provide an article title.');
       document.getElementById('title_en')?.focus();
       return;
     }
@@ -791,24 +778,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const content_en = getEditorContent('blog_content_en');
-    const content_ar = getEditorContent('blog_content_ar');
+    const short_desc = getVal('short_description_en');
+    const meta_title = getVal('meta_title_en');
+    const meta_desc = getVal('meta_desc_en');
 
     // Sync FAQ repeater values
     syncFaqFromDOM();
     const validFaqs = blogFaqItems.filter(f => {
-      const qEn = (f?.question?.en || '').trim();
-      const qAr = (f?.question?.ar || '').trim();
-      const aEn = (f?.answer?.en || '').trim();
-      const aAr = (f?.answer?.ar || '').trim();
-      return qEn || qAr || aEn || aAr;
+      const qEn = (f?.question?.en || f?.question || '').trim();
+      const aEn = (f?.answer?.en || f?.answer || '').trim();
+      return qEn || aEn;
     });
 
     const payload = {
-      title: { en: title_en, ar: title_ar },
-      content: { en: content_en, ar: content_ar },
+      title: { en: title_en, ar: title_en },
+      content: { en: content_en, ar: content_en },
       short_description: {
-        en: getVal('short_description_en'),
-        ar: getVal('short_description_ar')
+        en: short_desc,
+        ar: short_desc
       },
       slug: slug,
       category_id: (document.getElementById('category_name')?.selectedOptions[0]?.dataset?.id) ? parseInt(document.getElementById('category_name').selectedOptions[0].dataset.id) : null,
@@ -816,12 +803,12 @@ document.addEventListener('DOMContentLoaded', () => {
       image: imageInput ? imageInput.value.trim() || null : null,
       status: getVal('status') || 'draft',
       meta_title: {
-        en: getVal('meta_title_en'),
-        ar: getVal('meta_title_ar')
+        en: meta_title,
+        ar: meta_title
       },
       meta_desc: {
-        en: getVal('meta_desc_en'),
-        ar: getVal('meta_desc_ar')
+        en: meta_desc,
+        ar: meta_desc
       },
       faqs: validFaqs
     };

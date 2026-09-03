@@ -95,7 +95,7 @@
       <!-- Dynamic 4-Column Card Grid (Alpine-powered) -->
       <div x-show="!loading && !error && blogs.length > 0" class="blog-grid-4col" x-cloak>
         <template x-for="blog in blogs" :key="blog.id || blog.slug">
-          <a class="post-card" :href="blog.url || ((locale === 'ar' ? '/ar/blog/' : '/blog/') + encodeURIComponent(blog.slug))" :aria-label="blog.title">
+          <a class="post-card" :href="blog.url || ('/blog/' + encodeURIComponent(blog.slug))" :aria-label="blog.title">
             <div class="post-card-thumb">
               <!-- Date Badge -->
               <span class="post-date-pill" x-text="blog.published_at || '24 Aug 2026'"></span>

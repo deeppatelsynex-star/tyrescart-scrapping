@@ -86,12 +86,8 @@ def home_en():
 @site_bp.route('/ar/')
 @site_bp.route('/ar/home')
 def home_ar():
-    """Client storefront home landing page (EN only for now)."""
-    session['site_locale'] = 'en'
-    sections = _get_home_sections('en')
-    resp = make_response(render_template('Client/Home.html', sections=sections, locale='en'))
-    resp.set_cookie('site_locale', 'en', max_age=31536000, path='/')
-    return resp
+    """Redirect legacy /ar to root /."""
+    return redirect('/', code=301)
 
 
 # --- BLOG LISTING ROUTES ---
@@ -109,13 +105,8 @@ def blog_en():
 @site_bp.route('/ar/blogs')
 @site_bp.route('/ar/blogs/')
 def blog_ar():
-    """Arabic blog listing route: /ar/blog."""
-    session['site_locale'] = 'ar'
-    categories = Blog.distinct_categories()
-    selected_category = (request.args.get('category') or '').strip()
-    resp = make_response(render_template('Client/Blog.html', locale='ar', categories=categories, selected_category=selected_category))
-    resp.set_cookie('site_locale', 'ar', max_age=31536000, path='/')
-    return resp
+    """Redirect legacy /ar/blog to /blog."""
+    return redirect('/blog', code=301)
 
 
 @site_bp.route('/blog')
@@ -141,9 +132,8 @@ def blog_detail_en(slug):
 @site_bp.route('/ar/blog/<slug>')
 @site_bp.route('/ar/blogs/<slug>')
 def blog_detail_ar(slug):
-    """Arabic single blog detail route: /ar/blog/<slug>."""
-    session['site_locale'] = 'ar'
-    return _render_blog_detail(slug, 'ar')
+    """Redirect legacy /ar/blog/<slug> to /blog/<slug>."""
+    return redirect(f'/blog/{slug}', code=301)
 
 
 @site_bp.route('/blog/<slug>')
@@ -172,14 +162,14 @@ def _render_blog_detail(slug, locale):
                     'title': all_published[idx - 1].get_title(locale),
                     'slug': all_published[idx - 1].slug,
                     'cover_image_url': all_published[idx - 1].image or '/static/assets/images/online-tyres-shop-dubai.png',
-                    'url': f"/{locale}/blog/{all_published[idx - 1].slug}" if locale in ('en', 'ar') else f"/blog/{all_published[idx - 1].slug}"
+                    'url': f"/blog/{all_published[idx - 1].slug}"
                 }
             if idx < len(all_published) - 1:
                 next_post = {
                     'title': all_published[idx + 1].get_title(locale),
                     'slug': all_published[idx + 1].slug,
                     'cover_image_url': all_published[idx + 1].image or '/static/assets/images/online-tyres-shop-dubai.png',
-                    'url': f"/{locale}/blog/{all_published[idx + 1].slug}" if locale in ('en', 'ar') else f"/blog/{all_published[idx + 1].slug}"
+                    'url': f"/blog/{all_published[idx + 1].slug}"
                 }
             break
 
@@ -189,7 +179,7 @@ def _render_blog_detail(slug, locale):
             'title': other_blogs[0].get_title(locale),
             'slug': other_blogs[0].slug,
             'cover_image_url': other_blogs[0].image or '/static/assets/images/online-tyres-shop-dubai.png',
-            'url': f"/{locale}/blog/{other_blogs[0].slug}"
+            'url': f"/blog/{other_blogs[0].slug}"
         }
 
     # Related posts for sidebar
@@ -200,7 +190,7 @@ def _render_blog_detail(slug, locale):
             'slug': b.slug,
             'cover_image_url': b.image or '/static/assets/images/online-tyres-shop-dubai.png',
             'published_at': b.published_at.strftime('%d-%m-%Y') if b.published_at else '24-08-2026',
-            'url': f"/{locale}/blog/{b.slug}" if locale in ('en', 'ar') else f"/blog/{b.slug}"
+            'url': f"/blog/{b.slug}"
         })
 
     # Dynamic Sidebar categories from DB
@@ -439,10 +429,8 @@ def about_us_en_redirect():
 
 @site_bp.route('/ar/about-us')
 def about_us_ar():
-    page = Page.find_by_slug('about-us')
-    resp = make_response(render_template('Client/AboutUs.html', page=page, slug='about-us', locale='ar'))
-    resp.set_cookie('site_locale', 'ar', max_age=31536000, path='/')
-    return resp
+    """Redirect legacy /ar/about-us to /about-us."""
+    return redirect('/about-us', code=301)
 
 
 @site_bp.route('/en/page/<slug>')
@@ -459,16 +447,12 @@ def page_detail_en(slug):
 @site_bp.route('/ar/page/<slug>')
 @site_bp.route('/ar/<slug>')
 def page_detail_ar(slug):
-    """Generic Arabic CMS page reader with dynamic sections support."""
-    if slug in ('tcsadmin', 'visionadmin', 'visonadmin', 'admin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico', 'en', 'ar', 'blog', 'blogs'):
-        abort(404)
-    page = Page.find_by_slug(slug)
-    if page:
-        return render_template('Client/AboutUs.html', page=page, slug=slug, locale='ar')
-    blog = Blog.find_by_slug(slug)
-    if blog:
-        return redirect(f'/ar/blog/{slug}')
-    abort(404)
+    """Redirect legacy /ar/<slug> to clean canonical URL."""
+    if slug in ('blog', 'blogs'):
+        return redirect('/blog', code=301)
+    if slug == 'about-us':
+        return redirect('/about-us', code=301)
+    return redirect(f'/{slug}', code=301)
 
 
 @site_bp.route('/page/<slug>')

@@ -319,7 +319,7 @@
           var targetEl = document.getElementById(key.substring(1));
           if (targetEl) {
             var path = window.location.pathname;
-            var isHome = path === '/' || path === '/ar' || path === '/home';
+            var isHome = path === '/' || path === '/home';
             if (isHome) {
               e.preventDefault();
               history.pushState(null, null, key);
@@ -336,7 +336,7 @@
         setActive(window.location.hash);
       } else {
         var path = window.location.pathname;
-        var isHome = path === '/' || path === '/ar' || path === '/home';
+        var isHome = path === '/' || path === '/home';
         if (isHome && window.scrollY < 200) {
           setActive('/');
         }
