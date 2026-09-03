@@ -72,8 +72,10 @@
     }
     document.documentElement.classList.add('modal-open');
     document.body.classList.add('modal-open');
+    var sheetBody = m ? m.querySelector('.sheet-body') : null;
+    if (sheetBody) sheetBody.scrollTop = 0;
     var closeBtn = document.getElementById('noticeClose');
-    if (closeBtn) closeBtn.focus();
+    if (closeBtn && window.innerWidth > 820) closeBtn.focus();
   };
 
   window.closeNotice = function(e) {
