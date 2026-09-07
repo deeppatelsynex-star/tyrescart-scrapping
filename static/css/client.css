@@ -1,26 +1,50 @@
 /* ============================================================
-   BRAND TOKENS — TyresVision
-   Green sampled from the logo. Change --green / --green-deep
-   here and the whole page follows.
+   TYREVISION UAE — OFFICIAL BRAND COLOR SYSTEM & DESIGN TOKENS
+   Official Color Palette, Signature Gradients & Tokens
    ============================================================ */
 :root {
-  --green: #58B31B;
-  /* logo green */
-  --green-bright: #68C927;
-  /* hover / highlights */
-  --green-deep: #35760F;
-  /* accessible green for text on white */
-  --green-tint: #EFF9E6;
-  /* icon wells */
-  --ink: #0E1108;
-  /* logo black */
-  --ink-2: #191F12;
-  --slate: #4C5548;
-  --line: #E3E7DE;
+  /* Primary Brand Blues */
+  --blue-primary: #0B4F9C;
+  --blue-brand: #1C5FAE;
+  --blue-bright: #168BEA;
+  --blue-cyan: #29C7F6;
+
+  /* Conversion & Actions */
+  --whatsapp: #25D366;
+  --whatsapp-hover: #20BA5A;
+  --call-pill-dark: #061E38;
+  --star-gold: #F59E0B;
+
+  /* Dark Backgrounds & Shades */
+  --navy-deep: #001633;
+  --navy-primary: #021E45;
+  --navy-dark: #062B5C;
+
+  /* Light Surfaces & Typography */
+  --surface-main: #FFFFFF;
+  --blue-soft: #F4F9FD;
+  --blue-light: #EAF5FF;
+  --text-dark: #10243E;
+  --text-muted: #64748B;
+  --line-color: #E2E8F0;
+
+  /* Signature Brand Gradients */
+  --gradient-hero: linear-gradient(135deg, #001633 0%, #021E45 45%, #0B4F9C 100%);
+  --gradient-accent: linear-gradient(135deg, #001633 0%, #062B5C 45%, #0B4F9C 75%, #168BEA 100%);
+
+  /* Backwards-compatible Semantic Aliases */
+  --green: #0B4F9C;
+  --green-bright: #168BEA;
+  --green-deep: #1C5FAE;
+  --green-tint: #EAF5FF;
+  --ink: #001633;
+  --ink-2: #021E45;
+  --slate: #4A5568;
+  --line: #E2E8F0;
   --bg: #FFFFFF;
-  --bg-soft: #F6F8F3;
+  --bg-soft: #F4F9FD;
   --radius: 14px;
-  --shadow: 0 1px 2px rgba(14, 17, 8, .06), 0 8px 24px rgba(14, 17, 8, .09);
+  --shadow: 0 1px 2px rgba(0, 22, 51, .06), 0 8px 24px rgba(0, 22, 51, .09);
   --maxw: 1280px;
   --font: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
 }
@@ -155,7 +179,7 @@ section {
 
 .logo .swoosh {
   flex: 0 0 auto;
-  color: var(--green)
+  color: var(--blue-cyan, #29C7F6);
 }
 
 .logo .word {
@@ -171,12 +195,12 @@ section {
 
 .logo .t1 {
   font-family: Georgia, "Times New Roman", serif;
-  color: var(--ink)
+  color: var(--text-dark, #10243E);
 }
 
 .logo .t2 {
-  color: var(--green);
-  letter-spacing: -.03em
+  color: var(--blue-primary, #0B4F9C);
+  letter-spacing: -.03em;
 }
 
 .logo .oring {
@@ -184,7 +208,7 @@ section {
   width: .72em;
   height: .72em;
   border-radius: 50%;
-  border: .13em solid var(--green);
+  border: .13em solid var(--blue-primary, #0B4F9C);
   position: relative;
   margin: 0 .02em;
   transform: translateY(-.02em);
@@ -195,15 +219,27 @@ section {
   position: absolute;
   inset: .14em;
   border-radius: 50%;
-  background: var(--green);
+  background: var(--blue-cyan, #29C7F6);
 }
 
 .logo.on-dark .t1 {
-  color: #fff
+  color: #fff;
+}
+
+.logo.on-dark .t2 {
+  color: var(--blue-cyan, #29C7F6);
+}
+
+.logo.on-dark .oring {
+  border-color: var(--blue-cyan, #29C7F6);
+}
+
+.logo.on-dark .oring::after {
+  background: var(--blue-bright, #168BEA);
 }
 
 .logo.lg .word {
-  font-size: 1.8rem
+  font-size: 1.8rem;
 }
 
 .tagline {
@@ -256,24 +292,26 @@ section {
   flex: 0 0 auto
 }
 
-/* WhatsApp = brand green, black label (8:1 contrast) */
+/* WhatsApp CTA = brand WhatsApp green (#25D366), Dark Pill label */
 .btn-wa {
-  background: var(--green);
-  color: #0B1505
+  background: var(--whatsapp, #25D366);
+  color: #061E38;
 }
 
 .btn-wa:hover {
-  background: var(--green-bright)
+  background: var(--whatsapp-hover, #20BA5A);
+  color: #061E38;
 }
 
-/* Call = brand black */
+/* Call Button = Call Pill Dark (#061E38) */
 .btn-call {
-  background: var(--ink);
-  color: #fff
+  background: var(--call-pill-dark, #061E38);
+  color: #fff;
 }
 
 .btn-call:hover {
-  background: #000
+  background: var(--navy-deep, #001633);
+  color: #fff;
 }
 
 .btn-ghost {
@@ -481,8 +519,8 @@ header {
 /* ---------------- HERO ---------------- */
 .hero {
   background:
-    radial-gradient(980px 440px at 86% -10%, rgba(88, 179, 27, .30), transparent 62%),
-    linear-gradient(168deg, var(--ink) 0%, var(--ink-2) 100%);
+    radial-gradient(980px 440px at 86% -10%, rgba(41, 199, 246, 0.20), transparent 62%),
+    linear-gradient(135deg, #001633 0%, #021E45 45%, #0B4F9C 100%);
   color: #fff;
   position: relative;
   overflow: hidden;
@@ -494,12 +532,12 @@ header {
   position: absolute;
   inset: auto 0 0 0;
   height: 5px;
-  background: repeating-linear-gradient(90deg, var(--green) 0 26px, #fff 26px 52px);
+  background: repeating-linear-gradient(90deg, var(--blue-cyan, #29C7F6) 0 26px, #fff 26px 52px);
   opacity: .9;
 }
 
 .hero .eyebrow {
-  color: #96E05C
+  color: var(--blue-cyan, #29C7F6);
 }
 
 .hero h1 {
@@ -510,7 +548,7 @@ header {
 
 .hero h1 em {
   font-style: normal;
-  color: var(--green-bright)
+  color: var(--blue-cyan, #29C7F6);
 }
 
 .hero .lead {
@@ -858,9 +896,9 @@ header {
   min-width: 720px;
 }
 
-/* Table Header */
+/* Table Header — #062B5C (--navy-dark) from TyreVision UAE Brand System */
 .price-table thead th {
-  background: #58B31B;
+  background: var(--navy-dark, #062B5C);
   color: #FFFFFF;
   padding: 16px 20px;
   font-weight: 800;
@@ -886,13 +924,14 @@ header {
 }
 
 .th-content svg {
-  opacity: 0.92;
+  color: var(--blue-cyan, #29C7F6);
+  opacity: 0.95;
   flex-shrink: 0;
 }
 
 /* Table Body */
 .price-table tbody tr {
-  border-bottom: 1px solid #F0F4EC;
+  border-bottom: 1px solid #EAF0F8;
   transition: background-color 0.15s ease;
 }
 
@@ -901,11 +940,11 @@ header {
 }
 
 .price-table tbody tr:nth-child(even) {
-  background-color: #FAFCF8;
+  background-color: var(--blue-soft, #F4F9FD);
 }
 
 .price-table tbody tr:hover {
-  background-color: #F2F8EC;
+  background-color: var(--blue-light, #EAF5FF);
 }
 
 .price-table td {
@@ -923,13 +962,13 @@ header {
   font-family: var(--font), monospace;
   font-weight: 800;
   font-size: 0.96rem;
-  color: var(--ink);
+  color: var(--text-dark, #10243E);
   letter-spacing: -0.02em;
 }
 
 .td-common {
   width: 31%;
-  color: var(--slate);
+  color: var(--slate, #64748B);
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -941,7 +980,7 @@ header {
 
 .price-val {
   font-weight: 700;
-  color: #1E293B;
+  color: var(--text-dark, #10243E);
   font-size: 0.92rem;
   letter-spacing: -0.01em;
 }
@@ -1184,7 +1223,7 @@ header {
 }
 
 .stars {
-  color: var(--green);
+  color: var(--star-gold, #F59E0B);
   letter-spacing: 2px;
   font-size: 1rem;
   margin-bottom: 12px
@@ -1301,11 +1340,11 @@ details .body p:last-child {
 
 /* ---------------- FINAL CTA ---------------- */
 .final {
-  background: linear-gradient(162deg, var(--ink) 0%, #23300F 55%, #2F5A12 100%);
+  background: linear-gradient(135deg, #001633 0%, #062B5C 45%, #0B4F9C 75%, #168BEA 100%);
   color: #fff;
   text-align: center;
   position: relative;
-  overflow: hidden
+  overflow: hidden;
 }
 
 .final::before {
@@ -1313,7 +1352,7 @@ details .body p:last-child {
   position: absolute;
   inset: 0 0 auto 0;
   height: 5px;
-  background: repeating-linear-gradient(90deg, var(--green) 0 26px, #fff 26px 52px);
+  background: repeating-linear-gradient(90deg, var(--blue-cyan, #29C7F6) 0 26px, #fff 26px 52px);
   opacity: .9;
 }
 
@@ -1643,7 +1682,7 @@ body.modal-open {
 
 /* ---------------- FOOTER ---------------- */
 footer {
-  background: var(--ink);
+  background: var(--navy-deep, #001633);
   color: rgba(255, 255, 255, .66);
   font-size: .9rem
 }
@@ -1709,7 +1748,7 @@ footer a {
 }
 
 footer a:hover {
-  color: var(--green-bright);
+  color: var(--blue-cyan, #29C7F6);
   text-decoration: underline
 }
 
@@ -1765,16 +1804,16 @@ footer .tagline {
   width: 58px;
   height: 58px;
   border-radius: 50%;
-  background: var(--green);
-  color: #0B1505;
+  background: var(--whatsapp, #25D366);
+  color: #FFFFFF;
   place-items: center;
-  box-shadow: 0 10px 30px rgba(88, 179, 27, .5);
+  box-shadow: 0 10px 30px rgba(37, 211, 102, .45);
   transition: transform .15s ease;
 }
 
 .float-wa:hover {
   transform: scale(1.07);
-  background: var(--green-bright)
+  background: var(--whatsapp-hover, #20BA5A);
 }
 
 @media(min-width:820px) {
@@ -1832,8 +1871,8 @@ footer .tagline {
 /* Brand Hero Banner */
 .blog-hero-banner {
   background:
-    radial-gradient(980px 440px at 86% -10%, rgba(88,179,27,.35), transparent 62%),
-    linear-gradient(168deg, var(--ink) 0%, var(--ink-2) 45%, #1C380F 100%);
+    radial-gradient(980px 440px at 86% -10%, rgba(41, 199, 246, 0.20), transparent 62%),
+    linear-gradient(135deg, #001633 0%, #021E45 45%, #0B4F9C 100%);
   color: #fff;
   position: relative;
   overflow: hidden;
@@ -1846,12 +1885,12 @@ footer .tagline {
   position: absolute;
   inset: auto 0 0 0;
   height: 4px;
-  background: repeating-linear-gradient(90deg, var(--green) 0 24px, rgba(255,255,255,.2) 24px 48px);
+  background: repeating-linear-gradient(90deg, var(--blue-cyan, #29C7F6) 0 24px, rgba(255,255,255,.2) 24px 48px);
   opacity: .95;
 }
 
 .blog-hero-banner .eyebrow {
-  color: #96E05C;
+  color: var(--blue-cyan, #29C7F6);
   font-size: .82rem;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -1915,11 +1954,11 @@ footer .tagline {
 }
 
 .filter-btn.active {
-  background: var(--green);
-  color: #0B1505;
-  border-color: var(--green);
+  background: var(--blue-cyan, #29C7F6);
+  color: var(--navy-deep, #001633);
+  border-color: var(--blue-cyan, #29C7F6);
   font-weight: 800;
-  box-shadow: 0 4px 14px rgba(88,179,27,.35);
+  box-shadow: 0 4px 14px rgba(41, 199, 246, 0.35);
 }
 
 /* Breadcrumb Navigation */
@@ -2746,12 +2785,12 @@ footer .tagline {
 .sidebar-ad-card {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(145deg, #062b16 0%, #0c4a28 45%, #056a38 100%);
-  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: linear-gradient(135deg, #001633 0%, #062B5C 45%, #0B4F9C 75%, #168BEA 100%);
+  border: 1px solid rgba(41, 199, 246, 0.35);
   border-radius: 18px;
   padding: 24px 22px;
   color: #ffffff;
-  box-shadow: 0 10px 25px -5px rgba(6, 43, 22, 0.35), 0 8px 10px -6px rgba(6, 43, 22, 0.2);
+  box-shadow: 0 10px 25px -5px rgba(0, 22, 51, 0.35), 0 8px 10px -6px rgba(0, 22, 51, 0.2);
 }
 
 .sidebar-ad-card::before {
@@ -2761,7 +2800,7 @@ footer .tagline {
   right: -40px;
   width: 140px;
   height: 140px;
-  background: radial-gradient(circle, rgba(52, 211, 153, 0.25) 0%, rgba(52, 211, 153, 0) 70%);
+  background: radial-gradient(circle, rgba(41, 199, 246, 0.25) 0%, rgba(41, 199, 246, 0) 70%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -3686,8 +3725,8 @@ footer .tagline {
 /* 4. Statistics Band */
 .about-stats-band {
   background:
-    radial-gradient(980px 440px at 86% -10%, rgba(88,179,27,.3), transparent 62%),
-    linear-gradient(168deg, var(--ink) 0%, var(--ink-2) 45%, #1C380F 100%);
+    radial-gradient(980px 440px at 86% -10%, rgba(41, 199, 246, 0.20), transparent 62%),
+    linear-gradient(135deg, #001633 0%, #021E45 45%, #0B4F9C 100%);
   color: #ffffff;
   padding: clamp(52px, 6.5vw, 80px) 0;
   position: relative;
@@ -4688,4 +4727,13 @@ details summary span:last-child {
 
 .brand-premium-group {
   scroll-margin-top: 90px;
+}
+
+/* Signature Brand Gradient Utilities */
+.gradient-hero {
+  background: linear-gradient(135deg, #001633 0%, #021E45 45%, #0B4F9C 100%);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, #001633 0%, #062B5C 45%, #0B4F9C 75%, #168BEA 100%);
 }
