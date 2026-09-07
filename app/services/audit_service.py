@@ -63,8 +63,8 @@ def log_activity(
                 action,
                 entity_type,
                 entity_id,
-                json.dumps(old_values) if old_values is not None else None,
-                json.dumps(new_values) if new_values is not None else None,
+                json.dumps(old_values, default=str) if old_values is not None else None,
+                json.dumps(new_values, default=str) if new_values is not None else None,
                 ip_address,
                 user_agent
             ))

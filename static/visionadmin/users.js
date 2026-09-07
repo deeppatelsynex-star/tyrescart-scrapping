@@ -627,6 +627,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Search & Filter listeners
+  let userSearchTimeout = null;
+  if (inputSearch) {
+    inputSearch.addEventListener('input', (e) => {
+      clearTimeout(userSearchTimeout);
+      userSearchTimeout = setTimeout(() => {
+        currentSearch = e.target.value.trim().toLowerCase();
+        renderTable();
+      }, 250);
+    });
+  }
+
+  if (selectRole) {
+    selectRole.addEventListener('change', (e) => {
+      currentRoleFilter = e.target.value;
+      renderTable();
+    });
+  }
+
+  if (selectStatus) {
+    selectStatus.addEventListener('change', (e) => {
+      currentStatusFilter = e.target.value;
+      renderTable();
+    });
+  }
+
+  if (btnRefresh) {
+    btnRefresh.addEventListener('click', () => {
+      loadUsers();
+    });
+  }
+
   // Initial Load
   loadUsers();
 });

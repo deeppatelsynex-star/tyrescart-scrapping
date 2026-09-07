@@ -84,7 +84,7 @@ class AttributeService:
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    SELECT id, attribute_id, value, label, swatch_value, sort_order
+                    SELECT id, attribute_id, value, label, swatch_value, sort_order, is_default
                     FROM attribute_options
                     WHERE attribute_id = %s
                     ORDER BY sort_order ASC, id ASC

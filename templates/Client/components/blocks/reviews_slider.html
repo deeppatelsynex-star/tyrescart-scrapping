@@ -1,0 +1,22 @@
+<!-- Block: Customer Reviews -->
+<div class="dynamic-reviews-block" style="margin-top:24px;margin-bottom:24px;">
+  {% set rev_items = block['items'] if ('items' in block and block['items']) else (block['reviews'] if ('reviews' in block and block['reviews']) else []) %}
+  <div class="grid g3" style="gap:16px;margin-top:16px;">
+    {% for r in rev_items %}
+    {% set r_quote = r.quote.ar if (is_ar and r.quote and r.quote.ar) else (r.quote.en if (r.quote and r.quote.en) else (r.quote or '')) %}
+    {% set r_auth = r.author.ar if (is_ar and r.author and r.author.ar) else (r.author.en if (r.author and r.author.en) else (r.author or 'Verified Customer')) %}
+    {% set r_loc = r.location.ar if (is_ar and r.location and r.location.ar) else (r.location.en if (r.location and r.location.en) else (r.location or 'Dubai')) %}
+    <div class="quote card p-5" style="background:#fff;border:1px solid var(--line);border-radius:16px;">
+      <div class="stars" style="color:#f59e0b;font-size:1rem;margin-bottom:8px;" aria-label="5 stars">★★★★★</div>
+      <blockquote style="font-size:0.92rem;color:var(--ink);font-style:italic;line-height:1.55;margin:0 0 14px;">&ldquo;{{ r_quote }}&rdquo;</blockquote>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="width:34px;height:34px;border-radius:50%;background:var(--green-tint);color:var(--green-deep);font-weight:900;display:flex;align-items:center;justify-content:center;font-size:0.85rem;">{{ loop.index }}</span>
+        <div>
+          <b style="font-size:0.9rem;display:block;color:var(--ink);">{{ r_auth }}</b>
+          <span style="font-size:0.75rem;color:var(--slate);">{{ r_loc }}</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>

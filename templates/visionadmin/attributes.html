@@ -5,6 +5,9 @@
 {% block content %}
 <div class="space-y-6" x-data="visionAttributesApp()" x-init="initData()">
 
+  <!-- LISTING AND MANAGEMENT VIEW -->
+  <div x-show="!editMode" class="space-y-6">
+
   <!-- Top Hero Bar -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs">
     <div>
@@ -29,14 +32,24 @@
           </button>
         </template>
         <template x-if="activeTab === 'attributes'">
-          <button 
-            type="button" 
-            @click="openCreateModal()" 
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
-          >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>Add New Attribute</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              @click="openCsvModal()" 
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-[#0E1108] border border-[#D0D7DE] text-xs sm:text-sm font-bold shadow-xs transition-all duration-200 cursor-pointer active:scale-95"
+            >
+              <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Import Attributes CSV</span>
+            </button>
+            <button 
+              type="button" 
+              @click="openCreateModal()" 
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Add New Attribute</span>
+            </button>
+          </div>
         </template>
       </div>
     </div>
@@ -121,11 +134,10 @@
           </thead>
           <tbody class="divide-y divide-[#F1F5F0]">
             <template x-for="attr in paginatedAttributes" :key="attr.id">
-              <tr class="hover:bg-[#F9FCF8] transition-colors">
-                <td class="px-5 py-3.5 font-mono font-bold text-slate-800" x-text="attr.code"></td>
+              <tr @click="openEditModal(attr)" class="hover:bg-[#F9FCF8] transition-colors cursor-pointer group">
+                <td class="px-5 py-3.5 font-mono font-bold text-slate-800 group-hover:text-[#35760F] transition-colors" x-text="attr.code"></td>
                 <td class="px-5 py-3.5">
-                  <div class="font-bold text-[#0E1108]" x-text="formatAttrName(attr)"></div>
-                  <div class="text-[10px] text-slate-400 font-medium" dir="rtl" x-text="formatAttrArabic(attr)"></div>
+                  <div class="font-bold text-[#0E1108] group-hover:text-[#35760F] transition-colors" x-text="formatAttrName(attr)"></div>
                 </td>
                 <td class="px-5 py-3.5">
                   <span 
@@ -151,10 +163,10 @@
                 <td class="px-5 py-3.5 text-center">
                   <span class="text-xs font-bold" :class="attr.is_required ? 'text-rose-600' : 'text-slate-300'" x-text="attr.is_required ? '● Required' : 'Optional'"></span>
                 </td>
-                <td class="px-5 py-3.5 text-right space-x-1 whitespace-nowrap">
+                <td class="px-5 py-3.5 text-right space-x-1 whitespace-nowrap" @click.stop>
                   <button 
                     type="button" 
-                    @click="viewAttribute(attr)" 
+                    @click.stop="viewAttribute(attr)" 
                     class="p-1.5 rounded-lg text-slate-500 hover:text-[#35760F] hover:bg-[#EAF7E2] transition cursor-pointer"
                     title="Inspect Attribute"
                   >
@@ -162,7 +174,7 @@
                   </button>
                   <button 
                     type="button" 
-                    @click="openEditModal(attr)" 
+                    @click.stop="openEditModal(attr)" 
                     class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
                     title="Edit Attribute"
                   >
@@ -170,7 +182,7 @@
                   </button>
                   <button 
                     type="button" 
-                    @click="deleteAttribute(attr)" 
+                    @click.stop="deleteAttribute(attr)" 
                     class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                     title="Delete Attribute"
                   >
@@ -291,7 +303,6 @@
                 <td class="px-5 py-3.5 font-mono font-bold text-slate-800" x-text="attr.code"></td>
                 <td class="px-5 py-3.5">
                   <div class="font-bold text-[#0E1108]" x-text="formatAttrName(attr)"></div>
-                  <div class="text-[10px] text-slate-400" dir="rtl" x-text="formatAttrArabic(attr)"></div>
                 </td>
                 <td class="px-5 py-3.5">
                   <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-slate-100 text-slate-700" x-text="attr.type"></span>
@@ -320,6 +331,7 @@
       </div>
     </div>
   </div>
+  </div><!-- End of !editMode wrapper -->
 
   <!-- WORKING ADD / EDIT ATTRIBUTE SET MODAL -->
   <div x-show="showSetModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
@@ -369,104 +381,569 @@
     </div>
   </div>
 
-  <!-- WORKING ADD / EDIT ATTRIBUTE MODAL -->
-  <div x-show="showCreateModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-    <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto" @click.away="showCreateModal = false">
-      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
+  <!-- MAGENTO 2 ATTRIBUTE STUDIO (FULL EDIT / VALUES VIEW) -->
+  <div x-show="editMode" class="space-y-5" style="display: none;">
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-3xl border border-[#E8EDE4] shadow-xs">
+      <div class="flex items-center gap-3">
+        <button 
+          type="button" 
+          @click="exitEditMode()" 
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <span>Back</span>
+        </button>
         <div>
-          <h3 class="text-base font-black text-[#0E1108]" x-text="form.id ? 'Edit Attribute: ' + form.code : 'Add New Dynamic Attribute'"></h3>
-          <p class="text-xs text-slate-400">EAV Attribute definition with multi-store scoping and options.</p>
+          <h1 class="text-xl sm:text-2xl font-black text-[#0E1108] tracking-tight" x-text="form.code || form.name_en || 'New Attribute'"></h1>
         </div>
-        <button type="button" @click="showCreateModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
       </div>
 
-      <form @submit.prevent="saveAttribute()" class="space-y-4">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Attribute Code *</label>
-            <input 
-              type="text" 
-              x-model="form.code" 
-              :disabled="!!form.id" 
-              :class="form.id ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''"
-              required 
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono" 
-              placeholder="e.g. wet_grip"
-            >
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Data Type *</label>
-            <select x-model="form.type" :disabled="!!form.id" :class="form.id ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold">
-              <option value="select">Select / Dropdown</option>
-              <option value="multiselect">Multiselect</option>
-              <option value="text">Single-line Text</option>
-              <option value="number">Numeric</option>
-              <option value="boolean">Boolean (Yes/No)</option>
-            </select>
-          </div>
-        </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button 
+          type="button" 
+          @click="exitEditMode()" 
+          class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
+        >
+          ← Back
+        </button>
 
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Attribute Name (English) *</label>
-          <input type="text" x-model="form.name_en" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold" placeholder="e.g. Wet Grip Rating">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Attribute Name (Arabic)</label>
-          <input type="text" x-model="form.name_ar" dir="rtl" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold" placeholder="تصنيف التماسك على الأسطح الرطبة">
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Scope Level</label>
-            <select x-model="form.scope" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold">
-              <option value="global">Global (Universal)</option>
-              <option value="website">Website Scoped</option>
-              <option value="store">Store Scoped</option>
-              <option value="store_view">Store View / Locale</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Unit of Measure (Optional)</label>
-            <input type="text" x-model="form.unit" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs" placeholder="e.g. dB, mm, kg, km/h">
-          </div>
-        </div>
-
-        <!-- Dynamic Options Repeater (For Select / Multiselect) -->
-        <template x-if="form.type === 'select' || form.type === 'multiselect'">
-          <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-black text-slate-700">Predefined Select Options</span>
-              <button type="button" @click="addOption()" class="text-xs font-bold text-[#35760F] hover:underline cursor-pointer">+ Add Option</button>
-            </div>
-            <div class="space-y-2 max-h-36 overflow-y-auto">
-              <template x-for="(opt, idx) in form.options" :key="idx">
-                <div class="flex items-center gap-2">
-                  <input type="text" x-model="opt.value" placeholder="Option Value (e.g. A, B, XL)" class="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold">
-                  <button type="button" @click="removeOption(idx)" class="text-slate-400 hover:text-rose-600 px-1 text-sm font-bold">✕</button>
-                </div>
-              </template>
-            </div>
-          </div>
+        <template x-if="form.id">
+          <button 
+            type="button" 
+            @click="deleteCurrentAttribute()" 
+            class="px-4 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition cursor-pointer"
+          >
+            Delete Attribute
+          </button>
         </template>
 
-        <!-- Feature Flags Toggles -->
-        <div class="grid grid-cols-2 gap-3 pt-2">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" x-model="form.is_filterable" class="w-4 h-4 rounded text-[#58B31B]">
-            <span class="text-xs font-bold text-slate-700">Filterable on Storefront</span>
-          </label>
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" x-model="form.is_required" class="w-4 h-4 rounded text-[#58B31B]">
-            <span class="text-xs font-bold text-slate-700">Required Field</span>
-          </label>
+        <button 
+          type="button" 
+          @click="resetEditForm()" 
+          class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
+        >
+          Reset
+        </button>
+
+        <button 
+          type="button" 
+          @click="saveAttribute(false)" 
+          :disabled="isSaving"
+          class="px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold transition cursor-pointer disabled:opacity-50"
+        >
+          Save and Continue Edit
+        </button>
+
+        <button 
+          type="button" 
+          @click="saveAttribute(true)" 
+          :disabled="isSaving"
+          class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-black shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer disabled:opacity-50"
+        >
+          <template x-if="isSaving">
+            <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"/></svg>
+          </template>
+          <span>Save Attribute</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Information notice banner -->
+    <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-xs text-amber-800">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>EAV Attribute Studio: Configure attribute properties, multi-store translation labels, search/filter flags, and predefined options.</span>
+      </div>
+    </div>
+
+    <!-- 2-Column Studio Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Left Navigation Sidebar -->
+      <div class="lg:col-span-3 space-y-3">
+        <div class="bg-white rounded-3xl border border-[#E8EDE4] p-4 shadow-xs">
+          <h3 class="text-[11px] font-black uppercase tracking-wider text-slate-400 px-3 pb-3 border-b border-[#F1F5F0]">Attribute Information</h3>
+          <nav class="space-y-1 mt-3">
+            <button 
+              type="button" 
+              @click="attrActiveSection = 'properties'" 
+              :class="attrActiveSection === 'properties' ? 'bg-[#EAF7E2] text-[#35760F] font-black border-l-4 border-[#58B31B]' : 'text-slate-600 hover:bg-slate-50 font-bold'"
+              class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-between"
+            >
+              <span>Properties</span>
+              <span class="text-[11px] text-slate-400" x-show="attrActiveSection === 'properties'">●</span>
+            </button>
+
+            <button 
+              type="button" 
+              @click="attrActiveSection = 'labels'" 
+              :class="attrActiveSection === 'labels' ? 'bg-[#EAF7E2] text-[#35760F] font-black border-l-4 border-[#58B31B]' : 'text-slate-600 hover:bg-slate-50 font-bold'"
+              class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-between"
+            >
+              <span>Manage Labels</span>
+              <span class="text-[11px] text-slate-400" x-show="attrActiveSection === 'labels'">●</span>
+            </button>
+
+            <button 
+              type="button" 
+              @click="attrActiveSection = 'storefront'" 
+              :class="attrActiveSection === 'storefront' ? 'bg-[#EAF7E2] text-[#35760F] font-black border-l-4 border-[#58B31B]' : 'text-slate-600 hover:bg-slate-50 font-bold'"
+              class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-between"
+            >
+              <span>Storefront Properties</span>
+              <span class="text-[11px] text-slate-400" x-show="attrActiveSection === 'storefront'">●</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Right Main Workspace -->
+      <div class="lg:col-span-9 space-y-6">
+
+        <!-- SECTION: PROPERTIES -->
+        <div x-show="attrActiveSection === 'properties'" class="space-y-6">
+
+          <!-- 1. Attribute Properties Card -->
+          <div class="bg-white rounded-3xl border border-[#E8EDE4] p-6 shadow-xs space-y-5">
+            <h2 class="text-sm font-black text-[#0E1108] border-b border-[#F1F5F0] pb-3">Attribute Properties</h2>
+            
+            <div class="space-y-4 max-w-2xl">
+              <!-- Default Label -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
+                <label class="text-xs font-bold text-slate-700">
+                  Default Label <span class="text-rose-500">*</span>
+                </label>
+                <div class="sm:col-span-2">
+                  <input 
+                    type="text" 
+                    x-model="form.name_en" 
+                    required 
+                    placeholder="e.g. Brand"
+                    class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-[#35760F] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <!-- Catalog Input Type for Store Owner -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
+                <label class="text-xs font-bold text-slate-700">
+                  Catalog Input Type for Store Owner
+                </label>
+                <div class="sm:col-span-2">
+                  <select 
+                    x-model="form.type" 
+                    class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-2 focus:ring-[#35760F] focus:outline-none"
+                  >
+                    <option value="select">Dropdown</option>
+                    <option value="visual_swatch">Visual Swatch</option>
+                    <option value="text_swatch">Text Swatch</option>
+                    <option value="text">Text Field</option>
+                    <option value="textarea">Text Area</option>
+                    <option value="date">Date</option>
+                    <option value="boolean">Yes/No</option>
+                    <option value="multiselect">Multiple Select</option>
+                    <option value="decimal">Price</option>
+                    <option value="file">Media Image</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Values Required -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
+                <label class="text-xs font-bold text-slate-700">
+                  Values Required
+                </label>
+                <div class="sm:col-span-2">
+                  <select 
+                    x-model="form.is_required" 
+                    class="w-36 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-2 focus:ring-[#35760F] focus:outline-none"
+                  >
+                    <option :value="0">No</option>
+                    <option :value="1">Yes</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Manage Options (Values of Your Attribute) -->
+          <template x-if="isOptionType(form.type)">
+            <div class="bg-white rounded-3xl border border-[#E8EDE4] p-6 shadow-xs space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#F1F5F0] pb-3">
+                <div>
+                  <h2 class="text-sm font-black text-[#0E1108]">Manage Options (Values of Your Attribute)</h2>
+                  <p class="text-[11px] text-slate-400">Total <span class="font-bold text-slate-700" x-text="form.options ? form.options.length : 0"></span> options configured for this attribute.</p>
+                </div>
+
+                <!-- Options Search / Filter -->
+                <div class="flex items-center gap-2">
+                  <div class="relative w-48 sm:w-64">
+                    <input 
+                      type="text" 
+                      x-model="optionSearchQuery" 
+                      @input="optionsPage = 1"
+                      placeholder="Search options..."
+                      class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-[#35760F] focus:outline-none"
+                    />
+                    <svg class="w-3.5 h-3.5 absolute left-2.5 top-2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  </div>
+
+                  <!-- Per page select -->
+                  <select x-model="optionsPerPage" @change="optionsPage = 1" class="text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold">
+                    <option value="25">25 / page</option>
+                    <option value="50">50 / page</option>
+                    <option value="100">100 / page</option>
+                    <option value="all">Show All</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Options Table -->
+              <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+                <table class="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                      <th class="w-10 px-3 py-2.5 text-center"></th>
+                      <th class="w-24 px-3 py-2.5 text-center whitespace-nowrap">Is Default</th>
+                      <th class="px-3 py-2.5 min-w-[180px]">Admin <span class="text-rose-500">*</span></th>
+                      <th class="px-3 py-2.5 min-w-[180px]">English</th>
+                      <th class="px-3 py-2.5 min-w-[180px]">Arabic</th>
+                      <th class="px-3 py-2.5 min-w-[180px]">Default Store View</th>
+                      <th class="w-20 px-3 py-2.5 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 font-medium">
+                    <template x-for="(opt, idx) in paginatedOptions" :key="opt.id || idx">
+                      <tr class="hover:bg-slate-50/70 transition">
+                        <!-- Grip icon -->
+                        <td class="px-3 py-2 text-center text-slate-300 select-none cursor-move">
+                          <svg class="w-4 h-4 mx-auto text-slate-400" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>
+                            <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
+                            <circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>
+                          </svg>
+                        </td>
+
+                        <!-- Is Default Radio -->
+                        <td class="px-3 py-2 text-center">
+                          <input 
+                            type="radio" 
+                            name="attribute_default_option" 
+                            :checked="!!opt.is_default" 
+                            @change="setDefaultOption(opt)"
+                            class="w-4 h-4 text-[#58B31B] focus:ring-[#58B31B] cursor-pointer"
+                          />
+                        </td>
+
+                        <!-- Admin * -->
+                        <td class="px-3 py-2">
+                          <input 
+                            type="text" 
+                            x-model="opt.value" 
+                            required 
+                            class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-800 focus:ring-1 focus:ring-[#35760F] focus:outline-none"
+                          />
+                        </td>
+
+                        <!-- English -->
+                        <td class="px-3 py-2">
+                          <input 
+                            type="text" 
+                            x-model="opt.label.en" 
+                            class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 focus:ring-1 focus:ring-[#35760F] focus:outline-none"
+                          />
+                        </td>
+
+                        <!-- Arabic -->
+                        <td class="px-3 py-2">
+                          <input 
+                            type="text" 
+                            dir="rtl"
+                            x-model="opt.label.ar" 
+                            class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 focus:ring-1 focus:ring-[#35760F] focus:outline-none"
+                          />
+                        </td>
+
+                        <!-- Default Store View (English) -->
+                        <td class="px-3 py-2">
+                          <input 
+                            type="text" 
+                            :value="opt.label.en || opt.value" 
+                            @input="opt.label.en = $event.target.value"
+                            class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 focus:ring-1 focus:ring-[#35760F] focus:outline-none"
+                          />
+                        </td>
+
+                        <!-- Delete Action -->
+                        <td class="px-3 py-2 text-center">
+                          <button 
+                            type="button" 
+                            @click="deleteOptionRow(opt)" 
+                            class="px-2.5 py-1 rounded-md text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    </template>
+                    <template x-if="paginatedOptions.length === 0">
+                      <tr>
+                        <td colspan="7" class="px-4 py-6 text-center text-slate-400 italic">
+                          No matching options found.
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Options Pagination & Action Buttons -->
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+                <div class="flex items-center gap-2">
+                  <button 
+                    type="button" 
+                    @click="addOptionRow()" 
+                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold shadow-xs transition cursor-pointer"
+                  >
+                    <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>Add Option</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    @click="resetDefaultOption()" 
+                    class="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold transition cursor-pointer"
+                  >
+                    Reset to Default
+                  </button>
+                </div>
+
+                <!-- Options Pagination Controls -->
+                <div class="flex items-center gap-2" x-show="totalOptionPages > 1">
+                  <button 
+                    type="button" 
+                    @click="if (optionsPage > 1) optionsPage--" 
+                    :disabled="optionsPage === 1"
+                    :class="optionsPage === 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-100 cursor-pointer'"
+                    class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-700"
+                  >
+                    Prev
+                  </button>
+                  <span class="text-xs text-slate-500 font-medium">
+                    Page <strong class="text-slate-800" x-text="optionsPage"></strong> of <strong class="text-slate-800" x-text="totalOptionPages"></strong>
+                    (<span x-text="filteredOptions.length"></span> items)
+                  </span>
+                  <button 
+                    type="button" 
+                    @click="if (optionsPage < totalOptionPages) optionsPage++" 
+                    :disabled="optionsPage === totalOptionPages"
+                    :class="optionsPage === totalOptionPages ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-100 cursor-pointer'"
+                    class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-700"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </template>
+
+          <!-- 3. Advanced Attribute Properties Accordion -->
+          <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
+            <button 
+              type="button" 
+              @click="advancedPropertiesOpen = !advancedPropertiesOpen" 
+              class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50/60 transition cursor-pointer"
+            >
+              <span class="text-sm font-black text-[#0E1108]">Advanced Attribute Properties</span>
+              <svg 
+                class="w-5 h-5 text-slate-400 transform transition-transform duration-200" 
+                :class="advancedPropertiesOpen ? 'rotate-180' : ''"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              >
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            <div x-show="advancedPropertiesOpen" class="px-6 pb-6 pt-2 border-t border-[#F1F5F0] space-y-4 max-w-2xl">
+              <!-- Attribute Code -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
+                <label class="text-xs font-bold text-slate-700">
+                  Attribute Code <span class="text-rose-500">*</span>
+                </label>
+                <div class="sm:col-span-2">
+                  <input 
+                    type="text" 
+                    x-model="form.code" 
+                    :disabled="!!form.id" 
+                    :class="form.id ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''"
+                    class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono font-bold focus:ring-2 focus:ring-[#35760F] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <!-- Scope -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
+                <label class="text-xs font-bold text-slate-700">Scope</label>
+                <div class="sm:col-span-2">
+                  <select 
+                    x-model="form.scope" 
+                    class="w-48 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-2 focus:ring-[#35760F] focus:outline-none"
+                  >
+                    <option value="global">[ Global ]</option>
+                    <option value="website">[ Website ]</option>
+                    <option value="store_view">[ Store View ]</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Unique Value -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
+                <label class="text-xs font-bold text-slate-700">Unique Value</label>
+                <div class="sm:col-span-2">
+                  <select 
+                    x-model="form.is_unique" 
+                    class="w-36 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-2 focus:ring-[#35760F] focus:outline-none"
+                  >
+                    <option :value="0">No</option>
+                    <option :value="1">Yes</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Input Validation -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
+                <label class="text-xs font-bold text-slate-700">Input Validation for Store Owner</label>
+                <div class="sm:col-span-2">
+                  <select 
+                    x-model="form.validation_rules" 
+                    class="w-60 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-2 focus:ring-[#35760F] focus:outline-none"
+                  >
+                    <option value="none">None</option>
+                    <option value="decimal">Decimal Number</option>
+                    <option value="integer">Integer Number</option>
+                    <option value="email">Email</option>
+                    <option value="url">URL</option>
+                    <option value="letters">Letters</option>
+                    <option value="alphanumeric">Letters (a-z, A-Z) or Numbers (0-9)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-4 border-t border-[#F1F5F0]">
-          <button type="button" @click="showCreateModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 cursor-pointer">Cancel</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] shadow-xs cursor-pointer" x-text="form.id ? 'Save Changes' : 'Create Attribute'"></button>
+        <!-- SECTION: MANAGE LABELS -->
+        <div x-show="attrActiveSection === 'labels'" class="space-y-6">
+          <div class="bg-white rounded-3xl border border-[#E8EDE4] p-6 shadow-xs space-y-4">
+            <h2 class="text-sm font-black text-[#0E1108] border-b border-[#F1F5F0] pb-3">Manage Titles (Size, Color, etc.)</h2>
+            
+            <div class="max-w-xl space-y-3">
+              <div class="grid grid-cols-3 gap-2 py-2 border-b border-slate-100 font-bold text-xs text-slate-600">
+                <div>Store View</div>
+                <div class="col-span-2">Title</div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 items-center">
+                <label class="text-xs font-bold text-slate-700">Admin <span class="text-rose-500">*</span></label>
+                <div class="col-span-2">
+                  <input 
+                    type="text" 
+                    x-model="form.name_en" 
+                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 items-center">
+                <label class="text-xs font-bold text-slate-700">Default Store View (English)</label>
+                <div class="col-span-2">
+                  <input 
+                    type="text" 
+                    x-model="form.name_en" 
+                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 items-center">
+                <label class="text-xs font-bold text-slate-700">Arabic Store View</label>
+                <div class="col-span-2">
+                  <input 
+                    type="text" 
+                    dir="rtl"
+                    x-model="form.name_ar" 
+                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </form>
+
+        <!-- SECTION: STOREFRONT PROPERTIES -->
+        <div x-show="attrActiveSection === 'storefront'" class="space-y-6">
+          <div class="bg-white rounded-3xl border border-[#E8EDE4] p-6 shadow-xs space-y-5">
+            <h2 class="text-sm font-black text-[#0E1108] border-b border-[#F1F5F0] pb-3">Storefront Properties</h2>
+
+            <div class="space-y-4 max-w-2xl">
+              <!-- Use in Search -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
+                <label class="text-xs font-bold text-slate-700">Use in Search</label>
+                <div class="sm:col-span-2">
+                  <select x-model="form.is_searchable" class="w-36 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white">
+                    <option :value="1">Yes</option>
+                    <option :value="0">No</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Comparable on Storefront -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
+                <label class="text-xs font-bold text-slate-700">Comparable on Storefront</label>
+                <div class="sm:col-span-2">
+                  <select x-model="form.is_comparable" class="w-36 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white">
+                    <option :value="1">Yes</option>
+                    <option :value="0">No</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Use in Layered Navigation -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
+                <label class="text-xs font-bold text-slate-700">Use in Layered Navigation</label>
+                <div class="sm:col-span-2">
+                  <select x-model="form.is_filterable" class="w-64 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white">
+                    <option :value="1">Filterable (with results)</option>
+                    <option :value="2">Filterable (no results)</option>
+                    <option :value="0">No</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Position -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
+                <label class="text-xs font-bold text-slate-700">Position</label>
+                <div class="sm:col-span-2">
+                  <input type="number" x-model.number="form.sort_order" class="w-28 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold" />
+                </div>
+              </div>
+
+              <!-- Visible on Catalog Pages on Storefront -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
+                <label class="text-xs font-bold text-slate-700">Visible on Catalog Pages on Storefront</label>
+                <div class="sm:col-span-2">
+                  <select x-model="form.is_visible_on_front" class="w-36 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white">
+                    <option :value="1">Yes</option>
+                    <option :value="0">No</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
@@ -619,12 +1096,179 @@
     </div>
   </div>
 
+  <!-- MODAL: Import Attributes CSV -->
+  <div 
+    x-show="showCsvModal" 
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    style="display: none;"
+  >
+    <div 
+      class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-[#E8EDE4] space-y-5"
+      @click.away="if (!csvUploading) showCsvModal = false"
+    >
+      <!-- Header -->
+      <div class="flex items-start justify-between border-b border-[#F1F5F0] pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-black text-[#0E1108]">Import Attributes CSV</h3>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">Upload Magento / ElasticSuite export or standard attributes CSV to bulk import.</p>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          @click="if (!csvUploading) showCsvModal = false" 
+          class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition cursor-pointer"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Drag & Drop / File Input Box -->
+      <div 
+        class="border-2 border-dashed rounded-2xl p-6 text-center transition cursor-pointer flex flex-col items-center justify-center gap-2"
+        :class="isDragging ? 'border-[#58B31B] bg-[#EAF7E2]/30' : 'border-slate-200 hover:border-[#58B31B] bg-slate-50/50 hover:bg-slate-50'"
+        @dragover.prevent="isDragging = true"
+        @dragleave.prevent="isDragging = false"
+        @drop.prevent="handleCsvDrop($event)"
+        @click="$refs.csvInput.click()"
+      >
+        <input 
+          type="file" 
+          x-ref="csvInput" 
+          accept=".csv" 
+          class="hidden" 
+          @change="handleCsvFileSelect($event)"
+        />
+        
+        <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+
+        <div class="mt-1">
+          <p class="text-xs font-bold text-slate-700">Click to choose a file <span class="font-normal text-slate-500">or drag & drop here</span></p>
+          <p class="text-[11px] text-slate-400 font-medium mt-0.5">Supports CSV files up to 20MB</p>
+        </div>
+      </div>
+
+      <!-- File Details Card if Selected -->
+      <template x-if="csvFile">
+        <div class="flex items-center justify-between p-3.5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-xs">
+              CSV
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-800" x-text="csvFileName"></p>
+              <p class="text-[11px] text-slate-500 font-medium" x-text="csvFileSize"></p>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            @click.stop="clearCsvFile()" 
+            class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+            title="Remove file"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </template>
+
+      <!-- CSV Column Guidance -->
+      <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-1.5 text-slate-600">
+        <div class="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+          <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Supported Header Mapping</span>
+        </div>
+        <p class="text-[11px] text-slate-500 leading-relaxed">
+          The importer automatically maps ElasticSuite &amp; Magento export headers: <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-emerald-700">attribute_code</code>, <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-emerald-700">attribute_label</code> (or <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-emerald-700">frontend_label</code>), <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-emerald-700">is_searchable</code>, <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-emerald-700">is_filterable</code>, and <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-emerald-700">position</code>.
+        </p>
+      </div>
+
+      <!-- In-modal Error Alert -->
+      <template x-if="csvError">
+        <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-medium flex items-start gap-2">
+          <svg class="w-4 h-4 shrink-0 text-rose-500 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span x-text="csvError"></span>
+        </div>
+      </template>
+
+      <!-- In-modal Success Alert -->
+      <template x-if="csvResult">
+        <div class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-medium space-y-1">
+          <div class="flex items-center gap-2 font-bold text-emerald-900">
+            <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span x-text="csvResult.message"></span>
+          </div>
+          <div class="flex items-center gap-3 text-[11px] text-emerald-700 pt-1">
+            <span>✨ New Inserted: <strong x-text="csvResult.inserted"></strong></span>
+            <span>🔄 Updated: <strong x-text="csvResult.updated"></strong></span>
+            <span>📦 Total Processed: <strong x-text="csvResult.total"></strong></span>
+          </div>
+        </div>
+      </template>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-2 border-t border-[#F1F5F0]">
+        <button 
+          type="button" 
+          @click="showCsvModal = false" 
+          :disabled="csvUploading"
+          class="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          @click="uploadCsv()" 
+          :disabled="!csvFile || csvUploading"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <template x-if="csvUploading">
+            <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"/></svg>
+          </template>
+          <template x-if="!csvUploading">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </template>
+          <span x-text="csvUploading ? 'Importing CSV...' : 'Import & Sync'"></span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 
 <script>
 function visionAttributesApp() {
   return {
     activeTab: 'attributes',
+    editMode: false,
+    attrActiveSection: 'properties',
+    advancedPropertiesOpen: false,
+    optionSearchQuery: '',
+    optionsPage: 1,
+    optionsPerPage: '50',
+    isSaving: false,
+    originalForm: null,
     searchQuery: '',
     scopeFilter: '',
     typeFilter: '',
@@ -635,6 +1279,14 @@ function visionAttributesApp() {
     showSetModal: false,
     showDetailModal: false,
     showSchemaModal: false,
+    showCsvModal: false,
+    csvFile: null,
+    csvFileName: '',
+    csvFileSize: '',
+    csvUploading: false,
+    csvResult: null,
+    csvError: '',
+    isDragging: false,
     selectedAttr: null,
     selectedSchema: null,
     selectedAttrToAdd: {},
@@ -656,9 +1308,15 @@ function visionAttributesApp() {
       type: 'select',
       scope: 'global',
       unit: '',
-      is_filterable: true,
-      is_required: false,
-      options: [{ value: 'A' }, { value: 'B' }, { value: 'C' }]
+      is_filterable: 1,
+      is_searchable: 1,
+      is_comparable: 1,
+      is_visible_on_front: 1,
+      is_required: 0,
+      is_unique: 0,
+      sort_order: 0,
+      validation_rules: 'none',
+      options: []
     },
 
     async initData() {
@@ -672,6 +1330,17 @@ function visionAttributesApp() {
         if (attrData.attributes) this.attributes = attrData.attributes || [];
         if (attrData.trash) this.trashAttributes = attrData.trash || [];
         if (setData.attribute_sets) this.attributeSets = setData.attribute_sets || [];
+
+        // Check if query params specify attribute to open
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('id') || urlParams.get('attr_id');
+        const targetCode = urlParams.get('code');
+        if (targetId || targetCode) {
+          const found = this.attributes.find(a => (targetId && a.id == targetId) || (targetCode && a.code == targetCode));
+          if (found) {
+            this.openEditModal(found);
+          }
+        }
       } catch (err) {
         console.error('Error loading attributes data:', err);
       }
@@ -731,7 +1400,117 @@ function visionAttributesApp() {
       return '';
     },
 
+    isOptionType(type) {
+      return ['select', 'multiselect', 'visual_swatch', 'text_swatch', 'dropdown'].includes(type);
+    },
+
+    get filteredOptions() {
+      if (!this.form || !this.form.options) return [];
+      const q = (this.optionSearchQuery || '').toLowerCase().trim();
+      if (!q) return this.form.options;
+      return this.form.options.filter(o => {
+        const val = (o.value || '').toLowerCase();
+        const en = (o.label && o.label.en ? o.label.en : '').toLowerCase();
+        const ar = (o.label && o.label.ar ? o.label.ar : '').toLowerCase();
+        return val.includes(q) || en.includes(q) || ar.includes(q);
+      });
+    },
+
+    get totalOptionPages() {
+      if (this.optionsPerPage === 'all') return 1;
+      const perPage = parseInt(this.optionsPerPage) || 50;
+      return Math.ceil(this.filteredOptions.length / perPage) || 1;
+    },
+
+    get paginatedOptions() {
+      if (this.optionsPerPage === 'all') return this.filteredOptions;
+      const perPage = parseInt(this.optionsPerPage) || 50;
+      const start = (this.optionsPage - 1) * perPage;
+      return this.filteredOptions.slice(start, start + perPage);
+    },
+
+    setDefaultOption(selectedOpt) {
+      if (!this.form || !this.form.options) return;
+      this.form.options.forEach(o => {
+        o.is_default = (o === selectedOpt);
+      });
+    },
+
+    resetDefaultOption() {
+      if (!this.form || !this.form.options) return;
+      this.form.options.forEach(o => {
+        o.is_default = false;
+      });
+    },
+
+    addOptionRow() {
+      if (!this.form.options) this.form.options = [];
+      const newOpt = {
+        value: '',
+        label: { en: '', ar: '' },
+        is_default: false,
+        sort_order: this.form.options.length + 1
+      };
+      this.form.options.push(newOpt);
+      if (this.optionsPerPage !== 'all') {
+        this.optionsPage = this.totalOptionPages;
+      }
+    },
+
+    deleteOptionRow(opt) {
+      if (!this.form || !this.form.options) return;
+      const idx = this.form.options.indexOf(opt);
+      if (idx !== -1) {
+        this.form.options.splice(idx, 1);
+      }
+    },
+
+    exitEditMode() {
+      this.editMode = false;
+      const url = new URL(window.location);
+      url.searchParams.delete('id');
+      url.searchParams.delete('code');
+      window.history.replaceState({}, '', url);
+    },
+
+    resetEditForm() {
+      if (this.originalForm) {
+        this.form = JSON.parse(JSON.stringify(this.originalForm));
+        this.optionsPage = 1;
+      }
+    },
+
+    async deleteCurrentAttribute() {
+      if (!this.form.id) return;
+      const confirmMsg = `Are you sure you want to move attribute '${this.form.code}' to trash?`;
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch(`/visionadmin/api/attributes/${this.form.id}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          await this.initData();
+          this.exitEditMode();
+          if (window.showToast) window.showToast(`Attribute '${this.form.code}' moved to trash.`, 'success');
+        } else {
+          alert(data.error || 'Failed to delete attribute.');
+        }
+      } catch (e) {
+        console.error('Delete attribute error:', e);
+      }
+    },
+
     openCreateModal() {
+      this.editMode = true;
+      this.attrActiveSection = 'properties';
+      this.advancedPropertiesOpen = false;
+      this.optionSearchQuery = '';
+      this.optionsPage = 1;
+      this.optionsPerPage = '50';
+      this.isSaving = false;
+
       this.form = {
         id: null,
         code: '',
@@ -740,36 +1519,80 @@ function visionAttributesApp() {
         type: 'select',
         scope: 'global',
         unit: '',
-        is_filterable: true,
-        is_required: false,
-        options: [{ value: 'A' }, { value: 'B' }]
+        is_required: 0,
+        is_unique: 0,
+        is_filterable: 1,
+        is_searchable: 1,
+        is_comparable: 1,
+        is_visible_on_front: 1,
+        sort_order: 0,
+        validation_rules: 'none',
+        options: [
+          { value: '', label: { en: '', ar: '' }, is_default: false, sort_order: 1 }
+        ]
       };
-      this.showCreateModal = true;
+      this.originalForm = JSON.parse(JSON.stringify(this.form));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     async openEditModal(attr) {
+      this.editMode = true;
+      this.attrActiveSection = 'properties';
+      this.advancedPropertiesOpen = false;
+      this.optionSearchQuery = '';
+      this.optionsPage = 1;
+      this.optionsPerPage = '50';
+      this.isSaving = false;
+
+      // Update URL query param to reflect currently edited attribute
+      try {
+        const url = new URL(window.location);
+        url.searchParams.set('code', attr.code);
+        window.history.replaceState({}, '', url);
+      } catch (e) {}
+
+      let loadedAttr = attr;
       let options = [];
       try {
         const res = await fetch(`/visionadmin/api/attributes/${attr.id}`);
         const d = await res.json();
-        if (d.attribute && d.attribute.options) {
-          options = d.attribute.options.map(o => ({ value: o.value || o }));
+        if (d.attribute) {
+          loadedAttr = d.attribute;
+          if (d.attribute.options) {
+            options = d.attribute.options.map(o => ({
+              id: o.id,
+              value: o.value || '',
+              label: typeof o.label === 'object' && o.label !== null ? o.label : { en: o.value || '', ar: o.value || '' },
+              is_default: !!o.is_default,
+              sort_order: o.sort_order || 0
+            }));
+          }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error loading attribute details:', e);
+      }
 
       this.form = {
-        id: attr.id,
-        code: attr.code,
-        name_en: this.formatAttrName(attr),
-        name_ar: this.formatAttrArabic(attr),
-        type: attr.type || 'select',
-        scope: attr.scope || 'global',
-        unit: attr.unit || '',
-        is_filterable: !!attr.is_filterable,
-        is_required: !!attr.is_required,
-        options: options.length ? options : [{ value: 'A' }, { value: 'B' }]
+        id: loadedAttr.id,
+        code: loadedAttr.code,
+        name_en: this.formatAttrName(loadedAttr),
+        name_ar: this.formatAttrArabic(loadedAttr),
+        type: loadedAttr.type || 'select',
+        scope: loadedAttr.scope || 'global',
+        unit: loadedAttr.unit || '',
+        is_required: loadedAttr.is_required ? 1 : 0,
+        is_unique: loadedAttr.is_unique ? 1 : 0,
+        is_filterable: loadedAttr.is_filterable !== undefined ? loadedAttr.is_filterable : 1,
+        is_searchable: loadedAttr.is_searchable !== undefined ? loadedAttr.is_searchable : 1,
+        is_comparable: loadedAttr.is_comparable !== undefined ? loadedAttr.is_comparable : 1,
+        is_visible_on_front: loadedAttr.is_visible_on_front !== undefined ? loadedAttr.is_visible_on_front : 1,
+        sort_order: loadedAttr.sort_order || 0,
+        validation_rules: loadedAttr.validation_rules || 'none',
+        options: options
       };
-      this.showCreateModal = true;
+
+      this.originalForm = JSON.parse(JSON.stringify(this.form));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     async deleteAttribute(attr) {
@@ -809,25 +1632,44 @@ function visionAttributesApp() {
       }
     },
 
-    addOption() {
-      this.form.options.push({ value: '' });
-    },
+    async saveAttribute(exitAfterSave = true) {
+      if (!this.form.name_en || !this.form.name_en.trim()) {
+        alert('Please specify a Default Label for this attribute.');
+        return;
+      }
+      if (!this.form.code || !this.form.code.trim()) {
+        alert('Please specify an Attribute Code.');
+        return;
+      }
 
-    removeOption(idx) {
-      this.form.options.splice(idx, 1);
-    },
-
-    async saveAttribute() {
+      this.isSaving = true;
       try {
         const payload = {
-          code: this.form.code,
-          name: { en: this.form.name_en, ar: this.form.name_ar },
+          code: this.form.code.trim(),
+          name: {
+            en: this.form.name_en.trim(),
+            ar: (this.form.name_ar && this.form.name_ar.trim()) ? this.form.name_ar.trim() : this.form.name_en.trim()
+          },
           type: this.form.type,
           scope: this.form.scope,
           unit: this.form.unit || null,
-          is_filterable: this.form.is_filterable,
-          is_required: this.form.is_required,
-          options: this.form.options.map(o => o.value).filter(Boolean)
+          is_required: this.form.is_required ? 1 : 0,
+          is_unique: this.form.is_unique ? 1 : 0,
+          is_filterable: parseInt(this.form.is_filterable) || 0,
+          is_searchable: this.form.is_searchable ? 1 : 0,
+          is_comparable: this.form.is_comparable ? 1 : 0,
+          is_visible_on_front: this.form.is_visible_on_front ? 1 : 0,
+          sort_order: parseInt(this.form.sort_order) || 0,
+          validation_rules: this.form.validation_rules,
+          options: (this.form.options || []).filter(o => o.value && o.value.trim()).map((o, idx) => ({
+            value: o.value.trim(),
+            label: {
+              en: (o.label && o.label.en && o.label.en.trim()) ? o.label.en.trim() : o.value.trim(),
+              ar: (o.label && o.label.ar && o.label.ar.trim()) ? o.label.ar.trim() : o.value.trim()
+            },
+            is_default: !!o.is_default,
+            sort_order: idx + 1
+          }))
         };
 
         const method = this.form.id ? 'PUT' : 'POST';
@@ -840,19 +1682,49 @@ function visionAttributesApp() {
         });
         const data = await res.json();
         if (data.success || data.id) {
-          this.showCreateModal = false;
+          if (!this.form.id && data.id) {
+            this.form.id = data.id;
+          }
           await this.initData();
-          if (window.showToast) window.showToast(this.form.id ? 'Attribute updated successfully!' : 'Attribute created successfully!', 'success');
+          if (window.showToast) {
+            window.showToast(this.form.id ? 'Attribute saved successfully!' : 'Attribute created successfully!', 'success');
+          }
+          if (exitAfterSave) {
+            this.exitEditMode();
+          } else {
+            const refetch = await fetch(`/visionadmin/api/attributes/${this.form.id}`);
+            const refetchData = await refetch.json();
+            if (refetchData.attribute && refetchData.attribute.options) {
+              this.form.options = refetchData.attribute.options.map(o => ({
+                id: o.id,
+                value: o.value || '',
+                label: typeof o.label === 'object' && o.label !== null ? o.label : { en: o.value || '', ar: o.value || '' },
+                is_default: !!o.is_default,
+                sort_order: o.sort_order || 0
+              }));
+            }
+            this.originalForm = JSON.parse(JSON.stringify(this.form));
+          }
         } else {
           alert(data.error || 'Failed to save attribute.');
         }
       } catch (err) {
         console.error('Save attribute error:', err);
+        alert('An error occurred while saving.');
+      } finally {
+        this.isSaving = false;
       }
     },
 
-    viewAttribute(attr) {
+    async viewAttribute(attr) {
       this.selectedAttr = attr;
+      try {
+        const res = await fetch(`/visionadmin/api/attributes/${attr.id}`);
+        const d = await res.json();
+        if (d.attribute) {
+          this.selectedAttr = d.attribute;
+        }
+      } catch (e) {}
       this.showDetailModal = true;
     },
 
@@ -1034,6 +1906,90 @@ function visionAttributesApp() {
         }
       } catch (e) {
         console.error('Add group to set error:', e);
+      }
+    },
+
+    openCsvModal() {
+      this.csvFile = null;
+      this.csvFileName = '';
+      this.csvFileSize = '';
+      this.csvUploading = false;
+      this.csvResult = null;
+      this.csvError = '';
+      this.isDragging = false;
+      if (this.$refs.csvInput) this.$refs.csvInput.value = '';
+      this.showCsvModal = true;
+    },
+
+    clearCsvFile() {
+      this.csvFile = null;
+      this.csvFileName = '';
+      this.csvFileSize = '';
+      this.csvResult = null;
+      this.csvError = '';
+      if (this.$refs.csvInput) this.$refs.csvInput.value = '';
+    },
+
+    handleCsvFileSelect(e) {
+      const file = e.target.files && e.target.files[0];
+      if (file) {
+        this.processCsvFile(file);
+      }
+    },
+
+    handleCsvDrop(e) {
+      this.isDragging = false;
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file) {
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+          this.csvError = 'Please drop a valid .csv file.';
+          return;
+        }
+        this.processCsvFile(file);
+      }
+    },
+
+    processCsvFile(file) {
+      this.csvFile = file;
+      this.csvFileName = file.name;
+      this.csvFileSize = (file.size / 1024).toFixed(1) + ' KB';
+      this.csvError = '';
+      this.csvResult = null;
+    },
+
+    async uploadCsv() {
+      if (!this.csvFile) {
+        this.csvError = 'Please select a CSV file first.';
+        return;
+      }
+      this.csvUploading = true;
+      this.csvError = '';
+      this.csvResult = null;
+
+      try {
+        const formData = new FormData();
+        formData.append('file', this.csvFile);
+
+        const res = await fetch('/visionadmin/api/attributes/import-csv', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          this.csvResult = data;
+          await this.initData();
+          if (window.showToast) {
+            window.showToast(data.message || 'Attributes imported successfully!', 'success');
+          }
+        } else {
+          this.csvError = data.error || 'Failed to import attributes CSV.';
+        }
+      } catch (err) {
+        console.error('Import CSV error:', err);
+        this.csvError = err.message || 'An error occurred while uploading.';
+      } finally {
+        this.csvUploading = false;
       }
     }
   };

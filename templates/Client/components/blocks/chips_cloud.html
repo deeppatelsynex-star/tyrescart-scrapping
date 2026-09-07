@@ -1,0 +1,38 @@
+<!-- Block: Interactive Chips Cloud -->
+<div class="dynamic-chips-block" style="margin-top:24px;margin-bottom:24px;">
+  {% if block.heading %}
+    <div style="margin-bottom:12px;">
+      <h4 style="font-size:1.1rem;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:8px;margin:0;">
+        <span style="display:inline-block;width:4px;height:18px;background:var(--green);border-radius:2px;"></span>
+        <span>{{ block.heading }}</span>
+      </h4>
+      {% if block.description %}
+        <p style="font-size:0.88rem;color:var(--slate);margin:4px 0 0 12px;">{{ block.description }}</p>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% set chip_list = block['chips'] if ('chips' in block and block['chips'] is iterable and not block['chips'] is string) else [] %}
+  {% if block['chips'] is string %}
+    {% set chip_list = block['chips'].split('·') %}
+  {% endif %}
+
+  <div class="chips-grid" style="display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:10px;">
+    {% for c in chip_list %}
+    {% set c_clean = c | trim %}
+    {% if c_clean %}
+      {% set wa_text = "Hi TyresVision, I'd like a price quote for: " ~ c_clean %}
+      <a href="https://wa.me/971505069575?text={{ wa_text | urlencode }}" 
+         target="_blank" 
+         rel="noopener" 
+         class="chip chip-interactive" 
+         style="display:inline-flex;align-items:center;gap:7px;padding:8px 14px;background:#fff;border:1px solid var(--line);border-radius:100px;font-size:0.86rem;font-weight:700;color:var(--ink);text-decoration:none;transition:all 0.15s ease;"
+         onmouseover="this.style.borderColor='var(--green)';this.style.background='var(--green-tint)';this.style.transform='translateY(-1px)';"
+         onmouseout="this.style.borderColor='var(--line)';this.style.background='#fff';this.style.transform='none';">
+        <span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;"></span>
+        <span>{{ c_clean }}</span>
+      </a>
+    {% endif %}
+    {% endfor %}
+  </div>
+</div>

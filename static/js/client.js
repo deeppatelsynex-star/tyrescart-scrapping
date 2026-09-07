@@ -58,72 +58,72 @@
   }
 
   /* ---------- Ownership notice modal ---------- */
-  var modal    = document.getElementById('noticeModal');
-  if(modal){
-    var native   = typeof modal.showModal === 'function';
-    var opener   = null;   // element that opened the modal, for focus return
-    var backdrop = null;   // fallback backdrop node
-
-    function openNotice(e){
-      if(e) e.preventDefault();
-      opener = (e && e.currentTarget) || null;
-      document.documentElement.classList.add('modal-open');
-      document.body.classList.add('modal-open');
-
-      if(native){
-        modal.showModal();
-      } else {
-        backdrop = document.createElement('div');
-        backdrop.className = 'fb-backdrop';
-        backdrop.addEventListener('click', closeNotice);
-        document.body.appendChild(backdrop);
-        modal.classList.add('fb-open');
-        modal.setAttribute('open','');
-      }
-      var btn = document.getElementById('noticeClose');
-      if(btn) btn.focus();
+  window.openNotice = function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    var body = document.body;
+    if (window.Alpine && body._x_dataStack && body._x_dataStack.length) {
+      body._x_dataStack[0].noticeModalOpen = true;
     }
-
-    function closeNotice(){
-      document.documentElement.classList.remove('modal-open');
-      document.body.classList.remove('modal-open');
-
-      if(native){
-        if(modal.open) modal.close();
-      } else {
-        modal.classList.remove('fb-open');
-        modal.removeAttribute('open');
-        if(backdrop){ backdrop.remove(); backdrop = null; }
-      }
-      if(opener && opener.focus) opener.focus();
-      opener = null;
+    var m = document.getElementById('noticeModal');
+    if (m) {
+      m.style.setProperty('display', 'flex', 'important');
+      m.classList.add('open');
+      m.removeAttribute('x-cloak');
     }
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
+    var sheetBody = m ? m.querySelector('.sheet-body') : null;
+    if (sheetBody) sheetBody.scrollTop = 0;
+    var closeBtn = document.getElementById('noticeClose');
+    if (closeBtn && window.innerWidth > 820) closeBtn.focus();
+  };
 
-    // Any link pointing at #notice (or marked data-notice) opens the modal
-    Array.prototype.forEach.call(
-      document.querySelectorAll('a[href="#notice"], [data-notice]'),
-      function(el){ el.addEventListener('click', openNotice); }
-    );
+  window.closeNotice = function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    var body = document.body;
+    if (window.Alpine && body._x_dataStack && body._x_dataStack.length) {
+      body._x_dataStack[0].noticeModalOpen = false;
+    }
+    var m = document.getElementById('noticeModal');
+    if (m) {
+      m.style.setProperty('display', 'none', 'important');
+      m.classList.remove('open');
+    }
+    document.documentElement.classList.remove('modal-open');
+    document.body.classList.remove('modal-open');
+  };
 
-    var closeBtn1 = document.getElementById('noticeClose');
-    if(closeBtn1) closeBtn1.addEventListener('click', closeNotice);
-    var closeBtn2 = document.getElementById('noticeClose2');
-    if(closeBtn2) closeBtn2.addEventListener('click', closeNotice);
+  // Bind click handlers globally (catches dynamically rendered or static triggers)
+  document.addEventListener('click', function(e) {
+    var trigger = e.target && e.target.closest && e.target.closest('a[href="#notice"], [data-notice]');
+    if (trigger) {
+      e.preventDefault();
+      window.openNotice(e);
+      return;
+    }
+    var closeBtn = e.target && e.target.closest && e.target.closest('#noticeClose, #noticeClose2, [data-notice-close]');
+    if (closeBtn) {
+      e.preventDefault();
+      window.closeNotice(e);
+      return;
+    }
+    var modal = document.getElementById('noticeModal');
+    if (modal && (e.target === modal || (e.target && e.target.classList && e.target.classList.contains('notice-modal-dialog')))) {
+      window.closeNotice(e);
+    }
+  }, true); // Use capture phase so stopPropagation inside dialog won't block it!
 
-    // Click on the backdrop area (outside the white sheet) closes it
-    modal.addEventListener('click', function(e){ if(e.target === modal) closeNotice(); });
-    // Native <dialog> fires 'close' on Esc — keep body scroll state in sync
-    modal.addEventListener('close', function(){
-      document.documentElement.classList.remove('modal-open');
-      document.body.classList.remove('modal-open');
-    });
-    // Esc for the fallback path
-    document.addEventListener('keydown', function(e){
-      if(e.key === 'Escape' && !native && modal.classList.contains('fb-open')) closeNotice();
-    });
+  window.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var modal = document.getElementById('noticeModal');
+      if (modal && (modal.style.display === 'flex' || modal.classList.contains('open') || (window.Alpine && document.body._x_dataStack && document.body._x_dataStack[0] && document.body._x_dataStack[0].noticeModalOpen))) {
+        closeNotice();
+      }
+    }
+  });
 
-    // Deep link: /#notice opens the modal on load
-    if(window.location.hash === '#notice') openNotice();
+  if (window.location.hash === '#notice') {
+    setTimeout(openNotice, 150);
   }
 
   /* ---------- Mobile Navigation Drawer ---------- */
@@ -280,9 +280,115 @@
     }
   });
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMobileNav);
-  } else {
+  /* ---------- Dynamic Nav Active State (Mobile Drawer) & ScrollSpy ---------- */
+  function initNavActiveState() {
+    var mobileLinks = document.querySelectorAll('.mobile-nav-links a');
+    var allLinks = document.querySelectorAll('.nav-links a, .mobile-nav-links a');
+    if (!allLinks.length) return;
+
+    // Ensure desktop links never retain an active class
+    var desktopLinks = document.querySelectorAll('.nav-links a');
+    desktopLinks.forEach(function(l) { l.classList.remove('active'); });
+
+    function setActive(targetKey) {
+      if (!targetKey) return;
+      mobileLinks.forEach(function(link) {
+        var key = link.getAttribute('data-nav-target') || '';
+        if (!key) {
+          var href = link.getAttribute('href') || '';
+          key = href.indexOf('#') !== -1 ? ('#' + href.split('#')[1]) : href;
+        }
+        if (key === targetKey) {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    }
+
+    // 1. Click Listener
+    allLinks.forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        var key = link.getAttribute('data-nav-target') || '';
+        if (!key) {
+          var href = link.getAttribute('href') || '';
+          key = href.indexOf('#') !== -1 ? ('#' + href.split('#')[1]) : href;
+        }
+        setActive(key);
+
+        // If clicking hash link on current home page, handle smooth scroll
+        if (key && key.startsWith('#')) {
+          var targetEl = document.getElementById(key.substring(1));
+          if (targetEl) {
+            var path = window.location.pathname;
+            var isHome = path === '/' || path === '/home';
+            if (isHome) {
+              e.preventDefault();
+              history.pushState(null, null, key);
+              targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }
+        }
+      });
+    });
+
+    // 2. Hash Change & Initial Check
+    function checkHashOrTop() {
+      if (window.location.hash) {
+        setActive(window.location.hash);
+      } else {
+        var path = window.location.pathname;
+        var isHome = path === '/' || path === '/home';
+        if (isHome && window.scrollY < 200) {
+          setActive('/');
+        }
+      }
+    }
+
+    window.addEventListener('hashchange', checkHashOrTop);
+    checkHashOrTop();
+
+    // 3. ScrollSpy on Home Page
+    var sectionKeys = ['#faq', '#brands', '#how', '#services', '#prices', '#why'];
+    var sectionMap = [];
+    sectionKeys.forEach(function(k) {
+      var el = document.getElementById(k.substring(1));
+      if (el) sectionMap.push({ key: k, el: el });
+    });
+
+    if (sectionMap.length > 0) {
+      var ticking = false;
+      window.addEventListener('scroll', function() {
+        if (!ticking) {
+          window.requestAnimationFrame(function() {
+            var scrollY = window.scrollY;
+            if (scrollY < 200) {
+              setActive('/');
+            } else {
+              var probe = scrollY + 180;
+              for (var i = 0; i < sectionMap.length; i++) {
+                if (probe >= sectionMap[i].el.offsetTop) {
+                  setActive(sectionMap[i].key);
+                  break;
+                }
+              }
+            }
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }, { passive: true });
+    }
+  }
+
+  function initAll() {
     initMobileNav();
+    initNavActiveState();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll);
+  } else {
+    initAll();
   }
 })();

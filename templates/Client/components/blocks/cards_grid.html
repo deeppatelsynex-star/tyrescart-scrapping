@@ -1,0 +1,59 @@
+<!-- Block: Cards Grid -->
+{% set cols = block.columns or 3 %}
+{% set col_class = 'g4' if cols == 4 else ('g2' if cols == 2 else ('g1' if cols == 1 else 'g3')) %}
+{% if block.heading %}
+  <div class="dynamic-block-header center mb-6" style="margin-top:28px;margin-bottom:20px;">
+    {% if block.subtitle %}<span class="eyebrow">{{ block.subtitle }}</span>{% endif %}
+    <h3 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;">{{ block.heading }}</h3>
+    {% if block.description %}<p class="lead" style="margin-inline:auto;font-size:0.95rem;">{{ block.description }}</p>{% endif %}
+  </div>
+{% endif %}
+
+<div class="grid {{ col_class }}" style="margin-top:20px;margin-bottom:24px;">
+  {% set card_items = block['items'] if ('items' in block and block['items']) else (block['cards'] if ('cards' in block and block['cards']) else []) %}
+  {% for item in card_items %}
+  {% set item_title = item.title.ar if (is_ar and item.title and item.title.ar) else (item.title.en if (item.title and item.title.en) else (item.title or item.heading or '')) %}
+  {% set item_desc = item.description.ar if (is_ar and item.description and item.description.ar) else (item.description.en if (item.description and item.description.en) else (item.description or item.desc or '')) %}
+  {% set item_tag = item.tag.ar if (is_ar and item.tag and item.tag.ar) else (item.tag.en if (item.tag and item.tag.en) else (item.tag or '')) %}
+  <div class="card dynamic-card p-6" style="background:#fff;border:1px solid var(--line);border-radius:var(--radius);transition:transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;">
+      <div class="icon-well" style="width:44px;height:44px;border-radius:12px;background:var(--green-tint);color:var(--green-deep);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">
+        {% set ic = item.icon or 'shield' %}
+        {% if ic == 'clock' %}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        {% elif ic == 'dollar' %}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        {% elif ic == 'truck' %}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        {% elif ic == 'zap' %}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        {% elif ic == 'phone' %}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        {% elif ic == 'award' %}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        {% elif ic == 'tyre' %}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+        {% else %}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        {% endif %}
+      </div>
+      {% if item_tag %}
+        <span class="badge" style="font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:4px 8px;border-radius:6px;background:var(--green-tint);color:var(--green-deep);">{{ item_tag }}</span>
+      {% endif %}
+    </div>
+    {% if item_title %}
+      <h4 style="font-size:1.05rem;font-weight:800;color:var(--ink);margin:0 0 8px;letter-spacing:-0.01em;">{{ item_title }}</h4>
+    {% endif %}
+    {% if item_desc %}
+      <p style="font-size:0.9rem;color:var(--slate);line-height:1.55;margin:0;">{{ item_desc }}</p>
+    {% endif %}
+    {% if item.button_text and item.button_url %}
+      <div style="margin-top:14px;">
+        <a href="{{ item.button_url }}" class="btn btn-sm" style="font-size:0.82rem;padding:8px 16px;border-radius:100px;background:var(--green-tint);color:var(--green-deep);font-weight:700;display:inline-flex;align-items:center;gap:6px;">
+          {{ item.button_text }} &rarr;
+        </a>
+      </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>

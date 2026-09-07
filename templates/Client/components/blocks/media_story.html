@@ -1,0 +1,32 @@
+<!-- Block: Media + Narrative Split -->
+{% set pos = block.image_position or 'right' %}
+<div class="dynamic-media-story-block" style="margin-top:28px;margin-bottom:28px;">
+  <div class="grid g2" style="align-items:center;gap:36px;">
+    {% if pos == 'left' and block.image %}
+      <div class="media-container" style="border-radius:24px;overflow:hidden;box-shadow:var(--shadow);">
+        <img src="{{ block.image }}" alt="{{ block.title or 'Story' }}" style="width:100%;height:auto;object-fit:cover;display:block;" />
+      </div>
+    {% endif %}
+
+    <div class="prose-content">
+      {% if block.subtitle %}<span class="eyebrow">{{ block.subtitle }}</span>{% endif %}
+      {% if block.title %}<h3 style="font-size:1.5rem;font-weight:800;color:var(--ink);margin:0 0 12px;letter-spacing:-0.02em;">{{ block.title }}</h3>{% endif %}
+      {% if block.content %}
+        <div style="font-size:0.95rem;color:var(--slate);line-height:1.65;">
+          {{ block.content | safe }}
+        </div>
+      {% endif %}
+      {% if block.button_text and block.button_url %}
+        <div style="margin-top:20px;">
+          <a href="{{ block.button_url }}" class="btn btn-wa">{{ block.button_text }}</a>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if pos == 'right' and block.image %}
+      <div class="media-container" style="border-radius:24px;overflow:hidden;box-shadow:var(--shadow);">
+        <img src="{{ block.image }}" alt="{{ block.title or 'Story' }}" style="width:100%;height:auto;object-fit:cover;display:block;" />
+      </div>
+    {% endif %}
+  </div>
+</div>

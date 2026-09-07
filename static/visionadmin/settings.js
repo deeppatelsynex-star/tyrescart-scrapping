@@ -11,10 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const roleEnInput = document.getElementById('reviewer_role_en');
   const bioEnInput = document.getElementById('reviewer_bio_en');
 
-  const nameArInput = document.getElementById('reviewer_name_ar');
-  const roleArInput = document.getElementById('reviewer_role_ar');
-  const bioArInput = document.getElementById('reviewer_bio_ar');
-
   // Preview elements
   const previewAvatar = document.getElementById('preview-avatar');
   const previewName = document.getElementById('preview-name');
@@ -45,9 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Update Live Preview
   function updatePreview() {
     const initials = (initialsInput.value || 'SK').toUpperCase().trim();
-    const name = nameEnInput.value.trim() || 'Sharvil Kumar';
-    const role = roleEnInput.value.trim() || 'Tyre Selection Specialist, TyresVision';
-    const bio = bioEnInput.value.trim() || 'Sharvil Kumar oversees operations at TyresVision, helping customers find tyres that match their vehicle and budget.';
+    const name = nameEnInput ? nameEnInput.value.trim() || 'Sharvil Kumar' : 'Sharvil Kumar';
+    const role = roleEnInput ? roleEnInput.value.trim() || 'Tyre Selection Specialist, TyresVision' : 'Tyre Selection Specialist, TyresVision';
+    const bio = bioEnInput ? bioEnInput.value.trim() || 'Sharvil Kumar oversees operations at TyresVision, helping customers find tyres that match their vehicle and budget.' : '';
 
     if (previewAvatar) previewAvatar.textContent = initials;
     if (previewName) previewName.textContent = name;
@@ -58,29 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Listen for input changes to update preview in real-time
   [initialsInput, nameEnInput, roleEnInput, bioEnInput].forEach(el => {
     if (el) el.addEventListener('input', updatePreview);
-  });
-
-  // Language Tabs Switcher
-  const langTabs = document.querySelectorAll('.lang-tab');
-  const blockEn = document.getElementById('lang-block-en');
-  const blockAr = document.getElementById('lang-block-ar');
-
-  langTabs.forEach(tab => {
-    tab.addEventListener('click', function() {
-      const lang = this.dataset.lang;
-      langTabs.forEach(t => {
-        t.className = 'lang-tab px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer';
-      });
-      this.className = 'lang-tab px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-xs transition cursor-pointer';
-
-      if (lang === 'ar') {
-        blockEn.classList.add('hidden');
-        blockAr.classList.remove('hidden');
-      } else {
-        blockAr.classList.add('hidden');
-        blockEn.classList.remove('hidden');
-      }
-    });
   });
 
   // Load Settings from Server
@@ -99,19 +72,16 @@ document.addEventListener('DOMContentLoaded', function() {
         enabledSelect.value = s.enabled ? 'Yes' : 'No';
         initialsInput.value = s.initials || 'SK';
 
-        if (s.name) {
+        if (s.name && nameEnInput) {
           nameEnInput.value = typeof s.name === 'object' ? (s.name.en || '') : s.name;
-          nameArInput.value = typeof s.name === 'object' ? (s.name.ar || '') : '';
         }
 
-        if (s.role) {
+        if (s.role && roleEnInput) {
           roleEnInput.value = typeof s.role === 'object' ? (s.role.en || '') : s.role;
-          roleArInput.value = typeof s.role === 'object' ? (s.role.ar || '') : '';
         }
 
-        if (s.bio) {
+        if (s.bio && bioEnInput) {
           bioEnInput.value = typeof s.bio === 'object' ? (s.bio.en || '') : s.bio;
-          bioArInput.value = typeof s.bio === 'object' ? (s.bio.ar || '') : '';
         }
 
         updatePreview();
@@ -125,15 +95,19 @@ document.addEventListener('DOMContentLoaded', function() {
   // Save Settings to Server
   async function saveSettings() {
     const isEnabled = enabledSelect.value === 'Yes';
+    const nameVal = nameEnInput ? nameEnInput.value.trim() : '';
+    const roleVal = roleEnInput ? roleEnInput.value.trim() : '';
+    const bioVal = bioEnInput ? bioEnInput.value.trim() : '';
+
     const payload = {
       enabled: isEnabled,
       initials: initialsInput.value.trim() || 'SK',
-      name_en: nameEnInput.value.trim(),
-      name_ar: nameArInput.value.trim(),
-      role_en: roleEnInput.value.trim(),
-      role_ar: roleArInput.value.trim(),
-      bio_en: bioEnInput.value.trim(),
-      bio_ar: bioArInput.value.trim()
+      name_en: nameVal,
+      name_ar: nameVal,
+      role_en: roleVal,
+      role_ar: roleVal,
+      bio_en: bioVal,
+      bio_ar: bioVal
     };
 
     btnSave.disabled = true;

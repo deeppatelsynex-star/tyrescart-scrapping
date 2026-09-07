@@ -182,16 +182,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tableBody.innerHTML = pages.map(p => {
       let enTitle = 'Untitled';
-      let arTitle = '';
       if (typeof p.title === 'object' && p.title !== null) {
         enTitle = p.title.en || p.title.ar || 'Untitled';
-        arTitle = p.title.ar || '';
       } else if (typeof p.title === 'string') {
         if (p.title.trim().startsWith('{')) {
           try {
             const parsed = JSON.parse(p.title);
             enTitle = parsed.en || parsed.ar || p.title;
-            arTitle = parsed.ar || '';
           } catch (e) {
             enTitle = p.title;
           }
@@ -231,7 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="space-y-1">
               <div class="flex items-center gap-2">
                 <span class="font-black text-sm text-[#0E1108]">${escapeHtml(enTitle)}</span>
-                ${arTitle ? `<span class="text-xs text-slate-400" dir="rtl">(${escapeHtml(arTitle)})</span>` : ''}
               </div>
               <div class="flex items-center gap-2 text-xs">
                 <a href="/${p.slug}" target="_blank" class="text-[#58B31B] font-semibold hover:underline inline-flex items-center gap-1">
@@ -406,27 +402,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modalTitle) modalTitle.textContent = isEdit ? 'Edit Static Page' : 'Create New Static Page';
     if (saveBtnText) saveBtnText.textContent = isEdit ? 'Save Changes' : 'Create Page';
 
-    document.querySelector('.locale-tab[data-locale="en"]')?.click();
-
     if (isEdit && page) {
       setVal('title_en', (typeof page.title === 'object' ? page.title?.en : page.title) || '');
-      setVal('title_ar', (typeof page.title === 'object' ? page.title?.ar : '') || '');
       setVal('slug', page.slug || '');
       if (document.getElementById('is_active')) {
         document.getElementById('is_active').checked = Boolean(page.is_active);
       }
       setVal('seo_title_en', (typeof page.seo_title === 'object' ? page.seo_title?.en : '') || '');
-      setVal('seo_title_ar', (typeof page.seo_title === 'object' ? page.seo_title?.ar : '') || '');
       setVal('meta_description_en', (typeof page.meta_description === 'object' ? page.meta_description?.en : '') || '');
-      setVal('meta_description_ar', (typeof page.meta_description === 'object' ? page.meta_description?.ar : '') || '');
 
       setBannerPreview(page.banner_image || '');
 
       const contentEnVal = (typeof page.content === 'object' ? page.content?.en : page.content) || '';
-      const contentArVal = (typeof page.content === 'object' ? page.content?.ar : '') || '';
-
       setEditorContent('content_en', contentEnVal);
-      setEditorContent('content_ar', contentArVal);
 
     } else {
       if (document.getElementById('is_active')) {
@@ -477,12 +465,10 @@ document.addEventListener('DOMContentLoaded', () => {
   saveBtn?.addEventListener('click', async () => {
     const editId = editIdInput?.value || '';
     const title_en = getVal('title_en');
-    const title_ar = getVal('title_ar');
     const slug = getVal('slug');
 
     if (!title_en) {
-      alert('Please provide an English page title.');
-      document.querySelector('.locale-tab[data-locale="en"]')?.click();
+      alert('Please provide a page title.');
       document.getElementById('title_en')?.focus();
       return;
     }
@@ -497,21 +483,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const content_en = getEditorContent('content_en');
-    const content_ar = getEditorContent('content_ar');
+    const seo_title = getVal('seo_title_en');
+    const meta_desc = getVal('meta_description_en');
 
     const payload = {
-      title: { en: title_en, ar: title_ar },
-      content: { en: content_en, ar: content_ar },
+      title: { en: title_en, ar: title_en },
+      content: { en: content_en, ar: content_en },
       slug: slug,
       banner_image: bannerImageInput ? bannerImageInput.value.trim() || null : null,
       is_active: document.getElementById('is_active') ? document.getElementById('is_active').checked : true,
       seo_title: {
-        en: getVal('seo_title_en'),
-        ar: getVal('seo_title_ar')
+        en: seo_title,
+        ar: seo_title
       },
       meta_description: {
-        en: getVal('meta_description_en'),
-        ar: getVal('meta_description_ar')
+        en: meta_desc,
+        ar: meta_desc
       }
     };
 
