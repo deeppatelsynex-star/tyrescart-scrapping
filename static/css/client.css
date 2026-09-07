@@ -1,57 +1,68 @@
 /* ============================================================
-   TYREVISION UAE — PRECISION CERULEAN BRAND COLOR SYSTEM
-   Generated from Google Stitch Precision Cerulean Theme
+   TYREVISION UAE — ANTIGRAVITY MONOCHROMATIC BRAND SYSTEM
+   Harmonically calibrated from #1877F2 with Spatial Depth & Glassmorphism
    ============================================================ */
 :root {
-  /* Precision Cerulean Brand Blues */
-  --blue-primary: #1877F2;
-  --blue-brand: #1877F2;
-  --blue-bright: #4B9CF6;
-  --blue-cyan: #84BCF9;
-  --blue-hover: #0C5FD6;
+  /* Brand Anchor: Electric Cerulean Blue */
+  --blue-primary: #1877F2;        /* Primary Brand Anchor */
+  --blue-hover: #0F60CC;          /* Interactive Press / Deep Hover */
+  --blue-bright: #4594F7;         /* High-Velocity Cerulean Glow */
+  --blue-cyan: #7AB4FA;           /* Electric Sky (Eyebrows & Accents) */
+  --blue-soft-tint: #AECFFC;      /* Luminous Sky Highlight */
 
-  /* Dark Navies & Shades */
-  --navy-deep: #031B42;
-  --navy-primary: #052B66;
-  --navy-dark: #073B8A;
+  /* Deep Spatial Navies & Dark Foundations */
+  --navy-abyss: #030D1E;          /* Deepest Atmospheric Floor */
+  --navy-deep: #051838;           /* Hero, Footer & Table Header Base */
+  --navy-primary: #0A2554;        /* Dark Mid-Stop & Elevated Dark Surfaces */
+  --navy-accent: #0E367B;         /* Structural Dark Accent */
 
-  /* Conversion & Action Tokens */
+  /* Light Porcelain Surfaces & Tiers */
+  --surface-main: #FFFFFF;        /* Pure Crystalline Surface */
+  --blue-soft: #F5F9FF;           /* Whispering Blue (Zebra rows & Soft Tier) */
+  --blue-light: #EBF3FE;          /* Active Row Hover & Pill Background */
+  --blue-surface: #DEEDFE;        /* Soft Tint Fill & Icon Wells */
+  --blue-border: #D0E4FD;         /* Weightless Tonal Perimeter */
+  --blue-border-focus: #7AB4FA;   /* Active Glow Perimeter */
+
+  /* Chromatic Monochromatic Typography */
+  --text-dark: #051838;           /* High-Contrast Deep Navy Text */
+  --text-gray: #3A567F;           /* Technical Blue-Slate Body Copy */
+  --text-muted: #5C7AA6;          /* Muted Telemetry / Captions */
+
+  /* Action & Utility Tokens */
   --whatsapp: #25D366;
   --whatsapp-hover: #20BA5A;
-  --call-pill-dark: #031B42;
+  --call-pill-dark: #051838;
   --star-gold: #F59E0B;
 
-  /* Light Surfaces & Tonal Borders */
-  --surface-main: #FFFFFF;
-  --blue-soft: #F4F8FD;
-  --blue-light: #EBF4FE;
-  --blue-surface: #E0EEFD;
-  --blue-border: #D6E8FD;
-  --text-dark: #052B66;
-  --text-gray: #4B6584;
-  --text-muted: #5B738E;
-  --line-color: #D6E8FD;
+  /* Antigravity Spatial Gradients */
+  --gradient-hero: linear-gradient(135deg, #030D1E 0%, #051838 40%, #0A2554 75%, #1877F2 100%);
+  --gradient-accent: linear-gradient(135deg, #051838 0%, #0A2554 45%, #1877F2 80%, #4594F7 100%);
+  --gradient-footer: linear-gradient(180deg, #030D1E 0%, #051838 100%);
+  --gradient-surface: linear-gradient(180deg, #FFFFFF 0%, #F5F9FF 100%);
 
-  /* Precision Cerulean Signature Gradients */
-  --gradient-hero: linear-gradient(135deg, #031B42 0%, #073B8A 55%, #1877F2 100%);
-  --gradient-accent: linear-gradient(135deg, #031B42 0%, #073B8A 45%, #1877F2 75%, #4B9CF6 100%);
-  --gradient-footer: linear-gradient(180deg, #031B42 0%, #052B66 100%);
+  /* Antigravity Weightless Shadow Depths (Blue-Chroma Diffusion) */
+  --shadow-flat: 0 1px 3px rgba(5, 24, 56, 0.05);
+  --shadow-card: 0 4px 20px -2px rgba(24, 119, 242, 0.08), 0 2px 6px -1px rgba(5, 24, 56, 0.04);
+  --shadow-float: 0 16px 36px -4px rgba(24, 119, 242, 0.16), 0 4px 12px rgba(5, 24, 56, 0.06);
+  --shadow-deep: 0 24px 64px -12px rgba(3, 13, 30, 0.35);
 
-  /* Backwards-compatible Semantic Mappings */
+  /* Backwards-compatible Semantic Aliases */
   --green: #1877F2;
-  --green-bright: #4B9CF6;
+  --green-bright: #4594F7;
   --green-deep: #1877F2;
-  --green-tint: #EBF4FE;
-  --ink: #031B42;
-  --ink-2: #052B66;
-  --slate: #4B6584;
-  --line: #D6E8FD;
+  --green-tint: #EBF3FE;
+  --ink: #051838;
+  --ink-2: #0A2554;
+  --slate: #3A567F;
+  --line: #D0E4FD;
   --bg: #FFFFFF;
-  --bg-soft: #F4F8FD;
+  --bg-soft: #F5F9FF;
   --radius: 14px;
-  --shadow: 0 1px 3px rgba(7, 59, 138, 0.05), 0 4px 12px rgba(7, 59, 138, 0.04);
+  --shadow: var(--shadow-card);
   --maxw: 1280px;
   --font: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --transition-smooth: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 *,
@@ -184,7 +195,12 @@ section {
 
 .logo .swoosh {
   flex: 0 0 auto;
-  color: var(--blue-cyan, #84BCF9);
+  color: var(--blue-cyan, #7AB4FA);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.logo:hover .swoosh {
+  transform: rotate(15deg) scale(1.08);
 }
 
 .logo .word {
@@ -200,7 +216,7 @@ section {
 
 .logo .t1 {
   font-family: Georgia, "Times New Roman", serif;
-  color: var(--text-dark, #052B66);
+  color: var(--text-dark, #051838);
 }
 
 .logo .t2 {
@@ -224,7 +240,7 @@ section {
   position: absolute;
   inset: .14em;
   border-radius: 50%;
-  background: var(--blue-cyan, #84BCF9);
+  background: var(--blue-cyan, #7AB4FA);
 }
 
 .logo.on-dark .t1 {
@@ -232,15 +248,15 @@ section {
 }
 
 .logo.on-dark .t2 {
-  color: var(--blue-cyan, #84BCF9);
+  color: var(--blue-cyan, #7AB4FA);
 }
 
 .logo.on-dark .oring {
-  border-color: var(--blue-cyan, #84BCF9);
+  border-color: var(--blue-cyan, #7AB4FA);
 }
 
 .logo.on-dark .oring::after {
-  background: var(--blue-bright, #4B9CF6);
+  background: var(--blue-bright, #4594F7);
 }
 
 .logo.lg .word {
@@ -280,12 +296,13 @@ section {
   text-decoration: none;
   border: 2px solid transparent;
   cursor: pointer;
-  transition: transform .12s ease, box-shadow .12s ease, background .15s ease, border-color .15s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease, border-color 0.25s ease;
   white-space: nowrap;
+  will-change: transform;
 }
 
 .btn:hover {
-  transform: translateY(-2px)
+  transform: translateY(-2.5px);
 }
 
 .btn:focus-visible {
@@ -300,22 +317,22 @@ section {
 /* WhatsApp CTA = brand WhatsApp green (#25D366), Dark Pill label */
 .btn-wa {
   background: var(--whatsapp, #25D366);
-  color: #031B42;
+  color: #051838;
 }
 
 .btn-wa:hover {
   background: var(--whatsapp-hover, #20BA5A);
-  color: #031B42;
+  color: #051838;
 }
 
-/* Call Button = Call Pill Dark (#031B42) */
+/* Call Button = Call Pill Dark (#051838) */
 .btn-call {
-  background: var(--call-pill-dark, #031B42);
+  background: var(--call-pill-dark, #051838);
   color: #fff;
 }
 
 .btn-call:hover {
-  background: var(--navy-deep, #031B42);
+  background: var(--navy-deep, #051838);
   color: #fff;
 }
 
@@ -524,8 +541,8 @@ header {
 /* ---------------- HERO ---------------- */
 .hero {
   background:
-    radial-gradient(980px 440px at 86% -10%, rgba(132, 188, 249, 0.22), transparent 62%),
-    linear-gradient(135deg, #031B42 0%, #073B8A 55%, #1877F2 100%);
+    radial-gradient(980px 440px at 86% -10%, rgba(69, 148, 247, 0.25), transparent 65%),
+    linear-gradient(135deg, #030D1E 0%, #051838 40%, #0A2554 75%, #1877F2 100%);
   color: #fff;
   position: relative;
   overflow: hidden;
@@ -536,13 +553,14 @@ header {
   content: "";
   position: absolute;
   inset: auto 0 0 0;
-  height: 5px;
-  background: repeating-linear-gradient(90deg, var(--blue-cyan, #84BCF9) 0 26px, #fff 26px 52px);
-  opacity: .9;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, var(--blue-cyan, #7AB4FA) 0 26px, rgba(255, 255, 255, 0.7) 26px 52px);
+  opacity: .95;
 }
 
 .hero .eyebrow {
-  color: var(--blue-cyan, #84BCF9);
+  color: var(--blue-cyan, #7AB4FA);
+  letter-spacing: .14em;
 }
 
 .hero h1 {
@@ -553,7 +571,7 @@ header {
 
 .hero h1 em {
   font-style: normal;
-  color: var(--blue-cyan, #84BCF9);
+  color: var(--blue-cyan, #7AB4FA);
 }
 
 .hero .lead {
@@ -605,11 +623,20 @@ header {
 
 /* ---------------- QUOTE CARD ---------------- */
 .quote-card {
-  background: #fff;
-  color: var(--ink);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--text-dark, #051838);
+  border: 1px solid rgba(208, 228, 253, 0.8);
   border-radius: 20px;
   padding: 26px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .34)
+  box-shadow: 0 20px 50px -10px rgba(3, 13, 30, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.quote-card:hover {
+  box-shadow: 0 28px 64px -8px rgba(3, 13, 30, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.9) inset;
 }
 
 .quote-card h3 {
@@ -740,13 +767,15 @@ header {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 26px 24px;
-  transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+  will-change: transform;
 }
 
 .card:hover {
-  box-shadow: var(--shadow);
-  border-color: #CBD6C0;
-  transform: translateY(-2px)
+  box-shadow: var(--shadow-float);
+  border-color: var(--blue-cyan, #7AB4FA);
+  transform: translateY(-4px);
 }
 
 .card p {
@@ -901,14 +930,14 @@ header {
   min-width: 720px;
 }
 
-/* Table Header — Precision Cerulean #031B42 (--navy-deep) & #073B8A */
+/* Table Header — Antigravity Monochromatic #051838 with Cerulean Accents */
 .price-table thead th {
-  background: var(--navy-deep, #031B42);
+  background: var(--navy-deep, #051838);
   color: #FFFFFF;
   padding: 16px 20px;
   font-weight: 800;
   font-size: 0.9rem;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   white-space: nowrap;
   border: none;
   user-select: none;
@@ -929,15 +958,15 @@ header {
 }
 
 .th-content svg {
-  color: var(--blue-cyan, #84BCF9);
+  color: var(--blue-cyan, #7AB4FA);
   opacity: 0.95;
   flex-shrink: 0;
 }
 
 /* Table Body */
 .price-table tbody tr {
-  border-bottom: 1px solid var(--blue-border, #D6E8FD);
-  transition: background-color 0.15s ease;
+  border-bottom: 1px solid var(--blue-border, #D0E4FD);
+  transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .price-table tbody tr:last-child {
@@ -945,11 +974,11 @@ header {
 }
 
 .price-table tbody tr:nth-child(even) {
-  background-color: var(--blue-soft, #F4F8FD);
+  background-color: var(--blue-soft, #F5F9FF);
 }
 
 .price-table tbody tr:hover {
-  background-color: var(--blue-light, #EBF4FE);
+  background-color: var(--blue-light, #EBF3FE);
 }
 
 .price-table td {
@@ -967,13 +996,13 @@ header {
   font-family: var(--font), monospace;
   font-weight: 800;
   font-size: 0.96rem;
-  color: var(--text-dark, #052B66);
+  color: var(--text-dark, #051838);
   letter-spacing: -0.02em;
 }
 
 .td-common {
   width: 31%;
-  color: var(--text-gray, #4B6584);
+  color: var(--text-gray, #3A567F);
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -985,7 +1014,7 @@ header {
 
 .price-val {
   font-weight: 700;
-  color: var(--text-dark, #052B66);
+  color: var(--text-dark, #051838);
   font-size: 0.92rem;
   letter-spacing: -0.01em;
 }
@@ -1345,7 +1374,7 @@ details .body p:last-child {
 
 /* ---------------- FINAL CTA ---------------- */
 .final {
-  background: linear-gradient(135deg, #031B42 0%, #073B8A 45%, #1877F2 75%, #4B9CF6 100%);
+  background: linear-gradient(135deg, #051838 0%, #0A2554 45%, #1877F2 80%, #4594F7 100%);
   color: #fff;
   text-align: center;
   position: relative;
@@ -1356,9 +1385,9 @@ details .body p:last-child {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: 5px;
-  background: repeating-linear-gradient(90deg, var(--blue-cyan, #84BCF9) 0 26px, #fff 26px 52px);
-  opacity: .9;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, var(--blue-cyan, #7AB4FA) 0 26px, rgba(255, 255, 255, 0.8) 26px 52px);
+  opacity: .95;
 }
 
 .final h2 {
@@ -1687,7 +1716,7 @@ body.modal-open {
 
 /* ---------------- FOOTER ---------------- */
 footer {
-  background: var(--navy-deep, #031B42);
+  background: var(--navy-deep, #051838);
   color: rgba(255, 255, 255, .66);
   font-size: .9rem
 }
@@ -1753,7 +1782,7 @@ footer a {
 }
 
 footer a:hover {
-  color: var(--blue-cyan, #84BCF9);
+  color: var(--blue-cyan, #7AB4FA);
   text-decoration: underline
 }
 
@@ -1877,7 +1906,7 @@ footer .tagline {
 .blog-hero-banner {
   background:
     radial-gradient(980px 440px at 86% -10%, rgba(132, 188, 249, 0.22), transparent 62%),
-    linear-gradient(135deg, #031B42 0%, #073B8A 55%, #1877F2 100%);
+    linear-gradient(135deg, #051838 0%, #0A2554 55%, #1877F2 100%);
   color: #fff;
   position: relative;
   overflow: hidden;
@@ -1890,12 +1919,12 @@ footer .tagline {
   position: absolute;
   inset: auto 0 0 0;
   height: 4px;
-  background: repeating-linear-gradient(90deg, var(--blue-cyan, #84BCF9) 0 24px, rgba(255,255,255,.2) 24px 48px);
+  background: repeating-linear-gradient(90deg, var(--blue-cyan, #7AB4FA) 0 24px, rgba(255,255,255,.2) 24px 48px);
   opacity: .95;
 }
 
 .blog-hero-banner .eyebrow {
-  color: var(--blue-cyan, #84BCF9);
+  color: var(--blue-cyan, #7AB4FA);
   font-size: .82rem;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -1959,9 +1988,9 @@ footer .tagline {
 }
 
 .filter-btn.active {
-  background: var(--blue-cyan, #84BCF9);
-  color: var(--navy-deep, #031B42);
-  border-color: var(--blue-cyan, #84BCF9);
+  background: var(--blue-cyan, #7AB4FA);
+  color: var(--navy-deep, #051838);
+  border-color: var(--blue-cyan, #7AB4FA);
   font-weight: 800;
   box-shadow: 0 4px 14px rgba(75, 156, 246, 0.35);
 }
@@ -2790,7 +2819,7 @@ footer .tagline {
 .sidebar-ad-card {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #031B42 0%, #073B8A 45%, #1877F2 75%, #4B9CF6 100%);
+  background: linear-gradient(135deg, #051838 0%, #0A2554 45%, #1877F2 75%, #4594F7 100%);
   border: 1px solid rgba(75, 156, 246, 0.35);
   border-radius: 18px;
   padding: 24px 22px;
@@ -3731,7 +3760,7 @@ footer .tagline {
 .about-stats-band {
   background:
     radial-gradient(980px 440px at 86% -10%, rgba(132, 188, 249, 0.22), transparent 62%),
-    linear-gradient(135deg, #031B42 0%, #073B8A 55%, #1877F2 100%);
+    linear-gradient(135deg, #051838 0%, #0A2554 55%, #1877F2 100%);
   color: #ffffff;
   padding: clamp(52px, 6.5vw, 80px) 0;
   position: relative;
@@ -4736,9 +4765,9 @@ details summary span:last-child {
 
 /* Signature Brand Gradient Utilities */
 .gradient-hero {
-  background: linear-gradient(135deg, #031B42 0%, #073B8A 55%, #1877F2 100%);
+  background: linear-gradient(135deg, #051838 0%, #0A2554 55%, #1877F2 100%);
 }
 
 .gradient-accent {
-  background: linear-gradient(135deg, #031B42 0%, #073B8A 45%, #1877F2 75%, #4B9CF6 100%);
+  background: linear-gradient(135deg, #051838 0%, #0A2554 45%, #1877F2 75%, #4594F7 100%);
 }
