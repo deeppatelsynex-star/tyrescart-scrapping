@@ -586,41 +586,19 @@ header {
 
 /* ---------------- HERO ---------------- */
 .hero {
-  background: linear-gradient(135deg, #2563FF 0%, #1D4ED8 100%);
+  background-color: #2563FF;
+  background-image: url('/static/assets/images/hero-gradient.png');
+  background-image: image-set(
+    url('/static/assets/images/hero-gradient.webp') type('image/webp'),
+    url('/static/assets/images/hero-gradient.png') type('image/png')
+  );
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
   color: #FFFFFF;
   position: relative;
   overflow: hidden;
   padding: clamp(52px, 6.5vw, 84px) 0 clamp(48px, 6vw, 76px);
-}
-
-/* Organic Curved Wave Shape on Bottom-Left */
-.hero::before {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: clamp(280px, 34vw, 520px);
-  height: clamp(240px, 30vw, 440px);
-  background: radial-gradient(circle at 10% 90%, #A855F7 0%, #8B5CF6 55%, rgba(139, 92, 246, 0) 75%);
-  border-top-right-radius: 100%;
-  opacity: 0.88;
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* Organic Curved Dome Shape on Top-Right */
-.hero::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: clamp(320px, 38vw, 580px);
-  height: clamp(280px, 34vw, 500px);
-  background: radial-gradient(circle at 85% 15%, #8B5CF6 0%, #A855F7 45%, rgba(139, 92, 246, 0) 75%);
-  border-bottom-left-radius: 100%;
-  opacity: 0.80;
-  pointer-events: none;
-  z-index: 1;
 }
 
 .hero .wrap,
