@@ -222,6 +222,14 @@ class Product:
                         res['scoped_attributes'] = AttributeService.get_product_scoped_attributes(product_id)
                     except Exception:
                         res['scoped_attributes'] = {}
+                    try:
+                        cursor.execute("SELECT website_id FROM product_websites WHERE product_id = %s", (product_id,))
+                        w_rows = cursor.fetchall() or []
+                        res['website_ids'] = [r['website_id'] for r in w_rows]
+                        if not res['website_ids'] and res.get('website_id'):
+                            res['website_ids'] = [res['website_id']]
+                    except Exception:
+                        res['website_ids'] = [res.get('website_id')] if res.get('website_id') else [1]
                 return res
         finally:
             conn.close()
@@ -408,6 +416,27 @@ class Product:
                             except Exception:
                                 pass
 
+                # Save product websites
+                website_ids = data.get('website_ids')
+                if not website_ids and data.get('website_id'):
+                    website_ids = [data.get('website_id')]
+                if not website_ids:
+                    website_ids = [1]
+                for wid in website_ids:
+                    try:
+                        cursor.execute("""
+                            INSERT INTO product_websites (product_id, website_id, created_by, updated_by, created_at, updated_at)
+                            VALUES (%s, %s, %s, %s, NOW(), NOW())
+                        """, (new_id, int(wid), user_id, user_id))
+                    except Exception:
+                        pass
+                if website_ids:
+                    try:
+                        cursor.execute("UPDATE products SET website_id = %s WHERE id = %s", (int(website_ids[0]), new_id))
+                    except Exception:
+                        pass
+                conn.commit()
+
                 return new_id
         finally:
             conn.close()
@@ -553,6 +582,28 @@ class Product:
                                 )
                             except Exception:
                                 pass
+
+                # Sync product websites
+                if 'website_ids' in data or 'website_id' in data:
+                    website_ids = data.get('website_ids')
+                    if not website_ids and data.get('website_id'):
+                        website_ids = [data.get('website_id')]
+                    if website_ids is not None:
+                        cursor.execute("DELETE FROM product_websites WHERE product_id = %s", (product_id,))
+                        for wid in website_ids:
+                            try:
+                                cursor.execute("""
+                                    INSERT INTO product_websites (product_id, website_id, created_by, updated_by, created_at, updated_at)
+                                    VALUES (%s, %s, %s, %s, NOW(), NOW())
+                                """, (product_id, int(wid), user_id, user_id))
+                            except Exception:
+                                pass
+                        if website_ids:
+                            try:
+                                cursor.execute("UPDATE products SET website_id = %s WHERE id = %s", (int(website_ids[0]), product_id))
+                            except Exception:
+                                pass
+                conn.commit()
 
                 return True
         finally:

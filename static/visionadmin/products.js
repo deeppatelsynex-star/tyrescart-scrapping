@@ -25,6 +25,7 @@ function visionProductsApp() {
     activeProduct: null,
     viewProductSchema: null,
     attributeSets: [],
+    availableWebsites: [],
     csvModalOpen: false,
     selectedCsvFile: null,
     csvUploading: false,
@@ -168,7 +169,7 @@ function visionProductsApp() {
     },
 
     async initData() {
-      await Promise.all([this.fetchBrands(), this.fetchCategories(), this.fetchAttributeSets()]);
+      await Promise.all([this.fetchBrands(), this.fetchCategories(), this.fetchAttributeSets(), this.fetchWebsites()]);
       await this.fetchProducts();
 
       // Listen to filter search debounce
@@ -211,6 +212,49 @@ function visionProductsApp() {
         }
       } catch (err) {
         console.error('Error fetching attribute sets:', err);
+      }
+    },
+
+    async fetchWebsites() {
+      try {
+        const res = await fetch('/visionadmin/api/websites');
+        const data = await res.json();
+        if (data.websites) {
+          this.availableWebsites = data.websites || [];
+        }
+      } catch (err) {
+        console.error('Error fetching websites:', err);
+      }
+    },
+
+    formatWebsiteName(web) {
+      if (!web) return '';
+      if (typeof web.name === 'object' && web.name !== null) {
+        return web.name.en || web.name.ar || web.code || '';
+      }
+      try {
+        if (typeof web.name === 'string' && web.name.trim().startsWith('{')) {
+          const parsed = JSON.parse(web.name);
+          return parsed.en || parsed.ar || web.name;
+        }
+      } catch (e) {}
+      return web.name || web.code || '';
+    },
+
+    isWebsiteSelected(webId) {
+      if (!this.form || !this.form.website_ids) return false;
+      return this.form.website_ids.some(id => Number(id) === Number(webId));
+    },
+
+    toggleWebsiteSelection(webId, isChecked) {
+      if (!this.form.website_ids) this.form.website_ids = [];
+      const numId = Number(webId);
+      if (isChecked) {
+        if (!this.form.website_ids.some(id => Number(id) === numId)) {
+          this.form.website_ids.push(numId);
+        }
+      } else {
+        this.form.website_ids = this.form.website_ids.filter(id => Number(id) !== numId);
       }
     },
 
@@ -413,7 +457,8 @@ function visionProductsApp() {
         is_new: false,
         meta_title_en: '',
         meta_desc_en: '',
-        canonical_url: ''
+        canonical_url: '',
+        website_ids: (this.availableWebsites.find(w => w.is_default == 1) ? [this.availableWebsites.find(w => w.is_default == 1).id] : (this.availableWebsites.length > 0 ? [this.availableWebsites[0].id] : [1]))
       };
       this.modalOpen = true;
       this.onAttributeSetChange(defaultSetId);
@@ -484,7 +529,8 @@ function visionProductsApp() {
         is_new: Boolean(p.is_new),
         meta_title_en: metaTitleEn,
         meta_desc_en: metaDescEn,
-        canonical_url: p.canonical_url || ''
+        canonical_url: p.canonical_url || '',
+        website_ids: p.website_ids && p.website_ids.length ? p.website_ids.map(Number) : (p.website_id ? [Number(p.website_id)] : [1])
       };
       this.modalOpen = true;
       this.onAttributeSetChange(setId, p.id);
@@ -575,6 +621,9 @@ function visionProductsApp() {
         if (this.form.dynamic_attributes && this.form.dynamic_attributes.tire_size_label) {
           payload.tire_size_label = this.form.dynamic_attributes.tire_size_label;
         }
+
+        payload.website_ids = this.form.website_ids || [1];
+        payload.website_id = (this.form.website_ids && this.form.website_ids.length ? this.form.website_ids[0] : 1);
 
         const res = await fetch(url, {
           method: method,
