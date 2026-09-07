@@ -9,6 +9,7 @@ import re
 from datetime import datetime, timezone
 from decimal import Decimal
 from db import get_connection
+from services.attribute_service import AttributeService
 
 
 class Product:
@@ -95,8 +96,8 @@ class Product:
     @classmethod
     def paginate(cls, page: int = 1, per_page: int = 25, search: str = None,
                  brand_id: int = None, category_id: int = None, status: str = None,
-                 stock_status: str = None, vehicle_type: str = None, is_trash: bool = False,
-                 sort_by: str = 'created_at', sort_dir: str = 'DESC'):
+                 stock_status: str = None, vehicle_type: str = None, attribute_set_id: int = None,
+                 is_trash: bool = False, sort_by: str = 'created_at', sort_dir: str = 'DESC'):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
@@ -120,6 +121,10 @@ class Product:
                 if category_id:
                     where_clauses.append("p.category_id = %s")
                     params.append(category_id)
+
+                if attribute_set_id:
+                    where_clauses.append("p.attribute_set_id = %s")
+                    params.append(attribute_set_id)
 
                 if status:
                     where_clauses.append("p.status = %s")
@@ -155,16 +160,19 @@ class Product:
                 cursor.execute(count_sql, tuple(params))
                 total_items = cursor.fetchone()['cnt']
 
-                # Paginated items with brand and category names joined
+                # Paginated items with brand, category and attribute set names joined
                 offset = max(0, (page - 1) * per_page)
                 items_sql = f"""
                     SELECT p.*,
                            b.name as brand_name,
                            b.logo as brand_logo,
-                           c.name_en as category_name
+                           c.name_en as category_name,
+                           s.name as attribute_set_name,
+                           s.slug as attribute_set_slug
                     FROM products p
                     LEFT JOIN brands b ON b.id = p.brand_id
                     LEFT JOIN categories c ON c.id = p.category_id
+                    LEFT JOIN attribute_sets s ON s.id = p.attribute_set_id
                     {where_sql}
                     ORDER BY {order_col} {direction}
                     LIMIT %s OFFSET %s
@@ -195,17 +203,26 @@ class Product:
                     SELECT p.*,
                            b.name as brand_name,
                            b.logo as brand_logo,
-                           c.name_en as category_name
+                           c.name_en as category_name,
+                           s.name as attribute_set_name,
+                           s.slug as attribute_set_slug
                     FROM products p
                     LEFT JOIN brands b ON b.id = p.brand_id
                     LEFT JOIN categories c ON c.id = p.category_id
+                    LEFT JOIN attribute_sets s ON s.id = p.attribute_set_id
                     WHERE p.id = %s
                 """
                 if not include_trash:
                     sql += " AND p.deleted_at IS NULL"
                 cursor.execute(sql, (product_id,))
                 row = cursor.fetchone()
-                return cls.to_dict(row) if row else None
+                res = cls.to_dict(row) if row else None
+                if res:
+                    try:
+                        res['scoped_attributes'] = AttributeService.get_product_scoped_attributes(product_id)
+                    except Exception:
+                        res['scoped_attributes'] = {}
+                return res
         finally:
             conn.close()
 
@@ -316,10 +333,24 @@ class Product:
                 meta_desc = json.dumps(data.get('meta_desc') or {'en': data.get('meta_desc_en', ''), 'ar': ''})
                 canonical_url = (data.get('canonical_url') or '').strip() or None
 
+                attribute_set_id = int(data['attribute_set_id']) if data.get('attribute_set_id') else 1
+                dyn_attrs = data.get('dynamic_attributes') or data.get('attributes_json') or {}
+                if isinstance(dyn_attrs, str):
+                    try:
+                        dyn_attrs = json.loads(dyn_attrs)
+                    except Exception:
+                        dyn_attrs = {}
+                attributes_json = json.dumps(dyn_attrs)
+
+                # Sync tyre size from dynamic attributes if present
+                if not tire_size_label and dyn_attrs.get('tire_size_label'):
+                    tire_size_label = str(dyn_attrs['tire_size_label']).strip()
+
                 now = datetime.now(timezone.utc)
 
                 cursor.execute("""
                     INSERT INTO products (
+                        attribute_set_id, attributes_json,
                         sku, display_name, slug, name, description, short_desc,
                         price, list_price, sale_price, cost_price, currency,
                         stock_qty, stock_status, manage_stock, min_order_qty, max_order_qty,
@@ -331,6 +362,7 @@ class Product:
                         canonical_url, meta_title, meta_desc,
                         created_by, created_at, updated_at
                     ) VALUES (
+                        %s, %s,
                         %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
@@ -343,6 +375,7 @@ class Product:
                         %s, %s, %s
                     )
                 """, (
+                    attribute_set_id, attributes_json,
                     sku, display_name, slug, json.dumps(name_json), description, short_desc,
                     price, list_price, sale_price, cost_price, 'AED',
                     stock_qty, stock_status, manage_stock, min_order_qty, max_order_qty,
@@ -355,7 +388,27 @@ class Product:
                     user_id, now, now
                 ))
                 conn.commit()
-                return cursor.lastrowid
+                new_id = cursor.lastrowid
+
+                # Save dynamic attributes to EAV product_attribute_values
+                if dyn_attrs:
+                    for attr_code, attr_val in dyn_attrs.items():
+                        if attr_val is None or attr_val == '':
+                            continue
+                        cursor.execute("SELECT id FROM attributes WHERE code = %s AND deleted_at IS NULL", (attr_code,))
+                        attr_row = cursor.fetchone()
+                        if attr_row:
+                            try:
+                                AttributeService.save_product_scoped_attribute(
+                                    product_id=new_id,
+                                    attribute_id=attr_row['id'],
+                                    value=attr_val,
+                                    user_id=user_id
+                                )
+                            except Exception:
+                                pass
+
+                return new_id
         finally:
             conn.close()
 
@@ -453,9 +506,25 @@ class Product:
                     fields.append("meta_title = %s")
                     params.append(json.dumps(data['meta_title'] or {}))
 
-                if 'meta_desc' in data:
-                    fields.append("meta_desc = %s")
-                    params.append(json.dumps(data['meta_desc'] or {}))
+                if 'attribute_set_id' in data and data['attribute_set_id']:
+                    fields.append("attribute_set_id = %s")
+                    params.append(int(data['attribute_set_id']))
+
+                dyn_attrs = None
+                if 'dynamic_attributes' in data or 'attributes_json' in data:
+                    dyn_attrs = data.get('dynamic_attributes') or data.get('attributes_json') or {}
+                    if isinstance(dyn_attrs, str):
+                        try:
+                            dyn_attrs = json.loads(dyn_attrs)
+                        except Exception:
+                            dyn_attrs = {}
+                    fields.append("attributes_json = %s")
+                    params.append(json.dumps(dyn_attrs))
+
+                    # Sync tyre_size_label from dynamic attributes if present
+                    if dyn_attrs.get('tire_size_label') and 'tire_size_label' not in data:
+                        fields.append("tire_size_label = %s")
+                        params.append(str(dyn_attrs['tire_size_label']).strip())
 
                 now = datetime.now(timezone.utc)
                 fields.extend(["updated_by = %s", "updated_at = %s"])
@@ -466,6 +535,25 @@ class Product:
 
                 cursor.execute(sql, tuple(params))
                 conn.commit()
+
+                # Sync dynamic attributes into EAV product_attribute_values
+                if dyn_attrs is not None:
+                    for attr_code, attr_val in dyn_attrs.items():
+                        if attr_val is None or attr_val == '':
+                            continue
+                        cursor.execute("SELECT id FROM attributes WHERE code = %s AND deleted_at IS NULL", (attr_code,))
+                        attr_row = cursor.fetchone()
+                        if attr_row:
+                            try:
+                                AttributeService.save_product_scoped_attribute(
+                                    product_id=product_id,
+                                    attribute_id=attr_row['id'],
+                                    value=attr_val,
+                                    user_id=user_id
+                                )
+                            except Exception:
+                                pass
+
                 return True
         finally:
             conn.close()

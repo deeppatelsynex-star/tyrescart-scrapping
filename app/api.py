@@ -3822,12 +3822,14 @@ def register_visionadmin_api_routes(app):
         status = request.args.get('status')
         stock_status = request.args.get('stock_status')
         vehicle_type = request.args.get('vehicle_type')
+        attribute_set_id = request.args.get('attribute_set_id')
         is_trash = request.args.get('trash') in ('1', 'true', 'yes')
         sort_by = request.args.get('sort_by', 'created_at')
         sort_dir = request.args.get('sort_dir', 'DESC')
 
         bid = int(brand_id) if brand_id and str(brand_id).isdigit() else None
         cid = int(category_id) if category_id and str(category_id).isdigit() else None
+        asid = int(attribute_set_id) if attribute_set_id and str(attribute_set_id).isdigit() else None
 
         result = Product.paginate(
             page=page,
@@ -3838,6 +3840,7 @@ def register_visionadmin_api_routes(app):
             status=status if status else None,
             stock_status=stock_status if stock_status else None,
             vehicle_type=vehicle_type if vehicle_type else None,
+            attribute_set_id=asid,
             is_trash=is_trash,
             sort_by=sort_by,
             sort_dir=sort_dir
@@ -3852,7 +3855,9 @@ def register_visionadmin_api_routes(app):
         product = Product.find_by_id(prod_id, include_trash=True)
         if not product:
             return jsonify({'error': 'Product not found.'}), 404
-        return jsonify({'success': True, 'product': product})
+        set_id = product.get('attribute_set_id') or 1
+        schema = AttributeService.get_dynamic_form_schema(set_id, product_id=prod_id)
+        return jsonify({'success': True, 'product': product, 'schema': schema})
 
     @app.route('/visionadmin/api/products', methods=['POST'])
     @app.route('/visionadmin/api/v1/products', methods=['POST'])

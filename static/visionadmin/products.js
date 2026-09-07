@@ -23,6 +23,8 @@ function visionProductsApp() {
     isEditMode: false,
     formTab: 'basic',
     activeProduct: null,
+    viewProductSchema: null,
+    attributeSets: [],
     csvModalOpen: false,
     selectedCsvFile: null,
     csvUploading: false,
@@ -33,11 +35,16 @@ function visionProductsApp() {
       brand_id: '',
       category_id: '',
       vehicle_type: '',
-      stock_status: ''
+      stock_status: '',
+      attribute_set_id: ''
     },
 
     form: {
       id: null,
+      attribute_set_id: 1,
+      dynamic_attributes: {},
+      attribute_groups: [],
+      loadingSchema: false,
       sku: '',
       display_name: '',
       brand_id: '',
@@ -78,7 +85,7 @@ function visionProductsApp() {
     },
 
     async initData() {
-      await Promise.all([this.fetchBrands(), this.fetchCategories()]);
+      await Promise.all([this.fetchBrands(), this.fetchCategories(), this.fetchAttributeSets()]);
       await this.fetchProducts();
 
       // Listen to filter search debounce
@@ -112,6 +119,77 @@ function visionProductsApp() {
       }
     },
 
+    async fetchAttributeSets() {
+      try {
+        const res = await fetch('/visionadmin/api/attribute-sets');
+        const data = await res.json();
+        if (data.success || data.attribute_sets) {
+          this.attributeSets = data.attribute_sets || [];
+        }
+      } catch (err) {
+        console.error('Error fetching attribute sets:', err);
+      }
+    },
+
+    async onAttributeSetChange(setId, productId = null) {
+      if (!setId) return;
+      this.form.loadingSchema = true;
+      try {
+        const query = productId ? `?product_id=${productId}` : '';
+        const res = await fetch(`/visionadmin/api/catalog/form-schema/${setId}${query}`);
+        const data = await res.json();
+        if (data.schema && data.schema.groups) {
+          this.form.attribute_groups = data.schema.groups || [];
+          // Initialize dynamic attributes mapping if not already set
+          this.form.attribute_groups.forEach(group => {
+            (group.attributes || []).forEach(attr => {
+              if (this.form.dynamic_attributes[attr.code] === undefined) {
+                if (attr.type === 'boolean') {
+                  this.form.dynamic_attributes[attr.code] = (attr.current_value !== undefined && attr.current_value !== null) ? Boolean(attr.current_value) : false;
+                } else {
+                  this.form.dynamic_attributes[attr.code] = (attr.current_value !== undefined && attr.current_value !== null) ? attr.current_value : (attr.default_value || '');
+                }
+              }
+            });
+          });
+        }
+      } catch (err) {
+        console.error('Error loading dynamic form schema:', err);
+      } finally {
+        this.form.loadingSchema = false;
+      }
+    },
+
+    formatGroupName(g) {
+      if (!g) return '';
+      if (typeof g.name === 'object' && g.name !== null) {
+        return g.name.en || g.name.ar || g.code || 'Group';
+      }
+      if (typeof g.name === 'string' && g.name.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(g.name);
+          return parsed.en || parsed.ar || g.name;
+        } catch(e) {}
+      }
+      return g.name || g.code || 'Group';
+    },
+
+    formatAttrName(attr) {
+      if (!attr) return '';
+      if (typeof attr.name === 'object' && attr.name !== null) {
+        return attr.name.en || attr.name.ar || attr.code || '';
+      }
+      if (typeof attr.name === 'string' && attr.name.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(attr.name);
+          return parsed.en || parsed.ar || attr.name;
+        } catch(e) {
+          return attr.name;
+        }
+      }
+      return attr.name || attr.code || '';
+    },
+
     async fetchProducts() {
       this.loading = true;
       try {
@@ -127,6 +205,7 @@ function visionProductsApp() {
         if (this.filters.category_id) params.append('category_id', this.filters.category_id);
         if (this.filters.vehicle_type) params.append('vehicle_type', this.filters.vehicle_type);
         if (this.filters.stock_status) params.append('stock_status', this.filters.stock_status);
+        if (this.filters.attribute_set_id) params.append('attribute_set_id', this.filters.attribute_set_id);
 
         if (this.currentTab === 'trash') {
           params.append('trash', '1');
@@ -165,7 +244,8 @@ function visionProductsApp() {
         brand_id: '',
         category_id: '',
         vehicle_type: '',
-        stock_status: ''
+        stock_status: '',
+        attribute_set_id: ''
       };
       this.currentPage = 1;
       this.fetchProducts();
@@ -206,8 +286,13 @@ function visionProductsApp() {
     openCreateModal() {
       this.isEditMode = false;
       this.formTab = 'basic';
+      const defaultSetId = (this.attributeSets && this.attributeSets.length > 0) ? this.attributeSets[0].id : 1;
       this.form = {
         id: null,
+        attribute_set_id: defaultSetId,
+        dynamic_attributes: {},
+        attribute_groups: [],
+        loadingSchema: false,
         sku: '',
         display_name: '',
         brand_id: '',
@@ -247,6 +332,7 @@ function visionProductsApp() {
         canonical_url: ''
       };
       this.modalOpen = true;
+      this.onAttributeSetChange(defaultSetId);
     },
 
     openEditModal(p) {
@@ -269,8 +355,15 @@ function visionProductsApp() {
       const metaTitleEn = typeof p.meta_title === 'object' && p.meta_title ? p.meta_title.en || '' : p.meta_title || '';
       const metaDescEn = typeof p.meta_desc === 'object' && p.meta_desc ? p.meta_desc.en || '' : p.meta_desc || '';
 
+      const setId = p.attribute_set_id || 1;
+      const dynAttrs = Object.assign({}, p.attributes_json || {});
+
       this.form = {
         id: p.id,
+        attribute_set_id: setId,
+        dynamic_attributes: dynAttrs,
+        attribute_groups: [],
+        loadingSchema: false,
         sku: p.sku || '',
         display_name: p.display_name || p.name_en || '',
         brand_id: p.brand_id || '',
@@ -310,11 +403,23 @@ function visionProductsApp() {
         canonical_url: p.canonical_url || ''
       };
       this.modalOpen = true;
+      this.onAttributeSetChange(setId, p.id);
     },
 
-    openViewModal(p) {
+    async openViewModal(p) {
       this.activeProduct = p;
+      this.viewProductSchema = null;
       this.viewModalOpen = true;
+      const setId = p.attribute_set_id || 1;
+      try {
+        const res = await fetch(`/visionadmin/api/catalog/form-schema/${setId}?product_id=${p.id}`);
+        const data = await res.json();
+        if (data.schema) {
+          this.viewProductSchema = data.schema;
+        }
+      } catch (err) {
+        console.error('Error fetching view product schema:', err);
+      }
     },
 
     async uploadImage(e) {
@@ -367,6 +472,13 @@ function visionProductsApp() {
         const method = this.isEditMode ? 'PUT' : 'POST';
 
         const payload = { ...this.form };
+        payload.attribute_set_id = this.form.attribute_set_id;
+        payload.dynamic_attributes = this.form.dynamic_attributes;
+        payload.attributes_json = this.form.dynamic_attributes;
+
+        if (this.form.dynamic_attributes && this.form.dynamic_attributes.tire_size_label) {
+          payload.tire_size_label = this.form.dynamic_attributes.tire_size_label;
+        }
 
         const res = await fetch(url, {
           method: method,

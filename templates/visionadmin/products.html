@@ -117,17 +117,29 @@
     </div>
 
     <!-- Live Filters Row -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
       <!-- Search Input -->
       <div class="relative">
         <input 
           type="text" 
           x-model.debounce.350ms="filters.search" 
-          placeholder="Search SKU, name, size..." 
+          placeholder="Search SKU, name, specs..." 
           class="w-full pl-9 pr-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#58B31B] focus:ring-2 focus:ring-[#58B31B]/20 outline-hidden transition"
         />
         <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </div>
+
+      <!-- Attribute Set Filter -->
+      <select 
+        x-model="filters.attribute_set_id" 
+        @change="fetchProducts()"
+        class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#58B31B] focus:ring-2 focus:ring-[#58B31B]/20 outline-hidden transition"
+      >
+        <option value="">All Attribute Sets</option>
+        <template x-for="s in attributeSets" :key="s.id">
+          <option :value="s.id" x-text="s.name"></option>
+        </template>
+      </select>
 
       <!-- Brand Filter -->
       <select 
@@ -251,8 +263,8 @@
             </th>
             <th class="py-4 px-3">Product</th>
             <th class="py-4 px-3">SKU</th>
-            <th class="py-4 px-3">Brand &amp; Category</th>
-            <th class="py-4 px-3">Tyre Specs</th>
+            <th class="py-4 px-3">Brand &amp; Set</th>
+            <th class="py-4 px-3">Specs &amp; Attributes</th>
             <th class="py-4 px-3">Price (AED)</th>
             <th class="py-4 px-3">Stock</th>
             <th class="py-4 px-3">Status</th>
@@ -285,23 +297,39 @@
                 <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-mono text-[11px] font-bold" x-text="p.sku"></span>
               </td>
 
-              <!-- Brand & Category -->
+              <!-- Brand & Set -->
               <td class="py-3 px-3">
                 <div class="space-y-1">
-                  <span class="inline-block px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-extrabold" x-text="p.brand_name || 'Generic'"></span>
-                  <span class="text-[10px] text-slate-400 block truncate" x-text="p.category_name || 'Uncategorized'"></span>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="inline-block px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-extrabold" x-text="p.brand_name || 'Generic'"></span>
+                    <span class="inline-block px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider" :class="(p.attribute_set_slug === 'battery' || (p.attribute_set_name && p.attribute_set_name.toLowerCase().includes('battery'))) ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]'" x-text="p.attribute_set_name || 'Tyres'"></span>
+                  </div>
+                  <span class="text-[10px] text-slate-400 block truncate" x-text="p.category_name || 'General Catalog'"></span>
                 </div>
               </td>
 
-              <!-- Tyre Specs -->
+              <!-- Specs & Attributes -->
               <td class="py-3 px-3">
                 <div class="space-y-0.5">
-                  <span class="font-bold text-slate-800 text-xs block" x-text="p.tire_size_label || '—'"></span>
-                  <div class="flex items-center gap-1 flex-wrap text-[10px] text-slate-400 font-medium">
-                    <span x-text="p.tire_speed_rating ? 'Speed ' + p.tire_speed_rating : ''"></span>
-                    <span x-show="p.run_flat" class="px-1.5 py-0.2 rounded-xs bg-amber-100 text-amber-800 font-bold text-[9px]">RFT</span>
-                    <span x-show="p.ev_rated" class="px-1.5 py-0.2 rounded-xs bg-emerald-100 text-emerald-800 font-bold text-[9px]">EV</span>
-                  </div>
+                  <template x-if="p.attribute_set_slug === 'battery' || (p.attribute_set_name && p.attribute_set_name.toLowerCase().includes('battery'))">
+                    <div>
+                      <span class="font-bold text-amber-900 text-xs block" x-text="(p.attributes_json && p.attributes_json.volts ? p.attributes_json.volts + ' • ' : '') + (p.attributes_json && p.attributes_json.mah ? p.attributes_json.mah : 'Battery')"></span>
+                      <div class="flex items-center gap-1 flex-wrap text-[10px] text-slate-400 font-medium mt-0.5">
+                        <span x-show="p.attributes_json && p.attributes_json.cca" x-text="p.attributes_json.cca + ' CCA'"></span>
+                        <span x-show="p.attributes_json && p.attributes_json.battery_type" class="px-1.5 py-0.2 rounded-xs bg-amber-100 text-amber-800 font-bold text-[9px]" x-text="p.attributes_json.battery_type"></span>
+                      </div>
+                    </div>
+                  </template>
+                  <template x-if="p.attribute_set_slug !== 'battery' && (!p.attribute_set_name || !p.attribute_set_name.toLowerCase().includes('battery'))">
+                    <div>
+                      <span class="font-bold text-slate-800 text-xs block" x-text="p.tire_size_label || (p.attributes_json && p.attributes_json.tire_size_label) || '—'"></span>
+                      <div class="flex items-center gap-1 flex-wrap text-[10px] text-slate-400 font-medium">
+                        <span x-text="p.tire_speed_rating ? 'Speed ' + p.tire_speed_rating : ''"></span>
+                        <span x-show="p.run_flat" class="px-1.5 py-0.2 rounded-xs bg-amber-100 text-amber-800 font-bold text-[9px]">RFT</span>
+                        <span x-show="p.ev_rated" class="px-1.5 py-0.2 rounded-xs bg-emerald-100 text-emerald-800 font-bold text-[9px]">EV</span>
+                      </div>
+                    </div>
+                  </template>
                 </div>
               </td>
 
@@ -461,9 +489,9 @@
       <!-- Modal Tabs Navigation -->
       <div class="flex items-center gap-2 px-6 pt-3 border-b border-slate-200 bg-white overflow-x-auto text-xs font-bold">
         <button type="button" @click="formTab = 'basic'" :class="formTab === 'basic' ? 'border-[#58B31B] text-[#58B31B]' : 'border-transparent text-slate-500 hover:text-slate-900'" class="pb-3 border-b-2 transition whitespace-nowrap cursor-pointer">1. General Info</button>
-        <button type="button" @click="formTab = 'sizing'" :class="formTab === 'sizing' ? 'border-[#58B31B] text-[#58B31B]' : 'border-transparent text-slate-500 hover:text-slate-900'" class="pb-3 border-b-2 transition whitespace-nowrap cursor-pointer">2. Tyre Specs &amp; Sizing</button>
+        <button type="button" @click="formTab = 'sizing'" :class="formTab === 'sizing' ? 'border-[#58B31B] text-[#58B31B]' : 'border-transparent text-slate-500 hover:text-slate-900'" class="pb-3 border-b-2 transition whitespace-nowrap cursor-pointer">2. Specifications &amp; Attributes</button>
         <button type="button" @click="formTab = 'pricing'" :class="formTab === 'pricing' ? 'border-[#58B31B] text-[#58B31B]' : 'border-transparent text-slate-500 hover:text-slate-900'" class="pb-3 border-b-2 transition whitespace-nowrap cursor-pointer">3. Pricing &amp; Stock</button>
-        <button type="button" @click="formTab = 'media'" :class="formTab === 'media' ? 'border-[#58B31B] text-[#58B31B]' : 'border-transparent text-slate-500 hover:text-slate-900'" class="pb-3 border-b-2 transition whitespace-nowrap cursor-pointer">4. Media &amp; Attributes</button>
+        <button type="button" @click="formTab = 'media'" :class="formTab === 'media' ? 'border-[#58B31B] text-[#58B31B]' : 'border-transparent text-slate-500 hover:text-slate-900'" class="pb-3 border-b-2 transition whitespace-nowrap cursor-pointer">4. Media &amp; Images</button>
         <button type="button" @click="formTab = 'seo'" :class="formTab === 'seo' ? 'border-[#58B31B] text-[#58B31B]' : 'border-transparent text-slate-500 hover:text-slate-900'" class="pb-3 border-b-2 transition whitespace-nowrap cursor-pointer">5. SEO</button>
       </div>
 
@@ -472,6 +500,26 @@
         
         <!-- Tab 1: General Info -->
         <div x-show="formTab === 'basic'" class="space-y-4">
+          <!-- Attribute Set Selection Card -->
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <label class="block font-black text-slate-800 text-xs">Attribute Set / Product Family <span class="text-rose-500">*</span></label>
+                <p class="text-[11px] text-slate-500 font-medium">Select product family (e.g. Tyres or Batteries) to determine which attribute groups and specifications apply.</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]" x-text="(attributeSets.find(s => s.id == form.attribute_set_id) || {}).name || 'Tyres'"></span>
+            </div>
+            <select 
+              x-model="form.attribute_set_id" 
+              @change="onAttributeSetChange(form.attribute_set_id, isEditMode ? form.id : null)"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-slate-800 focus:border-[#58B31B] outline-hidden text-xs sm:text-sm"
+            >
+              <template x-for="s in attributeSets" :key="s.id">
+                <option :value="s.id" x-text="s.name"></option>
+              </template>
+            </select>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block font-bold text-slate-700 mb-1">SKU Code <span class="text-rose-500">*</span></label>
@@ -526,77 +574,149 @@
           </div>
         </div>
 
-        <!-- Tab 2: Tyre Specs & Sizing -->
-        <div x-show="formTab === 'sizing'" class="space-y-4">
-          <div class="p-4 bg-emerald-50/60 border border-emerald-200 rounded-2xl">
-            <span class="font-extrabold text-emerald-900 block mb-1">Dimension Quick Sizing</span>
-            <p class="text-[11px] text-emerald-700">Enter width, aspect ratio, and rim size to automatically generate the standard ISO tyre label (e.g. 205/55R16).</p>
-            <div class="grid grid-cols-4 gap-3 mt-3">
-              <div>
-                <label class="block font-bold text-emerald-900 mb-1">Width (mm)</label>
-                <input type="number" x-model="form.width" @input="calculateSizeLabel()" placeholder="205" class="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white font-bold outline-hidden" />
-              </div>
-              <div>
-                <label class="block font-bold text-emerald-900 mb-1">Aspect Ratio (%)</label>
-                <input type="number" x-model="form.aspect_ratio" @input="calculateSizeLabel()" placeholder="55" class="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white font-bold outline-hidden" />
-              </div>
-              <div>
-                <label class="block font-bold text-emerald-900 mb-1">Rim Size (in)</label>
-                <input type="number" x-model="form.rim_size" @input="calculateSizeLabel()" placeholder="16" class="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white font-bold outline-hidden" />
-              </div>
-              <div>
-                <label class="block font-bold text-emerald-900 mb-1">Size Label</label>
-                <input type="text" x-model="form.tire_size_label" placeholder="205/55R16" class="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white font-black text-emerald-800 outline-hidden" />
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Tab 2: Specifications & Attributes (Dynamic by Attribute Set & Groups) -->
+        <div x-show="formTab === 'sizing'" class="space-y-6">
+          <!-- Attribute Set Banner -->
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Speed Rating</label>
-              <input type="text" x-model="form.tire_speed_rating" placeholder="e.g. V, W, Y" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden uppercase" />
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]" x-text="(attributeSets.find(s => s.id == form.attribute_set_id) || {}).name || 'Tyres'"></span>
+                <span class="text-xs text-slate-500 font-bold" x-text="form.attribute_groups.length + ' Attribute Groups'"></span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">Fields below are dynamically configured for this product's attribute set.</p>
             </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Load Index</label>
-              <input type="text" x-model="form.tire_load_index" placeholder="e.g. 91, 94" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Season / Tyre Type</label>
-              <select x-model="form.tire_type" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden">
-                <option value="summer">Summer (Standard GCC)</option>
-                <option value="all_season">All Season</option>
-                <option value="winter">Winter</option>
-                <option value="all_terrain">All Terrain (A/T)</option>
-                <option value="mud_terrain">Mud Terrain (M/T)</option>
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-bold text-slate-600">Switch Family:</label>
+              <select 
+                x-model="form.attribute_set_id" 
+                @change="onAttributeSetChange(form.attribute_set_id, isEditMode ? form.id : null)"
+                class="px-3 py-1.5 rounded-xl border border-slate-300 bg-white font-bold text-slate-800 text-xs focus:border-[#58B31B] outline-hidden"
+              >
+                <template x-for="s in attributeSets" :key="s.id">
+                  <option :value="s.id" x-text="s.name"></option>
+                </template>
               </select>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Tread Pattern Name</label>
-              <input type="text" x-model="form.tire_pattern" placeholder="e.g. Primacy 4, Turanza T005, P Zero" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">OEM Approval Mark / Brand</label>
-              <input type="text" x-model="form.oem_brand" placeholder="e.g. BMW (*), Porsche (N0), Mercedes (MO)" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden" />
-            </div>
+          <!-- Loading state -->
+          <div x-show="form.loadingSchema" class="p-8 text-center text-slate-400 font-bold">
+            <svg class="w-6 h-6 animate-spin mx-auto text-[#58B31B] mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+            Loading attributes and groups schema...
           </div>
 
-          <!-- Feature Toggles -->
-          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-around flex-wrap gap-4">
-            <label class="flex items-center gap-2 cursor-pointer select-none">
-              <input type="checkbox" x-model="form.run_flat" class="w-4 h-4 text-[#58B31B] rounded-sm focus:ring-[#58B31B]" />
-              <span class="font-extrabold text-slate-800">Run-Flat (RFT)</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer select-none">
-              <input type="checkbox" x-model="form.ev_rated" class="w-4 h-4 text-[#58B31B] rounded-sm focus:ring-[#58B31B]" />
-              <span class="font-extrabold text-slate-800">EV-Rated</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer select-none">
-              <input type="checkbox" x-model="form.oem_approved" class="w-4 h-4 text-[#58B31B] rounded-sm focus:ring-[#58B31B]" />
-              <span class="font-extrabold text-slate-800">OEM Homologated</span>
-            </label>
+          <!-- Quick Tyre Dimension Helper if Tyres -->
+          <template x-if="!form.loadingSchema && (form.attribute_set_id == 1 || (attributeSets.find(s => s.id == form.attribute_set_id) || {}).slug === 'tyres')">
+            <div class="p-4 bg-emerald-50/60 border border-emerald-200 rounded-2xl">
+              <span class="font-extrabold text-emerald-900 block mb-1">Tyre Dimension Auto-Calculator</span>
+              <p class="text-[11px] text-emerald-700">Enter width, aspect ratio, and rim size to automatically generate the standard tyre size label (e.g. 205/55R16).</p>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+                <div>
+                  <label class="block font-bold text-emerald-900 mb-1">Width (mm)</label>
+                  <input type="number" x-model="form.width" @input="calculateSizeLabel()" placeholder="205" class="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white font-bold outline-hidden" />
+                </div>
+                <div>
+                  <label class="block font-bold text-emerald-900 mb-1">Aspect Ratio (%)</label>
+                  <input type="number" x-model="form.aspect_ratio" @input="calculateSizeLabel()" placeholder="55" class="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white font-bold outline-hidden" />
+                </div>
+                <div>
+                  <label class="block font-bold text-emerald-900 mb-1">Rim Size (in)</label>
+                  <input type="number" x-model="form.rim_size" @input="calculateSizeLabel()" placeholder="16" class="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white font-bold outline-hidden" />
+                </div>
+                <div>
+                  <label class="block font-bold text-emerald-900 mb-1">Size Label</label>
+                  <input type="text" x-model="form.tire_size_label" @input="if(form.dynamic_attributes) form.dynamic_attributes['tire_size_label'] = form.tire_size_label" placeholder="205/55R16" class="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white font-black text-emerald-800 outline-hidden" />
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Dynamic Attribute Groups -->
+          <div x-show="!form.loadingSchema && form.attribute_groups.length > 0" class="space-y-6">
+            <template x-for="group in form.attribute_groups" :key="group.id">
+              <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-[#58B31B]"></div>
+                    <h3 class="font-black text-slate-800 text-xs tracking-wide uppercase" x-text="formatGroupName(group)"></h3>
+                  </div>
+                  <span class="text-[10px] font-bold text-slate-400" x-text="(group.attributes || []).length + ' attributes'"></span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <template x-for="attr in (group.attributes || [])" :key="attr.id">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">
+                        <span x-text="formatAttrName(attr)"></span>
+                        <span x-show="attr.unit" class="text-slate-400 font-normal" x-text="'(' + attr.unit + ')'"></span>
+                        <span x-show="attr.is_required" class="text-rose-500">*</span>
+                      </label>
+
+                      <!-- Select / Dropdown type -->
+                      <template x-if="attr.type === 'select' || attr.type === 'multiselect'">
+                        <select 
+                          x-model="form.dynamic_attributes[attr.code]" 
+                          class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden bg-white text-xs"
+                        >
+                          <option value="">Select option</option>
+                          <template x-for="opt in (attr.options || [])" :key="opt.id || opt.value">
+                            <option :value="opt.value" x-text="typeof opt.label === 'object' ? (opt.label.en || opt.value) : (opt.label || opt.value)"></option>
+                          </template>
+                        </select>
+                      </template>
+
+                      <!-- Boolean checkbox toggle -->
+                      <template x-if="attr.type === 'boolean'">
+                        <div class="pt-2">
+                          <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input 
+                              type="checkbox" 
+                              x-model="form.dynamic_attributes[attr.code]" 
+                              class="w-4 h-4 text-[#58B31B] rounded-sm focus:ring-[#58B31B]"
+                            />
+                            <span class="font-extrabold text-slate-800 text-xs" x-text="form.dynamic_attributes[attr.code] ? 'Enabled / Yes' : 'Disabled / No'"></span>
+                          </label>
+                        </div>
+                      </template>
+
+                      <!-- Number input -->
+                      <template x-if="attr.type === 'number'">
+                        <input 
+                          type="number" 
+                          x-model="form.dynamic_attributes[attr.code]" 
+                          :placeholder="attr.default_value || 'e.g. 0'" 
+                          class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden text-xs"
+                        />
+                      </template>
+
+                      <!-- Text input -->
+                      <template x-if="attr.type === 'text' || !attr.type">
+                        <input 
+                          type="text" 
+                          x-model="form.dynamic_attributes[attr.code]" 
+                          :placeholder="attr.default_value || 'Enter value...'" 
+                          class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden text-xs"
+                        />
+                      </template>
+
+                      <!-- Textarea -->
+                      <template x-if="attr.type === 'textarea'">
+                        <textarea 
+                          rows="2" 
+                          x-model="form.dynamic_attributes[attr.code]" 
+                          class="w-full px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:border-[#58B31B] outline-hidden text-xs"
+                        ></textarea>
+                      </template>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Empty fallback -->
+          <div x-show="!form.loadingSchema && form.attribute_groups.length === 0" class="p-8 text-center text-slate-400 font-semibold bg-slate-50 rounded-2xl border border-slate-200">
+            No dynamic attribute groups configured for this attribute set. You can manage attribute groups in <a href="/visionadmin/attributes" class="text-[#58B31B] underline font-bold">Attributes Studio</a>.
           </div>
         </div>
 
@@ -773,7 +893,8 @@
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   <span class="px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 font-black" x-text="activeProduct.brand_name || 'Generic Brand'"></span>
-                  <span class="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-black" x-text="activeProduct.category_name || 'Tyre'"></span>
+                  <span class="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-black" x-text="activeProduct.category_name || 'General'"></span>
+                  <span class="px-2.5 py-0.5 rounded-lg font-black text-[10px] uppercase tracking-wider" :class="(activeProduct.attribute_set_slug === 'battery' || (activeProduct.attribute_set_name && activeProduct.attribute_set_name.toLowerCase().includes('battery'))) ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]'" x-text="activeProduct.attribute_set_name || 'Tyres'"></span>
                 </div>
                 <div class="text-base font-black text-slate-900">
                   AED <span x-text="(activeProduct.sale_price || activeProduct.price).toFixed(2)"></span>
@@ -782,32 +903,90 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl font-semibold">
-              <div>
-                <span class="text-[10px] text-slate-400 uppercase block">Tyre Size</span>
-                <span class="font-bold text-slate-900" x-text="activeProduct.tire_size_label || '—'"></span>
+            <!-- Battery Specific Highlights -->
+            <template x-if="activeProduct.attribute_set_slug === 'battery' || (activeProduct.attribute_set_name && activeProduct.attribute_set_name.toLowerCase().includes('battery'))">
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 bg-amber-50/60 border border-amber-200 rounded-2xl font-semibold">
+                <div>
+                  <span class="text-[10px] text-amber-700 uppercase block">Voltage</span>
+                  <span class="font-bold text-amber-950" x-text="(activeProduct.attributes_json && activeProduct.attributes_json.volts) || '—'"></span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-amber-700 uppercase block">Capacity (mAh / Ah)</span>
+                  <span class="font-bold text-amber-950" x-text="(activeProduct.attributes_json && activeProduct.attributes_json.mah) || '—'"></span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-amber-700 uppercase block">Cold Cranking (CCA)</span>
+                  <span class="font-bold text-amber-950" x-text="(activeProduct.attributes_json && activeProduct.attributes_json.cca ? activeProduct.attributes_json.cca + ' CCA' : '—')"></span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-amber-700 uppercase block">Chemistry / Type</span>
+                  <span class="font-bold text-amber-950" x-text="(activeProduct.attributes_json && activeProduct.attributes_json.battery_type) || '—'"></span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-amber-700 uppercase block">Terminal Layout</span>
+                  <span class="font-bold text-amber-950" x-text="(activeProduct.attributes_json && activeProduct.attributes_json.terminal_layout) || '—'"></span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-amber-700 uppercase block">Warranty</span>
+                  <span class="font-bold text-amber-950" x-text="(activeProduct.attributes_json && activeProduct.attributes_json.warranty_battery_months ? activeProduct.attributes_json.warranty_battery_months + ' Months' : (activeProduct.warranty_months ? activeProduct.warranty_months + ' Months' : '—'))"></span>
+                </div>
               </div>
-              <div>
-                <span class="text-[10px] text-slate-400 uppercase block">Pattern</span>
-                <span class="font-bold text-slate-900" x-text="activeProduct.tire_pattern || '—'"></span>
+            </template>
+
+            <!-- Tyre Specific Highlights -->
+            <template x-if="activeProduct.attribute_set_slug !== 'battery' && (!activeProduct.attribute_set_name || !activeProduct.attribute_set_name.toLowerCase().includes('battery'))">
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl font-semibold">
+                <div>
+                  <span class="text-[10px] text-slate-400 uppercase block">Tyre Size</span>
+                  <span class="font-bold text-slate-900" x-text="activeProduct.tire_size_label || (activeProduct.attributes_json && activeProduct.attributes_json.tire_size_label) || '—'"></span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 uppercase block">Pattern</span>
+                  <span class="font-bold text-slate-900" x-text="activeProduct.tire_pattern || (activeProduct.attributes_json && activeProduct.attributes_json.tire_pattern) || '—'"></span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 uppercase block">Speed &amp; Load</span>
+                  <span class="font-bold text-slate-900" x-text="(activeProduct.tire_load_index || '') + ' ' + (activeProduct.tire_speed_rating || '')"></span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 uppercase block">Vehicle</span>
+                  <span class="font-bold text-slate-900 uppercase" x-text="activeProduct.vehicle_type || 'car'"></span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 uppercase block">Origin</span>
+                  <span class="font-bold text-slate-900" x-text="activeProduct.country_of_origin || '—'"></span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 uppercase block">Warranty</span>
+                  <span class="font-bold text-slate-900" x-text="activeProduct.warranty_months ? activeProduct.warranty_months + ' Months' : '—'"></span>
+                </div>
               </div>
-              <div>
-                <span class="text-[10px] text-slate-400 uppercase block">Speed &amp; Load</span>
-                <span class="font-bold text-slate-900" x-text="(activeProduct.tire_load_index || '') + ' ' + (activeProduct.tire_speed_rating || '')"></span>
+            </template>
+
+            <!-- Dynamic Groups in View Modal -->
+            <template x-if="viewProductSchema && viewProductSchema.groups && viewProductSchema.groups.length > 0">
+              <div class="space-y-3 pt-2">
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Assigned Attribute Groups &amp; Dynamic Values</span>
+                <div class="space-y-2.5">
+                  <template x-for="grp in viewProductSchema.groups" :key="grp.id">
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                      <div class="text-[11px] font-black text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#58B31B]"></span>
+                        <span x-text="formatGroupName(grp)"></span>
+                      </div>
+                      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                        <template x-for="attr in (grp.attributes || [])" :key="attr.id">
+                          <div class="bg-white p-2 rounded-lg border border-slate-100">
+                            <span class="text-[10px] text-slate-400 block" x-text="formatAttrName(attr)"></span>
+                            <span class="font-bold text-slate-800 truncate block" x-text="(activeProduct.attributes_json && activeProduct.attributes_json[attr.code] !== undefined && activeProduct.attributes_json[attr.code] !== '') ? activeProduct.attributes_json[attr.code] : (attr.current_value !== undefined && attr.current_value !== null && attr.current_value !== '' ? attr.current_value : '—')"></span>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </div>
               </div>
-              <div>
-                <span class="text-[10px] text-slate-400 uppercase block">Vehicle</span>
-                <span class="font-bold text-slate-900 uppercase" x-text="activeProduct.vehicle_type || 'car'"></span>
-              </div>
-              <div>
-                <span class="text-[10px] text-slate-400 uppercase block">Origin</span>
-                <span class="font-bold text-slate-900" x-text="activeProduct.country_of_origin || '—'"></span>
-              </div>
-              <div>
-                <span class="text-[10px] text-slate-400 uppercase block">Warranty</span>
-                <span class="font-bold text-slate-900" x-text="activeProduct.warranty_months ? activeProduct.warranty_months + ' Months' : '—'"></span>
-              </div>
-            </div>
+            </template>
 
             <template x-if="activeProduct.description_en || activeProduct.description">
               <div class="space-y-1">
