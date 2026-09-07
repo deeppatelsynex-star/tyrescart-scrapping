@@ -30,6 +30,89 @@ function visionProductsApp() {
     csvUploading: false,
     csvResult: null,
 
+    accordions: {
+      sources: true,
+      content: false,
+      configurations: false,
+      subscriptions: false,
+      media: false,
+      seo: false,
+      websites: false,
+      related: false,
+      custom_options: false,
+      design: false,
+      schedule: false,
+      gift: false,
+      downloadable: false
+    },
+
+    toggleAccordion(key) {
+      this.accordions[key] = !this.accordions[key];
+    },
+
+    formatScope(scope) {
+      if (!scope) return 'global';
+      const s = String(scope).toLowerCase();
+      if (s === 'store_view' || s === 'store') return 'store view';
+      if (s === 'website') return 'website';
+      return 'global';
+    },
+
+    handleMultiselectChange(code, e) {
+      const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+      this.form.dynamic_attributes[code] = selected.join(',');
+      this.syncDynamicField(code, this.form.dynamic_attributes[code]);
+    },
+
+    openAddAttributeModal() {
+      window.open('/visionadmin/attributes', '_blank');
+    },
+
+    syncDynamicField(code, val) {
+      if (!this.form.dynamic_attributes) this.form.dynamic_attributes = {};
+      this.form.dynamic_attributes[code] = val;
+
+      if (code === 'product_name' || code === 'display_name') {
+        this.form.display_name = val;
+      } else if (code === 'sku') {
+        this.form.sku = val;
+      } else if (code === 'price') {
+        this.form.price = val;
+      } else if (code === 'sale_price' || code === 'promotion') {
+        this.form.sale_price = val;
+      } else if (code === 'weight') {
+        this.form.weight = val;
+      } else if (code === 'visibility') {
+        this.form.visibility = val;
+      } else if (code === 'tabby_payment') {
+        this.form.pay_later_eligible = Boolean(val);
+      } else if (code === 'country_of_manufacture' || code === 'country_of_origin') {
+        this.form.country_of_origin = val;
+      } else if (code === 'brand') {
+        const found = (this.brands || []).find(b => String(b.name).toLowerCase() === String(val).toLowerCase() || b.id == val);
+        if (found) this.form.brand_id = found.id;
+      } else if (code === 'tire_size_label' || code === 'tire_size') {
+        this.form.tire_size_label = val;
+      } else if (code === 'width') {
+        this.form.width = val;
+        this.calculateSizeLabel();
+      } else if (code === 'aspect_ratio' || code === 'height') {
+        this.form.aspect_ratio = val;
+        this.calculateSizeLabel();
+      } else if (code === 'rim_size' || code === 'rim') {
+        this.form.rim_size = val;
+        this.calculateSizeLabel();
+      } else if (code === 'tire_pattern' || code === 'pattern') {
+        this.form.tire_pattern = val;
+      } else if (code === 'run_flat' || code === 'runflat') {
+        this.form.run_flat = Boolean(val);
+      } else if (code === 'ev_rated' || code === 'ev_tyre') {
+        this.form.ev_rated = Boolean(val);
+      } else if (code === 'warranty_period' || code === 'warranty_months') {
+        this.form.warranty_months = val;
+      }
+    },
+
     filters: {
       search: '',
       brand_id: '',
@@ -41,7 +124,7 @@ function visionProductsApp() {
 
     form: {
       id: null,
-      attribute_set_id: 1,
+      attribute_set_id: 2,
       dynamic_attributes: {},
       attribute_groups: [],
       loadingSchema: false,
@@ -150,6 +233,7 @@ function visionProductsApp() {
                   this.form.dynamic_attributes[attr.code] = (attr.current_value !== undefined && attr.current_value !== null) ? attr.current_value : (attr.default_value || '');
                 }
               }
+              this.syncDynamicField(attr.code, this.form.dynamic_attributes[attr.code]);
             });
           });
         }
@@ -285,8 +369,8 @@ function visionProductsApp() {
 
     openCreateModal() {
       this.isEditMode = false;
-      this.formTab = 'basic';
-      const defaultSetId = (this.attributeSets && this.attributeSets.length > 0) ? this.attributeSets[0].id : 1;
+      const defaultSet = (this.attributeSets || []).find(s => s.slug === 'default' || (s.name && s.name.toLowerCase() === 'default'));
+      const defaultSetId = defaultSet ? defaultSet.id : 2;
       this.form = {
         id: null,
         attribute_set_id: defaultSetId,
@@ -447,31 +531,43 @@ function visionProductsApp() {
       }
     },
 
-    async saveProduct() {
-      if (!this.form.sku.trim()) {
+    async saveProduct(closeAfter = true, newAfter = false, duplicate = false) {
+      // Sync any missing fields from dynamic_attributes
+      if (!this.form.sku && this.form.dynamic_attributes && this.form.dynamic_attributes.sku) {
+        this.form.sku = this.form.dynamic_attributes.sku;
+      }
+      if (!this.form.display_name && this.form.dynamic_attributes) {
+        this.form.display_name = this.form.dynamic_attributes.product_name || this.form.dynamic_attributes.display_name || '';
+      }
+      if ((!this.form.price || isNaN(parseFloat(this.form.price))) && this.form.dynamic_attributes && this.form.dynamic_attributes.price) {
+        this.form.price = this.form.dynamic_attributes.price;
+      }
+
+      if (!this.form.sku || !this.form.sku.trim()) {
         this.showToast('Please enter a product SKU.', 'error');
-        this.formTab = 'basic';
         return;
       }
-      if (!this.form.display_name.trim()) {
+      if (!this.form.display_name || !this.form.display_name.trim()) {
         this.showToast('Please enter a product name.', 'error');
-        this.formTab = 'basic';
         return;
       }
       if (!this.form.price || isNaN(parseFloat(this.form.price))) {
         this.showToast('Please enter a valid regular price.', 'error');
-        this.formTab = 'pricing';
         return;
       }
 
       this.isSubmitting = true;
       try {
-        const url = this.isEditMode 
+        const url = (this.isEditMode && !duplicate)
           ? `/visionadmin/api/products/${this.form.id}`
           : '/visionadmin/api/products';
-        const method = this.isEditMode ? 'PUT' : 'POST';
+        const method = (this.isEditMode && !duplicate) ? 'PUT' : 'POST';
 
         const payload = { ...this.form };
+        if (duplicate) {
+          delete payload.id;
+          payload.sku = payload.sku + '-COPY';
+        }
         payload.attribute_set_id = this.form.attribute_set_id;
         payload.dynamic_attributes = this.form.dynamic_attributes;
         payload.attributes_json = this.form.dynamic_attributes;
@@ -489,8 +585,12 @@ function visionProductsApp() {
         const data = await res.json();
         if (res.ok && data.success) {
           this.showToast(data.message || 'Product saved successfully!', 'success');
-          this.modalOpen = false;
           await this.fetchProducts();
+          if (newAfter) {
+            this.openCreateModal();
+          } else if (closeAfter) {
+            this.modalOpen = false;
+          }
         } else {
           this.showToast(data.error || 'Failed to save product.', 'error');
         }
