@@ -1,31 +1,28 @@
 /* ============================================================
-   TYREVISION UAE — MODERN • CLEAN • VIBRANT • PROFESSIONAL
-   Derived strictly from TyresVision Official Spec Sheet & Gradient Reference
+   TYREVISION UAE — FACEBOOK BRAND COLOUR SYSTEM
+   #1877F2 (Facebook Blue / Primary / CTA)
+   #166FE5 (Hover Blue / Buttons Hover)
+   #0E5ED7 (Active Blue / Pressed / Active)
+   #0A58CA (Dark Blue / Navigation)
+   #E7F3FF (Light Blue / Surfaces / Highlights)
    ============================================================ */
 :root {
-  /* 1. PRIMARY COLOURS (BRAND) */
-  --primary: #2563FF;             /* Primary Brand Blue */
-  --primary-dark: #1D4ED8;        /* Primary Dark */
-  --primary-light: #0EA5FF;       /* Primary Light / Azure */
+  /* 1. PRIMARY COLOURS (FACEBOOK BRAND) */
+  --primary: #1877F2;             /* Facebook Blue — Primary / CTA */
+  --primary-hover: #166FE5;       /* Hover Blue — Buttons (Hover) */
+  --primary-active: #0E5ED7;      /* Active Blue — Pressed / Active */
+  --primary-dark: #0A58CA;        /* Dark Blue — Navigation */
+  --primary-light: #E7F3FF;       /* Light Blue — Surfaces / Highlights */
+
+  /* 2. ACCENTS & EXTENDED PALETTE */
   --sky-blue: #38BDF8;            /* Sky Blue */
-  --primary-purple: #A855F7;      /* Primary Purple */
-
-  /* 2. SECONDARY COLOURS */
-  --indigo: #6366F1;              /* Indigo */
-  --violet: #8B5CF6;              /* Violet */
-  --soft-purple: #C084FC;         /* Soft Purple */
-  --blue: #3B82F6;                /* Mid Blue */
-  --light-blue: #60A5FA;          /* Light Blue */
-
-  /* 3. ACCENT COLOURS (CTA / HIGHLIGHT) */
-  --success: #10B981;             /* Success / Primary CTA */
-  --teal: #14B8A6;                /* Teal */
-  --warning: #F59E0B;             /* Warning / Accent */
-  --pink: #EC4899;                /* Pink */
-  --danger: #EF4444;              /* Error / Danger */
+  --primary-purple: #8B5CF6;      /* Ambient Violet / Purple Glow */
+  --success: #10B981;             /* Success / CTA */
   --whatsapp: #25D366;            /* WhatsApp */
+  --warning: #F59E0B;             /* Warning / Accent */
+  --danger: #EF4444;              /* Error / Danger */
 
-  /* 4. TEXT COLOURS */
+  /* 3. TEXT COLOURS */
   --text-heading: #0F172A;        /* Heading (Primary Text) */
   --text-sub: #1E293B;            /* Sub Heading */
   --text-body: #334155;           /* Body Text */
@@ -33,69 +30,66 @@
   --text-placeholder: #94A3B8;    /* Placeholder */
   --text-disabled: #CBD5E1;       /* Disabled Text */
 
-  /* 5. BACKGROUND COLOURS */
+  /* 4. BACKGROUND COLOURS */
   --bg-white: #FFFFFF;            /* Pure White */
   --bg-page: #F8FAFC;             /* Page Background */
-  --bg-card: #EFF6FF;             /* Card Background */
-  --bg-light-blue: #E0F2FE;       /* Light Blue BG */
-  --bg-light-purple: #F3E8FF;     /* Light Purple BG */
+  --bg-card: #E7F3FF;             /* Card / Surface Highlight */
+  --bg-light-blue: #E7F3FF;       /* Light Blue BG */
 
-  /* 6. BORDER & DIVIDER */
+  /* 5. BORDER & DIVIDER */
   --border: #E2E8F0;              /* Border */
   --border-input: #CBD5E1;        /* Input Border */
   --divider: #94A3B8;             /* Divider */
-  --border-focus: #2563FF;        /* Focus Border */
+  --border-focus: #1877F2;        /* Focus Border */
 
-  /* 7. SIGNATURE GRADIENT SYSTEM (From Reference Image 2 & Spec) */
-  --gradient-linear: linear-gradient(135deg, #A855F7 0%, #2563FF 50%, #38BDF8 100%);
+  /* 6. SIGNATURE HERO & ACCENT GRADIENTS */
+  --gradient-linear: linear-gradient(135deg, #0A58CA 0%, #1877F2 50%, #38BDF8 100%);
   --gradient-hero:
-    radial-gradient(1100px 550px at 0% 100%, rgba(168, 85, 247, 0.70), transparent 58%),
-    radial-gradient(900px 480px at 100% 0%, rgba(139, 92, 246, 0.65), transparent 52%),
+    radial-gradient(1100px 550px at 0% 100%, rgba(139, 92, 246, 0.70), transparent 58%),
+    radial-gradient(900px 480px at 100% 0%, rgba(14, 94, 215, 0.65), transparent 52%),
     radial-gradient(750px 380px at 90% 80%, rgba(56, 189, 248, 0.50), transparent 48%),
-    linear-gradient(135deg, #6366F1 0%, #2563FF 45%, #0EA5FF 85%, #38BDF8 100%);
+    linear-gradient(135deg, #0A58CA 0%, #0E5ED7 35%, #1877F2 70%, #38BDF8 100%);
   --gradient-accent:
-    radial-gradient(1000px 500px at 0% 100%, rgba(168, 85, 247, 0.65), transparent 58%),
-    radial-gradient(850px 450px at 100% 0%, rgba(139, 92, 246, 0.60), transparent 52%),
-    linear-gradient(135deg, #6366F1 0%, #2563FF 45%, #0EA5FF 85%, #38BDF8 100%);
-  --gradient-purple-blue: linear-gradient(135deg, #A855F7 0%, #2563FF 100%);
-  --gradient-blue-sky: linear-gradient(135deg, #2563FF 0%, #38BDF8 100%);
-  --gradient-violet-purple: linear-gradient(135deg, #8B5CF6 0%, #C084FC 100%);
-  --gradient-azure: linear-gradient(135deg, #0EA5FF 0%, #38BDF8 100%);
+    radial-gradient(1000px 500px at 0% 100%, rgba(139, 92, 246, 0.65), transparent 58%),
+    radial-gradient(850px 450px at 100% 0%, rgba(14, 94, 215, 0.60), transparent 52%),
+    linear-gradient(135deg, #0A58CA 0%, #0E5ED7 35%, #1877F2 70%, #38BDF8 100%);
   --gradient-footer: linear-gradient(180deg, #0F172A 0%, #090D16 100%);
 
   /* Antigravity Spatial Depths & Shadows */
   --shadow-flat: 0 1px 3px rgba(15, 23, 42, 0.05);
-  --shadow-card: 0 4px 20px -2px rgba(37, 99, 255, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
-  --shadow-float: 0 16px 36px -4px rgba(37, 99, 255, 0.18), 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-card: 0 4px 20px -2px rgba(24, 119, 242, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --shadow-float: 0 16px 36px -4px rgba(24, 119, 242, 0.18), 0 4px 12px rgba(15, 23, 42, 0.06);
   --shadow-deep: 0 24px 60px -12px rgba(15, 23, 42, 0.28);
 
-  /* Semantic Aliases for Maximum Compatibility */
-  --blue-primary: #2563FF;
-  --blue-hover: #1D4ED8;
-  --blue-bright: #38BDF8;
+  /* Semantic Aliases */
+  --blue-primary: #1877F2;
+  --blue-hover: #166FE5;
+  --blue-active: #0E5ED7;
+  --blue-dark: #0A58CA;
+  --blue-bright: #1877F2;
   --blue-cyan: #38BDF8;
-  --blue-mid: #3B82F6;
+  --blue-mid: #166FE5;
   --slate-blue: #64748B;
-  --navy-deep: #0F172A;
+  --navy-deep: #0A58CA;
   --surface-main: #FFFFFF;
-  --blue-soft: #EFF6FF;
-  --blue-light: #E0F2FE;
-  --blue-surface: #E0F2FE;
+  --blue-soft: #E7F3FF;
+  --blue-light: #E7F3FF;
+  --blue-surface: #E7F3FF;
   --blue-border: #E2E8F0;
-  --blue-border-focus: #2563FF;
+  --blue-border-focus: #1877F2;
   --text-dark: #0F172A;
   --text-gray: #334155;
   --text-muted: #64748B;
   --green: #10B981;
   --green-bright: #38BDF8;
-  --green-deep: #1D4ED8;
-  --green-tint: #E0F2FE;
+  --green-deep: #0A58CA;
+  --green-tint: #E7F3FF;
   --ink: #0F172A;
   --ink-2: #1E293B;
   --slate: #334155;
   --line: #E2E8F0;
   --bg: #F8FAFC;
-  --bg-soft: #EFF6FF;
+  --bg-soft: #E7F3FF;
   --radius: 14px;
   --shadow: var(--shadow-card);
   --maxw: 1280px;
@@ -258,7 +252,7 @@ section {
 }
 
 .logo .t2 {
-  color: var(--primary, #2563FF);
+  color: var(--primary, #1877F2);
   letter-spacing: -.03em;
 }
 
@@ -267,7 +261,7 @@ section {
   width: .72em;
   height: .72em;
   border-radius: 50%;
-  border: .13em solid var(--primary, #2563FF);
+  border: .13em solid var(--primary, #1877F2);
   position: relative;
   margin: 0 .02em;
   transform: translateY(-.02em);
@@ -694,13 +688,13 @@ header {
 }
 
 .hero .btn-ghost-light svg {
-  color: #2563FF;
+  color: #1877F2;
 }
 
 .hero .btn-ghost-light:hover {
-  background: #EFF6FF;
-  color: #2563FF;
-  border-color: #EFF6FF;
+  background: #E7F3FF;
+  color: #1877F2;
+  border-color: #E7F3FF;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
 }
@@ -752,7 +746,7 @@ header {
 }
 
 .quote-card h3 {
-  color: #2563FF;
+  color: #1877F2;
   font-size: 1.30rem;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -795,9 +789,9 @@ header {
 
 .quote-card input:focus,
 .quote-card select:focus {
-  border-color: #2563FF;
+  border-color: #1877F2;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.18);
 }
 
 .quote-card .btn-wa {
@@ -1002,7 +996,7 @@ header {
 .price-section {
   background: 
     radial-gradient(1200px 500px at 50% 0%, rgba(88, 179, 27, 0.05), transparent 70%),
-    linear-gradient(180deg, #FFFFFF 0%, #EFF6FF 100%);
+    linear-gradient(180deg, #FFFFFF 0%, #E7F3FF 100%);
   padding: clamp(36px, 5vw, 56px) 0;
   position: relative;
   overflow: hidden;
@@ -1047,7 +1041,7 @@ header {
   height: 44px;
   border-radius: 12px;
   background: #E0F2FE;
-  color: #1D4ED8;
+  color: #0A58CA;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1111,7 +1105,7 @@ header {
 
 /* Table Header — Antigravity Monochromatic #0F172A with Cerulean Accents */
 .price-table thead th {
-  background: linear-gradient(135deg, #1D4ED8 0%, #2563FF 60%, #0EA5FF 100%);
+  background: linear-gradient(135deg, #0A58CA 0%, #0E5ED7 50%, #1877F2 100%);
   color: #FFFFFF;
   padding: 16px 20px;
   font-weight: 800;
@@ -1153,7 +1147,7 @@ header {
 }
 
 .price-table tbody tr:nth-child(even) {
-  background-color: var(--blue-soft, #EFF6FF);
+  background-color: var(--blue-soft, #E7F3FF);
 }
 
 .price-table tbody tr:hover {
@@ -2533,7 +2527,7 @@ footer .tagline {
 
 /* Table of Contents / "In This Article" Box */
 .toc-box {
-  background: #EFF6FF;
+  background: #E7F3FF;
   border: 1px solid #E2E8F0;
   border-radius: 12px;
   padding: 20px 22px;
@@ -2823,7 +2817,7 @@ footer .tagline {
   border-left: 4px solid var(--green);
   padding: 8px 18px;
   margin: 20px 0;
-  background: #EFF6FF;
+  background: #E7F3FF;
   border-radius: 0 10px 10px 0;
   font-style: italic;
   color: var(--slate);
@@ -2998,7 +2992,7 @@ footer .tagline {
   overflow: hidden;
   background:
     radial-gradient(220px 220px at 0% 100%, rgba(168, 85, 247, 0.75), transparent 60%),
-    linear-gradient(135deg, #6366F1 0%, #2563FF 50%, #38BDF8 100%);
+    linear-gradient(135deg, #6366F1 0%, #1877F2 50%, #38BDF8 100%);
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 18px;
   padding: 24px 22px;
@@ -3166,7 +3160,7 @@ footer .tagline {
   box-shadow: 0 4px 12px rgba(14,17,8,.08);
 }
 
-.share-btn.btn-fb:hover { color: #2563FF; border-color: #2563FF; }
+.share-btn.btn-fb:hover { color: #1877F2; border-color: #1877F2; }
 .share-btn.btn-tw:hover { color: #000000; border-color: #000000; }
 .share-btn.btn-in:hover { color: #0A66C2; border-color: #0A66C2; }
 .share-btn.btn-wa:hover { color: #25D366; border-color: #25D366; }
@@ -4196,7 +4190,7 @@ footer .tagline {
   gap: 8px;
   padding: 13px 30px;
   border-radius: 100px;
-  background: #1D4ED8;
+  background: #0A58CA;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.95rem;
@@ -4223,7 +4217,7 @@ footer .tagline {
   gap: 5px;
   width: 38px;
   height: 38px;
-  background: var(--bg-soft, #EFF6FF);
+  background: var(--bg-soft, #E7F3FF);
   border: 1px solid var(--line, #E2E8F0);
   border-radius: 10px;
   cursor: pointer;
@@ -4347,7 +4341,7 @@ html[dir="rtl"] .mobile-nav-drawer.open,
   height: 36px;
   border-radius: 10px;
   border: 1px solid var(--line, #E2E8F0);
-  background: var(--bg-soft, #EFF6FF);
+  background: var(--bg-soft, #E7F3FF);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4415,7 +4409,7 @@ html[dir="rtl"] .mobile-nav-drawer.open,
 .mobile-nav-foot {
   padding: 16px 20px 20px;
   border-top: 1px solid var(--line, #E2E8F0);
-  background: var(--bg-soft, #EFF6FF);
+  background: var(--bg-soft, #E7F3FF);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -4712,7 +4706,7 @@ html[dir="rtl"] .category-badge-pill {
 }
 
 .dynamic-section.bg-soft {
-  background: var(--bg-soft, #EFF6FF);
+  background: var(--bg-soft, #E7F3FF);
 }
 
 .dynamic-section.bg-dark {
@@ -4788,7 +4782,7 @@ details summary span:last-child {
   height: 22px;
   min-width: 22px;
   border-radius: 50%;
-  background: #2563FF;
+  background: #1877F2;
   color: #FFFFFF !important;
   border: none;
   font-size: 14px;
@@ -4807,7 +4801,7 @@ details summary span:last-child {
 }
 
 .dtr-parent-row:hover {
-  background-color: #EFF6FF !important;
+  background-color: #E7F3FF !important;
 }
 
 .dtr-parent-row.dtr-expanded {
@@ -4865,7 +4859,7 @@ details summary span:last-child {
 }
 
 .dtr-detail-title svg {
-  color: #2563FF;
+  color: #1877F2;
 }
 
 .dtr-detail-value {
