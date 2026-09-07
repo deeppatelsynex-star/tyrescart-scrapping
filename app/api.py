@@ -2981,10 +2981,11 @@ def register_visionadmin_api_routes(app):
                 for idx, opt in enumerate(options, start=1):
                     val = opt.get('value') if isinstance(opt, dict) else str(opt)
                     lbl = opt.get('label') if isinstance(opt, dict) else {'en': str(opt), 'ar': str(opt)}
+                    is_def = 1 if (isinstance(opt, dict) and opt.get('is_default')) else 0
                     cursor.execute("""
-                        INSERT INTO attribute_options (attribute_id, value, label, sort_order, created_by, updated_by)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                    """, (attr_id, val, json.dumps(lbl) if isinstance(lbl, dict) else str(lbl), idx, user_id, user_id))
+                        INSERT INTO attribute_options (attribute_id, value, label, sort_order, is_default, created_by, updated_by)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """, (attr_id, val, json.dumps(lbl) if isinstance(lbl, dict) else str(lbl), idx, is_def, user_id, user_id))
 
                 conn.commit()
 
@@ -3011,24 +3012,52 @@ def register_visionadmin_api_routes(app):
                 if not old_attr:
                     return jsonify({'error': 'Attribute not found.'}), 404
 
+                def _to_json_str(val, default=None):
+                    if val is None or val == '':
+                        return default
+                    if isinstance(val, (dict, list)):
+                        return json.dumps(val)
+                    if isinstance(val, str):
+                        try:
+                            parsed = json.loads(val)
+                            return json.dumps(parsed)
+                        except Exception:
+                            return json.dumps(val)
+                    return json.dumps(val)
+
+                name_val = json.dumps(name) if isinstance(name, dict) else _to_json_str(name, default=json.dumps({"en": str(name), "ar": str(name)}))
+                val_rules_val = _to_json_str(data.get('validation_rules'))
+
                 cursor.execute("""
                     UPDATE attributes 
                     SET name = %s,
+                        type = COALESCE(%s, type),
                         scope = COALESCE(%s, scope),
                         unit = %s,
                         is_required = %s,
+                        is_unique = %s,
                         is_filterable = %s,
                         is_searchable = %s,
+                        is_comparable = %s,
+                        is_visible_on_front = %s,
+                        sort_order = %s,
+                        validation_rules = %s,
                         updated_by = %s,
                         updated_at = NOW()
                     WHERE id = %s
                 """, (
-                    json.dumps(name) if isinstance(name, dict) else str(name),
+                    name_val,
+                    attr_type,
                     scope,
                     unit,
-                    1 if data.get('is_required') else 0,
-                    1 if data.get('is_filterable') else 0,
-                    1 if data.get('is_searchable', True) else 0,
+                    1 if data.get('is_required') in (1, '1', True) else 0,
+                    1 if data.get('is_unique') in (1, '1', True) else 0,
+                    1 if data.get('is_filterable') in (1, '1', True) else 0,
+                    1 if data.get('is_searchable') in (1, '1', True) else 0,
+                    1 if data.get('is_comparable') in (1, '1', True) else 0,
+                    1 if data.get('is_visible_on_front') in (1, '1', True) else 0,
+                    int(data.get('sort_order') or 0),
+                    val_rules_val,
                     user_id,
                     attr_id
                 ))
@@ -3040,11 +3069,12 @@ def register_visionadmin_api_routes(app):
                     for idx, opt in enumerate(options, start=1):
                         val = opt.get('value') if isinstance(opt, dict) else str(opt)
                         lbl = opt.get('label') if isinstance(opt, dict) else {'en': str(opt), 'ar': str(opt)}
+                        is_def = 1 if (isinstance(opt, dict) and opt.get('is_default')) else 0
                         if val:
                             cursor.execute("""
-                                INSERT INTO attribute_options (attribute_id, value, label, sort_order, created_by, updated_by)
-                                VALUES (%s, %s, %s, %s, %s, %s)
-                            """, (attr_id, val, json.dumps(lbl) if isinstance(lbl, dict) else str(lbl), idx, user_id, user_id))
+                                INSERT INTO attribute_options (attribute_id, value, label, sort_order, is_default, created_by, updated_by)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            """, (attr_id, val, json.dumps(lbl) if isinstance(lbl, dict) else str(lbl), idx, is_def, user_id, user_id))
 
                 conn.commit()
                 log_activity('update', 'attribute', attr_id, old_attr, data, user_id=user_id)
