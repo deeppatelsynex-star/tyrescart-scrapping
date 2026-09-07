@@ -3086,6 +3086,120 @@ def register_visionadmin_api_routes(app):
         log_activity('restore', 'attribute', attr_id, {'deleted': True}, {'deleted': False}, user_id=user_id)
         return jsonify({'success': True, 'message': f"Attribute #{attr_id} restored successfully."})
 
+    @app.route('/visionadmin/api/attributes/import-csv', methods=['POST'])
+    def visionadmin_api_import_attributes_csv():
+        """Imports or synchronizes attributes from an ElasticSuite / Magento product attribute CSV file."""
+        user_id = get_current_admin_user_id()
+        file = request.files.get('file') or request.files.get('csv_file')
+        if not file or not file.filename:
+            return jsonify({'success': False, 'error': 'No CSV file provided.'}), 400
+
+        try:
+            stream = io.StringIO(file.stream.read().decode("utf-8-sig"), newline=None)
+            reader = csv.DictReader(stream)
+            if not reader.fieldnames:
+                return jsonify({'success': False, 'error': 'CSV file is empty or invalid format.'}), 400
+
+            type_map = {
+                'boolean': {'status', 'runflat', 'ev', 'gift_message_available', 'tabby_payment', 
+                            'msrp_display_actual_price_type', 'price_type', 'sku_type', 'weight_type'},
+                'decimal': {'price', 'special_price', 'cost', 'msrp', 'tier_price', 'price_per_item', 'weight'},
+                'number': {'width', 'height', 'rim', 'cold_test_current_a', 'voltage_v', 'capacity_ah'},
+                'date': {'news_from_date', 'news_to_date', 'special_from_date', 'special_to_date', 
+                         'custom_design_from', 'custom_design_to', 'created_at', 'updated_at'},
+                'textarea': {'description', 'short_description'},
+                'file': {'image', 'small_image', 'thumbnail', 'swatch_image', 'gallery', 'media_gallery'},
+                'multiselect': {'category_ids', 'oem_tyres'},
+                'select': {'brand', 'country', 'country_of_manufacture', 'parts_category', 'pattern', 
+                           'oem_marking', 'offers', 'tyre_marking', 'tyre_type', 'tyres_category', 
+                           'bike_tyre_type', 'visibility', 'tax_class_id', 'color_finish', 'wheel_type', 
+                           'pcd', 'year', 'warranty_period', 'hold_down_type', 'terminal_type', 
+                           'post_positions', 'vehicle_compatible', 'page_layout', 'custom_layout', 
+                           'custom_design', 'options_container', 'shipment_type', 'price_view', 
+                           'quantity_and_stock_status', 'color', 'construction', 'model', 'price_included_text'}
+            }
+            store_view_codes = {
+                'status', 'name', 'display_name', 'color_finish', 'item_code', 'wheel_type', 
+                'hub_bore', 'pcd', 'back_space_inches', 'visibility', 'tyre_marking', 'ev', 
+                'oem_marking', 'offers', 'promotion', 'description', 'short_description', 
+                'url_key', 'meta_title', 'meta_keyword', 'meta_description', 'oem_tyres',
+                'image', 'small_image', 'thumbnail', 'swatch_image', 'gallery', 'media_gallery'
+            }
+            website_codes = {
+                'tax_class_id', 'news_from_date', 'news_to_date', 'special_from_date', 
+                'special_to_date', 'special_price', 'custom_design_from', 'custom_design_to', 
+                'country_of_manufacture'
+            }
+
+            def deduce_type(c, default='text'):
+                for t, codes in type_map.items():
+                    if c in codes:
+                        return t
+                return default
+
+            def deduce_scope(c, default='global'):
+                if c in store_view_codes:
+                    return 'store_view'
+                if c in website_codes:
+                    return 'website'
+                return default
+
+            conn = get_connection()
+            inserted = 0
+            updated = 0
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT id, code FROM attributes")
+                    existing = {r['code']: r['id'] for r in cursor.fetchall()}
+
+                    for row in reader:
+                        code = (row.get('attribute_code') or row.get('code') or '').strip()
+                        if not code:
+                            continue
+                        label = (row.get('attribute_label') or row.get('label') or row.get('name') or code).strip()
+                        is_searchable = 1 if str(row.get('is_searchable', '0')).strip() == '1' else 0
+                        is_filterable = 1 if str(row.get('is_filterable', '0')).strip() == '1' else 0
+                        pos = row.get('position') or row.get('sort_order') or 0
+                        try:
+                            sort_order = int(pos)
+                        except (ValueError, TypeError):
+                            sort_order = 0
+
+                        name_json = json.dumps({'en': label, 'ar': label})
+                        attr_type = deduce_type(code, row.get('type') or 'text')
+                        scope = deduce_scope(code, row.get('scope') or 'global')
+
+                        if code in existing:
+                            cursor.execute("""
+                                UPDATE attributes 
+                                SET name = %s, is_searchable = %s, is_filterable = %s, sort_order = %s, updated_at = NOW(), updated_by = %s
+                                WHERE id = %s
+                            """, (name_json, is_searchable, is_filterable, sort_order, user_id, existing[code]))
+                            updated += 1
+                        else:
+                            cursor.execute("""
+                                INSERT INTO attributes (code, name, type, scope, is_searchable, is_filterable, sort_order, is_system, created_by, updated_by, created_at, updated_at)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, 0, %s, %s, NOW(), NOW())
+                            """, (code, name_json, attr_type, scope, is_searchable, is_filterable, sort_order, user_id, user_id))
+                            existing[code] = cursor.lastrowid
+                            inserted += 1
+
+                    conn.commit()
+            finally:
+                conn.close()
+
+            log_activity('import_csv', 'attributes', 0, None, {'inserted': inserted, 'updated': updated}, user_id=user_id)
+            return jsonify({
+                'success': True,
+                'message': f"Successfully processed attributes CSV: {inserted} inserted, {updated} updated.",
+                'inserted': inserted,
+                'updated': updated,
+                'total': inserted + updated
+            }), 200
+        except Exception as e:
+            logger.error(f"Error importing attributes CSV: {e}", exc_info=True)
+            return jsonify({'success': False, 'error': f"Failed to import attributes CSV: {str(e)}"}), 500
+
     @app.route('/visionadmin/api/attribute-sets', methods=['GET'])
     def visionadmin_api_list_attribute_sets():
         sets = AttributeService.get_attribute_sets()

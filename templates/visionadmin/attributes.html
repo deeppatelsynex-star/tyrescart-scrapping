@@ -29,14 +29,24 @@
           </button>
         </template>
         <template x-if="activeTab === 'attributes'">
-          <button 
-            type="button" 
-            @click="openCreateModal()" 
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
-          >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>Add New Attribute</span>
-          </button>
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              @click="openCsvModal()" 
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-[#0E1108] border border-[#D0D7DE] text-xs sm:text-sm font-bold shadow-xs transition-all duration-200 cursor-pointer active:scale-95"
+            >
+              <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Import Attributes CSV</span>
+            </button>
+            <button 
+              type="button" 
+              @click="openCreateModal()" 
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Add New Attribute</span>
+            </button>
+          </div>
         </template>
       </div>
     </div>
@@ -612,6 +622,165 @@
     </div>
   </div>
 
+  <!-- MODAL: Import Attributes CSV -->
+  <div 
+    x-show="showCsvModal" 
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    style="display: none;"
+  >
+    <div 
+      class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-[#E8EDE4] space-y-5"
+      @click.away="if (!csvUploading) showCsvModal = false"
+    >
+      <!-- Header -->
+      <div class="flex items-start justify-between border-b border-[#F1F5F0] pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-black text-[#0E1108]">Import Attributes CSV</h3>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">Upload Magento / ElasticSuite export or standard attributes CSV to bulk import.</p>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          @click="if (!csvUploading) showCsvModal = false" 
+          class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition cursor-pointer"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Drag & Drop / File Input Box -->
+      <div 
+        class="border-2 border-dashed rounded-2xl p-6 text-center transition cursor-pointer flex flex-col items-center justify-center gap-2"
+        :class="isDragging ? 'border-[#58B31B] bg-[#EAF7E2]/30' : 'border-slate-200 hover:border-[#58B31B] bg-slate-50/50 hover:bg-slate-50'"
+        @dragover.prevent="isDragging = true"
+        @dragleave.prevent="isDragging = false"
+        @drop.prevent="handleCsvDrop($event)"
+        @click="$refs.csvInput.click()"
+      >
+        <input 
+          type="file" 
+          x-ref="csvInput" 
+          accept=".csv" 
+          class="hidden" 
+          @change="handleCsvFileSelect($event)"
+        />
+        
+        <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+
+        <div class="mt-1">
+          <p class="text-xs font-bold text-slate-700">Click to choose a file <span class="font-normal text-slate-500">or drag & drop here</span></p>
+          <p class="text-[11px] text-slate-400 font-medium mt-0.5">Supports CSV files up to 20MB</p>
+        </div>
+      </div>
+
+      <!-- File Details Card if Selected -->
+      <template x-if="csvFile">
+        <div class="flex items-center justify-between p-3.5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-xs">
+              CSV
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-800" x-text="csvFileName"></p>
+              <p class="text-[11px] text-slate-500 font-medium" x-text="csvFileSize"></p>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            @click.stop="clearCsvFile()" 
+            class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+            title="Remove file"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </template>
+
+      <!-- CSV Column Guidance -->
+      <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-1.5 text-slate-600">
+        <div class="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+          <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Supported Header Mapping</span>
+        </div>
+        <p class="text-[11px] text-slate-500 leading-relaxed">
+          The importer automatically maps ElasticSuite &amp; Magento export headers: <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-emerald-700">attribute_code</code>, <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-emerald-700">attribute_label</code> (or <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-emerald-700">frontend_label</code>), <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-emerald-700">is_searchable</code>, <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-emerald-700">is_filterable</code>, and <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-emerald-700">position</code>.
+        </p>
+      </div>
+
+      <!-- In-modal Error Alert -->
+      <template x-if="csvError">
+        <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-medium flex items-start gap-2">
+          <svg class="w-4 h-4 shrink-0 text-rose-500 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span x-text="csvError"></span>
+        </div>
+      </template>
+
+      <!-- In-modal Success Alert -->
+      <template x-if="csvResult">
+        <div class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-medium space-y-1">
+          <div class="flex items-center gap-2 font-bold text-emerald-900">
+            <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span x-text="csvResult.message"></span>
+          </div>
+          <div class="flex items-center gap-3 text-[11px] text-emerald-700 pt-1">
+            <span>✨ New Inserted: <strong x-text="csvResult.inserted"></strong></span>
+            <span>🔄 Updated: <strong x-text="csvResult.updated"></strong></span>
+            <span>📦 Total Processed: <strong x-text="csvResult.total"></strong></span>
+          </div>
+        </div>
+      </template>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-2 border-t border-[#F1F5F0]">
+        <button 
+          type="button" 
+          @click="showCsvModal = false" 
+          :disabled="csvUploading"
+          class="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          @click="uploadCsv()" 
+          :disabled="!csvFile || csvUploading"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <template x-if="csvUploading">
+            <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"/></svg>
+          </template>
+          <template x-if="!csvUploading">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </template>
+          <span x-text="csvUploading ? 'Importing CSV...' : 'Import & Sync'"></span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -628,6 +797,14 @@ function visionAttributesApp() {
     showSetModal: false,
     showDetailModal: false,
     showSchemaModal: false,
+    showCsvModal: false,
+    csvFile: null,
+    csvFileName: '',
+    csvFileSize: '',
+    csvUploading: false,
+    csvResult: null,
+    csvError: '',
+    isDragging: false,
     selectedAttr: null,
     selectedSchema: null,
     selectedAttrToAdd: {},
@@ -1027,6 +1204,90 @@ function visionAttributesApp() {
         }
       } catch (e) {
         console.error('Add group to set error:', e);
+      }
+    },
+
+    openCsvModal() {
+      this.csvFile = null;
+      this.csvFileName = '';
+      this.csvFileSize = '';
+      this.csvUploading = false;
+      this.csvResult = null;
+      this.csvError = '';
+      this.isDragging = false;
+      if (this.$refs.csvInput) this.$refs.csvInput.value = '';
+      this.showCsvModal = true;
+    },
+
+    clearCsvFile() {
+      this.csvFile = null;
+      this.csvFileName = '';
+      this.csvFileSize = '';
+      this.csvResult = null;
+      this.csvError = '';
+      if (this.$refs.csvInput) this.$refs.csvInput.value = '';
+    },
+
+    handleCsvFileSelect(e) {
+      const file = e.target.files && e.target.files[0];
+      if (file) {
+        this.processCsvFile(file);
+      }
+    },
+
+    handleCsvDrop(e) {
+      this.isDragging = false;
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file) {
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+          this.csvError = 'Please drop a valid .csv file.';
+          return;
+        }
+        this.processCsvFile(file);
+      }
+    },
+
+    processCsvFile(file) {
+      this.csvFile = file;
+      this.csvFileName = file.name;
+      this.csvFileSize = (file.size / 1024).toFixed(1) + ' KB';
+      this.csvError = '';
+      this.csvResult = null;
+    },
+
+    async uploadCsv() {
+      if (!this.csvFile) {
+        this.csvError = 'Please select a CSV file first.';
+        return;
+      }
+      this.csvUploading = true;
+      this.csvError = '';
+      this.csvResult = null;
+
+      try {
+        const formData = new FormData();
+        formData.append('file', this.csvFile);
+
+        const res = await fetch('/visionadmin/api/attributes/import-csv', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          this.csvResult = data;
+          await this.initData();
+          if (window.showToast) {
+            window.showToast(data.message || 'Attributes imported successfully!', 'success');
+          }
+        } else {
+          this.csvError = data.error || 'Failed to import attributes CSV.';
+        }
+      } catch (err) {
+        console.error('Import CSV error:', err);
+        this.csvError = err.message || 'An error occurred while uploading.';
+      } finally {
+        this.csvUploading = false;
       }
     }
   };
