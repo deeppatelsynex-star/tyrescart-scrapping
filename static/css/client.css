@@ -1060,12 +1060,14 @@ header {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: transform 0.25s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .price-guarantee-card:hover .pg-icon {
   transform: scale(1.08) rotate(3deg);
-  background: #E4F5D8;
+  background: var(--primary, #2563FF);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(37, 99, 255, 0.28);
 }
 
 .pg-text {
@@ -3997,7 +3999,8 @@ footer .tagline {
 
 .about-val-card:hover .about-val-icon {
   transform: scale(1.1);
-  background: #E2F4D3;
+  background: var(--primary, #2563FF);
+  color: #FFFFFF;
 }
 
 .about-val-title {
@@ -4309,20 +4312,20 @@ footer .tagline {
   gap: 8px;
   padding: 13px 30px;
   border-radius: 100px;
-  background: var(--primary-dark, #1D4ED8);
+  background: var(--primary, #2563FF);
   color: #ffffff;
   font-weight: 700;
   font-size: 0.95rem;
   text-decoration: none;
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(53, 118, 15, 0.35);
+  box-shadow: 0 4px 16px rgba(37, 99, 255, 0.35);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .about-action-btn:hover {
-  background: #2D650D;
+  background: var(--primary-hover, #1D4ED8);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(53, 118, 15, 0.45);
+  box-shadow: 0 8px 24px rgba(37, 99, 255, 0.45);
 }
 
 /* ============================================================
