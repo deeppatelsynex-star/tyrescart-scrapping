@@ -1002,7 +1002,7 @@ header {
 .price-section {
   background: 
     radial-gradient(1200px 500px at 50% 0%, rgba(88, 179, 27, 0.05), transparent 70%),
-    linear-gradient(180deg, #FFFFFF 0%, #F8FAF6 100%);
+    linear-gradient(180deg, #FFFFFF 0%, #EFF6FF 100%);
   padding: clamp(36px, 5vw, 56px) 0;
   position: relative;
   overflow: hidden;
@@ -1029,7 +1029,7 @@ header {
   align-items: center;
   gap: 14px;
   background: #FFFFFF;
-  border: 1px solid #E8EDE4;
+  border: 1px solid #E2E8F0;
   border-radius: 18px;
   padding: 16px 18px;
   box-shadow: 0 4px 16px rgba(14, 17, 8, 0.03);
@@ -1046,8 +1046,8 @@ header {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: #EFF9E6;
-  color: #35760F;
+  background: #E0F2FE;
+  color: #1D4ED8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1082,7 +1082,7 @@ header {
 /* Price Table Card Container */
 .price-table-card {
   background: #FFFFFF;
-  border: 1px solid #E3E7DE;
+  border: 1px solid #E2E8F0;
   border-radius: 20px;
   box-shadow: 0 12px 36px rgba(14, 17, 8, 0.05);
   overflow: hidden;
@@ -1238,14 +1238,14 @@ header {
   font-size: 0.95rem;
   color: var(--ink);
   background: #FFFFFF;
-  border: 1.5px solid #CBD6C0;
+  border: 1.5px solid #E2E8F0;
   text-decoration: none;
   transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .btn-call-outline:hover {
   transform: translateY(-2px);
-  background: #F8FAF6;
+  background: #F8FAFC;
   border-color: var(--ink);
   box-shadow: 0 4px 14px rgba(14, 17, 8, 0.08);
 }
@@ -1362,7 +1362,7 @@ header {
 
 .step:hover {
   box-shadow: var(--shadow);
-  border-color: #CBD6C0;
+  border-color: #E2E8F0;
   transform: translateY(-2px)
 }
 
@@ -1423,7 +1423,7 @@ header {
 
 .brand.more {
   background: var(--green);
-  color: #0B1505;
+  color: #0F172A;
   border-color: var(--green)
 }
 
@@ -2250,7 +2250,7 @@ footer .tagline {
 .post-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 16px 36px rgba(14,17,8,.08), 0 4px 12px rgba(14,17,8,.04);
-  border-color: #CBD6C0;
+  border-color: #E2E8F0;
 }
 
 .post-card:focus-visible {
@@ -2421,7 +2421,7 @@ footer .tagline {
 
 .page-link.active {
   background: var(--green);
-  color: #0B1505;
+  color: #0F172A;
   border-color: var(--green);
   font-weight: 800;
 }
@@ -2533,8 +2533,8 @@ footer .tagline {
 
 /* Table of Contents / "In This Article" Box */
 .toc-box {
-  background: #F4F8F1;
-  border: 1px solid #DFEAD8;
+  background: #EFF6FF;
+  border: 1px solid #E2E8F0;
   border-radius: 12px;
   padding: 20px 22px;
   margin-bottom: 32px;
@@ -2611,7 +2611,7 @@ footer .tagline {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #0B6B38;
+  background: #10B981;
   color: #ffffff;
   font-weight: 800;
   font-size: 1.05rem;
@@ -2673,7 +2673,7 @@ footer .tagline {
 .reviewed-by-role {
   font-size: 0.88rem;
   font-weight: 700;
-  color: #0B6B38;
+  color: #10B981;
   margin: 4px 0 6px;
 }
 
@@ -2823,7 +2823,7 @@ footer .tagline {
   border-left: 4px solid var(--green);
   padding: 8px 18px;
   margin: 20px 0;
-  background: #F4F8F1;
+  background: #EFF6FF;
   border-radius: 0 10px 10px 0;
   font-style: italic;
   color: var(--slate);
@@ -2889,7 +2889,7 @@ footer .tagline {
 .blog-faqs-title {
   font-size: clamp(1.25rem, 2.4vw, 1.65rem);
   font-weight: 800;
-  color: var(--ink, #0e1108);
+  color: var(--ink, #0F172A);
   margin: 0;
   line-height: 1.25;
 }
@@ -2927,7 +2927,7 @@ footer .tagline {
   cursor: pointer;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--ink, #0e1108);
+  color: var(--ink, #0F172A);
   transition: color 0.25s ease;
 }
 
@@ -3649,7 +3649,7 @@ footer .tagline {
   padding: 13px 30px;
   border-radius: 100px;
   background: var(--green);
-  color: #0B1505;
+  color: #0F172A;
   font-weight: 700;
   font-size: 0.95rem;
   text-decoration: none;
@@ -3898,7 +3898,7 @@ footer .tagline {
 
 .about-val-card:hover {
   transform: translateY(-6px);
-  border-color: #CBD6C0;
+  border-color: #E2E8F0;
   box-shadow: 0 16px 36px rgba(14, 17, 8, 0.08);
 }
 
@@ -4081,7 +4081,7 @@ footer .tagline {
 
 .about-commit-card:hover {
   transform: translateY(-5px);
-  border-color: #CBD6C0;
+  border-color: #E2E8F0;
   box-shadow: 0 14px 32px rgba(14, 17, 8, 0.08);
 }
 
@@ -4118,7 +4118,7 @@ footer .tagline {
 
 .about-action-box {
   background: #F1F7EE;
-  border: 1px solid #DFEAD8;
+  border: 1px solid #E2E8F0;
   border-radius: 24px;
   padding: 32px 36px;
   display: flex;
@@ -4166,7 +4166,7 @@ footer .tagline {
   height: 52px;
   border-radius: 50%;
   background: #ffffff;
-  border: 1px solid #DFEAD8;
+  border: 1px solid #E2E8F0;
   color: var(--green-deep);
   display: flex;
   align-items: center;
@@ -4196,7 +4196,7 @@ footer .tagline {
   gap: 8px;
   padding: 13px 30px;
   border-radius: 100px;
-  background: #35760F;
+  background: #1D4ED8;
   color: #ffffff;
   font-weight: 700;
   font-size: 0.95rem;
@@ -4223,8 +4223,8 @@ footer .tagline {
   gap: 5px;
   width: 38px;
   height: 38px;
-  background: var(--bg-soft, #f6f8f3);
-  border: 1px solid var(--line, #e3e7de);
+  background: var(--bg-soft, #EFF6FF);
+  border: 1px solid var(--line, #E2E8F0);
   border-radius: 10px;
   cursor: pointer;
   padding: 0;
@@ -4335,7 +4335,7 @@ html[dir="rtl"] .mobile-nav-drawer.open,
 
 .mobile-nav-head {
   padding: 16px 20px;
-  border-bottom: 1px solid var(--line, #e3e7de);
+  border-bottom: 1px solid var(--line, #E2E8F0);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -4346,8 +4346,8 @@ html[dir="rtl"] .mobile-nav-drawer.open,
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  border: 1px solid var(--line, #e3e7de);
-  background: var(--bg-soft, #f6f8f3);
+  border: 1px solid var(--line, #E2E8F0);
+  background: var(--bg-soft, #EFF6FF);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4395,7 +4395,7 @@ html[dir="rtl"] .mobile-nav-drawer.open,
 }
 
 .mobile-nav-link:hover {
-  background: var(--green-tint, #eff9e6);
+  background: var(--green-tint, #E0F2FE);
   color: var(--green-deep);
 }
 
@@ -4404,7 +4404,7 @@ html[dir="rtl"] .mobile-nav-drawer.open,
 }
 
 .mobile-nav-link.active {
-  background: #0e1108;
+  background: #0F172A;
   color: #ffffff;
 }
 
@@ -4414,8 +4414,8 @@ html[dir="rtl"] .mobile-nav-drawer.open,
 
 .mobile-nav-foot {
   padding: 16px 20px 20px;
-  border-top: 1px solid var(--line, #e3e7de);
-  background: var(--bg-soft, #f6f8f3);
+  border-top: 1px solid var(--line, #E2E8F0);
+  background: var(--bg-soft, #EFF6FF);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -4593,17 +4593,17 @@ html[dir="rtl"] .category-badge-pill {
 .chip-interactive.chip-more {
   background: rgba(104, 201, 39, 0.08);
   border-color: rgba(104, 201, 39, 0.35);
-  color: #1b5e20;
+  color: #10B981;
   font-weight: 750;
 }
 
 .chip-interactive.chip-more .dot {
-  background: #1b5e20;
+  background: #10B981;
 }
 
 /* ---------------- 6.3 DELIVERY AND FITTING COVERAGE ---------------- */
 .coverage-section {
-  background: var(--bg-alt, #F8FAF7);
+  background: var(--bg-alt, #F8FAFC);
   padding: clamp(34px, 4.5vw, 52px) 0;
   border-top: 1px solid var(--line);
 }
@@ -4659,7 +4659,7 @@ html[dir="rtl"] .category-badge-pill {
 
 .coverage-tag-free {
   background: rgba(104, 201, 39, 0.15);
-  color: #1b5e20;
+  color: #10B981;
 }
 
 .coverage-option-card h3 {
@@ -4712,7 +4712,7 @@ html[dir="rtl"] .category-badge-pill {
 }
 
 .dynamic-section.bg-soft {
-  background: var(--bg-soft, #F6F8F3);
+  background: var(--bg-soft, #EFF6FF);
 }
 
 .dynamic-section.bg-dark {
@@ -4788,7 +4788,7 @@ details summary span:last-child {
   height: 22px;
   min-width: 22px;
   border-radius: 50%;
-  background: #58B31B;
+  background: #2563FF;
   color: #FFFFFF !important;
   border: none;
   font-size: 14px;
@@ -4807,7 +4807,7 @@ details summary span:last-child {
 }
 
 .dtr-parent-row:hover {
-  background-color: #F4F8F1 !important;
+  background-color: #EFF6FF !important;
 }
 
 .dtr-parent-row.dtr-expanded {
@@ -4817,17 +4817,17 @@ details summary span:last-child {
 
 .dtr-parent-row.dtr-expanded .dtr-control-btn,
 .dtr-control-btn.is-expanded {
-  background: #0E1108 !important;
+  background: #0F172A !important;
 }
 
 /* Child Row Details Box */
 .dtr-child-row {
-  background-color: #F8FAF7 !important;
+  background-color: #F8FAFC !important;
 }
 
 .dtr-child-td {
   padding: 0 14px 16px 14px !important;
-  border-bottom: 1px solid #E8EDE4 !important;
+  border-bottom: 1px solid #E2E8F0 !important;
 }
 
 .dtr-child-details {
@@ -4865,12 +4865,12 @@ details summary span:last-child {
 }
 
 .dtr-detail-title svg {
-  color: #58B31B;
+  color: #2563FF;
 }
 
 .dtr-detail-value {
   font-weight: 800;
-  color: #0E1108;
+  color: #0F172A;
   text-align: right;
   font-size: 0.9rem;
 }
