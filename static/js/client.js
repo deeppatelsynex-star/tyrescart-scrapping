@@ -385,11 +385,12 @@
   function SmoothAccordion(el) {
     this.el = el;
     this.summary = el.querySelector('summary');
+    this.content = el.querySelector('.body') || el.querySelector('.faq-answer-panel') || el.lastElementChild;
     this.animation = null;
     this.isClosing = false;
     this.isExpanding = false;
 
-    if (!this.summary) return;
+    if (!this.summary || !this.content) return;
     el._accordionController = this;
 
     var self = this;
@@ -416,11 +417,16 @@
 
     if (this.animation) this.animation.cancel();
 
+    if (typeof this.el.animate !== 'function') {
+      this.onAnimationFinish(false);
+      return;
+    }
+
     var self = this;
     this.animation = this.el.animate({
       height: [startHeight, endHeight]
     }, {
-      duration: 260,
+      duration: 250,
       easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
     });
 
@@ -449,22 +455,19 @@
       });
     }
 
-    this.el.style.height = this.el.offsetHeight + 'px';
+    var startHeight = this.summary.offsetHeight + 'px';
+    this.el.style.height = startHeight;
     this.el.open = true;
-    var self = this;
-    window.requestAnimationFrame(function() {
-      self.expand();
-    });
-  };
 
-  SmoothAccordion.prototype.expand = function() {
+    var targetHeight = (this.summary.offsetHeight + this.content.scrollHeight) + 'px';
+
+    if (typeof this.el.animate !== 'function') {
+      this.onAnimationFinish(true);
+      return;
+    }
+
     this.isExpanding = true;
     this.el.classList.remove('is-closing');
-    var startHeight = this.el.offsetHeight + 'px';
-
-    this.el.style.height = 'auto';
-    var targetHeight = this.el.offsetHeight + 'px';
-    this.el.style.height = startHeight;
 
     if (this.animation) this.animation.cancel();
 
@@ -472,7 +475,7 @@
     this.animation = this.el.animate({
       height: [startHeight, targetHeight]
     }, {
-      duration: 320,
+      duration: 290,
       easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
     });
 

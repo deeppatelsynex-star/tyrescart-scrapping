@@ -629,10 +629,15 @@
             <h2>{{ sec.section_title }}</h2>
           </div>
           {% set faqs = sec.section_data.faqs if sec.section_data and sec.section_data.faqs else [] %}
-          <div style="margin-top:36px">
+          <div style="margin-top:36px" class="faq-list">
             {% for f in faqs %}
-            <details name="faq_group" {% if loop.first %}open{% endif %}>
-              <summary>{{ f.question }}</summary>
+            <details class="faq-item" {% if loop.first %}open{% endif %}>
+              <summary class="faq-summary">
+                <span class="faq-summary-inner">
+                  <span class="faq-question-text">{{ f.question }}</span>
+                  <span class="faq-chevron" aria-hidden="true"></span>
+                </span>
+              </summary>
               <div class="body"><p>{{ f.answer | safe }}</p></div>
             </details>
             {% endfor %}
