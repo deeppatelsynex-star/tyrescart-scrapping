@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from db import get_connection
 from services.attribute_service import AttributeService
+from i18n import localize_value
 
 
 class Product:
@@ -49,11 +50,27 @@ class Product:
 
         # Resolve display name string
         if isinstance(d.get('name'), dict):
-            d['name_en'] = d['name'].get('en') or d.get('display_name') or ''
+            d['display_name'] = localize_value(d['name'])
+            d['name_en'] = localize_value(d['name'], 'en') or d['display_name']
         elif isinstance(d.get('name'), str):
+            d['display_name'] = d['name']
             d['name_en'] = d['name']
         else:
+            d['display_name'] = d.get('display_name') or ''
             d['name_en'] = d.get('display_name') or ''
+
+        # Resolve category name if JSON
+        if d.get('category_name'):
+            cat_raw = d['category_name']
+            if isinstance(cat_raw, str) and cat_raw.strip().startswith('{'):
+                try:
+                    d['category_name'] = json.loads(cat_raw)
+                except Exception:
+                    pass
+            if isinstance(d['category_name'], dict):
+                d['category_name_display'] = localize_value(d['category_name'])
+            else:
+                d['category_name_display'] = str(d['category_name'])
 
         # Decimal / Float conversions for JSON serialization
         for k in ['price', 'list_price', 'sale_price', 'cost_price', 'weight']:
@@ -166,7 +183,7 @@ class Product:
                     SELECT p.*,
                            b.name as brand_name,
                            b.logo as brand_logo,
-                           c.name_en as category_name,
+                           c.name as category_name,
                            s.name as attribute_set_name,
                            s.slug as attribute_set_slug
                     FROM products p
@@ -203,7 +220,7 @@ class Product:
                     SELECT p.*,
                            b.name as brand_name,
                            b.logo as brand_logo,
-                           c.name_en as category_name,
+                           c.name as category_name,
                            s.name as attribute_set_name,
                            s.slug as attribute_set_slug
                     FROM products p

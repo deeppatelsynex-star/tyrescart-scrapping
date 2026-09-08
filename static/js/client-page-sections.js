@@ -81,11 +81,10 @@
     return fallbackSvgs[hash];
   }
 
-  function renderHeroSection(sec, page, locale) {
-    const isAr = locale === 'ar';
-    const homeUrl = isAr ? '/ar' : '/';
-    const homeLabel = isAr ? 'الرئيسية' : 'Home';
-    const defaultTitle = isAr ? 'من نحن' : 'About Us';
+  function renderHeroSection(sec, page, locale, labels) {
+    const homeUrl = '/';
+    const homeLabel = labels?.home || 'Home';
+    const defaultTitle = labels?.about_us || 'About Us';
     const pageTitle = page?.title || defaultTitle;
     const titleHtml = (sec.section_title || '').replace(/\n/g, '<br>');
     const heroImage = sec.image || '';
@@ -366,11 +365,10 @@
     `;
   }
 
-  function renderBreadcrumbBar(page, locale) {
-    const isAr = locale === 'ar';
-    const homeUrl = isAr ? '/ar' : '/';
-    const homeLabel = isAr ? 'الرئيسية' : 'Home';
-    const pageTitle = page?.title || (isAr ? 'من نحن' : 'About Us');
+  function renderBreadcrumbBar(page, locale, labels) {
+    const homeUrl = '/';
+    const homeLabel = labels?.home || 'Home';
+    const pageTitle = page?.title || (labels?.about_us || 'About Us');
 
     return `
       <div style="background:#0c1008; border-bottom:1px solid rgba(255,255,255,0.06); padding: 18px 0;">
@@ -391,11 +389,10 @@
     `;
   }
 
-  function renderPageHeroBanner(page, locale) {
-    const isAr = locale === 'ar';
-    const homeUrl = isAr ? '/ar' : '/';
-    const homeLabel = isAr ? 'الرئيسية' : 'Home';
-    const pageTitle = page?.title || (isAr ? 'من نحن' : 'About Us');
+  function renderPageHeroBanner(page, locale, labels) {
+    const homeUrl = '/';
+    const homeLabel = labels?.home || 'Home';
+    const pageTitle = page?.title || (labels?.about_us || 'About Us');
     const heroImage = page?.banner_image;
     const bodyContent = page?.content || '';
 
@@ -463,12 +460,13 @@
     // Detect slug from data attribute or current pathname
     let slug = root.dataset.slug || '';
     if (!slug) {
-      const pathParts = window.location.pathname.replace(/^\/(en|ar)\//, '/').split('/').filter(Boolean);
+      const pathParts = window.location.pathname.replace(/^\/[a-z]{2}\//, '/').split('/').filter(Boolean);
       slug = pathParts[pathParts.length - 1] || 'about-us';
     }
 
-    // Detect active locale
-    const locale = root.dataset.locale || (window.location.pathname.startsWith('/ar') || document.documentElement.lang === 'ar' ? 'ar' : 'en');
+    // Detect active locale dynamically from data attribute, html lang, or path
+    const pathMatch = window.location.pathname.match(/^\/([a-z]{2})(\/|$)/i);
+    const locale = root.dataset.locale || (pathMatch ? pathMatch[1].toLowerCase() : '') || document.documentElement.lang || 'en';
 
     try {
       const apiUrl = `/api/sections/${encodeURIComponent(slug)}?locale=${encodeURIComponent(locale)}`;
@@ -478,10 +476,11 @@
       const data = await resp.json();
       const page = data.page || {};
       const sections = data.sections || [];
+      const labels = data.labels || { home: 'Home', about_us: 'About Us', site_title: 'TyresVision UAE' };
 
       // Update document title and meta description dynamically
       if (page.title) {
-        document.title = `${page.title} | ${locale === 'ar' ? 'تايرز فيجن الإمارات' : 'TyresVision UAE'}`;
+        document.title = `${page.title} | ${labels.site_title || 'TyresVision UAE'}`;
       }
       if (page.meta_description) {
         const metaDesc = document.querySelector('meta[name="description"]');
@@ -492,9 +491,9 @@
 
       // 1. If page has a hero banner image configured in Pages Admin, render the Hero Banner using database content
       if (page.banner_image) {
-        finalHtml += renderPageHeroBanner(page, locale);
+        finalHtml += renderPageHeroBanner(page, locale, labels);
       } else {
-        finalHtml += renderBreadcrumbBar(page, locale);
+        finalHtml += renderBreadcrumbBar(page, locale, labels);
         finalHtml += renderPageProseBody(page, locale);
       }
 

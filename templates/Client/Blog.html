@@ -1,19 +1,11 @@
 {% extends 'Client/layout.html' %}
 
 {% block title %}
-  {% if locale == 'ar' %}
-    دليل ونصائح العناية بالإطارات وشراؤها في الإمارات | مدونة تايرز فيجن
-  {% else %}
-    Tyre Care &amp; Buying Guides | TyresVision Blog
-  {% endif %}
+  {{ _('Tyre Care & Buying Guides | TyresVision Blog') }}
 {% endblock %}
 
 {% block meta_description %}
-  {% if locale == 'ar' %}
-    إرشادات ونصائح عملية وموثوقة حول مقاسات الإطارات، الصيانة، واختيار الطقم المناسب لطرقات وحرارة صيف الإمارات من خبراء تايرز فيجن.
-  {% else %}
-    Straight answers on tyre sizing, maintenance, and buying the right set for UAE roads and heat — from the team behind TyresVision.
-  {% endif %}
+  {{ _('Straight answers on tyre sizing, maintenance, and buying the right set for UAE roads and heat — from the team behind TyresVision.') }}
 {% endblock %}
 
 {% block content %}
@@ -25,30 +17,22 @@
     <div class="wrap">
       <div>
         <span class="eyebrow">
-          {% if locale == 'ar' %}قاعدة معرفة تايرز فيجن{% else %}TyresVision Knowledge Base{% endif %}
+          {{ _('TyresVision Knowledge Base') }}
         </span>
         
         <h1>
-          {% if locale == 'ar' %}
-            استكشف مدونتنا — نصائح الإطارات <em>وصيانة السيارات</em>
-          {% else %}
-            Explore Our Blog — Tyre Advice &amp; <em>Car Maintenance</em>
-          {% endif %}
+          {{ _('Explore Our Blog — Tyre Advice & Car Maintenance') }}
         </h1>
         
         <p class="lead">
-          {% if locale == 'ar' %}
-            إرشادات عملية ونصائح موثوقة حول اختيار الإطارات، مواصفات دول الخليج، والعناية في حرارة الصيف مع خدمة التركيب المتنقل في دبي، أبوظبي والشارقة.
-          {% else %}
-            Straight, practical answers on tyre selection, GCC specifications, summer heat care, and mobile fitting across Dubai, Abu Dhabi &amp; Sharjah.
-          {% endif %}
+          {{ _('Straight, practical answers on tyre selection, GCC specifications, summer heat care, and mobile fitting across Dubai, Abu Dhabi & Sharjah.') }}
         </p>
       </div>
       
       <!-- Glassmorphic Category Filter Pills (Alpine-controlled) -->
       <div class="blog-filter-pills" role="tablist" aria-label="Blog categories">
         <button type="button" class="filter-btn" :class="{ 'active': !currentCategory }" @click="setCategory('')">
-          {% if locale == 'ar' %}جميع المقالات{% else %}All Articles{% endif %}
+          {{ _('All Articles') }}
         </button>
         {% for cat in categories %}
           <button type="button" class="filter-btn" :class="{ 'active': currentCategory.toLowerCase() === '{{ cat }}'.toLowerCase() }" @click="setCategory('{{ cat }}')">
@@ -65,31 +49,31 @@
       
       <!-- Breadcrumb -->
       <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-        <a href="/">{% if locale == 'ar' %}الرئيسية{% else %}Home{% endif %}</a>
+        <a href="/">{{ _('Home') }}</a>
         <span class="sep">/</span>
-        <span class="current">{% if locale == 'ar' %}المدونة{% else %}Blog{% endif %}</span>
+        <span class="current">{{ _('Blog') }}</span>
       </nav>
 
       <!-- Loading State Indicator -->
       <div x-show="loading" class="center" style="padding:60px 0;">
-        <span class="eyebrow">{% if locale == 'ar' %}جاري التحميل{% else %}Loading Articles{% endif %}</span>
-        <p class="lead">{% if locale == 'ar' %}جاري تحميل أحدث مقالات الإطارات من الخادم...{% else %}Fetching latest tyre guides from the API...{% endif %}</p>
+        <span class="eyebrow">{{ _('Loading Articles') }}</span>
+        <p class="lead">{{ _('Fetching latest tyre guides from the API...') }}</p>
       </div>
 
       <!-- Error State Container -->
       <div x-show="error" class="center" style="padding:60px 0;" x-cloak>
-        <span class="eyebrow">{% if locale == 'ar' %}تنبيه{% else %}Notice{% endif %}</span>
-        <h3>{% if locale == 'ar' %}تعذر تحميل المقالات{% else %}Unable to load blog articles{% endif %}</h3>
-        <p class="lead" style="margin-bottom:16px;">{% if locale == 'ar' %}يرجى التحقق من اتصالك بالإنترنت أو إعادة المحاولة.{% else %}Please check your connection or try again.{% endif %}</p>
+        <span class="eyebrow">{{ _('Notice') }}</span>
+        <h3>{{ _('Unable to load blog articles') }}</h3>
+        <p class="lead" style="margin-bottom:16px;">{{ _('Please check your connection or try again.') }}</p>
         <button type="button" class="btn btn-wa" @click="loadBlogs(currentPage, currentCategory)">
-          {% if locale == 'ar' %}إعادة المحاولة{% else %}Retry{% endif %}
+          {{ _('Retry') }}
         </button>
       </div>
 
       <!-- Empty State -->
       <div x-show="!loading && !error && blogs.length === 0" class="center" style="padding:48px 0;" x-cloak>
-        <span class="eyebrow">{% if locale == 'ar' %}تنبيه{% else %}Notice{% endif %}</span>
-        <p class="lead">{% if locale == 'ar' %}لا توجد مقالات متاحة في هذا القسم حالياً.{% else %}No articles found in this category.{% endif %}</p>
+        <span class="eyebrow">{{ _('Notice') }}</span>
+        <p class="lead">{{ _('No articles found in this category.') }}</p>
       </div>
 
       <!-- Dynamic 4-Column Card Grid (Alpine-powered) -->
@@ -105,7 +89,7 @@
                 <span class="post-badge-pill" x-text="blog.badge || 'AIR'"></span>
               </template>
               <template x-if="!blog.badge && !(blog.slug && blog.slug.includes('air')) && blog.category && (blog.category.toLowerCase().includes('buying') || blog.category.includes('شراء'))">
-                <span class="post-badge-pill" style="background:linear-gradient(135deg, #2563FF 0%, #1D4ED8 100%);" x-text="locale === 'ar' ? 'دليل' : 'GUIDE'"></span>
+                <span class="post-badge-pill" style="background:linear-gradient(135deg, #2563FF 0%, #1D4ED8 100%);" x-text="blog.badge_label || 'GUIDE'"></span>
               </template>
 
               <!-- Cover Image -->
@@ -152,9 +136,8 @@ document.addEventListener('alpine:init', () => {
     get paginationInfoText() {
       if (!this.pagination) return '';
       const p = this.pagination;
-      return this.locale === 'ar'
-        ? `عرض ${p.start} إلى ${p.end} من إجمالي ${p.total} مقال`
-        : `Items ${p.start} to ${p.end} of ${p.total} total`;
+      const fmt = {{ _('Items {start} to {end} of {total} total') | tojson }};
+      return fmt.replace('{start}', p.start).replace('{end}', p.end).replace('{total}', p.total);
     },
 
     init() {

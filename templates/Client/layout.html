@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ locale or 'en' }}" dir="{{ 'rtl' if locale == 'ar' else 'ltr' }}">
+<html lang="{{ locale or 'en' }}" dir="{{ 'rtl' if is_rtl(locale) else 'ltr' }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -572,12 +572,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
     </a>
     <div class="nav-links">
-      <a href="/#why" data-nav-target="#why">Why us</a>
-      <a href="/#prices" data-nav-target="#prices">Prices</a>
-      <a href="/#services" data-nav-target="#services">Services</a>
-      <a href="/#how" data-nav-target="#how">How it works</a>
-      <a href="/#brands" data-nav-target="#brands">Brands</a>
-      <a href="/#faq" data-nav-target="#faq">FAQ</a>
+      <a href="/#why" data-nav-target="#why">{{ _('Why us') }}</a>
+      <a href="/#prices" data-nav-target="#prices">{{ _('Prices') }}</a>
+      <a href="/#services" data-nav-target="#services">{{ _('Services') }}</a>
+      <a href="/#how" data-nav-target="#how">{{ _('How it works') }}</a>
+      <a href="/#brands" data-nav-target="#brands">{{ _('Brands') }}</a>
+      <a href="/#faq" data-nav-target="#faq">{{ _('FAQ') }}</a>
     </div>
     <div class="nav-cta">
       <a class="btn btn-wa btn-sm" href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">
@@ -586,7 +586,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </a>
       <a class="btn btn-call btn-sm header-call-btn" href="tel:+971505069575" aria-label="Call now">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-        <span class="btn-call-label">Call now</span>
+        <span class="btn-call-label">{{ _('Call now') }}</span>
       </a>
 
       <!-- Mobile Menu Hamburger Button (Alpine-controlled) -->
@@ -661,36 +661,36 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </svg>
           <span class="word"><span class="t1">TYRES</span><span class="t2">VISI<span class="oring"></span>N</span></span>
         </a>
-        <p style="max-width:34ch;margin-top:16px">Buy tyres online in Dubai & Abu Dhabi. 60+ brands, 7,000+ tyres, free fitting at centres, mobile vans too. </p>
+        <p style="max-width:34ch;margin-top:16px">{{ _("Buy tyres online in Dubai & Abu Dhabi. 60+ brands, 7,000+ tyres, free fitting at centres, mobile vans too.") }}</p>
       </div>
 
       <!-- Column 2: Contact & Legal -->
       <div>
-        <h4>Contact</h4>
+        <h4>{{ _('Contact') }}</h4>
         <ul>
           <li><a href="tel:+971505069575">+971 50 506 9575</a></li>
-          <li><a href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">WhatsApp us</a></li>
+          <li><a href="https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote." target="_blank" rel="noopener">{{ _('WhatsApp us') }}</a></li>
         </ul>
-        <h4 style="margin-top:24px">Legal</h4>
+        <h4 style="margin-top:24px">{{ _('Legal') }}</h4>
         <ul>
-          <li><a href="#notice" data-notice @click.prevent="noticeModalOpen = true">Ownership notice</a></li>
+          <li><a href="#notice" data-notice @click.prevent="noticeModalOpen = true">{{ _('Ownership notice') }}</a></li>
         </ul>        
       </div>
 
       <!-- Column 3: Coverage -->
       <div>
-        <h4>Coverage</h4>
+        <h4>{{ _('Coverage') }}</h4>
         <ul>
-          <li>Dubai</li>
-          <li>Abu Dhabi</li>
-          <li>Sharjah</li>
-          <li>Ajman &amp; Northern Emirates</li>
+          <li>{{ _('Dubai') }}</li>
+          <li>{{ _('Abu Dhabi') }}</li>
+          <li>{{ _('Sharjah') }}</li>
+          <li>{{ _('Ajman & Northern Emirates') }}</li>
         </ul>
       </div>
     </div>
 
     <div class="f-bottom">
-      <span>&copy; <span id="yr">2026</span> TyresVision &mdash; operated by DSP Trade Hub FZ-LLC. All rights reserved.</span>
+      <span>&copy; <span id="yr">2026</span> TyresVision &mdash; {{ _('operated by DSP Trade Hub FZ-LLC. All rights reserved.') }}</span>
     </div>
   </div>
 </footer>
@@ -733,35 +733,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <nav class="mobile-nav-links">
       <a href="/" @click="mobileNavOpen = false" class="mobile-nav-link" data-nav-target="/">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        <span>Home</span>
+        <span>{{ _('Home') }}</span>
       </a>
       <a href="/#why" @click="mobileNavOpen = false" class="mobile-nav-link" data-nav-target="#why">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <span>Why Us</span>
+        <span>{{ _('Why Us') }}</span>
       </a>
       <a href="/#prices" @click="mobileNavOpen = false" class="mobile-nav-link" data-nav-target="#prices">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        <span>Prices</span>
+        <span>{{ _('Prices') }}</span>
       </a>
       <a href="/#services" @click="mobileNavOpen = false" class="mobile-nav-link" data-nav-target="#services">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-        <span>Services</span>
+        <span>{{ _('Services') }}</span>
       </a>
       <a href="/#how" @click="mobileNavOpen = false" class="mobile-nav-link" data-nav-target="#how">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
-        <span>How it Works</span>
+        <span>{{ _('How it Works') }}</span>
       </a>
       <a href="/#brands" @click="mobileNavOpen = false" class="mobile-nav-link" data-nav-target="#brands">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="22"/></svg>
-        <span>Brands</span>
+        <span>{{ _('Brands') }}</span>
       </a>
       <a href="/#faq" @click="mobileNavOpen = false" class="mobile-nav-link" data-nav-target="#faq">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span>FAQ</span>
+        <span>{{ _('FAQ') }}</span>
       </a>
       <a href="#notice" data-notice @click="mobileNavOpen = false; noticeModalOpen = true;" class="mobile-nav-link" style="border-top: 1px dashed var(--line); margin-top: 6px; color: var(--slate);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 6v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-        <span>Ownership Notice</span>
+        <span>{{ _('Ownership Notice') }}</span>
       </a>
     </nav>
   </div>
