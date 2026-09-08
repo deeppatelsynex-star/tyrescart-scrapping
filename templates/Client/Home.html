@@ -631,7 +631,7 @@
           {% set faqs = sec.section_data.faqs if sec.section_data and sec.section_data.faqs else [] %}
           <div style="margin-top:36px">
             {% for f in faqs %}
-            <details {% if loop.first %}open{% endif %}>
+            <details name="faq_group" {% if loop.first %}open{% endif %}>
               <summary>{{ f.question }}</summary>
               <div class="body"><p>{{ f.answer | safe }}</p></div>
             </details>
