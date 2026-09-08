@@ -1612,13 +1612,8 @@ summary:not(:has(.faq-summary-inner)) {
   border-right: 2.5px solid var(--primary, #2563FF);
   border-bottom: 2.5px solid var(--primary, #2563FF);
   transform: rotate(45deg);
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
   margin-inline-start: auto;
-}
-
-details[open] .faq-chevron {
-  transform: rotate(225deg);
 }
 
 /* Fallback pseudo-element chevron when no .faq-chevron span exists */
@@ -1630,13 +1625,8 @@ summary:not(:has(.faq-chevron))::after {
   border-right: 2.5px solid var(--primary, #2563FF);
   border-bottom: 2.5px solid var(--primary, #2563FF);
   transform: rotate(45deg);
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
   margin-inline-start: auto;
-}
-
-details[open] summary:not(:has(.faq-chevron))::after {
-  transform: rotate(225deg);
 }
 
 details[open] .faq-summary-inner,
@@ -3098,11 +3088,10 @@ footer .tagline {
   justify-content: center;
   flex-shrink: 0;
   color: #475569;
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .faq-item.active .faq-chevron-icon {
-  transform: rotate(180deg);
   background: var(--green-tint);
   color: var(--green-deep);
 }
