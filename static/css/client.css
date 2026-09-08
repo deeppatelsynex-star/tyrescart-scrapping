@@ -1549,11 +1549,6 @@ details[open],
   background: #ffffff;
 }
 
-details.is-closing,
-.faq-item.is-closing {
-  border-color: var(--line, #E2E8F0) !important;
-  box-shadow: none !important;
-}
 
 summary,
 .faq-summary {
@@ -1626,10 +1621,6 @@ details[open] .faq-chevron {
   transform: rotate(225deg);
 }
 
-details.is-closing .faq-chevron {
-  transform: rotate(45deg) !important;
-}
-
 /* Fallback pseudo-element chevron when no .faq-chevron span exists */
 summary:not(:has(.faq-chevron))::after {
   content: "";
@@ -1648,18 +1639,9 @@ details[open] summary:not(:has(.faq-chevron))::after {
   transform: rotate(225deg);
 }
 
-details.is-closing summary:not(:has(.faq-chevron))::after {
-  transform: rotate(45deg) !important;
-}
-
 details[open] .faq-summary-inner,
 details[open] summary {
   color: var(--primary, #2563FF);
-}
-
-details.is-closing .faq-summary-inner,
-details.is-closing summary {
-  color: var(--text-heading, #0F172A) !important;
 }
 
 summary:focus-visible {
@@ -1673,18 +1655,27 @@ details .body {
   color: var(--text-body, #334155);
   font-size: 0.95rem;
   line-height: 1.7;
-  transition: opacity 0.22s ease, transform 0.22s ease;
 }
 
-details:not([open]) .body,
-details.is-closing .body {
-  opacity: 0;
-  transform: translateY(-4px);
+details[open] .body {
+  animation: faqSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform, max-height;
+  overflow: hidden;
 }
 
-details[open]:not(.is-closing) .body {
-  opacity: 1;
-  transform: translateY(0);
+@keyframes faqSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+    max-height: 0;
+    padding-bottom: 0;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 800px;
+    padding-bottom: 20px;
+  }
 }
 
 details .body p:last-child {

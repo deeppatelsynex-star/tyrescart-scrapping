@@ -797,7 +797,7 @@
           {% set faqs = sec.section_data.faqs if sec.section_data and sec.section_data.faqs else [] %}
           <div style="margin-top:36px" class="faq-list">
             {% for f in faqs %}
-            <details class="faq-item" {% if loop.first %}open{% endif %}>
+            <details class="faq-item" name="faq_group" {% if loop.first %}open{% endif %}>
               <summary class="faq-summary">
                 <span class="faq-summary-inner">
                   <span class="faq-question-text">{{ f.question }}</span>
@@ -864,129 +864,21 @@
   {% endif %}
 
   <script>
-    function SmoothAccordion(el) {
-      this.el = el;
-      this.summary = el.querySelector('summary');
-      this.content = el.querySelector('.body') || el.querySelector('.faq-answer-panel') || el.lastElementChild;
-      this.animation = null;
-      this.isClosing = false;
-      this.isExpanding = false;
-
-      if (!this.summary || !this.content) return;
-      el._accordionController = this;
-
-      var self = this;
-      this.summary.addEventListener('click', function(e) {
-        self.onClick(e);
-      });
-    }
-
-    SmoothAccordion.prototype.onClick = function(e) {
-      e.preventDefault();
-      this.el.style.overflow = 'hidden';
-      if (this.isClosing || !this.el.open) {
-        this.open();
-      } else if (this.isExpanding || this.el.open) {
-        this.shrink();
-      }
-    };
-
-    SmoothAccordion.prototype.shrink = function() {
-      this.isClosing = true;
-      this.el.classList.add('is-closing');
-      var startHeight = this.el.offsetHeight + 'px';
-      var endHeight = this.summary.offsetHeight + 'px';
-
-      if (this.animation) this.animation.cancel();
-
-      if (typeof this.el.animate !== 'function') {
-        this.onAnimationFinish(false);
-        return;
-      }
-
-      var self = this;
-      this.animation = this.el.animate({
-        height: [startHeight, endHeight]
-      }, {
-        duration: 250,
-        easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
-      });
-
-      this.animation.onfinish = function() {
-        self.onAnimationFinish(false);
-      };
-      this.animation.oncancel = function() {
-        self.isClosing = false;
-        self.el.classList.remove('is-closing');
-      };
-    };
-
-    SmoothAccordion.prototype.open = function() {
-      var container = this.el.closest('.faq, .dynamic-faq-block, [id^="faq"]') || this.el.parentElement;
-      if (container) {
-        var allDetails = container.querySelectorAll('details');
-        var self = this;
-        allDetails.forEach(function(other) {
-          if (other !== self.el && other.open) {
-            if (other._accordionController) {
-              other._accordionController.shrink();
-            } else {
-              other.removeAttribute('open');
-            }
-          }
-        });
-      }
-
-      var startHeight = this.summary.offsetHeight + 'px';
-      this.el.style.height = startHeight;
-      this.el.open = true;
-
-      var targetHeight = (this.summary.offsetHeight + this.content.scrollHeight) + 'px';
-
-      if (typeof this.el.animate !== 'function') {
-        this.onAnimationFinish(true);
-        return;
-      }
-
-      this.isExpanding = true;
-      this.el.classList.remove('is-closing');
-
-      if (this.animation) this.animation.cancel();
-
-      var self = this;
-      this.animation = this.el.animate({
-        height: [startHeight, targetHeight]
-      }, {
-        duration: 290,
-        easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
-      });
-
-      this.animation.onfinish = function() {
-        self.onAnimationFinish(true);
-      };
-      this.animation.oncancel = function() {
-        self.isExpanding = false;
-      };
-    };
-
-    SmoothAccordion.prototype.onAnimationFinish = function(isOpen) {
-      this.el.open = isOpen;
-      this.animation = null;
-      this.isClosing = false;
-      this.isExpanding = false;
-      this.el.classList.remove('is-closing');
-      this.el.style.height = '';
-      this.el.style.overflow = '';
-    };
-
     document.addEventListener('DOMContentLoaded', function() {
-      var faqContainers = document.querySelectorAll('.faq, .dynamic-faq-block, [id^="faq"]');
+      var faqContainers = document.querySelectorAll('.faq, .dynamic-faq-block, [id^="faq"], .faq-list');
       faqContainers.forEach(function(container) {
         var allDetails = container.querySelectorAll('details');
         allDetails.forEach(function(detail) {
-          if (!detail._accordionController) {
-            new SmoothAccordion(detail);
-          }
+          detail.addEventListener('toggle', function() {
+            if (this.open) {
+              allDetails.forEach(function(other) {
+                if (other !== detail && other.open) {
+                  other.open = false;
+                  other.removeAttribute('open');
+                }
+              });
+            }
+          });
         });
       });
     });

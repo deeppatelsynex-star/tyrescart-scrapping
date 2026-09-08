@@ -5,7 +5,7 @@
     {% for f in faq_items %}
     {% set f_q = f.question.ar if (is_ar and f.question and f.question.ar) else (f.question.en if (f.question and f.question.en) else (f.question or '')) %}
     {% set f_a = f.answer.ar if (is_ar and f.answer and f.answer.ar) else (f.answer.en if (f.answer and f.answer.en) else (f.answer or '')) %}
-    <details class="faq-item" style="background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;" {% if loop.first and block.open_first %}open{% endif %}>
+    <details class="faq-item" name="dynamic_faq_group" style="background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;" {% if loop.first and block.open_first %}open{% endif %}>
       <summary class="faq-summary" style="cursor:pointer;list-style:none;">
         <span class="faq-summary-inner">
           <span class="faq-question-text" style="font-weight:800;color:var(--ink);font-size:0.98rem;">{{ f_q }}</span>
