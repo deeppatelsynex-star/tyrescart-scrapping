@@ -1595,11 +1595,36 @@ summary:focus-visible {
   border-radius: 12px;
 }
 
+details.is-closing {
+  border-color: var(--line, #E2E8F0) !important;
+  box-shadow: none !important;
+}
+
+details.is-closing summary {
+  color: var(--text-heading, #0F172A) !important;
+}
+
+details.is-closing summary::after {
+  transform: rotate(45deg) !important;
+}
+
 details .body {
   padding: 0 20px 20px;
   color: var(--text-body, #334155);
   font-size: 0.95rem;
   line-height: 1.7;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+details:not([open]) .body,
+details.is-closing .body {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+details[open]:not(.is-closing) .body {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 details .body p:last-child {

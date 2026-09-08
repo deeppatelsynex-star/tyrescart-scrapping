@@ -859,20 +859,126 @@
   {% endif %}
 
   <script>
+    function SmoothAccordion(el) {
+      this.el = el;
+      this.summary = el.querySelector('summary');
+      this.animation = null;
+      this.isClosing = false;
+      this.isExpanding = false;
+
+      if (!this.summary) return;
+      el._accordionController = this;
+
+      var self = this;
+      this.summary.addEventListener('click', function(e) {
+        self.onClick(e);
+      });
+    }
+
+    SmoothAccordion.prototype.onClick = function(e) {
+      e.preventDefault();
+      this.el.style.overflow = 'hidden';
+      if (this.isClosing || !this.el.open) {
+        this.open();
+      } else if (this.isExpanding || this.el.open) {
+        this.shrink();
+      }
+    };
+
+    SmoothAccordion.prototype.shrink = function() {
+      this.isClosing = true;
+      this.el.classList.add('is-closing');
+      var startHeight = this.el.offsetHeight + 'px';
+      var endHeight = this.summary.offsetHeight + 'px';
+
+      if (this.animation) this.animation.cancel();
+
+      var self = this;
+      this.animation = this.el.animate({
+        height: [startHeight, endHeight]
+      }, {
+        duration: 260,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
+      });
+
+      this.animation.onfinish = function() {
+        self.onAnimationFinish(false);
+      };
+      this.animation.oncancel = function() {
+        self.isClosing = false;
+        self.el.classList.remove('is-closing');
+      };
+    };
+
+    SmoothAccordion.prototype.open = function() {
+      var container = this.el.closest('.faq, .dynamic-faq-block, [id^="faq"]') || this.el.parentElement;
+      if (container) {
+        var allDetails = container.querySelectorAll('details');
+        var self = this;
+        allDetails.forEach(function(other) {
+          if (other !== self.el && other.open) {
+            if (other._accordionController) {
+              other._accordionController.shrink();
+            } else {
+              other.removeAttribute('open');
+            }
+          }
+        });
+      }
+
+      this.el.style.height = this.el.offsetHeight + 'px';
+      this.el.open = true;
+      var self = this;
+      window.requestAnimationFrame(function() {
+        self.expand();
+      });
+    };
+
+    SmoothAccordion.prototype.expand = function() {
+      this.isExpanding = true;
+      this.el.classList.remove('is-closing');
+      var startHeight = this.el.offsetHeight + 'px';
+
+      this.el.style.height = 'auto';
+      var targetHeight = this.el.offsetHeight + 'px';
+      this.el.style.height = startHeight;
+
+      if (this.animation) this.animation.cancel();
+
+      var self = this;
+      this.animation = this.el.animate({
+        height: [startHeight, targetHeight]
+      }, {
+        duration: 320,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)'
+      });
+
+      this.animation.onfinish = function() {
+        self.onAnimationFinish(true);
+      };
+      this.animation.oncancel = function() {
+        self.isExpanding = false;
+      };
+    };
+
+    SmoothAccordion.prototype.onAnimationFinish = function(isOpen) {
+      this.el.open = isOpen;
+      this.animation = null;
+      this.isClosing = false;
+      this.isExpanding = false;
+      this.el.classList.remove('is-closing');
+      this.el.style.height = '';
+      this.el.style.overflow = '';
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
       var faqContainers = document.querySelectorAll('.faq, .dynamic-faq-block, [id^="faq"]');
       faqContainers.forEach(function(container) {
         var allDetails = container.querySelectorAll('details');
         allDetails.forEach(function(detail) {
-          detail.addEventListener('toggle', function() {
-            if (this.open) {
-              allDetails.forEach(function(other) {
-                if (other !== detail && other.open) {
-                  other.removeAttribute('open');
-                }
-              });
-            }
-          });
+          if (!detail._accordionController) {
+            new SmoothAccordion(detail);
+          }
         });
       });
     });
