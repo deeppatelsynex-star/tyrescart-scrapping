@@ -631,7 +631,7 @@
           {% set faqs = sec.section_data.faqs if sec.section_data and sec.section_data.faqs else [] %}
           <div style="margin-top:36px" class="faq-list">
             {% for f in faqs %}
-            <details class="faq-item" {% if loop.first %}open{% endif %}>
+            <details class="faq-item" name="faq_group" {% if loop.first %}open{% endif %}>
               <summary class="faq-summary">
                 <span class="faq-summary-inner">
                   <span class="faq-question-text">{{ f.question }}</span>
