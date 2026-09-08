@@ -6,7 +6,7 @@
 <div class="space-y-6" x-data="visionAttributesApp()" x-init="initData()">
 
   <!-- LISTING AND MANAGEMENT VIEW -->
-  <div x-show="!editMode" class="space-y-6">
+  <div class="space-y-6">
 
   <!-- Top Hero Bar -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs">
@@ -22,14 +22,13 @@
     <div class="flex items-center gap-3">
       <div class="flex items-center gap-2">
         <template x-if="activeTab === 'sets'">
-          <button 
-            type="button" 
-            @click="openCreateSetModal()" 
+          <a 
+            href="/visionadmin/attribute-sets/create" 
             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             <span>Add Attribute Set</span>
-          </button>
+          </a>
         </template>
         <template x-if="activeTab === 'attributes'">
           <div class="flex items-center gap-2">
@@ -41,14 +40,13 @@
               <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <span>Import Attributes CSV</span>
             </button>
-            <button 
-              type="button" 
-              @click="openCreateModal()" 
+            <a 
+              href="/visionadmin/attributes/create" 
               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
             >
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               <span>Add New Attribute</span>
-            </button>
+            </a>
           </div>
         </template>
       </div>
@@ -134,7 +132,7 @@
           </thead>
           <tbody class="divide-y divide-[#F1F5F0]">
             <template x-for="attr in paginatedAttributes" :key="attr.id">
-              <tr @click="openEditModal(attr)" class="hover:bg-[#F9FCF8] transition-colors cursor-pointer group">
+              <tr @click="window.location.href = '/visionadmin/attributes/' + attr.id + '/edit'" class="hover:bg-[#F9FCF8] transition-colors cursor-pointer group">
                 <td class="px-5 py-3.5 font-mono font-bold text-slate-800 group-hover:text-[#35760F] transition-colors" x-text="attr.code"></td>
                 <td class="px-5 py-3.5">
                   <div class="font-bold text-[#0E1108] group-hover:text-[#35760F] transition-colors" x-text="formatAttrName(attr)"></div>
@@ -172,14 +170,13 @@
                   >
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
-                  <button 
-                    type="button" 
-                    @click.stop="openEditModal(attr)" 
+                  <a 
+                    :href="'/visionadmin/attributes/' + attr.id + '/edit'" 
                     class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
                     title="Edit Attribute"
                   >
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
+                  </a>
                   <button 
                     type="button" 
                     @click.stop="deleteAttribute(attr)" 
@@ -247,14 +244,13 @@
 
         <div class="mt-5 pt-4 border-t border-[#F1F5F0] flex items-center justify-between">
           <div class="flex items-center gap-1.5">
-            <button 
-              type="button" 
-              @click="openEditSetModal(set)" 
+            <a 
+              :href="'/visionadmin/attribute-sets/' + set.id + '/edit'" 
               class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
               title="Edit Attribute Set"
             >
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
+            </a>
             <button 
               type="button" 
               @click="deleteAttributeSet(set)" 
@@ -264,13 +260,12 @@
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
           </div>
-          <button 
-            type="button" 
-            @click="loadSetSchema(set.id)" 
-            class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#EAF7E2] hover:text-[#35760F] text-slate-700 text-xs font-bold transition cursor-pointer"
+          <a 
+            :href="'/visionadmin/attribute-sets/' + set.id + '/builder'" 
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#EAF7E2] hover:text-[#35760F] text-slate-700 text-xs font-bold transition cursor-pointer"
           >
-            Inspect Form Schema ↗
-          </button>
+            <span>Schema Builder ↗</span>
+          </a>
         </div>
       </div>
     </template>
@@ -331,621 +326,7 @@
       </div>
     </div>
   </div>
-  </div><!-- End of !editMode wrapper -->
-
-  <!-- WORKING ADD / EDIT ATTRIBUTE SET MODAL -->
-  <div x-show="showSetModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showSetModal = false">
-      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
-        <div>
-          <h3 class="text-base font-black text-[#0E1108]" x-text="setForm.id ? 'Edit Attribute Set: ' + setForm.name : 'Create New Attribute Set'"></h3>
-          <p class="text-xs text-slate-400">Schema blueprint grouping dynamic attributes for vehicle &amp; product catalogs.</p>
-        </div>
-        <button type="button" @click="showSetModal = false" class="text-slate-400 hover:text-slate-700 text-base">✕</button>
-      </div>
-
-      <form @submit.prevent="saveAttributeSet()" class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Set Name *</label>
-          <input type="text" x-model="setForm.name" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold" placeholder="e.g. Electric Vehicle (EV) Tyres">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Slug / Code</label>
-          <input type="text" x-model="setForm.slug" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono" placeholder="e.g. ev_tyres (auto-generated if blank)">
-        </div>
-
-        <template x-if="!setForm.id">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Clone Schema Groups From (Optional)</label>
-            <select x-model="setForm.clone_from_id" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold">
-              <option value="">None (Create Blank Set with General Group)</option>
-              <template x-for="s in attributeSets" :key="s.id">
-                <option :value="s.id" x-text="`Inherit from: ${s.name} (#${s.id})`"></option>
-              </template>
-            </select>
-            <p class="text-[11px] text-slate-400 mt-1">Inherits all schema groups and attribute mappings from the selected template.</p>
-          </div>
-        </template>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Description</label>
-          <textarea x-model="setForm.description" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs" placeholder="e.g. Specialized acoustic ratings, high load capacity, and rolling resistance."></textarea>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#F1F5F0]">
-          <button type="button" @click="showSetModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 cursor-pointer">Cancel</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] shadow-xs cursor-pointer" x-text="setForm.id ? 'Save Changes' : 'Create Set'"></button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MAGENTO 2 ATTRIBUTE STUDIO (FULL EDIT / VALUES VIEW) -->
-  <div x-show="editMode" class="space-y-5" style="display: none;">
-    <!-- Top Action Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-3xl border border-[#E8EDE4] shadow-xs">
-      <div class="flex items-center gap-3">
-        <button 
-          type="button" 
-          @click="exitEditMode()" 
-          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
-        >
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          <span>Back</span>
-        </button>
-        <div>
-          <h1 class="text-xl sm:text-2xl font-black text-[#0E1108] tracking-tight" x-text="form.code || form.name_en || 'New Attribute'"></h1>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2">
-        <button 
-          type="button" 
-          @click="exitEditMode()" 
-          class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
-        >
-          ← Back
-        </button>
-
-        <template x-if="form.id">
-          <button 
-            type="button" 
-            @click="deleteCurrentAttribute()" 
-            class="px-4 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition cursor-pointer"
-          >
-            Delete Attribute
-          </button>
-        </template>
-
-        <button 
-          type="button" 
-          @click="resetEditForm()" 
-          class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
-        >
-          Reset
-        </button>
-
-        <button 
-          type="button" 
-          @click="saveAttribute(false)" 
-          :disabled="isSaving"
-          class="px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold transition cursor-pointer disabled:opacity-50"
-        >
-          Save and Continue Edit
-        </button>
-
-        <button 
-          type="button" 
-          @click="saveAttribute(true)" 
-          :disabled="isSaving"
-          class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-black shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer disabled:opacity-50"
-        >
-          <template x-if="isSaving">
-            <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"/></svg>
-          </template>
-          <span>Save Attribute</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Information notice banner -->
-    <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-xs text-amber-800">
-      <div class="flex items-center gap-2">
-        <svg class="w-4 h-4 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span>EAV Attribute Studio: Configure attribute properties, multi-store translation labels, search/filter flags, and predefined options.</span>
-      </div>
-    </div>
-
-    <!-- 2-Column Studio Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-      <!-- Left Navigation Sidebar -->
-      <div class="lg:col-span-3 space-y-3">
-        <div class="bg-white rounded-3xl border border-[#E8EDE4] p-4 shadow-xs">
-          <h3 class="text-[11px] font-black uppercase tracking-wider text-slate-400 px-3 pb-3 border-b border-[#F1F5F0]">Attribute Information</h3>
-          <nav class="space-y-1 mt-3">
-            <button 
-              type="button" 
-              @click="attrActiveSection = 'properties'" 
-              :class="attrActiveSection === 'properties' ? 'bg-[#EAF7E2] text-[#35760F] font-black border-l-4 border-[#58B31B]' : 'text-slate-600 hover:bg-slate-50 font-bold'"
-              class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-between"
-            >
-              <span>Properties</span>
-              <span class="text-[11px] text-slate-400" x-show="attrActiveSection === 'properties'">●</span>
-            </button>
-
-            <button 
-              type="button" 
-              @click="attrActiveSection = 'labels'" 
-              :class="attrActiveSection === 'labels' ? 'bg-[#EAF7E2] text-[#35760F] font-black border-l-4 border-[#58B31B]' : 'text-slate-600 hover:bg-slate-50 font-bold'"
-              class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-between"
-            >
-              <span>Manage Labels</span>
-              <span class="text-[11px] text-slate-400" x-show="attrActiveSection === 'labels'">●</span>
-            </button>
-
-            <button 
-              type="button" 
-              @click="attrActiveSection = 'storefront'" 
-              :class="attrActiveSection === 'storefront' ? 'bg-[#EAF7E2] text-[#35760F] font-black border-l-4 border-[#58B31B]' : 'text-slate-600 hover:bg-slate-50 font-bold'"
-              class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-between"
-            >
-              <span>Storefront Properties</span>
-              <span class="text-[11px] text-slate-400" x-show="attrActiveSection === 'storefront'">●</span>
-            </button>
-          </nav>
-        </div>
-      </div>
-
-      <!-- Right Main Workspace -->
-      <div class="lg:col-span-9 space-y-6">
-
-        <!-- SECTION: PROPERTIES -->
-        <div x-show="attrActiveSection === 'properties'" class="space-y-6">
-
-          <!-- 1. Attribute Properties Card -->
-          <div class="bg-white rounded-3xl border border-[#E8EDE4] p-6 shadow-xs space-y-5">
-            <h2 class="text-sm font-black text-[#0E1108] border-b border-[#F1F5F0] pb-3">Attribute Properties</h2>
-            
-            <div class="space-y-4 max-w-2xl">
-              <!-- Default Label -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
-                <label class="text-xs font-bold text-slate-700">
-                  Default Label <span class="text-rose-500">*</span>
-                </label>
-                <div class="sm:col-span-2">
-                  <input 
-                    type="text" 
-                    x-model="form.name_en" 
-                    required 
-                    placeholder="e.g. Brand"
-                    class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-[#35760F] focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <!-- Catalog Input Type for Store Owner -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
-                <label class="text-xs font-bold text-slate-700">
-                  Catalog Input Type for Store Owner
-                </label>
-                <div class="sm:col-span-2">
-                  <select 
-                    x-model="form.type" 
-                    class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-2 focus:ring-[#35760F] focus:outline-none"
-                  >
-                    <option value="select">Dropdown</option>
-                    <option value="visual_swatch">Visual Swatch</option>
-                    <option value="text_swatch">Text Swatch</option>
-                    <option value="text">Text Field</option>
-                    <option value="textarea">Text Area</option>
-                    <option value="date">Date</option>
-                    <option value="boolean">Yes/No</option>
-                    <option value="multiselect">Multiple Select</option>
-                    <option value="decimal">Price</option>
-                    <option value="file">Media Image</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Values Required -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
-                <label class="text-xs font-bold text-slate-700">
-                  Values Required
-                </label>
-                <div class="sm:col-span-2">
-                  <select 
-                    x-model="form.is_required" 
-                    class="w-36 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-2 focus:ring-[#35760F] focus:outline-none"
-                  >
-                    <option :value="0">No</option>
-                    <option :value="1">Yes</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2. Manage Options (Values of Your Attribute) -->
-          <template x-if="isOptionType(form.type)">
-            <div class="bg-white rounded-3xl border border-[#E8EDE4] p-6 shadow-xs space-y-4">
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#F1F5F0] pb-3">
-                <div>
-                  <h2 class="text-sm font-black text-[#0E1108]">Manage Options (Values of Your Attribute)</h2>
-                  <p class="text-[11px] text-slate-400">Total <span class="font-bold text-slate-700" x-text="form.options ? form.options.length : 0"></span> options configured for this attribute.</p>
-                </div>
-
-                <!-- Options Search / Filter -->
-                <div class="flex items-center gap-2">
-                  <div class="relative w-48 sm:w-64">
-                    <input 
-                      type="text" 
-                      x-model="optionSearchQuery" 
-                      @input="optionsPage = 1"
-                      placeholder="Search options..."
-                      class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-[#35760F] focus:outline-none"
-                    />
-                    <svg class="w-3.5 h-3.5 absolute left-2.5 top-2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                  </div>
-
-                  <!-- Per page select -->
-                  <select x-model="optionsPerPage" @change="optionsPage = 1" class="text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold">
-                    <option value="25">25 / page</option>
-                    <option value="50">50 / page</option>
-                    <option value="100">100 / page</option>
-                    <option value="all">Show All</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Options Table -->
-              <div class="overflow-x-auto border border-slate-200 rounded-2xl">
-                <table class="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
-                      <th class="w-10 px-3 py-2.5 text-center"></th>
-                      <th class="w-24 px-3 py-2.5 text-center whitespace-nowrap">Is Default</th>
-                      <th class="px-3 py-2.5 min-w-[180px]">Admin <span class="text-rose-500">*</span></th>
-                      <th class="px-3 py-2.5 min-w-[180px]">English</th>
-                      <th class="px-3 py-2.5 min-w-[180px]">Arabic</th>
-                      <th class="px-3 py-2.5 min-w-[180px]">Default Store View</th>
-                      <th class="w-20 px-3 py-2.5 text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 font-medium">
-                    <template x-for="(opt, idx) in paginatedOptions" :key="opt.id || idx">
-                      <tr class="hover:bg-slate-50/70 transition">
-                        <!-- Grip icon -->
-                        <td class="px-3 py-2 text-center text-slate-300 select-none cursor-move">
-                          <svg class="w-4 h-4 mx-auto text-slate-400" viewBox="0 0 24 24" fill="currentColor">
-                            <circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>
-                            <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
-                            <circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>
-                          </svg>
-                        </td>
-
-                        <!-- Is Default Radio -->
-                        <td class="px-3 py-2 text-center">
-                          <input 
-                            type="radio" 
-                            name="attribute_default_option" 
-                            :checked="!!opt.is_default" 
-                            @change="setDefaultOption(opt)"
-                            class="w-4 h-4 text-[#58B31B] focus:ring-[#58B31B] cursor-pointer"
-                          />
-                        </td>
-
-                        <!-- Admin * -->
-                        <td class="px-3 py-2">
-                          <input 
-                            type="text" 
-                            x-model="opt.value" 
-                            required 
-                            class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-800 focus:ring-1 focus:ring-[#35760F] focus:outline-none"
-                          />
-                        </td>
-
-                        <!-- English -->
-                        <td class="px-3 py-2">
-                          <input 
-                            type="text" 
-                            x-model="opt.label.en" 
-                            class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 focus:ring-1 focus:ring-[#35760F] focus:outline-none"
-                          />
-                        </td>
-
-                        <!-- Arabic -->
-                        <td class="px-3 py-2">
-                          <input 
-                            type="text" 
-                            dir="rtl"
-                            x-model="opt.label.ar" 
-                            class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 focus:ring-1 focus:ring-[#35760F] focus:outline-none"
-                          />
-                        </td>
-
-                        <!-- Default Store View (English) -->
-                        <td class="px-3 py-2">
-                          <input 
-                            type="text" 
-                            :value="opt.label.en || opt.value" 
-                            @input="opt.label.en = $event.target.value"
-                            class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 focus:ring-1 focus:ring-[#35760F] focus:outline-none"
-                          />
-                        </td>
-
-                        <!-- Delete Action -->
-                        <td class="px-3 py-2 text-center">
-                          <button 
-                            type="button" 
-                            @click="deleteOptionRow(opt)" 
-                            class="px-2.5 py-1 rounded-md text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    </template>
-                    <template x-if="paginatedOptions.length === 0">
-                      <tr>
-                        <td colspan="7" class="px-4 py-6 text-center text-slate-400 italic">
-                          No matching options found.
-                        </td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Options Pagination & Action Buttons -->
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
-                <div class="flex items-center gap-2">
-                  <button 
-                    type="button" 
-                    @click="addOptionRow()" 
-                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold shadow-xs transition cursor-pointer"
-                  >
-                    <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    <span>Add Option</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    @click="resetDefaultOption()" 
-                    class="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold transition cursor-pointer"
-                  >
-                    Reset to Default
-                  </button>
-                </div>
-
-                <!-- Options Pagination Controls -->
-                <div class="flex items-center gap-2" x-show="totalOptionPages > 1">
-                  <button 
-                    type="button" 
-                    @click="if (optionsPage > 1) optionsPage--" 
-                    :disabled="optionsPage === 1"
-                    :class="optionsPage === 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-100 cursor-pointer'"
-                    class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-700"
-                  >
-                    Prev
-                  </button>
-                  <span class="text-xs text-slate-500 font-medium">
-                    Page <strong class="text-slate-800" x-text="optionsPage"></strong> of <strong class="text-slate-800" x-text="totalOptionPages"></strong>
-                    (<span x-text="filteredOptions.length"></span> items)
-                  </span>
-                  <button 
-                    type="button" 
-                    @click="if (optionsPage < totalOptionPages) optionsPage++" 
-                    :disabled="optionsPage === totalOptionPages"
-                    :class="optionsPage === totalOptionPages ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-100 cursor-pointer'"
-                    class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-700"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          </template>
-
-          <!-- 3. Advanced Attribute Properties Accordion -->
-          <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
-            <button 
-              type="button" 
-              @click="advancedPropertiesOpen = !advancedPropertiesOpen" 
-              class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50/60 transition cursor-pointer"
-            >
-              <span class="text-sm font-black text-[#0E1108]">Advanced Attribute Properties</span>
-              <svg 
-                class="w-5 h-5 text-slate-400 transform transition-transform duration-200" 
-                :class="advancedPropertiesOpen ? 'rotate-180' : ''"
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              >
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-
-            <div x-show="advancedPropertiesOpen" class="px-6 pb-6 pt-2 border-t border-[#F1F5F0] space-y-4 max-w-2xl">
-              <!-- Attribute Code -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
-                <label class="text-xs font-bold text-slate-700">
-                  Attribute Code <span class="text-rose-500">*</span>
-                </label>
-                <div class="sm:col-span-2">
-                  <input 
-                    type="text" 
-                    x-model="form.code" 
-                    :disabled="!!form.id" 
-                    :class="form.id ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''"
-                    class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono font-bold focus:ring-2 focus:ring-[#35760F] focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <!-- Scope -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
-                <label class="text-xs font-bold text-slate-700">Scope</label>
-                <div class="sm:col-span-2">
-                  <select 
-                    x-model="form.scope" 
-                    class="w-48 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-2 focus:ring-[#35760F] focus:outline-none"
-                  >
-                    <option value="global">[ Global ]</option>
-                    <option value="website">[ Website ]</option>
-                    <option value="store_view">[ Store View ]</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Unique Value -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
-                <label class="text-xs font-bold text-slate-700">Unique Value</label>
-                <div class="sm:col-span-2">
-                  <select 
-                    x-model="form.is_unique" 
-                    class="w-36 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-2 focus:ring-[#35760F] focus:outline-none"
-                  >
-                    <option :value="0">No</option>
-                    <option :value="1">Yes</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Input Validation -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
-                <label class="text-xs font-bold text-slate-700">Input Validation for Store Owner</label>
-                <div class="sm:col-span-2">
-                  <select 
-                    x-model="form.validation_rules" 
-                    class="w-60 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-2 focus:ring-[#35760F] focus:outline-none"
-                  >
-                    <option value="none">None</option>
-                    <option value="decimal">Decimal Number</option>
-                    <option value="integer">Integer Number</option>
-                    <option value="email">Email</option>
-                    <option value="url">URL</option>
-                    <option value="letters">Letters</option>
-                    <option value="alphanumeric">Letters (a-z, A-Z) or Numbers (0-9)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- SECTION: MANAGE LABELS -->
-        <div x-show="attrActiveSection === 'labels'" class="space-y-6">
-          <div class="bg-white rounded-3xl border border-[#E8EDE4] p-6 shadow-xs space-y-4">
-            <h2 class="text-sm font-black text-[#0E1108] border-b border-[#F1F5F0] pb-3">Manage Titles (Size, Color, etc.)</h2>
-            
-            <div class="max-w-xl space-y-3">
-              <div class="grid grid-cols-3 gap-2 py-2 border-b border-slate-100 font-bold text-xs text-slate-600">
-                <div>Store View</div>
-                <div class="col-span-2">Title</div>
-              </div>
-
-              <div class="grid grid-cols-3 gap-2 items-center">
-                <label class="text-xs font-bold text-slate-700">Admin <span class="text-rose-500">*</span></label>
-                <div class="col-span-2">
-                  <input 
-                    type="text" 
-                    x-model="form.name_en" 
-                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold"
-                  />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-3 gap-2 items-center">
-                <label class="text-xs font-bold text-slate-700">Default Store View (English)</label>
-                <div class="col-span-2">
-                  <input 
-                    type="text" 
-                    x-model="form.name_en" 
-                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div class="grid grid-cols-3 gap-2 items-center">
-                <label class="text-xs font-bold text-slate-700">Arabic Store View</label>
-                <div class="col-span-2">
-                  <input 
-                    type="text" 
-                    dir="rtl"
-                    x-model="form.name_ar" 
-                    class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- SECTION: STOREFRONT PROPERTIES -->
-        <div x-show="attrActiveSection === 'storefront'" class="space-y-6">
-          <div class="bg-white rounded-3xl border border-[#E8EDE4] p-6 shadow-xs space-y-5">
-            <h2 class="text-sm font-black text-[#0E1108] border-b border-[#F1F5F0] pb-3">Storefront Properties</h2>
-
-            <div class="space-y-4 max-w-2xl">
-              <!-- Use in Search -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
-                <label class="text-xs font-bold text-slate-700">Use in Search</label>
-                <div class="sm:col-span-2">
-                  <select x-model="form.is_searchable" class="w-36 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white">
-                    <option :value="1">Yes</option>
-                    <option :value="0">No</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Comparable on Storefront -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
-                <label class="text-xs font-bold text-slate-700">Comparable on Storefront</label>
-                <div class="sm:col-span-2">
-                  <select x-model="form.is_comparable" class="w-36 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white">
-                    <option :value="1">Yes</option>
-                    <option :value="0">No</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Use in Layered Navigation -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
-                <label class="text-xs font-bold text-slate-700">Use in Layered Navigation</label>
-                <div class="sm:col-span-2">
-                  <select x-model="form.is_filterable" class="w-64 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white">
-                    <option :value="1">Filterable (with results)</option>
-                    <option :value="2">Filterable (no results)</option>
-                    <option :value="0">No</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Position -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
-                <label class="text-xs font-bold text-slate-700">Position</label>
-                <div class="sm:col-span-2">
-                  <input type="number" x-model.number="form.sort_order" class="w-28 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold" />
-                </div>
-              </div>
-
-              <!-- Visible on Catalog Pages on Storefront -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:items-center">
-                <label class="text-xs font-bold text-slate-700">Visible on Catalog Pages on Storefront</label>
-                <div class="sm:col-span-2">
-                  <select x-model="form.is_visible_on_front" class="w-36 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white">
-                    <option :value="1">Yes</option>
-                    <option :value="0">No</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
+  
 
   <!-- INSPECT ATTRIBUTE DETAILS MODAL -->
   <div x-show="showDetailModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
@@ -986,112 +367,6 @@
 
       <div class="flex items-center justify-end pt-3 border-t border-[#F1F5F0]">
         <button type="button" @click="showDetailModal = false" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SCHEMA GROUPS & ATTRIBUTES BUILDER / INSPECTOR MODAL -->
-  <div x-show="showSchemaModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto" @click.away="showSchemaModal = false">
-      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
-        <div>
-          <div class="flex items-center gap-2">
-            <h3 class="text-base font-black text-[#0E1108]" x-text="selectedSchema ? selectedSchema.name : 'Form Schema Builder'"></h3>
-            <span class="px-2 py-0.5 rounded-full bg-[#EAF7E2] text-[#35760F] text-[10px] font-black uppercase">Active Schema Builder</span>
-          </div>
-          <p class="text-xs text-slate-400 mt-0.5">Assign, reorder, or remove dynamic attributes across schema groups.</p>
-        </div>
-        <button type="button" @click="showSchemaModal = false" class="text-slate-400 hover:text-slate-700 text-base cursor-pointer">✕</button>
-      </div>
-
-      <!-- Add New Group Toolbar -->
-      <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-        <div class="flex items-center gap-2 flex-1">
-          <input 
-            type="text" 
-            x-model="newGroupName" 
-            placeholder="New Group Name (e.g. Electric Vehicle Specs)" 
-            class="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#35760F]"
-          >
-          <button 
-            type="button" 
-            @click="addGroupToCurrentSet()" 
-            class="px-3.5 py-1.5 rounded-xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs font-bold transition shadow-2xs cursor-pointer whitespace-nowrap"
-          >
-            + Add Group
-          </button>
-        </div>
-      </div>
-
-      <template x-if="selectedSchema">
-        <div class="space-y-4 text-xs">
-          <template x-for="(group, gIdx) in selectedSchema.groups" :key="group.id || gIdx">
-            <div class="p-4 bg-slate-50/90 rounded-2xl border border-slate-200/80 space-y-3">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
-                  <span class="font-black text-[#0E1108] text-xs" x-text="formatGroupName(group)"></span>
-                  <span class="text-[10px] font-mono text-slate-400" x-text="`(${group.code})`"></span>
-                </div>
-                <span class="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600 text-[10px] font-bold" x-text="`${group.attributes ? group.attributes.length : 0} Attributes`"></span>
-              </div>
-
-              <!-- Group Attributes Grid -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                <template x-for="attr in group.attributes" :key="attr.id">
-                  <div class="p-2.5 bg-white rounded-xl border border-slate-200/80 flex items-center justify-between shadow-2xs group hover:border-slate-300">
-                    <div class="min-w-0 flex-1 pr-2">
-                      <div class="font-bold text-[#0E1108] truncate" x-text="formatAttrName(attr)"></div>
-                      <div class="text-[10px] font-mono text-slate-400 truncate" x-text="attr.code"></div>
-                    </div>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                      <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-blue-50 text-blue-700" x-text="attr.type"></span>
-                      <template x-if="attr.unit">
-                        <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-slate-100 text-slate-600" x-text="attr.unit"></span>
-                      </template>
-                      <button 
-                        type="button" 
-                        @click="removeAttributeFromGroup(group.id, attr.id, formatAttrName(attr))" 
-                        class="p-1 rounded-md text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                        title="Remove from this group"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                </template>
-                <div x-show="!group.attributes || group.attributes.length === 0" class="col-span-2 py-3 text-center text-slate-400 italic">
-                  No attributes assigned to this group yet.
-                </div>
-              </div>
-
-              <!-- Inline Assign Attribute to Group Controls -->
-              <div class="pt-2 border-t border-slate-200/60 flex items-center gap-2">
-                <select 
-                  x-model="selectedAttrToAdd[group.id]" 
-                  class="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700"
-                >
-                  <option value="">Select an attribute to add to this group...</option>
-                  <template x-for="a in getAvailableAttrsForGroup(group)" :key="a.id">
-                    <option :value="a.id" x-text="`${formatAttrName(a)} (${a.code})`"></option>
-                  </template>
-                </select>
-                <button 
-                  type="button" 
-                  @click="addAttributeToGroup(group.id)" 
-                  class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-black text-white text-xs font-bold transition cursor-pointer whitespace-nowrap"
-                >
-                  + Add to Group
-                </button>
-              </div>
-
-            </div>
-          </template>
-        </div>
-      </template>
-
-      <div class="flex items-center justify-end pt-3 border-t border-[#F1F5F0]">
-        <button type="button" @click="showSchemaModal = false" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer">Close</button>
       </div>
     </div>
   </div>
@@ -1331,16 +606,42 @@ function visionAttributesApp() {
         if (attrData.trash) this.trashAttributes = attrData.trash || [];
         if (setData.attribute_sets) this.attributeSets = setData.attribute_sets || [];
 
-        // Check if query params specify attribute to open
+        // Check if query params or URL specify attribute to open
+        const path = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
         const targetId = urlParams.get('id') || urlParams.get('attr_id');
         const targetCode = urlParams.get('code');
-        if (targetId || targetCode) {
+        if (path.endsWith('/attributes/new') || path.endsWith('/attributes/create') || urlParams.get('new') === '1') {
+          this.openCreateModal(false);
+        } else if (path.includes('/attributes/') && path.endsWith('/edit')) {
+          const parts = path.split('/attributes/');
+          const editId = parts.length > 1 ? parseInt(parts[1].split('/')[0]) : null;
+          if (editId) {
+            const found = this.attributes.find(a => a.id == editId);
+            if (found) this.openEditModal(found, false);
+          }
+        } else if (targetId || targetCode) {
           const found = this.attributes.find(a => (targetId && a.id == targetId) || (targetCode && a.code == targetCode));
           if (found) {
-            this.openEditModal(found);
+            this.openEditModal(found, false);
           }
         }
+
+        window.addEventListener('popstate', () => {
+          const p = window.location.pathname;
+          if (p.endsWith('/attributes/new') || p.endsWith('/attributes/create')) {
+            this.openCreateModal(false);
+          } else if (p.includes('/attributes/') && p.endsWith('/edit')) {
+            const parts = p.split('/attributes/');
+            const editId = parts.length > 1 ? parseInt(parts[1].split('/')[0]) : null;
+            if (editId) {
+              const found = this.attributes.find(a => a.id == editId);
+              if (found) this.openEditModal(found, false);
+            }
+          } else {
+            this.editMode = false;
+          }
+        });
       } catch (err) {
         console.error('Error loading attributes data:', err);
       }
@@ -1467,10 +768,16 @@ function visionAttributesApp() {
 
     exitEditMode() {
       this.editMode = false;
-      const url = new URL(window.location);
-      url.searchParams.delete('id');
-      url.searchParams.delete('code');
-      window.history.replaceState({}, '', url);
+      if (window.location.pathname !== '/visionadmin/attributes') {
+        history.pushState(null, '', '/visionadmin/attributes');
+      } else {
+        const url = new URL(window.location);
+        url.searchParams.delete('id');
+        url.searchParams.delete('code');
+        url.searchParams.delete('new');
+        window.history.replaceState({}, '', url);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     resetEditForm() {
@@ -1502,7 +809,7 @@ function visionAttributesApp() {
       }
     },
 
-    openCreateModal() {
+    openCreateModal(push = true) {
       this.editMode = true;
       this.attrActiveSection = 'properties';
       this.advancedPropertiesOpen = false;
@@ -1532,67 +839,23 @@ function visionAttributesApp() {
         ]
       };
       this.originalForm = JSON.parse(JSON.stringify(this.form));
+
+      if (push && window.location.pathname !== '/visionadmin/attributes/new') {
+        history.pushState(null, '', '/visionadmin/attributes/new');
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
-    async openEditModal(attr) {
-      this.editMode = true;
-      this.attrActiveSection = 'properties';
-      this.advancedPropertiesOpen = false;
-      this.optionSearchQuery = '';
-      this.optionsPage = 1;
-      this.optionsPerPage = '50';
-      this.isSaving = false;
-
-      // Update URL query param to reflect currently edited attribute
-      try {
-        const url = new URL(window.location);
-        url.searchParams.set('code', attr.code);
-        window.history.replaceState({}, '', url);
-      } catch (e) {}
-
-      let loadedAttr = attr;
-      let options = [];
-      try {
-        const res = await fetch(`/visionadmin/api/attributes/${attr.id}`);
-        const d = await res.json();
-        if (d.attribute) {
-          loadedAttr = d.attribute;
-          if (d.attribute.options) {
-            options = d.attribute.options.map(o => ({
-              id: o.id,
-              value: o.value || '',
-              label: typeof o.label === 'object' && o.label !== null ? o.label : { en: o.value || '', ar: o.value || '' },
-              is_default: !!o.is_default,
-              sort_order: o.sort_order || 0
-            }));
-          }
-        }
-      } catch (e) {
-        console.error('Error loading attribute details:', e);
+    openEditModal(attr) {
+      if (attr && attr.id) {
+        window.location.href = `/visionadmin/attributes/${attr.id}/edit`;
       }
+    },
 
-      this.form = {
-        id: loadedAttr.id,
-        code: loadedAttr.code,
-        name_en: this.formatAttrName(loadedAttr),
-        name_ar: this.formatAttrArabic(loadedAttr),
-        type: loadedAttr.type || 'select',
-        scope: loadedAttr.scope || 'global',
-        unit: loadedAttr.unit || '',
-        is_required: loadedAttr.is_required ? 1 : 0,
-        is_unique: loadedAttr.is_unique ? 1 : 0,
-        is_filterable: loadedAttr.is_filterable !== undefined ? loadedAttr.is_filterable : 1,
-        is_searchable: loadedAttr.is_searchable !== undefined ? loadedAttr.is_searchable : 1,
-        is_comparable: loadedAttr.is_comparable !== undefined ? loadedAttr.is_comparable : 1,
-        is_visible_on_front: loadedAttr.is_visible_on_front !== undefined ? loadedAttr.is_visible_on_front : 1,
-        sort_order: loadedAttr.sort_order || 0,
-        validation_rules: loadedAttr.validation_rules || 'none',
-        options: options
-      };
-
-      this.originalForm = JSON.parse(JSON.stringify(this.form));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    openEditSetModal(set) {
+      if (set && set.id) {
+        window.location.href = `/visionadmin/attribute-sets/${set.id}/edit`;
+      }
     },
 
     async deleteAttribute(attr) {

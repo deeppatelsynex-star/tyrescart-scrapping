@@ -50,3 +50,6 @@ tmp/
 # Postman collections
 *.postman_collection.json
 *.postman_environment.json
+
+seed_dynamic_attributes_data.sql
+seed_product_attribute_values.sql

@@ -1,0 +1,635 @@
+{% extends "visionadmin/base.html" %}
+
+{% block title %}{% if initial_attr_id %}Edit Attribute - VisionAdmin{% else %}New Attribute - VisionAdmin{% endif %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="visionAttributeFormApp('{{ initial_mode | default('create', true) }}', {{ initial_attr_id | default('null', true) }})" x-init="initData()">
+
+  <!-- Top Action Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs">
+    <div>
+      <div class="flex items-center gap-2 text-xs font-semibold text-slate-400">
+        <a href="/visionadmin/attributes" class="hover:text-[#35760F] transition">Catalog</a>
+        <span>/</span>
+        <a href="/visionadmin/attributes" class="hover:text-[#35760F] transition">Attributes</a>
+        <span>/</span>
+        <span class="text-[#35760F] font-bold" x-text="form.id ? 'Edit: ' + form.code : 'New Attribute'"></span>
+      </div>
+      <h1 class="text-2xl font-black text-[#0E1108] tracking-tight mt-1" x-text="form.id ? ('Edit Attribute: ' + (form.name_en || form.code)) : 'Create New Attribute'"></h1>
+      <p class="text-xs text-slate-500 font-medium mt-0.5" x-text="form.id ? ('Code: ' + form.code + ' • Scope: ' + form.scope.toUpperCase() + ' • Type: ' + form.type.toUpperCase()) : 'Define attribute type, scoping, frontend labels, EU regulation grades, and selectable options.'"></p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2.5">
+      <a 
+        href="/visionadmin/attributes" 
+        class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs tracking-wide transition cursor-pointer shadow-2xs active:scale-95"
+      >
+        <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+        <span>Back to Attributes</span>
+      </a>
+
+      <template x-if="form.id">
+        <button 
+          type="button" 
+          @click="deleteCurrentAttribute()" 
+          class="px-4 py-2.5 rounded-2xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs tracking-wide transition cursor-pointer active:scale-95"
+        >
+          Delete Attribute
+        </button>
+      </template>
+
+      <button 
+        type="button" 
+        @click="resetEditForm()" 
+        class="px-4 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs tracking-wide transition cursor-pointer shadow-2xs active:scale-95"
+      >
+        Reset
+      </button>
+
+      <button 
+        type="button" 
+        @click="saveAttribute(false)" 
+        :disabled="isSaving"
+        class="px-5 py-2.5 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs tracking-wide transition cursor-pointer shadow-2xs disabled:opacity-50 active:scale-95"
+      >
+        <span x-text="isSaving ? 'Saving...' : 'Save and Continue Edit'"></span>
+      </button>
+
+      <button 
+        type="button" 
+        @click="saveAttribute(true)" 
+        :disabled="isSaving"
+        class="px-6 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white font-bold text-xs tracking-wide transition cursor-pointer shadow-xs disabled:opacity-50 active:scale-95"
+      >
+        <span x-text="isSaving ? 'Saving...' : 'Save Attribute'"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Studio Grid: Tabs / Sections Navigation + Configuration Panels -->
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Left Navigation Pill Sidebar -->
+    <div class="space-y-2 lg:col-span-1">
+      <div class="bg-white p-3 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-1">
+        <button 
+          type="button" 
+          @click="attrActiveSection = 'properties'" 
+          :class="attrActiveSection === 'properties' ? 'bg-[#58B31B] text-white' : 'text-slate-700 hover:bg-slate-50'"
+          class="w-full text-left px-4 py-3 rounded-2xl text-xs font-bold transition flex items-center justify-between cursor-pointer"
+        >
+          <div class="flex items-center gap-2.5">
+            <span>⚙️</span>
+            <span>Attribute Properties</span>
+          </div>
+          <span class="text-[10px] font-black opacity-80" x-text="form.code || 'New'"></span>
+        </button>
+
+        <button 
+          type="button" 
+          @click="attrActiveSection = 'labels'" 
+          :class="attrActiveSection === 'labels' ? 'bg-[#58B31B] text-white' : 'text-slate-700 hover:bg-slate-50'"
+          class="w-full text-left px-4 py-3 rounded-2xl text-xs font-bold transition flex items-center justify-between cursor-pointer"
+        >
+          <div class="flex items-center gap-2.5">
+            <span>🌐</span>
+            <span>Frontend Labels &amp; Locales</span>
+          </div>
+          <span class="text-[10px] font-black opacity-80">EN / AR</span>
+        </button>
+
+        <button 
+          type="button" 
+          @click="attrActiveSection = 'storefront'" 
+          :class="attrActiveSection === 'storefront' ? 'bg-[#58B31B] text-white' : 'text-slate-700 hover:bg-slate-50'"
+          class="w-full text-left px-4 py-3 rounded-2xl text-xs font-bold transition flex items-center justify-between cursor-pointer"
+        >
+          <div class="flex items-center gap-2.5">
+            <span>🔍</span>
+            <span>Storefront &amp; Search</span>
+          </div>
+          <span class="text-[10px] font-black opacity-80">Filters</span>
+        </button>
+      </div>
+
+      <!-- Quick Tips Card -->
+      <div class="bg-emerald-50/70 p-4 rounded-3xl border border-emerald-100 text-xs space-y-2">
+        <div class="font-bold text-[#35760F] flex items-center gap-1.5">
+          <span>💡</span>
+          <span>Enterprise Scoping Hint</span>
+        </div>
+        <p class="text-slate-600 text-[11px] leading-relaxed">
+          Set scope to <strong>Store View</strong> for translations/titles, <strong>Website</strong> for regional pricing, or <strong>Global</strong> for universal tyre sizing &amp; EU specs.
+        </p>
+      </div>
+    </div>
+
+    <!-- Right Configuration Canvas -->
+    <div class="lg:col-span-3 space-y-6">
+
+      <!-- SECTION 1: ATTRIBUTE PROPERTIES -->
+      <div x-show="attrActiveSection === 'properties'" class="space-y-6">
+        <div class="bg-white p-6 sm:p-7 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-6">
+          <div class="border-b border-slate-100 pb-4">
+            <h2 class="text-base font-black text-[#0E1108]">Attribute Properties</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Specify technical database codes, data types, and scoped inheritance behavior.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <!-- Attribute Code -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                Attribute Code <span class="text-rose-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                x-model="form.code" 
+                :disabled="form.id != null"
+                required 
+                placeholder="e.g. wet_grip, speed_rating, tire_width" 
+                class="w-full px-3.5 py-2.5 text-xs font-mono font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#58B31B] disabled:opacity-60 disabled:cursor-not-allowed"
+              />
+              <p class="text-[10px] text-slate-400 mt-1 font-mono">Unique machine identifier (alphanumeric &amp; underscores only).</p>
+            </div>
+
+            <!-- Scope -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                Scope Hierarchy <span class="text-rose-500">*</span>
+              </label>
+              <select 
+                x-model="form.scope" 
+                class="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#58B31B]"
+              >
+                <option value="global">Global (Shared across all websites &amp; stores)</option>
+                <option value="website">Website (Can be overridden per currency/domain)</option>
+                <option value="store">Store (Can be overridden per physical store/hub)</option>
+                <option value="store_view">Store View (Locale-specific: Arabic / English)</option>
+              </select>
+              <p class="text-[10px] text-slate-400 mt-1">Controls how values fall back across your multi-tenant hierarchy.</p>
+            </div>
+
+            <!-- Catalog Input Type -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                Catalog Input Type for Store Owner <span class="text-rose-500">*</span>
+              </label>
+              <select 
+                x-model="form.type" 
+                class="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#58B31B]"
+              >
+                <option value="select">Dropdown (Single Option)</option>
+                <option value="multiselect">Multiple Select (Checkboxes)</option>
+                <option value="text">Text Field (Single Line)</option>
+                <option value="textarea">Text Area (Multi-line Description)</option>
+                <option value="number">Integer Number</option>
+                <option value="decimal">Decimal / Price Amount</option>
+                <option value="boolean">Yes / No Toggle (Boolean)</option>
+                <option value="date">Date Picker</option>
+                <option value="file">Media File / Image Upload</option>
+              </select>
+            </div>
+
+            <!-- Unit of Measurement -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                Unit of Measurement (Optional)
+              </label>
+              <input 
+                type="text" 
+                x-model="form.unit" 
+                placeholder="e.g. mm, inch, dB, km/h, kg, %" 
+                class="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#58B31B]"
+              />
+            </div>
+          </div>
+
+          <!-- Boolean Flags -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+            <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition">
+              <input type="checkbox" x-model="form.is_required" class="w-4 h-4 rounded text-[#58B31B] focus:ring-[#58B31B] border-slate-300" />
+              <div>
+                <span class="text-xs font-bold text-slate-800">Values Required</span>
+                <p class="text-[11px] text-slate-500">Products cannot be published without setting this attribute.</p>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition">
+              <input type="checkbox" x-model="form.is_unique" class="w-4 h-4 rounded text-[#58B31B] focus:ring-[#58B31B] border-slate-300" />
+              <div>
+                <span class="text-xs font-bold text-slate-800">Unique Value</span>
+                <p class="text-[11px] text-slate-500">Prevents multiple products from having duplicate entries (e.g. Barcode, SKU).</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- SELECTABLE OPTIONS (Only for select / multiselect) -->
+        <template x-if="isOptionType(form.type)">
+          <div class="bg-white p-6 sm:p-7 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
+              <div>
+                <h2 class="text-base font-black text-[#0E1108]">Manage Options (Values of Your Attribute)</h2>
+                <p class="text-xs text-slate-400 mt-0.5">Pre-populate available choices like speed ratings (H, V, W) or EU grades (A, B, C, D, E).</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <input 
+                  type="text" 
+                  x-model="optionSearchQuery" 
+                  placeholder="Filter options..." 
+                  class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#58B31B]"
+                />
+                <button 
+                  type="button" 
+                  @click="addOptionRow()" 
+                  class="px-3.5 py-1.5 rounded-xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                >
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <span>Add Option</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Options Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] border-b border-slate-200">
+                  <tr>
+                    <th class="px-3 py-2.5 w-12 text-center">Default</th>
+                    <th class="px-3 py-2.5">Value (Code)</th>
+                    <th class="px-3 py-2.5">English Admin Label</th>
+                    <th class="px-3 py-2.5">Arabic Storefront Label</th>
+                    <th class="px-3 py-2.5 w-20 text-center">Order</th>
+                    <th class="px-3 py-2.5 w-12 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <template x-for="(opt, idx) in paginatedOptions" :key="idx">
+                    <tr class="hover:bg-slate-50/60 transition">
+                      <td class="px-3 py-2 text-center">
+                        <input 
+                          type="radio" 
+                          name="default_option" 
+                          :checked="opt.is_default" 
+                          @change="setDefaultOption(opt)" 
+                          class="w-3.5 h-3.5 text-[#58B31B] focus:ring-[#58B31B] border-slate-300 cursor-pointer"
+                        />
+                      </td>
+                      <td class="px-3 py-2">
+                        <input type="text" x-model="opt.value" required class="w-full px-2.5 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-200 bg-white" placeholder="e.g. 205_55_r16" />
+                      </td>
+                      <td class="px-3 py-2">
+                        <input type="text" x-model="opt.label.en" class="w-full px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white" placeholder="English label" />
+                      </td>
+                      <td class="px-3 py-2">
+                        <input type="text" x-model="opt.label.ar" dir="rtl" class="w-full px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-right" placeholder="التسمية العربية" />
+                      </td>
+                      <td class="px-3 py-2 text-center">
+                        <input type="number" x-model.number="opt.sort_order" class="w-16 px-2 py-1.5 text-center text-xs font-bold rounded-lg border border-slate-200 bg-white" />
+                      </td>
+                      <td class="px-3 py-2 text-center">
+                        <button type="button" @click="deleteOptionRow(opt)" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition cursor-pointer" title="Remove Option">
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Option Pagination -->
+            <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-500">
+              <span x-text="`Showing ${filteredOptions.length} total options`"></span>
+              <div class="flex items-center gap-2">
+                <button type="button" @click="optionsPage = Math.max(1, optionsPage - 1)" :disabled="optionsPage <= 1" class="px-2.5 py-1 rounded-lg border border-slate-200 disabled:opacity-40">Prev</button>
+                <span x-text="`Page ${optionsPage} of ${totalOptionPages}`"></span>
+                <button type="button" @click="optionsPage = Math.min(totalOptionPages, optionsPage + 1)" :disabled="optionsPage >= totalOptionPages" class="px-2.5 py-1 rounded-lg border border-slate-200 disabled:opacity-40">Next</button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- SECTION 2: FRONTEND LABELS -->
+      <div x-show="attrActiveSection === 'labels'" class="space-y-6">
+        <div class="bg-white p-6 sm:p-7 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-5">
+          <div class="border-b border-slate-100 pb-4">
+            <h2 class="text-base font-black text-[#0E1108]">Frontend Storefront Labels</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Customize what customers see on PDP specifications and faceted navigation filters.</p>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">English Admin &amp; Storefront Label <span class="text-rose-500">*</span></label>
+              <input type="text" x-model="form.name_en" required placeholder="e.g. Wet Grip Rating" class="w-full px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#58B31B]" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Arabic Storefront Label (العربية)</label>
+              <input type="text" x-model="form.name_ar" dir="rtl" placeholder="e.g. تصنيف التماسك على الأسطح الرطبة" class="w-full px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-right focus:ring-2 focus:ring-[#58B31B]" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: STOREFRONT & SEARCH PROPERTIES -->
+      <div x-show="attrActiveSection === 'storefront'" class="space-y-6">
+        <div class="bg-white p-6 sm:p-7 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-5">
+          <div class="border-b border-slate-100 pb-4">
+            <h2 class="text-base font-black text-[#0E1108]">Storefront &amp; Search Engine Properties</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Configure faceted filter indexing, product comparison, and search relevance.</p>
+          </div>
+
+          <div class="space-y-4">
+            <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition">
+              <input type="checkbox" x-model="form.is_searchable" class="w-4 h-4 rounded text-[#58B31B] focus:ring-[#58B31B] border-slate-300" />
+              <div>
+                <span class="text-xs font-bold text-slate-800">Use in Quick Search &amp; Global Search</span>
+                <p class="text-[11px] text-slate-500">Includes values in search queries on tyresvision.com.</p>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition">
+              <input type="checkbox" x-model="form.is_filterable" class="w-4 h-4 rounded text-[#58B31B] focus:ring-[#58B31B] border-slate-300" />
+              <div>
+                <span class="text-xs font-bold text-slate-800">Use in Layered Navigation (Faceted Filter)</span>
+                <p class="text-[11px] text-slate-500">Shows filter checkboxes on category and search result pages.</p>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition">
+              <input type="checkbox" x-model="form.is_comparable" class="w-4 h-4 rounded text-[#58B31B] focus:ring-[#58B31B] border-slate-300" />
+              <div>
+                <span class="text-xs font-bold text-slate-800">Comparable on Frontend</span>
+                <p class="text-[11px] text-slate-500">Includes this specification when customers compare multiple tyres side-by-side.</p>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition">
+              <input type="checkbox" x-model="form.is_visible_on_front" class="w-4 h-4 rounded text-[#58B31B] focus:ring-[#58B31B] border-slate-300" />
+              <div>
+                <span class="text-xs font-bold text-slate-800">Visible on Catalog Pages on Storefront</span>
+                <p class="text-[11px] text-slate-500">Display this specification in the PDP "Technical Details" accordion.</p>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Action Bar -->
+  <div class="bg-white p-5 rounded-3xl border border-[#E8EDE4] shadow-xs flex items-center justify-between">
+    <a 
+      href="/visionadmin/attributes" 
+      class="px-5 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs tracking-wide transition shadow-2xs active:scale-95"
+    >
+      Cancel &amp; Back to Attributes
+    </a>
+
+    <div class="flex items-center gap-3">
+      <button 
+        type="button" 
+        @click="saveAttribute(false)" 
+        :disabled="isSaving"
+        class="px-5 py-2.5 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs tracking-wide transition shadow-2xs disabled:opacity-50 active:scale-95 cursor-pointer"
+      >
+        <span x-text="isSaving ? 'Saving...' : 'Save and Continue Edit'"></span>
+      </button>
+
+      <button 
+        type="button" 
+        @click="saveAttribute(true)" 
+        :disabled="isSaving"
+        class="px-6 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white font-bold text-xs tracking-wide transition shadow-xs disabled:opacity-50 active:scale-95 cursor-pointer"
+      >
+        <span x-text="isSaving ? 'Saving...' : 'Save Attribute'"></span>
+      </button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function visionAttributeFormApp(initialMode = 'create', initialAttrId = null) {
+  return {
+    initialMode: initialMode,
+    initialAttrId: initialAttrId,
+    attrActiveSection: 'properties',
+    isSaving: false,
+    optionSearchQuery: '',
+    optionsPage: 1,
+    optionsPerPage: 50,
+    form: {
+      id: initialAttrId,
+      code: '',
+      name_en: '',
+      name_ar: '',
+      type: 'select',
+      scope: 'global',
+      unit: '',
+      is_required: false,
+      is_unique: false,
+      is_filterable: true,
+      is_searchable: true,
+      is_comparable: true,
+      is_visible_on_front: true,
+      sort_order: 0,
+      validation_rules: 'none',
+      options: []
+    },
+    originalForm: null,
+
+    async initData() {
+      if (this.initialAttrId) {
+        await this.loadAttribute(this.initialAttrId);
+      }
+      this.originalForm = JSON.parse(JSON.stringify(this.form));
+    },
+
+    async loadAttribute(id) {
+      try {
+        const res = await fetch(`/visionadmin/api/attributes/${id}`);
+        const data = await res.json();
+        if (data.attribute) {
+          const a = data.attribute;
+          let nameEn = a.name_en || '';
+          let nameAr = a.name_ar || '';
+          if (!nameEn && a.name) {
+            nameEn = typeof a.name === 'object' ? (a.name.en || '') : a.name;
+            nameAr = typeof a.name === 'object' ? (a.name.ar || '') : '';
+          }
+          this.form = {
+            id: a.id,
+            code: a.code,
+            name_en: nameEn,
+            name_ar: nameAr,
+            type: a.type || 'select',
+            scope: a.scope || 'global',
+            unit: a.unit || '',
+            is_required: Boolean(a.is_required),
+            is_unique: Boolean(a.is_unique),
+            is_filterable: Boolean(a.is_filterable),
+            is_searchable: Boolean(a.is_searchable),
+            is_comparable: Boolean(a.is_comparable),
+            is_visible_on_front: Boolean(a.is_visible_on_front),
+            sort_order: a.sort_order || 0,
+            validation_rules: a.validation_rules || 'none',
+            options: (a.options || []).map(o => ({
+              id: o.id,
+              value: o.value,
+              label: typeof o.label === 'object' && o.label !== null ? o.label : { en: o.value, ar: o.value },
+              is_default: Boolean(o.is_default),
+              sort_order: o.sort_order || 0
+            }))
+          };
+        }
+      } catch (err) {
+        console.error('Error loading attribute:', err);
+      }
+    },
+
+    isOptionType(type) {
+      return ['select', 'multiselect'].includes(type);
+    },
+
+    get filteredOptions() {
+      if (!this.form.options) return [];
+      const q = (this.optionSearchQuery || '').toLowerCase().trim();
+      if (!q) return this.form.options;
+      return this.form.options.filter(o => {
+        const val = (o.value || '').toLowerCase();
+        const en = (o.label && o.label.en ? o.label.en : '').toLowerCase();
+        const ar = (o.label && o.label.ar ? o.label.ar : '').toLowerCase();
+        return val.includes(q) || en.includes(q) || ar.includes(q);
+      });
+    },
+
+    get totalOptionPages() {
+      return Math.ceil(this.filteredOptions.length / this.optionsPerPage) || 1;
+    },
+
+    get paginatedOptions() {
+      const start = (this.optionsPage - 1) * this.optionsPerPage;
+      return this.filteredOptions.slice(start, start + this.optionsPerPage);
+    },
+
+    addOptionRow() {
+      if (!this.form.options) this.form.options = [];
+      this.form.options.push({
+        value: '',
+        label: { en: '', ar: '' },
+        is_default: false,
+        sort_order: this.form.options.length + 1
+      });
+      this.optionsPage = this.totalOptionPages;
+    },
+
+    deleteOptionRow(opt) {
+      const idx = this.form.options.indexOf(opt);
+      if (idx !== -1) this.form.options.splice(idx, 1);
+    },
+
+    setDefaultOption(selected) {
+      this.form.options.forEach(o => o.is_default = (o === selected));
+    },
+
+    resetEditForm() {
+      if (this.originalForm) {
+        this.form = JSON.parse(JSON.stringify(this.originalForm));
+      }
+    },
+
+    async saveAttribute(exitAfter = false) {
+      if (!this.form.code || !this.form.code.trim()) {
+        alert('Please enter an attribute code.');
+        return;
+      }
+      if (!this.form.name_en || !this.form.name_en.trim()) {
+        alert('Please enter an English attribute label.');
+        return;
+      }
+
+      this.isSaving = true;
+      try {
+        const payload = {
+          code: this.form.code.trim().toLowerCase(),
+          name: {
+            en: this.form.name_en.trim(),
+            ar: (this.form.name_ar && this.form.name_ar.trim()) ? this.form.name_ar.trim() : this.form.name_en.trim()
+          },
+          type: this.form.type,
+          scope: this.form.scope,
+          unit: this.form.unit || null,
+          is_required: this.form.is_required ? 1 : 0,
+          is_unique: this.form.is_unique ? 1 : 0,
+          is_filterable: this.form.is_filterable ? 1 : 0,
+          is_searchable: this.form.is_searchable ? 1 : 0,
+          is_comparable: this.form.is_comparable ? 1 : 0,
+          is_visible_on_front: this.form.is_visible_on_front ? 1 : 0,
+          sort_order: parseInt(this.form.sort_order) || 0,
+          validation_rules: this.form.validation_rules,
+          options: (this.form.options || []).filter(o => o.value && o.value.trim()).map((o, idx) => ({
+            value: o.value.trim(),
+            label: {
+              en: (o.label && o.label.en && o.label.en.trim()) ? o.label.en.trim() : o.value.trim(),
+              ar: (o.label && o.label.ar && o.label.ar.trim()) ? o.label.ar.trim() : o.value.trim()
+            },
+            is_default: Boolean(o.is_default),
+            sort_order: idx + 1
+          }))
+        };
+
+        const method = this.form.id ? 'PUT' : 'POST';
+        const url = this.form.id ? `/visionadmin/api/attributes/${this.form.id}` : '/visionadmin/api/attributes';
+
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.success || data.id) {
+          if (!this.form.id && data.id) {
+            this.form.id = data.id;
+          }
+          if (exitAfter) {
+            window.location.href = '/visionadmin/attributes';
+          } else {
+            history.replaceState(null, '', `/visionadmin/attributes/${this.form.id}/edit`);
+            alert('Attribute saved successfully!');
+          }
+        } else {
+          alert(data.error || 'Failed to save attribute.');
+        }
+      } catch (err) {
+        console.error('Save attribute error:', err);
+        alert('Error saving attribute.');
+      } finally {
+        this.isSaving = false;
+      }
+    },
+
+    async deleteCurrentAttribute() {
+      if (!this.form.id) return;
+      if (!confirm(`Are you sure you want to move attribute '${this.form.code}' to trash?`)) return;
+      try {
+        const res = await fetch(`/visionadmin/api/attributes/${this.form.id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = '/visionadmin/attributes';
+        } else {
+          alert(data.error || 'Failed to delete attribute.');
+        }
+      } catch (err) {
+        console.error('Delete attribute error:', err);
+      }
+    }
+  };
+}
+</script>
+{% endblock %}

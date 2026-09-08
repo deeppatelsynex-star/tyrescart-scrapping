@@ -172,6 +172,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCancelModal = document.getElementById('btn-cancel-modal');
   const btnSaveSection = document.getElementById('btn-save-section');
 
+  // Preview Modal Elements
+  const previewModal = document.getElementById('preview-modal');
+  const previewModalBox = document.getElementById('preview-modal-box');
+  const previewModalTitle = document.getElementById('preview-modal-title');
+  const previewModalBadge = document.getElementById('preview-modal-badge');
+  const previewIframeWrapper = document.getElementById('preview-iframe-wrapper');
+  const previewIframe = document.getElementById('preview-iframe');
+  const btnClosePreviewModal = document.getElementById('btn-close-preview-modal');
+  const previewOpenExternal = document.getElementById('preview-open-external');
+  let currentPreviewSecId = null;
+
   // Language Tabs
   const tabEn = document.getElementById('tab-en');
   const tabAr = document.getElementById('tab-ar');
@@ -673,6 +684,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>Edit</span>
               </button>
 
+              <!-- Live Preview Button -->
+              <button type="button" class="btn-preview-section inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-blue-500 hover:border-blue-600 text-blue-600 hover:bg-blue-50 text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer" data-id="${sec.id}" title="Live Preview this section">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span>Live Preview</span>
+              </button>
+
               <!-- Delete Button -->
               <button type="button" class="btn-delete-section w-8 h-8 rounded-xl border border-rose-200 hover:border-rose-300 text-rose-500 hover:bg-rose-50 flex items-center justify-center transition cursor-pointer" data-id="${sec.id}" title="Delete Section">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -690,6 +707,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function attachRowEvents() {
     document.querySelectorAll('.btn-edit-section').forEach(b => {
       b.addEventListener('click', () => openEditModal(parseInt(b.dataset.id)));
+    });
+
+    document.querySelectorAll('.btn-preview-section').forEach(b => {
+      b.addEventListener('click', () => openPreviewModal(parseInt(b.dataset.id)));
     });
 
     document.querySelectorAll('.btn-toggle-active').forEach(b => {
@@ -790,6 +811,92 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (e) {
       showToast('Network error', 'error');
+    }
+  });
+
+  // =========================================================================
+  // LIVE SECTION PREVIEW MODAL LOGIC
+  // =========================================================================
+  function openPreviewModal(secId) {
+    const sec = allSections.find(s => s.id === secId);
+    if (!sec) return;
+
+    currentPreviewSecId = secId;
+    currentPreviewLocale = 'en';
+
+    const meta = TYPE_METADATA[sec.section_type] || { label: sec.section_type };
+    const titleEn = typeof sec.section_title === 'object' ? (sec.section_title?.en || '') : (sec.section_title || '');
+    const displayTitle = titleEn ? `Live Preview - ${titleEn}` : `Live Preview - ${meta.label}`;
+
+    if (previewModalTitle) previewModalTitle.textContent = displayTitle;
+    if (previewModalBadge) previewModalBadge.textContent = sec.page_slug || currentPageSlug;
+
+    // Reset viewport size to 100%
+    updatePreviewViewport('100%');
+
+    // Update iframe and external link
+    const previewUrl = `/visionadmin/sections/${secId}/preview`;
+    if (previewIframe) previewIframe.src = previewUrl;
+    if (previewOpenExternal) previewOpenExternal.href = previewUrl;
+
+    // Open modal
+    if (previewModal) {
+      previewModal.classList.remove('hidden');
+      setTimeout(() => {
+        previewModal.classList.remove('opacity-0');
+        if (previewModalBox) previewModalBox.classList.remove('scale-95');
+      }, 10);
+    }
+  }
+
+  function closePreviewModal() {
+    if (!previewModal) return;
+    previewModal.classList.add('opacity-0');
+    if (previewModalBox) previewModalBox.classList.add('scale-95');
+    setTimeout(() => {
+      previewModal.classList.add('hidden');
+      if (previewIframe) previewIframe.src = 'about:blank';
+      currentPreviewSecId = null;
+    }, 200);
+  }
+
+  function updatePreviewViewport(width) {
+    if (previewIframeWrapper) {
+      previewIframeWrapper.style.maxWidth = width;
+    }
+    document.querySelectorAll('.btn-viewport-size').forEach(btn => {
+      if (btn.dataset.width === width) {
+        btn.className = 'btn-viewport-size px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-900';
+      } else {
+        btn.className = 'btn-viewport-size px-2.5 py-1 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-900 transition cursor-pointer';
+      }
+    });
+  }
+
+  if (btnClosePreviewModal) {
+    btnClosePreviewModal.addEventListener('click', closePreviewModal);
+  }
+
+  if (previewModal) {
+    previewModal.addEventListener('click', (e) => {
+      if (e.target === previewModal) closePreviewModal();
+    });
+  }
+
+  document.querySelectorAll('.btn-viewport-size').forEach(btn => {
+    btn.addEventListener('click', () => updatePreviewViewport(btn.dataset.width));
+  });
+
+  // Global Escape Key Listener for Modals
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (previewModal && !previewModal.classList.contains('hidden')) {
+        closePreviewModal();
+      } else if (deleteModal && !deleteModal.classList.contains('hidden')) {
+        closeDeleteModal();
+      } else if (sectionModal && !sectionModal.classList.contains('hidden')) {
+        closeModal();
+      }
     }
   });
 

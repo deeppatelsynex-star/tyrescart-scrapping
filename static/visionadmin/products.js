@@ -3,8 +3,10 @@
  * Phase 6.4 Catalog Products Management
  */
 
-function visionProductsApp() {
+function visionProductsApp(initialView = '', initialProductId = null) {
   return {
+    initialView: initialView || '',
+    initialProductId: initialProductId ? Number(initialProductId) : null,
     products: [],
     brands: [],
     categories: [],
@@ -19,6 +21,7 @@ function visionProductsApp() {
     selectedIds: [],
     bulkActionChoice: '',
     modalOpen: false,
+    formOpen: false,
     viewModalOpen: false,
     isEditMode: false,
     formTab: 'basic',
@@ -74,43 +77,51 @@ function visionProductsApp() {
       this.form.dynamic_attributes[code] = val;
 
       if (code === 'product_name' || code === 'display_name') {
-        this.form.display_name = val;
+        if (val || !this.form.display_name) this.form.display_name = val || '';
       } else if (code === 'sku') {
-        this.form.sku = val;
+        if (val || !this.form.sku) this.form.sku = val || '';
       } else if (code === 'price') {
-        this.form.price = val;
+        if ((val !== undefined && val !== null && val !== '') || !this.form.price) this.form.price = val;
       } else if (code === 'sale_price' || code === 'promotion') {
-        this.form.sale_price = val;
+        if ((val !== undefined && val !== null && val !== '') || !this.form.sale_price) this.form.sale_price = val;
       } else if (code === 'weight') {
-        this.form.weight = val;
+        if (val || !this.form.weight) this.form.weight = val;
       } else if (code === 'visibility') {
-        this.form.visibility = val;
+        if (val || !this.form.visibility) this.form.visibility = val;
       } else if (code === 'tabby_payment') {
         this.form.pay_later_eligible = Boolean(val);
       } else if (code === 'country_of_manufacture' || code === 'country_of_origin') {
-        this.form.country_of_origin = val;
+        if (val || !this.form.country_of_origin) this.form.country_of_origin = val;
       } else if (code === 'brand') {
-        const found = (this.brands || []).find(b => String(b.name).toLowerCase() === String(val).toLowerCase() || b.id == val);
-        if (found) this.form.brand_id = found.id;
+        if (val) {
+          const found = (this.brands || []).find(b => String(b.name).toLowerCase() === String(val).toLowerCase() || b.id == val);
+          if (found) this.form.brand_id = found.id;
+        }
       } else if (code === 'tire_size_label' || code === 'tire_size') {
-        this.form.tire_size_label = val;
+        if (val || !this.form.tire_size_label) this.form.tire_size_label = val;
       } else if (code === 'width') {
-        this.form.width = val;
-        this.calculateSizeLabel();
+        if (val || !this.form.width) {
+          this.form.width = val;
+          this.calculateSizeLabel();
+        }
       } else if (code === 'aspect_ratio' || code === 'height') {
-        this.form.aspect_ratio = val;
-        this.calculateSizeLabel();
+        if (val || !this.form.aspect_ratio) {
+          this.form.aspect_ratio = val;
+          this.calculateSizeLabel();
+        }
       } else if (code === 'rim_size' || code === 'rim') {
-        this.form.rim_size = val;
-        this.calculateSizeLabel();
+        if (val || !this.form.rim_size) {
+          this.form.rim_size = val;
+          this.calculateSizeLabel();
+        }
       } else if (code === 'tire_pattern' || code === 'pattern') {
-        this.form.tire_pattern = val;
+        if (val || !this.form.tire_pattern) this.form.tire_pattern = val;
       } else if (code === 'run_flat' || code === 'runflat') {
         this.form.run_flat = Boolean(val);
       } else if (code === 'ev_rated' || code === 'ev_tyre') {
         this.form.ev_rated = Boolean(val);
       } else if (code === 'warranty_period' || code === 'warranty_months') {
-        this.form.warranty_months = val;
+        if (val || !this.form.warranty_months) this.form.warranty_months = val;
       }
     },
 
@@ -177,6 +188,73 @@ function visionProductsApp() {
         this.currentPage = 1;
         this.fetchProducts();
       });
+
+      // Check URL and initialView parameters to determine whether to open full-page form
+      const path = window.location.pathname;
+      const urlParams = new URLSearchParams(window.location.search);
+      if (this.initialView === 'new' || path.endsWith('/products/new') || path.endsWith('/products/create') || urlParams.get('new') === '1') {
+        this.openCreateModal(false);
+      } else if (this.initialProductId || (path.includes('/products/') && path.endsWith('/edit'))) {
+        const parts = path.split('/products/');
+        const editId = this.initialProductId || (parts.length > 1 ? parseInt(parts[1].split('/')[0]) : null);
+        if (editId) {
+          this.loadAndEditProduct(editId, false);
+        }
+      } else if (urlParams.get('edit')) {
+        const editId = parseInt(urlParams.get('edit'));
+        if (editId) {
+          this.loadAndEditProduct(editId, false);
+        }
+      }
+
+      window.addEventListener('popstate', () => {
+        const currPath = window.location.pathname;
+        if (currPath.endsWith('/products/new') || currPath.endsWith('/products/create')) {
+          this.openCreateModal(false);
+        } else if (currPath.includes('/products/') && currPath.endsWith('/edit')) {
+          const parts = currPath.split('/products/');
+          const editId = parts.length > 1 ? parseInt(parts[1].split('/')[0]) : null;
+          if (editId) {
+            this.loadAndEditProduct(editId, false);
+          }
+        } else {
+          this.modalOpen = false;
+          this.formOpen = false;
+        }
+      });
+    },
+
+    closeForm() {
+      this.modalOpen = false;
+      this.formOpen = false;
+      if (window.location.pathname !== '/visionadmin/products' && window.location.pathname !== '/visionadmin/catalog/products') {
+        window.location.href = '/visionadmin/products';
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    },
+
+    async loadAndEditProduct(id, push = true) {
+      if (!id) return;
+      this.loading = true;
+      try {
+        const res = await fetch(`/visionadmin/api/products/${id}`);
+        const data = await res.json();
+        if (data && data.product) {
+          this.openEditModal(data.product, push);
+          return;
+        }
+      } catch (err) {
+        console.error('Error fetching product to edit:', err);
+      } finally {
+        this.loading = false;
+      }
+      const found = (this.products || []).find(p => Number(p.id) === Number(id));
+      if (found) {
+        this.openEditModal(found, push);
+      } else {
+        this.showToast('Product not found.', 'error');
+      }
     },
 
     async fetchBrands() {
@@ -270,14 +348,18 @@ function visionProductsApp() {
           // Initialize dynamic attributes mapping if not already set
           this.form.attribute_groups.forEach(group => {
             (group.attributes || []).forEach(attr => {
-              if (this.form.dynamic_attributes[attr.code] === undefined) {
-                if (attr.type === 'boolean') {
-                  this.form.dynamic_attributes[attr.code] = (attr.current_value !== undefined && attr.current_value !== null) ? Boolean(attr.current_value) : false;
-                } else {
-                  this.form.dynamic_attributes[attr.code] = (attr.current_value !== undefined && attr.current_value !== null) ? attr.current_value : (attr.default_value || '');
+              const currentDyn = this.form.dynamic_attributes[attr.code];
+              if (currentDyn === undefined || currentDyn === null || currentDyn === '') {
+                if (attr.current_value !== undefined && attr.current_value !== null && attr.current_value !== '') {
+                  this.form.dynamic_attributes[attr.code] = (attr.type === 'boolean') ? Boolean(attr.current_value) : attr.current_value;
+                } else if (!this.isEditMode && attr.default_value !== undefined && attr.default_value !== null) {
+                  this.form.dynamic_attributes[attr.code] = (attr.type === 'boolean') ? Boolean(attr.default_value) : attr.default_value;
                 }
               }
-              this.syncDynamicField(attr.code, this.form.dynamic_attributes[attr.code]);
+              const val = this.form.dynamic_attributes[attr.code];
+              if (val !== undefined && val !== null && val !== '') {
+                this.syncDynamicField(attr.code, val);
+              }
             });
           });
         }
@@ -411,7 +493,7 @@ function visionProductsApp() {
       }
     },
 
-    openCreateModal() {
+    openCreateModal(push = true) {
       this.isEditMode = false;
       const defaultSet = (this.attributeSets || []).find(s => s.slug === 'default' || (s.name && s.name.toLowerCase() === 'default'));
       const defaultSetId = defaultSet ? defaultSet.id : 2;
@@ -461,17 +543,32 @@ function visionProductsApp() {
         website_ids: (this.availableWebsites.find(w => w.is_default == 1) ? [this.availableWebsites.find(w => w.is_default == 1).id] : (this.availableWebsites.length > 0 ? [this.availableWebsites[0].id] : [1]))
       };
       this.modalOpen = true;
+      this.formOpen = true;
       this.onAttributeSetChange(defaultSetId);
+
+      if (push && window.location.pathname !== '/visionadmin/products/new') {
+        history.pushState(null, '', '/visionadmin/products/new');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
-    openEditModal(p) {
+    openEditModal(p, push = true) {
+      if (!p) return;
+
+      // If user triggers edit from catalog listing page, navigate to dedicated edit page
+      if (window.location.pathname === '/visionadmin/products' || window.location.pathname === '/visionadmin/catalog/products') {
+        window.location.href = `/visionadmin/products/${p.id}/edit`;
+        return;
+      }
+
       this.isEditMode = true;
       this.formTab = 'basic';
 
       // Parse dimensions if size label exists (e.g. 205/55R16)
       let w = '', a = '', r = '';
-      if (p.tire_size_label) {
-        const m = p.tire_size_label.match(/(\d+)\/(\d+)R(\d+)/i);
+      const sizeLabel = p.tire_size_label || (p.attributes_json && p.attributes_json.tire_size_label) || '';
+      if (sizeLabel) {
+        const m = sizeLabel.match(/(\d+)\/(\d+)R(\d+)/i);
         if (m) {
           w = m[1];
           a = m[2];
@@ -485,7 +582,25 @@ function visionProductsApp() {
       const metaDescEn = typeof p.meta_desc === 'object' && p.meta_desc ? p.meta_desc.en || '' : p.meta_desc || '';
 
       const setId = p.attribute_set_id || 1;
-      const dynAttrs = Object.assign({}, p.attributes_json || {});
+      let dynAttrs = {};
+      if (typeof p.attributes_json === 'string') {
+        try { dynAttrs = JSON.parse(p.attributes_json); } catch(e) { dynAttrs = {}; }
+      } else if (typeof p.attributes_json === 'object' && p.attributes_json !== null) {
+        dynAttrs = Object.assign({}, p.attributes_json);
+      }
+
+      // Pre-seed dynamic attributes from primary product columns
+      if (p.sku && !dynAttrs.sku) dynAttrs.sku = p.sku;
+      if ((p.display_name || p.name_en) && !dynAttrs.product_name) dynAttrs.product_name = p.display_name || p.name_en;
+      if ((p.display_name || p.name_en) && !dynAttrs.display_name) dynAttrs.display_name = p.display_name || p.name_en;
+      if (p.price != null && dynAttrs.price === undefined) dynAttrs.price = p.price;
+      if (p.sale_price != null && dynAttrs.sale_price === undefined) dynAttrs.sale_price = p.sale_price;
+      if (p.tire_size_label && !dynAttrs.tire_size_label) dynAttrs.tire_size_label = p.tire_size_label;
+      if (p.tire_pattern && !dynAttrs.tire_pattern) dynAttrs.tire_pattern = p.tire_pattern;
+      if (p.brand_name && !dynAttrs.brand) dynAttrs.brand = p.brand_name;
+      if (p.country_of_origin && !dynAttrs.country_of_origin) dynAttrs.country_of_origin = p.country_of_origin;
+      if (p.run_flat !== undefined && dynAttrs.run_flat === undefined) dynAttrs.run_flat = Boolean(p.run_flat);
+      if (p.ev_rated !== undefined && dynAttrs.ev_rated === undefined) dynAttrs.ev_rated = Boolean(p.ev_rated);
 
       this.form = {
         id: p.id,
@@ -503,7 +618,7 @@ function visionProductsApp() {
         width: w,
         aspect_ratio: a,
         rim_size: r,
-        tire_size_label: p.tire_size_label || '',
+        tire_size_label: sizeLabel,
         tire_speed_rating: p.tire_speed_rating || '',
         tire_load_index: p.tire_load_index || '',
         tire_type: p.tire_type || 'summer',
@@ -533,7 +648,16 @@ function visionProductsApp() {
         website_ids: p.website_ids && p.website_ids.length ? p.website_ids.map(Number) : (p.website_id ? [Number(p.website_id)] : [1])
       };
       this.modalOpen = true;
+      this.formOpen = true;
       this.onAttributeSetChange(setId, p.id);
+
+      if (push && p && p.id) {
+        const targetUrl = `/visionadmin/products/${p.id}/edit`;
+        if (window.location.pathname !== targetUrl) {
+          history.pushState(null, '', targetUrl);
+        }
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     async openViewModal(p) {
@@ -577,7 +701,21 @@ function visionProductsApp() {
       }
     },
 
-    async saveProduct(closeAfter = true, newAfter = false, duplicate = false) {
+    async saveProduct(opts = true, newAfterArg = false, duplicateArg = false) {
+      let closeAfter = true;
+      let newAfter = false;
+      let duplicate = false;
+
+      if (typeof opts === 'object' && opts !== null) {
+        closeAfter = opts.closeAfter !== undefined ? opts.closeAfter : true;
+        newAfter = opts.newAfter !== undefined ? opts.newAfter : false;
+        duplicate = opts.duplicate !== undefined ? opts.duplicate : false;
+      } else if (typeof opts === 'boolean') {
+        closeAfter = opts;
+        newAfter = newAfterArg;
+        duplicate = duplicateArg;
+      }
+
       // Sync any missing fields from dynamic_attributes
       if (!this.form.sku && this.form.dynamic_attributes && this.form.dynamic_attributes.sku) {
         this.form.sku = this.form.dynamic_attributes.sku;
@@ -634,11 +772,14 @@ function visionProductsApp() {
         const data = await res.json();
         if (res.ok && data.success) {
           this.showToast(data.message || 'Product saved successfully!', 'success');
-          await this.fetchProducts();
           if (newAfter) {
-            this.openCreateModal();
+            window.location.href = '/visionadmin/products/create';
           } else if (closeAfter) {
-            this.modalOpen = false;
+            window.location.href = '/visionadmin/products';
+          } else if (!this.isEditMode && data.product_id) {
+            window.location.href = `/visionadmin/products/${data.product_id}/edit`;
+          } else {
+            await this.fetchProducts();
           }
         } else {
           this.showToast(data.error || 'Failed to save product.', 'error');

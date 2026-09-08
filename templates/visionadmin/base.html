@@ -664,7 +664,7 @@
     </header>
 
     <!-- Page Content Viewport -->
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 {% block main_width %}max-w-[96rem]{% endblock %} w-full mx-auto space-y-6">
       {% block content %}{% endblock %}
     </main>
 
@@ -1411,5 +1411,6 @@
 
   {% block scripts %}{% endblock %}
   {% block extra_scripts %}{% endblock %}
+  {% block ExtraScripts %}{% endblock %}
 </body>
 </html>

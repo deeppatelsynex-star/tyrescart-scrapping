@@ -3409,6 +3409,14 @@ def register_visionadmin_api_routes(app):
         log_activity('unassign', 'attribute_group', group_id, {'attribute_id': attribute_id}, None, user_id=user_id)
         return jsonify({'success': True, 'message': 'Attribute removed from group successfully.'}), 200
 
+    @app.route('/visionadmin/api/attribute-groups/<int:group_id>', methods=['DELETE'])
+    def visionadmin_api_delete_attribute_group(group_id):
+        """Deletes an attribute group and its mappings."""
+        user_id = get_current_admin_user_id()
+        AttributeService.remove_group_from_set(group_id)
+        log_activity('delete', 'attribute_group', group_id, None, {'deleted': True}, user_id=user_id)
+        return jsonify({'success': True, 'message': 'Group deleted successfully.'}), 200
+
     @app.route('/visionadmin/api/catalog/form-schema/<int:set_id>', methods=['GET'])
     def visionadmin_api_get_product_form_schema(set_id):
         """Returns reactive Alpine.js form schema with scoped values & fallback flags."""
@@ -3657,6 +3665,7 @@ def register_visionadmin_api_routes(app):
             return jsonify({'success': False, 'error': str(e)}), 500
 
     @app.route('/visionadmin/api/categories/<int:cat_id>', methods=['GET'])
+    @app.route('/visionadmin/api/catalog/categories/<int:cat_id>', methods=['GET'])
     def visionadmin_api_get_category(cat_id):
         """Fetch single category detail."""
         category = Category.find_by_id(cat_id)
@@ -3679,6 +3688,7 @@ def register_visionadmin_api_routes(app):
             return jsonify({'success': False, 'error': str(e)}), 500
 
     @app.route('/visionadmin/api/categories/<int:cat_id>', methods=['PUT'])
+    @app.route('/visionadmin/api/catalog/categories/<int:cat_id>', methods=['PUT'])
     def visionadmin_api_update_category(cat_id):
         """Update existing category."""
         try:
@@ -3695,6 +3705,7 @@ def register_visionadmin_api_routes(app):
             return jsonify({'success': False, 'error': str(e)}), 500
 
     @app.route('/visionadmin/api/categories/<int:cat_id>', methods=['DELETE'])
+    @app.route('/visionadmin/api/catalog/categories/<int:cat_id>', methods=['DELETE'])
     def visionadmin_api_delete_category(cat_id):
         """Soft delete category."""
         try:

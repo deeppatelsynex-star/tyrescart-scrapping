@@ -8,7 +8,7 @@ Authenticated and authorized against the `admin_users` table in the database.
 import functools
 import re
 import secrets
-from flask import jsonify, redirect, render_template, request, session
+from flask import jsonify, make_response, redirect, render_template, request, session
 
 from visionadmin.admin_auth import (
     check_admin_forgot_password_rate_limit,
@@ -300,6 +300,25 @@ def register_visionadmin_routes(app):
     def visionadmin_sections():
         return render_template('visionadmin/sections.html', page='sections')
 
+    @app.route('/visionadmin/sections/<int:section_id>/preview', methods=['GET'])
+    @app.route('/visonadmin/sections/<int:section_id>/preview', methods=['GET'])
+    @app.route('/admin/sections/<int:section_id>/preview', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_section_preview(section_id):
+        from models.page_section import PageSection
+        sec_raw = PageSection.find_by_id(section_id)
+        if not sec_raw:
+            return "<div style='padding:40px;text-align:center;font-family:sans-serif;'><h3>Section not found.</h3></div>", 404
+        
+        locale = request.args.get('locale', 'en').lower()
+        if locale not in ('en', 'ar'):
+            locale = 'en'
+            
+        sec = PageSection.to_localized_dict(sec_raw, locale=locale)
+        resp = make_response(render_template('visionadmin/section_preview.html', sec=sec, locale=locale))
+        resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        return resp
+
     @app.route('/visionadmin/settings', methods=['GET'])
     @app.route('/visionadmin/config', methods=['GET'])
     @app.route('/visionadmin/reviewer-settings', methods=['GET'])
@@ -347,7 +366,23 @@ def register_visionadmin_routes(app):
     @app.route('/admin/products', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_products():
-        return render_template('visionadmin/products.html', page='products', is_catalog=True)
+        return render_template('visionadmin/products.html', page='products', is_catalog=True, initial_view='list')
+
+    @app.route('/visionadmin/catalog/products/new', methods=['GET'])
+    @app.route('/visionadmin/products/new', methods=['GET'])
+    @app.route('/visionadmin/products/create', methods=['GET'])
+    @app.route('/visonadmin/products/new', methods=['GET'])
+    @app.route('/visonadmin/products/create', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_products_create():
+        return render_template('visionadmin/product_form.html', page='products', is_catalog=True, initial_view='new')
+
+    @app.route('/visionadmin/catalog/products/<int:product_id>/edit', methods=['GET'])
+    @app.route('/visionadmin/products/<int:product_id>/edit', methods=['GET'])
+    @app.route('/visonadmin/products/<int:product_id>/edit', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_products_edit(product_id):
+        return render_template('visionadmin/product_form.html', page='products', is_catalog=True, initial_view='edit', initial_product_id=product_id)
 
     @app.route('/visionadmin/catalog/brands', methods=['GET'])
     @app.route('/visionadmin/brands', methods=['GET'])
@@ -357,6 +392,22 @@ def register_visionadmin_routes(app):
     def visionadmin_brands():
         return render_template('visionadmin/brands.html', page='brands', is_catalog=True)
 
+    @app.route('/visionadmin/catalog/brands/new', methods=['GET'])
+    @app.route('/visionadmin/brands/new', methods=['GET'])
+    @app.route('/visionadmin/brands/create', methods=['GET'])
+    @app.route('/visonadmin/brands/new', methods=['GET'])
+    @app.route('/visonadmin/brands/create', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_brands_create():
+        return render_template('visionadmin/brand_form.html', page='brands', is_catalog=True, initial_mode='create')
+
+    @app.route('/visionadmin/catalog/brands/<int:brand_id>/edit', methods=['GET'])
+    @app.route('/visionadmin/brands/<int:brand_id>/edit', methods=['GET'])
+    @app.route('/visonadmin/brands/<int:brand_id>/edit', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_brands_edit(brand_id):
+        return render_template('visionadmin/brand_form.html', page='brands', is_catalog=True, initial_mode='edit', initial_brand_id=brand_id)
+
     @app.route('/visionadmin/catalog/categories', methods=['GET'])
     @app.route('/visionadmin/categories', methods=['GET'])
     @app.route('/visonadmin/catalog/categories', methods=['GET'])
@@ -365,11 +416,72 @@ def register_visionadmin_routes(app):
     def visionadmin_categories():
         return render_template('visionadmin/categories.html', page='categories', is_catalog=True)
 
+    @app.route('/visionadmin/catalog/categories/new', methods=['GET'])
+    @app.route('/visionadmin/categories/new', methods=['GET'])
+    @app.route('/visionadmin/categories/create', methods=['GET'])
+    @app.route('/visonadmin/categories/new', methods=['GET'])
+    @app.route('/visonadmin/categories/create', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_categories_create():
+        return render_template('visionadmin/category_form.html', page='categories', is_catalog=True, initial_mode='create')
+
+    @app.route('/visionadmin/catalog/categories/<int:cat_id>/edit', methods=['GET'])
+    @app.route('/visionadmin/categories/<int:cat_id>/edit', methods=['GET'])
+    @app.route('/visonadmin/categories/<int:cat_id>/edit', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_categories_edit(cat_id):
+        return render_template('visionadmin/category_form.html', page='categories', is_catalog=True, initial_mode='edit', initial_cat_id=cat_id)
+
     @app.route('/visionadmin/attributes', methods=['GET'])
     @app.route('/visionadmin/catalog/attributes', methods=['GET'])
+    @app.route('/visonadmin/attributes', methods=['GET'])
+    @app.route('/visonadmin/catalog/attributes', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_attributes():
         return render_template('visionadmin/attributes.html', page='attributes')
+
+    @app.route('/visionadmin/attributes/new', methods=['GET'])
+    @app.route('/visionadmin/attributes/create', methods=['GET'])
+    @app.route('/visionadmin/catalog/attributes/new', methods=['GET'])
+    @app.route('/visionadmin/catalog/attributes/create', methods=['GET'])
+    @app.route('/visonadmin/attributes/new', methods=['GET'])
+    @app.route('/visonadmin/attributes/create', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_attributes_create():
+        return render_template('visionadmin/attribute_form.html', page='attributes', initial_mode='create')
+
+    @app.route('/visionadmin/attributes/<int:attr_id>/edit', methods=['GET'])
+    @app.route('/visionadmin/catalog/attributes/<int:attr_id>/edit', methods=['GET'])
+    @app.route('/visonadmin/attributes/<int:attr_id>/edit', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_attributes_edit(attr_id):
+        return render_template('visionadmin/attribute_form.html', page='attributes', initial_mode='edit', initial_attr_id=attr_id)
+
+    @app.route('/visionadmin/attribute-sets/new', methods=['GET'])
+    @app.route('/visionadmin/attribute-sets/create', methods=['GET'])
+    @app.route('/visionadmin/catalog/attribute-sets/new', methods=['GET'])
+    @app.route('/visionadmin/catalog/attribute-sets/create', methods=['GET'])
+    @app.route('/visonadmin/attribute-sets/new', methods=['GET'])
+    @app.route('/visonadmin/attribute-sets/create', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_attribute_sets_create():
+        return render_template('visionadmin/attribute_set_form.html', page='attributes', initial_mode='create')
+
+    @app.route('/visionadmin/attribute-sets/<int:set_id>/edit', methods=['GET'])
+    @app.route('/visionadmin/catalog/attribute-sets/<int:set_id>/edit', methods=['GET'])
+    @app.route('/visonadmin/attribute-sets/<int:set_id>/edit', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_attribute_sets_edit(set_id):
+        return render_template('visionadmin/attribute_set_form.html', page='attributes', initial_mode='edit', initial_set_id=set_id)
+
+    @app.route('/visionadmin/attribute-sets/<int:set_id>/builder', methods=['GET'])
+    @app.route('/visionadmin/attribute-sets/<int:set_id>/schema', methods=['GET'])
+    @app.route('/visionadmin/catalog/attribute-sets/<int:set_id>/builder', methods=['GET'])
+    @app.route('/visonadmin/attribute-sets/<int:set_id>/builder', methods=['GET'])
+    @app.route('/visonadmin/attribute-sets/<int:set_id>/schema', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_attribute_sets_builder(set_id):
+        return render_template('visionadmin/attribute_set_builder.html', page='attributes', initial_set_id=set_id)
 
     @app.route('/visionadmin/stores', methods=['GET'])
     @app.route('/visionadmin/websites', methods=['GET'])
