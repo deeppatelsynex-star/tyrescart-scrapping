@@ -381,10 +381,140 @@
     }
   }
 
-  /* ---------- Mobile-First Exclusive FAQ Accordion ---------- */
+  /* ---------- HTML Escape & Localization Utilities ---------- */
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function getLocalizedText(val, locale) {
+    if (!val) return '';
+    if (typeof val === 'string') {
+      var trimmed = val.trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        try {
+          var parsed = JSON.parse(trimmed);
+          return parsed[locale] || parsed.en || parsed.ar || Object.values(parsed)[0] || '';
+        } catch (e) {}
+      }
+      return val;
+    }
+    if (typeof val === 'object') {
+      return val[locale] || val.en || val.ar || Object.values(val)[0] || '';
+    }
+    return String(val);
+  }
+
+  /* ---------- Dynamic FAQ Section Renderer (via JS) ---------- */
+  function renderFaqSections() {
+    var locale = document.documentElement.getAttribute('lang') || 'en';
+
+    // Home Page / Section FAQ (Rendered dynamically via JS)
+    var homeFaqContainer = document.getElementById('home-faq-container');
+    var homeFaqScript = document.getElementById('home-faq-json');
+
+    if (homeFaqContainer && homeFaqScript) {
+      try {
+        var secData = JSON.parse(homeFaqScript.textContent || '{}');
+        var title = getLocalizedText(secData.section_title, locale);
+        var subtitle = getLocalizedText(secData.section_subtitle, locale);
+        var rawFaqs = (secData.section_data && secData.section_data.faqs) ? secData.section_data.faqs : [];
+        if (!Array.isArray(rawFaqs)) rawFaqs = [];
+
+        var itemsHtml = '';
+        rawFaqs.forEach(function(f, idx) {
+          if (!f) return;
+          var q = getLocalizedText(f.question, locale);
+          var a = getLocalizedText(f.answer, locale);
+          if (!q || !q.trim()) return;
+
+          var isFirst = (idx === 0);
+          var answerContent = a.trim().startsWith('<p') ? a : ('<p>' + a + '</p>');
+
+          itemsHtml += `
+            <div class="faq-item ${isFirst ? 'active' : ''}" data-faq-item>
+              <button type="button" class="faq-summary" aria-expanded="${isFirst ? 'true' : 'false'}">
+                <span class="faq-question-text">${escapeHtml(q)}</span>
+                <span class="faq-chevron-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </button>
+              <div class="faq-answer">
+                <div class="faq-answer-inner">
+                  <div class="body">${answerContent}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        var headerHtml = '';
+        if (subtitle || title) {
+          headerHtml = `
+            <div class="center">
+              ${subtitle ? `<span class="eyebrow">${escapeHtml(subtitle)}</span>` : ''}
+              ${title ? `<h2>${escapeHtml(title)}</h2>` : ''}
+            </div>
+          `;
+        }
+
+        homeFaqContainer.innerHTML = `
+          ${headerHtml}
+          <div style="margin-top:36px" class="faq-list">
+            ${itemsHtml}
+          </div>
+        `;
+      } catch (err) {
+        console.error('Failed to render FAQ section via JS:', err);
+      }
+    }
+  }
+
+  /* ---------- Smooth Exclusive FAQ Accordion Engine ---------- */
   function initFaqAccordion() {
     var faqContainers = document.querySelectorAll('.faq, .dynamic-faq-block, [id^="faq"], .faq-list');
     faqContainers.forEach(function(container) {
+      // 1. Button-based FAQ items (Smooth CSS Grid Accordion)
+      var faqButtons = container.querySelectorAll('.faq-item .faq-summary');
+      faqButtons.forEach(function(btn) {
+        if (btn._faqBound) return;
+        btn._faqBound = true;
+
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          var item = btn.closest('.faq-item');
+          if (!item) return;
+          var isAlreadyActive = item.classList.contains('active');
+
+          // Smoothly close all other items in this list container
+          var allItems = container.querySelectorAll('.faq-item');
+          allItems.forEach(function(otherItem) {
+            if (otherItem !== item && otherItem.classList.contains('active')) {
+              otherItem.classList.remove('active');
+              var otherBtn = otherItem.querySelector('.faq-summary');
+              if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+            }
+          });
+
+          // Toggle clicked item
+          if (isAlreadyActive) {
+            item.classList.remove('active');
+            btn.setAttribute('aria-expanded', 'false');
+          } else {
+            item.classList.add('active');
+            btn.setAttribute('aria-expanded', 'true');
+          }
+        });
+      });
+
+      // 2. Native <details> fallback support
       var allDetails = container.querySelectorAll('details');
       allDetails.forEach(function(detail) {
         if (detail._faqBound) return;
@@ -392,12 +522,16 @@
 
         detail.addEventListener('toggle', function() {
           if (this.open) {
+            detail.classList.add('active');
             allDetails.forEach(function(other) {
               if (other !== detail && other.open) {
                 other.open = false;
                 other.removeAttribute('open');
+                other.classList.remove('active');
               }
             });
+          } else {
+            detail.classList.remove('active');
           }
         });
       });
@@ -407,6 +541,7 @@
   function initAll() {
     initMobileNav();
     initNavActiveState();
+    renderFaqSections();
     initFaqAccordion();
   }
 
