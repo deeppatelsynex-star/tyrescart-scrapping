@@ -5,15 +5,18 @@
     {% for f in faq_items %}
     {% set f_q = f.question.ar if (is_ar and f.question and f.question.ar) else (f.question.en if (f.question and f.question.en) else (f.question or '')) %}
     {% set f_a = f.answer.ar if (is_ar and f.answer and f.answer.ar) else (f.answer.en if (f.answer and f.answer.en) else (f.answer or '')) %}
-    <details class="faq-item" name="dynamic_faq_group" style="background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;" {% if loop.first and block.open_first %}open{% endif %}>
-      <summary class="faq-summary" style="cursor:pointer;list-style:none;">
-        <span class="faq-summary-inner">
-          <span class="faq-question-text" style="font-weight:800;color:var(--ink);font-size:0.98rem;">{{ f_q }}</span>
-          <span class="faq-chevron" aria-hidden="true"></span>
-        </span>
+    <details class="faq-item" name="dynamic_faq_group" {% if loop.first and block.open_first %}open{% endif %}>
+      <summary class="faq-summary">
+        <div class="faq-summary-inner">
+          <span class="faq-question-text">{{ f_q }}</span>
+          <span class="faq-icon-badge" aria-hidden="true">
+            <svg class="faq-chevron-down" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <svg class="faq-chevron-up" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          </span>
+        </div>
       </summary>
-      <div class="body" style="padding:0 20px 18px;color:var(--slate);font-size:0.92rem;line-height:1.6;">
-        {{ f_a | safe }}
+      <div class="body">
+        <p>{{ f_a | safe }}</p>
       </div>
     </details>
     {% endfor %}
