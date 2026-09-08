@@ -230,6 +230,18 @@ class AttributeService:
             conn.close()
 
     @staticmethod
+    def remove_group_from_set(group_id):
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM attribute_group_attributes WHERE attribute_group_id = %s", (group_id,))
+                cursor.execute("DELETE FROM attribute_groups WHERE id = %s", (group_id,))
+                conn.commit()
+                return True
+        finally:
+            conn.close()
+
+    @staticmethod
     def get_product_scoped_attributes(product_id, website_id=None, store_id=None, store_view_id=None):
         """
         Resolves product attribute values with 4-tier fallback:
@@ -428,14 +440,49 @@ class AttributeService:
             return {'groups': []}
 
         saved_values = {}
+        prod_data = {}
         if product_id:
             saved_values = AttributeService.get_product_scoped_attributes(product_id, website_id, store_id)
+            conn = get_connection()
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT * FROM products WHERE id = %s", (product_id,))
+                    prow = cursor.fetchone()
+                    if prow:
+                        prod_data = dict(prow)
+                        if prod_data.get('attributes_json') and isinstance(prod_data['attributes_json'], str):
+                            try:
+                                prod_data['attributes_json'] = json.loads(prod_data['attributes_json'])
+                            except Exception:
+                                prod_data['attributes_json'] = {}
+            except Exception as e:
+                logger.error(f"Error fetching product in get_dynamic_form_schema: {e}")
+            finally:
+                conn.close()
 
         for group in attr_set.get('groups', []):
             for attr in group.get('attributes', []):
                 code = attr['code']
                 val_info = saved_values.get(code, {})
-                attr['current_value'] = val_info.get('value', attr.get('default_value'))
+                c_val = val_info.get('value')
+
+                # Fallback to products.attributes_json
+                if (c_val is None or c_val == '') and prod_data.get('attributes_json') and isinstance(prod_data['attributes_json'], dict):
+                    c_val = prod_data['attributes_json'].get(code)
+
+                # Fallback to direct columns in products table
+                if (c_val is None or c_val == '') and prod_data:
+                    if code in ('product_name', 'name'):
+                        c_val = prod_data.get('display_name') or prod_data.get('name')
+                    elif code == 'display_name':
+                        c_val = prod_data.get('display_name')
+                    elif code in prod_data and prod_data.get(code) is not None:
+                        c_val = prod_data.get(code)
+
+                if c_val is None:
+                    c_val = attr.get('default_value')
+
+                attr['current_value'] = c_val
                 attr['current_option_id'] = val_info.get('option_id')
                 attr['scope_level'] = val_info.get('scope_level', 'global')
                 attr['is_inherited'] = val_info.get('is_inherited', False)

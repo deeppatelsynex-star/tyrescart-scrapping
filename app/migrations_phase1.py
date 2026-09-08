@@ -354,6 +354,9 @@ ALTER_EXISTING_TABLES = [
     ("admin_users", "deleted_by", "ALTER TABLE `admin_users` ADD COLUMN `deleted_by` BIGINT UNSIGNED NULL AFTER `deleted_at`"),
     ("admin_users", "created_by", "ALTER TABLE `admin_users` ADD COLUMN `created_by` BIGINT UNSIGNED NULL AFTER `remember_token`"),
     ("admin_users", "updated_by", "ALTER TABLE `admin_users` ADD COLUMN `updated_by` BIGINT UNSIGNED NULL AFTER `created_by`"),
+
+    # Alter attribute_options table
+    ("attribute_options", "is_default", "ALTER TABLE `attribute_options` ADD COLUMN `is_default` TINYINT(1) NOT NULL DEFAULT 0 AFTER `swatch_value`"),
 ]
 
 

@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="{{ locale or 'en' }}" dir="{{ 'rtl' if locale == 'ar' else 'ltr' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preview: {{ sec.section_title or sec.section_type }} | VisionAdmin</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Cairo:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Client Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/client.css') }}?v={{ range(10000, 99999) | random }}">
+  
+  <!-- Alpine.js Core & Plugins -->
+  <style>
+    [x-cloak] { display: none !important; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #ffffff;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      min-height: 100%;
+    }
+    html[dir="rtl"], body.lang-ar {
+      font-family: 'Cairo', 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+    
+    /* Responsive preview adjustments */
+    @media(min-width: 960px) {
+      .hero-2col-layout {
+        grid-template-columns: 1.15fr 0.95fr !important;
+        gap: 56px !important;
+      }
+    }
+    .hero-db-content h1 {
+      color: #ffffff !important;
+      font-size: clamp(2rem, 3.8vw, 2.75rem) !important;
+      font-weight: 800 !important;
+      line-height: 1.25 !important;
+      margin-bottom: 16px !important;
+    }
+    .hero-db-content h2, .hero-db-content h3 {
+      color: var(--brand-glow, #34d399) !important;
+      font-size: 1.25rem !important;
+      font-weight: 700 !important;
+      margin-top: 18px !important;
+      margin-bottom: 8px !important;
+    }
+    .hero-db-content p {
+      color: rgba(255, 255, 255, 0.85) !important;
+      font-size: 1.02rem !important;
+      line-height: 1.75 !important;
+      margin-bottom: 14px !important;
+    }
+    .hero-db-content strong {
+      color: #ffffff !important;
+      font-weight: 700 !important;
+    }
+    .hero-db-content ul, .hero-db-content ol {
+      margin: 12px 0 16px 20px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+    .hero-db-content li {
+      margin-bottom: 6px;
+    }
+    .stat-animated .about-stat-icon-wrap {
+      animation: statIconPulse 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .stat-animated .about-stat-number {
+      animation: statNumberPop 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    @keyframes statIconPulse {
+      0% { transform: scale(0.6); opacity: 0; }
+      60% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes statNumberPop {
+      0% { transform: translateY(12px); opacity: 0.2; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Isolated preview header ribbon */
+    .preview-ribbon {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(8px);
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 7px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .preview-ribbon-tag {
+      background: #10b981;
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  </style>
+  <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="{{ 'lang-ar' if locale == 'ar' else 'lang-en' }}">
+
+  <!-- Top Preview Context Ribbon -->
+  <div class="preview-ribbon">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span class="preview-ribbon-tag">{{ sec.page_slug or 'about-us' }}</span>
+      <span style="color:#ffffff;">Section #{{ sec.id }}: {{ sec.section_title or sec.section_type }}</span>
+    </div>
+    <div>
+      <span>Isolated Section Live Preview</span>
+    </div>
+  </div>
+
+  {# =========================================================================
+     SVG ICON HELPER MACRO
+     ========================================================================= #}
+  {% macro render_icon(icon_name, size=24, stroke_width='2.2') %}
+    {% set key = (icon_name or '') | lower | trim %}
+    {% if 'tyre' in key or 'tire' in key or 'wheel' in key or 'disc' in key or 'rubber' in key or 'product' in key %}
+      <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ stroke_width }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3"></circle><path d="M12 3v6"></path><path d="M12 15v6"></path><path d="M3 12h6"></path><path d="M15 12h6"></path></svg>
+    {% elif 'brand' in key or 'award' in key or 'badge' in key or 'quality' in key or 'star' in key or 'medal' in key or 'trust' in key or 'certif' in key %}
+      <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ stroke_width }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"></circle><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path></svg>
+    {% elif 'clock' in key or 'time' in key or 'hour' in key or '247' in key or 'access' in key or 'online' in key or 'schedule' in key or 'always' in key %}
+      <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ stroke_width }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+    {% elif 'user' in key or 'customer' in key or 'people' in key or 'client' in key or 'team' in key or 'heart' in key or 'person' in key or 'focus' in key or 'satisf' in key %}
+      <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ stroke_width }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+    {% elif 'truck' in key or 'delivery' in key or 'shipping' in key or 'van' in key or 'car' in key or 'vehicle' in key or 'mobile' in key %}
+      <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ stroke_width }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+    {% elif 'dollar' in key or 'price' in key or 'cost' in key or 'money' in key or 'save' in key or 'value' in key or 'deal' in key or 'rate' in key %}
+      <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ stroke_width }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+    {% elif 'headset' in key or 'support' in key or 'service' in key or 'call' in key or 'phone' in key or 'help' in key or 'contact' in key %}
+      <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ stroke_width }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+    {% elif 'globe' in key or 'network' in key or 'uae' in key or 'map' in key or 'location' in key or 'pin' in key or 'world' in key or 'nation' in key %}
+      <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ stroke_width }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+    {% elif 'zap' in key or 'bolt' in key or 'speed' in key or 'instant' in key or 'flash' in key or 'innovat' in key %}
+      <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ stroke_width }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+    {% else %}
+      <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ stroke_width }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+    {% endif %}
+  {% endmacro %}
+
+  {# =========================================================================
+     RENDER TARGET SECTION
+     ========================================================================= #}
+  {% if (sec.section_data and sec.section_data.blocks and (sec.section_data.blocks | length > 0)) or sec.section_type == 'custom' %}
+    <!-- ================= COMPOSABLE DYNAMIC SECTION ================= -->
+    {% set s_theme = sec.section_data.theme if (sec.section_data and sec.section_data.theme) else {} %}
+    {% set s_bg = s_theme.bg_style or 'default' %}
+    {% set s_pad = s_theme.padding_y or 'standard' %}
+    <section class="dynamic-section {{ 'bg-soft' if s_bg == 'soft' else ('bg-dark' if s_bg == 'dark' else '') }} {{ s_theme.custom_class or '' }}" 
+             id="section-{{ sec.id }}" 
+             style="{% if s_pad == 'compact' %}padding:clamp(24px, 3vw, 40px) 0;{% elif s_pad == 'spacious' %}padding:clamp(48px, 6vw, 80px) 0;{% endif %}{% if s_bg == 'custom' and s_theme.custom_bg %}background:{{ s_theme.custom_bg }};{% endif %}{{ s_theme.custom_style or '' }}">
+      <div class="wrap">
+        {% if sec.section_title %}
+          <div class="center" style="margin-bottom:28px;">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle | safe }}</span>{% endif %}
+            <h2>{{ sec.section_title | safe }}</h2>
+            {% if sec.content %}<div class="lead" style="margin-inline:auto;">{{ sec.content | safe }}</div>{% endif %}
+          </div>
+        {% endif %}
+
+        {% if sec.section_data and sec.section_data.blocks %}
+          {% for block in sec.section_data.blocks %}
+            {% include 'Client/components/blocks/' ~ block.type ~ '.html' ignore missing %}
+          {% endfor %}
+        {% endif %}
+
+        {% if sec.button_text and sec.button_url %}
+          <div class="center" style="margin-top:28px;">
+            <a class="btn btn-wa" href="{{ sec.button_url }}" target="_blank" rel="noopener">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+              {{ sec.button_text }}
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+  {# ================= ABOUT-US PAGE STYLED SECTIONS ================= #}
+  {% elif sec.page_slug == 'about-us' or sec.section_type == 'mission_vision' %}
+    
+    {% if sec.section_type == 'hero' %}
+      <!-- ABOUT US HERO -->
+      {% set hero_img = sec.image or '' %}
+      {% set bg_style = "background: linear-gradient(90deg, rgba(12, 16, 8, 0.95) 0%, rgba(12, 16, 8, 0.88) 55%, rgba(12, 16, 8, 0.72) 100%), url('" ~ hero_img ~ "') center center / cover no-repeat;" if hero_img else "background: #0c1008;" %}
+      <section class="about-hero-dark" id="hero-{{ sec.id }}" style="{{ bg_style }}">
+        <div class="wrap">
+          <nav class="about-breadcrumb" aria-label="Breadcrumb">
+            <a href="/">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              <span>{{ 'الرئيسية' if locale == 'ar' else 'Home' }}</span>
+            </a>
+            <span class="sep" aria-hidden="true">/</span>
+            <span class="current">{{ sec.section_title or ('من نحن' if locale == 'ar' else 'About Us') }}</span>
+          </nav>
+
+          <div class="hero-db-content" style="max-width: 860px;">
+            {% if sec.section_subtitle %}<span class="eyebrow">&mdash; {{ sec.section_subtitle }}</span>{% endif %}
+            {% if sec.section_title %}<h1>{{ sec.section_title | replace('\n', '<br>') | safe }}</h1>{% endif %}
+            {% if sec.content %}<div class="lead">{{ sec.content | safe }}</div>{% endif %}
+            {% if sec.button_text %}
+            <div style="margin-top: 24px;">
+              <a href="{{ sec.button_url or '#' }}" class="about-hero-cta">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span>{{ sec.button_text }}</span>
+              </a>
+            </div>
+            {% endif %}
+          </div>
+
+          {% set feat_list = (sec.section_data and (sec.section_data.features or sec.section_data.items)) or [] %}
+          {% if feat_list %}
+          <div class="about-hero-features-grid">
+            {% for feat in feat_list %}
+            <div class="about-hero-feat-item">
+              <div class="about-hero-feat-icon">{{ render_icon(feat.icon or 'star', 20) }}</div>
+              <div>
+                <div class="about-hero-feat-title">{{ feat.title }}</div>
+                <div class="about-hero-feat-sub">{{ feat.sub or feat.desc }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'content_image' %}
+      <!-- ABOUT US CONTENT + IMAGE STORY -->
+      {% set has_image = sec.image and sec.image|trim %}
+      {% set is_left = sec.image_position == 'left' %}
+      {% set grid_style = 'grid-template-columns: 1fr 1.15fr;' if (has_image and is_left) else ('grid-template-columns: 1.15fr 1fr;' if has_image else 'grid-template-columns: 1fr;') %}
+      <section class="about-story-section" id="story-{{ sec.id }}">
+        <div class="wrap">
+          <div class="about-story-grid" style="{{ grid_style }}">
+            {% if has_image and is_left %}
+              <div class="about-story-media">
+                <img src="{{ sec.image }}" alt="{{ sec.section_title or '' }}" loading="lazy" />
+                {% if sec.section_data and sec.section_data.badge_title %}
+                <div class="about-story-floating-badge">
+                  <div class="about-badge-icon">{{ render_icon('user', 22) }}</div>
+                  <div>
+                    <div class="about-badge-title">{{ sec.section_data.badge_title }}</div>
+                    <div class="about-badge-sub">{{ sec.section_data.badge_sub or '' }}</div>
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            {% endif %}
+
+            <div class="about-story-content" {% if not has_image %}style="max-width: 900px;"{% endif %}>
+              {% if sec.section_subtitle %}<span class="eyebrow">&mdash; {{ sec.section_subtitle }}</span>{% endif %}
+              {% if sec.section_title %}<h2>{{ sec.section_title }}</h2>{% endif %}
+              {% if sec.content %}<div class="about-story-rich">{{ sec.content | safe }}</div>{% endif %}
+              {% if sec.button_text %}
+              <div>
+                <a href="{{ sec.button_url or '#' }}" class="about-btn-primary">
+                  <span>{{ sec.button_text }}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+              </div>
+              {% endif %}
+            </div>
+
+            {% if has_image and not is_left %}
+              <div class="about-story-media">
+                <img src="{{ sec.image }}" alt="{{ sec.section_title or '' }}" loading="lazy" />
+                {% if sec.section_data and sec.section_data.badge_title %}
+                <div class="about-story-floating-badge">
+                  <div class="about-badge-icon">{{ render_icon('user', 22) }}</div>
+                  <div>
+                    <div class="about-badge-title">{{ sec.section_data.badge_title }}</div>
+                    <div class="about-badge-sub">{{ sec.section_data.badge_sub or '' }}</div>
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'features' or sec.section_type == 'why' %}
+      <!-- ABOUT US FEATURES / WHY -->
+      <section class="about-why-section" id="why-{{ sec.id }}">
+        <div class="wrap">
+          {% if sec.section_title or sec.section_subtitle %}
+          <div class="about-section-head">
+            {% if sec.section_subtitle %}<span class="eyebrow">&mdash; {{ sec.section_subtitle }}</span>{% endif %}
+            {% if sec.section_title %}<h2>{{ sec.section_title }}</h2>{% endif %}
+            {% if sec.content %}<div class="sublead">{{ sec.content | safe }}</div>{% endif %}
+          </div>
+          {% endif %}
+          {% set cards_list = (sec.section_data and (sec.section_data.cards or sec.section_data.items or sec.section_data.features)) or [] %}
+          {% if cards_list %}
+          <div class="about-why-grid">
+            {% for card in cards_list %}
+            <div class="about-why-card">
+              <div class="about-why-icon-wrap">{{ render_icon(card.icon or 'shield', 26) }}</div>
+              <h3 class="about-why-card-title">{{ card.title }}</h3>
+              <p class="about-why-card-desc">{{ card.desc or card.description }}</p>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'stats' %}
+      <!-- ABOUT US STATS BAND -->
+      {% set metrics_list = (sec.section_data and (sec.section_data.metrics or sec.section_data.items)) or [] %}
+      <section class="about-stats-band" id="stats-{{ sec.id }}">
+        <div class="wrap">
+          {% if metrics_list %}
+          <div class="about-stats-grid" style="text-align: center;">
+            {% for stat in metrics_list %}
+            <div class="about-stat-col" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 16px;">
+              <div class="about-stat-icon-wrap" style="display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; color: var(--green-bright, #34d399);">
+                {{ render_icon(stat.icon or 'disc', 36, '2') }}
+              </div>
+              <div class="about-stat-number" style="text-align: center; width: 100%; font-size: clamp(2rem, 3.8vw, 3rem); font-weight: 800; color: #ffffff; margin-bottom: 6px; letter-spacing: -0.02em;">{{ stat.number }}</div>
+              <div class="about-stat-heading" style="text-align: center; width: 100%; font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 4px;">{{ stat.heading or stat.label }}</div>
+              <div class="about-stat-subtext" style="text-align: center; width: 100%; font-size: 0.85rem; color: rgba(255, 255, 255, 0.75); line-height: 1.5; max-width: 250px; margin: 0 auto;">{{ stat.subtext or stat.sub }}</div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'mission_vision' %}
+      <!-- ABOUT US MISSION & TEAM -->
+      {% set has_image = sec.image and sec.image|trim %}
+      {% set is_left = sec.image_position == 'left' %}
+      {% set grid_style = 'grid-template-columns: 1.2fr 1fr;' if (has_image and is_left) else ('grid-template-columns: 1fr 1.2fr;' if has_image else 'grid-template-columns: 1fr;') %}
+      <section class="about-team-section" id="team-{{ sec.id }}">
+        <div class="wrap">
+          <div class="about-team-grid" style="{{ grid_style }}">
+            {% if has_image and is_left %}
+            <div class="about-team-media"><img src="{{ sec.image }}" alt="{{ sec.section_title or '' }}" loading="lazy" /></div>
+            {% endif %}
+            <div {% if not has_image %}style="max-width: 900px;"{% endif %}>
+              {% if sec.section_subtitle %}<span class="eyebrow">&mdash; {{ sec.section_subtitle }}</span>{% endif %}
+              {% if sec.section_title %}<h2>{{ sec.section_title }}</h2>{% endif %}
+              {% if sec.content %}<div class="about-team-rich">{{ sec.content | safe }}</div>{% endif %}
+              {% if sec.button_text %}
+              <div>
+                <a href="{{ sec.button_url or '#' }}" class="about-btn-outline">
+                  <span>{{ sec.button_text }}</span>
+                </a>
+              </div>
+              {% endif %}
+            </div>
+            {% if has_image and not is_left %}
+            <div class="about-team-media"><img src="{{ sec.image }}" alt="{{ sec.section_title or '' }}" loading="lazy" /></div>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'cta' %}
+      <!-- ABOUT US CTA BOX -->
+      <section class="about-action-wrap" id="cta-{{ sec.id }}">
+        <div class="wrap">
+          <div class="about-action-box">
+            <div class="about-action-left">
+              {% if sec.image %}
+              <div class="about-action-wheel" style="max-width:110px; width:110px; height:110px; flex-shrink:0;">
+                <img src="{{ sec.image }}" alt="{{ sec.section_title or '' }}" style="width:100%; height:100%; object-fit:contain;" loading="lazy" />
+              </div>
+              {% endif %}
+              <div class="about-action-icon-circle">{{ render_icon('user', 24) }}</div>
+              <div>
+                <h3 class="about-action-title">{{ sec.section_title }}</h3>
+                {% if sec.content %}<div class="about-action-desc">{{ sec.content | safe }}</div>{% endif %}
+              </div>
+            </div>
+            {% if sec.button_text %}
+            <div>
+              <a href="{{ sec.button_url or '#' }}" class="about-action-btn">
+                <span>{{ sec.button_text }}</span>
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+    {% endif %}
+
+  {# ================= HOME PAGE / STANDARD STOREFRONT SECTIONS ================= #}
+  {% else %}
+
+    {% if sec.section_type == 'hero' %}
+      <!-- 1. HOME HERO -->
+      <section class="hero" id="section-{{ sec.id }}">
+        <div class="wrap hero-grid">
+          <div>
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h1>{{ sec.section_title | replace('\n', '<br>') | safe }}</h1>
+            {% if sec.content %}<p class="lead">{{ sec.content | safe }}</p>{% endif %}
+
+            <div class="cta-row">
+              <a class="btn btn-wa" href="{{ sec.button_url or 'https://wa.me/971505069575?text=Hi%20Online%20Tyres%20Shop%2C%20I%27d%20like%20a%20tyre%20quote.' }}" target="_blank" rel="noopener">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+                {{ sec.button_text or 'WhatsApp for a quote' }}
+              </a>
+              <a class="btn btn-ghost-light" href="tel:{{ (sec.section_data and sec.section_data.phone) or '+971505069575' }}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.4 21 3 13.6 3 4.5 3 3.95 3.45 3.5 4 3.5h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                {{ (sec.section_data and sec.section_data.phone_display) or '+971 50 506 9575' }}
+              </a>
+            </div>
+
+            {% set badges = sec.section_data.badges if sec.section_data and sec.section_data.badges else [] %}
+            {% if badges %}
+            <div class="hero-badges">
+              {% for b in badges %}
+              <span class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg> {{ b.title or b.text or b.name or b }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="quote-card">
+            <h3>Buy tyres online — price in minute</h3>
+            <p class="sub">Send us your size — we’ll reply with tyre prices for Dubai & Abu Dhabi.</p>
+            <form id="quoteForm" novalidate onsubmit="return false;">
+              <div class="field">
+                <label for="tyreSize">Tyre size (e.g. 235/55 R19)</label>
+                <input id="tyreSize" name="tyreSize" type="text" placeholder="235/55 R19" autocomplete="off">
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label for="carMake">Car Details</label>
+                  <input id="carMake" name="carMake" type="text" placeholder="Nissan Patrol 2024" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label for="emirate">Emirate</label>
+                  <select id="emirate" name="emirate">
+                    <option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-wa" type="button">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+                Send on WhatsApp
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'stats' %}
+      <!-- 2. HOME STATS -->
+      <section class="stats" id="section-{{ sec.id }}" style="padding-top:20px;padding-bottom:20px">
+        <div class="wrap">
+          <div class="stats-inner">
+            {% set metrics = sec.section_data.metrics if sec.section_data and sec.section_data.metrics else [] %}
+            {% for m in metrics %}
+            <div class="stat"><b>{{ m.number }}</b><span>{{ m.label or m.heading }}</span></div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'features' or sec.section_type == 'why' %}
+      <!-- 3. HOME WHY / FEATURES -->
+      <section id="why" class="why-section">
+        <div class="wrap">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+            {% if sec.content %}<p class="lead">{{ sec.content | safe }}</p>{% endif %}
+          </div>
+
+          {% set cards = sec.section_data.cards if sec.section_data and sec.section_data.cards else [] %}
+          {% if cards %}
+          <div class="grid g3" style="margin-top:44px">
+            {% for c in cards %}
+            <div class="card">
+              <div class="icon" aria-hidden="true">{{ render_icon(c.icon or 'star', 22) }}</div>
+              <h3>{{ c.title }}</h3>
+              <p>{{ c.description or c.desc }}</p>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          {% set cta_row = sec.section_data.cta_row if sec.section_data and sec.section_data.cta_row else {} %}
+          <div class="cta-row center" style="justify-content:center">
+            <a class="btn btn-wa" href="{{ cta_row.wa_url or '#' }}" target="_blank" rel="noopener">{{ cta_row.wa_text or 'Chat on WhatsApp' }}</a>
+            <a class="btn btn-ghost" href="{{ cta_row.call_url or '#' }}">{{ cta_row.call_text or 'Call Us' }}</a>
+          </div>
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'price_table' or sec.section_type == 'pricing' %}
+      <!-- TYRE PRICES TABLE -->
+      <section id="prices" class="price-section">
+        <div class="wrap">
+          <div class="center">
+            <span class="eyebrow">{{ sec.section_subtitle or 'TYRE PRICES' }}</span>
+            <h2>{{ sec.section_title or 'Tyre Prices in Dubai and Abu Dhabi' }}</h2>
+            {% if sec.content %}
+            <p class="lead">{{ sec.content | safe }}</p>
+            {% else %}
+            <p class="lead">Starting prices for the sizes UAE drivers buy most, fitted at a partner centre.</p>
+            {% endif %}
+          </div>
+
+          <!-- Guarantees -->
+          {% set val_cards = sec.section_data.value_cards if sec.section_data and sec.section_data.value_cards else [] %}
+          {% if val_cards %}
+          <div class="price-guarantees-grid">
+            {% for vc in val_cards %}
+            <div class="price-guarantee-card">
+              <div class="pg-icon">{{ render_icon(vc.icon or 'shield', 24) }}</div>
+              <div class="pg-text">
+                <div class="pg-title">{{ vc.title.en if (vc.title is mapping) else (vc.title or '') }}</div>
+                <div class="pg-sub">{{ vc.subtitle.en if (vc.subtitle is mapping) else (vc.subtitle or '') }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Table -->
+          {% set p_rows = sec.section_data.rows if sec.section_data and sec.section_data.rows else [] %}
+          <div class="price-table-card" x-data="{ expandedRow: null }">
+            <div class="price-table-scroll">
+              <table class="price-table responsive-price-table" aria-label="Tyre sizes and starting prices in UAE">
+                <thead>
+                  <tr>
+                    <th scope="col" class="th-size"><span>Tyre size</span></th>
+                    <th scope="col" class="th-common desktop-col"><span>Common on</span></th>
+                    <th scope="col" class="th-tier"><span>Budget from</span></th>
+                    <th scope="col" class="th-tier desktop-col"><span>Mid-range from</span></th>
+                    <th scope="col" class="th-tier desktop-col"><span>Premium from</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in p_rows %}
+                  {% set row_idx = loop.index0 %}
+                  <tr class="dtr-parent-row" 
+                      :class="expandedRow === {{ row_idx }} ? 'dtr-expanded' : ''"
+                      @click="expandedRow = expandedRow === {{ row_idx }} ? null : {{ row_idx }}">
+                    <td class="td-size">
+                      <div class="dtr-cell-content">
+                        <button type="button" class="dtr-control-btn" :class="expandedRow === {{ row_idx }} ? 'is-expanded' : ''">
+                          <span class="dtr-icon" x-text="expandedRow === {{ row_idx }} ? '−' : '+'">+</span>
+                        </button>
+                        <span class="size-pill">{{ r.size }}</span>
+                      </div>
+                    </td>
+                    <td class="td-common desktop-col">{{ r.common_on.en if (r.common_on is mapping) else (r.common_on or '') }}</td>
+                    <td class="td-price"><span class="price-val">{{ r.budget or 'AED —' }}</span></td>
+                    <td class="td-price desktop-col"><span class="price-val">{{ r.mid_range or 'AED —' }}</span></td>
+                    <td class="td-price desktop-col"><span class="price-val">{{ r.premium or 'AED —' }}</span></td>
+                  </tr>
+                  <tr class="dtr-child-row" x-show="expandedRow === {{ row_idx }}" x-cloak>
+                    <td colspan="5" class="dtr-child-td">
+                      <div class="dtr-child-details">
+                        <div class="dtr-detail-item">
+                          <span class="dtr-detail-title">Common on:</span>
+                          <span class="dtr-detail-value">{{ r.common_on.en if (r.common_on is mapping) else (r.common_on or 'Various models') }}</span>
+                        </div>
+                        <div class="dtr-detail-item">
+                          <span class="dtr-detail-title">Mid-range:</span>
+                          <span class="dtr-detail-value price-val">{{ r.mid_range or 'AED —' }}</span>
+                        </div>
+                        <div class="dtr-detail-item">
+                          <span class="dtr-detail-title">Premium:</span>
+                          <span class="dtr-detail-value price-val text-[#2563FF]">{{ r.premium or 'AED —' }}</span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Small Print & CTA -->
+          {% set small_p = sec.section_data.small_print if sec.section_data and sec.section_data.small_print else '' %}
+          <p class="price-table-note">{{ small_p.en if (small_p is mapping) else (small_p or 'Prices are per tyre, fitted at a partner centre.') }}</p>
+          <div class="price-action-cluster">
+            <a class="btn btn-wa price-btn-wa" href="{{ sec.button_url or '#' }}" target="_blank" rel="noopener">
+              <span>{{ sec.button_text or 'Send Size on WhatsApp' }}</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'services' %}
+      <!-- SERVICES -->
+      <section id="services" class="services">
+        <div class="wrap">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+            {% if sec.content %}<p class="lead">{{ sec.content | safe }}</p>{% endif %}
+          </div>
+          {% set svcs = sec.section_data.services if sec.section_data and sec.section_data.services else [] %}
+          <div class="svc-grid">
+            {% for s in svcs %}
+            <div class="svc"><span class="dot" aria-hidden="true"></span>{{ s.name if s.name else s }}</div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'how_it_works' or sec.section_type == 'how' %}
+      <!-- HOW IT WORKS -->
+      <section id="how">
+        <div class="wrap">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+          </div>
+          {% set steps = sec.section_data.steps if sec.section_data and sec.section_data.steps else [] %}
+          {% if steps %}
+          <div class="steps">
+            {% for st in steps %}
+            <div class="step">
+              <span class="step-num" aria-hidden="true">{{ loop.index }}</span>
+              <div class="icon" aria-hidden="true">{{ render_icon(st.icon or 'star', 22) }}</div>
+              <h3>{{ st.title }}</h3>
+              <p>{{ st.description or st.desc }}</p>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'shop_by' %}
+      <!-- SHOP BY -->
+      <section id="shop-by" class="shop-by-section">
+        <div class="wrap">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+            {% if sec.content %}<p class="lead">{{ sec.content | safe }}</p>{% endif %}
+          </div>
+
+          {% set groups = sec.section_data.groups if sec.section_data and sec.section_data.groups else [] %}
+          {% for g in groups %}
+          <div class="shop-by-group">
+            <div class="shop-by-group-header">
+              <h3 class="shop-by-group-title">{{ g.heading }}</h3>
+            </div>
+            {% set chips = g.chips if g.chips else [] %}
+            <div class="svc-grid shop-by-grid">
+              {% for chip in chips %}
+              <div class="svc chip-interactive">
+                <span class="dot" aria-hidden="true"></span>
+                <span class="chip-text">{{ chip }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'coverage' %}
+      <!-- COVERAGE -->
+      <section id="coverage" class="coverage-section">
+        <div class="wrap">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle | safe }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+            {% if sec.content %}<p class="lead">{{ sec.content | safe }}</p>{% endif %}
+          </div>
+
+          {% set options = sec.section_data.options if sec.section_data and sec.section_data.options else [] %}
+          {% if options %}
+          <div class="coverage-options-grid">
+            {% for opt in options %}
+            <div class="coverage-option-card">
+              <div class="coverage-card-head">
+                <span class="coverage-tag">{{ opt.tag }}</span>
+                <h3>{{ opt.heading }}</h3>
+              </div>
+              <p class="coverage-card-desc">{{ opt.description }}</p>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          {% set areas = sec.section_data.areas if sec.section_data and sec.section_data.areas else [] %}
+          {% for a in areas %}
+          <div class="shop-by-group coverage-area-group">
+            <div class="shop-by-group-header">
+              <h3 class="shop-by-group-title">{{ a.heading }}</h3>
+            </div>
+            {% set chips = a.chips if a.chips else [] %}
+            <div class="svc-grid shop-by-grid">
+              {% for chip in chips %}
+              <div class="svc chip-interactive">
+                <span class="dot" aria-hidden="true"></span>
+                <span class="chip-text">{{ chip }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'advice' or sec.section_type == 'buying_guide' %}
+      <!-- ADVICE -->
+      <section id="advice" class="why-section advice-section">
+        <div class="wrap">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle | safe }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+            {% if sec.content %}<p class="lead">{{ sec.content | safe }}</p>{% endif %}
+          </div>
+
+          {% set cards = sec.section_data.cards if sec.section_data and sec.section_data.cards else (sec.section_data.items if sec.section_data and sec.section_data.items else []) %}
+          {% if cards %}
+          <div class="grid g3" style="margin-top:44px">
+            {% for c in cards %}
+            <div class="card advice-card">
+              <div class="icon" aria-hidden="true">{{ render_icon(c.icon or 'star', 22) }}</div>
+              <h3>{{ c.title.en if (c.title is mapping) else (c.title or '') }}</h3>
+              <p>{{ c.description.en if (c.description is mapping) else (c.description or c.desc or '') }}</p>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'brands' %}
+      <!-- BRANDS -->
+      <section id="brands-showcase" class="brands">
+        <div class="wrap center">
+          {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+          <h2>{{ sec.section_title }}</h2>
+          {% set b_list = sec.section_data.brands if sec.section_data and sec.section_data.brands else [] %}
+          <div class="brand-list">
+            {% for b in b_list %}
+            <span class="brand">{{ b }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'testimonials' or sec.section_type == 'reviews' %}
+      <!-- REVIEWS -->
+      <section>
+        <div class="wrap">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+          </div>
+          {% set revs = sec.section_data.reviews if sec.section_data and sec.section_data.reviews else [] %}
+          {% if revs %}
+          <div class="grid g3" style="margin-top:40px">
+            {% for r in revs %}
+            <div class="quote">
+              <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
+              <blockquote>&ldquo;{{ r.quote }}&rdquo;</blockquote>
+              <div class="who"><span class="avatar" aria-hidden="true">{{ loop.index }}</span><span><b>{{ r.author or 'Verified customer' }}</b><span>{{ r.location or 'Dubai' }}</span></span></div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'faq' %}
+      <!-- FAQ -->
+      <section id="faq" class="faq">
+        <div class="wrap" style="max-width:840px">
+          <div class="center">
+            {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+            <h2>{{ sec.section_title }}</h2>
+          </div>
+          {% set faqs = sec.section_data.faqs if sec.section_data and sec.section_data.faqs else [] %}
+          <div style="margin-top:36px">
+            {% for f in faqs %}
+            <details {% if loop.first %}open{% endif %}>
+              <summary>{{ f.question }}</summary>
+              <div class="body"><p>{{ f.answer | safe }}</p></div>
+            </details>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'cta' %}
+      <!-- CTA -->
+      <section class="final">
+        <div class="wrap">
+          <h2>{{ sec.section_title }}</h2>
+          {% if sec.content %}<p>{{ sec.content | safe }}</p>{% endif %}
+          <div class="cta-row" style="justify-content:center">
+            <a class="btn btn-wa" href="{{ sec.button_url or '#' }}" target="_blank" rel="noopener">
+              {{ sec.button_text or 'WhatsApp us' }}
+            </a>
+          </div>
+        </div>
+      </section>
+
+    {% elif sec.section_type == 'content_image' %}
+      <!-- CONTENT + IMAGE -->
+      <section class="content-image-section" id="section-{{ sec.id }}">
+        <div class="wrap">
+          <div class="grid g2" style="align-items: center; gap: 40px;">
+            {% if sec.image_position == 'left' and sec.image %}
+            <div><img src="{{ sec.image }}" alt="{{ sec.section_title }}" style="width:100%; border-radius:18px; display:block;" /></div>
+            {% endif %}
+            <div>
+              {% if sec.section_subtitle %}<span class="eyebrow">{{ sec.section_subtitle }}</span>{% endif %}
+              <h2>{{ sec.section_title }}</h2>
+              {% if sec.content %}<div class="lead">{{ sec.content | safe }}</div>{% endif %}
+              {% if sec.button_text and sec.button_url %}
+              <div style="margin-top:24px;">
+                <a class="btn btn-wa" href="{{ sec.button_url }}">{{ sec.button_text }}</a>
+              </div>
+              {% endif %}
+            </div>
+            {% if sec.image_position != 'left' and sec.image %}
+            <div><img src="{{ sec.image }}" alt="{{ sec.section_title }}" style="width:100%; border-radius:18px; display:block;" /></div>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+    {% else %}
+      <!-- GENERIC FALLBACK SECTION -->
+      <section style="padding: 60px 0; background: #ffffff;">
+        <div class="wrap">
+          {% if sec.section_subtitle %}<span class="eyebrow">&mdash; {{ sec.section_subtitle }}</span>{% endif %}
+          <h2>{{ sec.section_title or sec.section_type }}</h2>
+          {% if sec.content %}<div class="lead">{{ sec.content | safe }}</div>{% endif %}
+        </div>
+      </section>
+    {% endif %}
+
+  {% endif %}
+
+</body>
+</html>
