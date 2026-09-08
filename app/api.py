@@ -60,6 +60,7 @@ from models.category import Category
 from i18n import get_locale, localize_value, translate, is_rtl
 from services.audit_service import log_activity, get_activity_logs, get_current_admin_user_id
 from services.attribute_service import AttributeService
+from services.store_context import StoreContext
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 # This file is app/api.py, so the project root (where scrapers/ and tmp/
@@ -2747,26 +2748,54 @@ def register_visionadmin_api_routes(app):
         websites = StoreContext.get_all_websites(include_inactive=True)
         return jsonify({'websites': websites, 'count': len(websites)})
 
+    @app.route('/visionadmin/api/all-stores', methods=['GET'])
+    def visionadmin_api_all_stores():
+        filter_website = request.args.get('website')
+        filter_store = request.args.get('store')
+        filter_view = request.args.get('store_view')
+        rows = StoreContext.get_stores_table_rows(
+            filter_website=filter_website,
+            filter_store=filter_store,
+            filter_view=filter_view
+        )
+        return jsonify({'success': True, 'rows': rows, 'count': len(rows)})
+
     @app.route('/visionadmin/api/websites', methods=['POST'])
     def visionadmin_api_create_website():
         data = request.get_json() or {}
         code = (data.get('code') or '').strip().lower()
         name = (data.get('name') or '').strip()
         domain = (data.get('domain') or '').strip()
+        sort_order = int(data.get('sort_order') or 10)
         is_default = 1 if data.get('is_default') else 0
         status = data.get('status', 'active')
         user_id = session.get('admin_user_id') or session.get('user_id')
 
         if not code or not name:
-            return jsonify({'error': 'Website code and name are required.'}), 400
+            return jsonify({'success': False, 'error': 'Website code and name are required.'}), 400
 
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                cursor.execute("SELECT id, deleted_at FROM websites WHERE code = %s", (code,))
+                existing = cursor.fetchone()
+                if existing:
+                    if existing.get('deleted_at') is None:
+                        return jsonify({'success': False, 'error': f"Website code '{code}' is already in use."}), 400
+                    cursor.execute("""
+                        UPDATE websites
+                        SET name = %s, domain = %s, is_default = %s, status = %s, sort_order = %s,
+                            deleted_at = NULL, deleted_by = NULL, updated_by = %s
+                        WHERE id = %s
+                    """, (name, domain, is_default, status, sort_order, user_id, existing['id']))
+                    conn.commit()
+                    log_activity('create', 'website', existing['id'], {'code': code, 'name': name}, actor_user_id=user_id)
+                    return jsonify({'success': True, 'id': existing['id'], 'message': 'Website created successfully.'}), 201
+
                 cursor.execute("""
                     INSERT INTO websites (code, name, domain, is_default, status, sort_order, created_by)
-                    VALUES (%s, %s, %s, %s, %s, 10, %s)
-                """, (code, name, domain, is_default, status, user_id))
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (code, name, domain, is_default, status, sort_order, user_id))
                 conn.commit()
                 new_id = cursor.lastrowid
                 log_activity('create', 'website', new_id, {'code': code, 'name': name}, actor_user_id=user_id)
@@ -2774,11 +2803,26 @@ def register_visionadmin_api_routes(app):
         finally:
             conn.close()
 
+    @app.route('/visionadmin/api/websites/<int:web_id>', methods=['GET'])
+    def visionadmin_api_get_website(web_id):
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM websites WHERE id = %s AND deleted_at IS NULL", (web_id,))
+                web = cursor.fetchone()
+                if not web:
+                    return jsonify({'success': False, 'error': 'Website not found.'}), 404
+                return jsonify({'success': True, 'website': web})
+        finally:
+            conn.close()
+
     @app.route('/visionadmin/api/websites/<int:web_id>', methods=['PUT'])
     def visionadmin_api_update_website(web_id):
         data = request.get_json() or {}
+        code = (data.get('code') or '').strip().lower()
         name = data.get('name')
         domain = data.get('domain')
+        sort_order = int(data.get('sort_order') or 10)
         is_default = 1 if data.get('is_default') else 0
         status = data.get('status', 'active')
         user_id = session.get('admin_user_id') or session.get('user_id')
@@ -2788,10 +2832,15 @@ def register_visionadmin_api_routes(app):
             with conn.cursor() as cursor:
                 cursor.execute("""
                     UPDATE websites 
-                    SET name = COALESCE(%s, name), domain = COALESCE(%s, domain),
-                        is_default = %s, status = %s, updated_by = %s
+                    SET code = COALESCE(NULLIF(%s, ''), code),
+                        name = COALESCE(%s, name),
+                        domain = COALESCE(%s, domain),
+                        sort_order = %s,
+                        is_default = %s,
+                        status = %s,
+                        updated_by = %s
                     WHERE id = %s
-                """, (name, domain, is_default, status, user_id, web_id))
+                """, (code, name, domain, sort_order, is_default, status, user_id, web_id))
                 conn.commit()
                 log_activity('update', 'website', web_id, {'name': name, 'domain': domain}, actor_user_id=user_id)
                 return jsonify({'success': True, 'message': 'Website updated successfully.'})
@@ -2807,9 +2856,9 @@ def register_visionadmin_api_routes(app):
                 cursor.execute("SELECT * FROM websites WHERE id = %s AND deleted_at IS NULL", (web_id,))
                 web = cursor.fetchone()
                 if not web:
-                    return jsonify({'error': 'Website not found.'}), 404
+                    return jsonify({'success': False, 'error': 'Website not found.'}), 404
                 if web.get('is_default') == 1:
-                    return jsonify({'error': 'Cannot delete default primary website.'}), 400
+                    return jsonify({'success': False, 'error': 'Cannot delete default primary website.'}), 400
 
                 cursor.execute("UPDATE websites SET deleted_at = NOW(), deleted_by = %s WHERE id = %s", (user_id, web_id))
                 conn.commit()
@@ -2824,32 +2873,84 @@ def register_visionadmin_api_routes(app):
         stores = StoreContext.get_all_stores(website_id=website_id, include_inactive=True)
         return jsonify({'stores': stores, 'count': len(stores)})
 
+    @app.route('/visionadmin/api/stores/<int:store_id>', methods=['GET'])
+    def visionadmin_api_get_store(store_id):
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM stores WHERE id = %s AND deleted_at IS NULL", (store_id,))
+                st = cursor.fetchone()
+                if not st:
+                    return jsonify({'success': False, 'error': 'Store not found.'}), 404
+
+                name_str = st['name']
+                name_en = ''
+                if isinstance(name_str, dict):
+                    name_en = name_str.get('en') or next(iter(name_str.values()), '')
+                elif isinstance(name_str, str):
+                    if name_str.strip().startswith('{'):
+                        try:
+                            p = json.loads(name_str)
+                            name_en = p.get('en') or next(iter(p.values()), name_str)
+                        except Exception:
+                            name_en = name_str
+                    else:
+                        name_en = name_str
+
+                st['display_name'] = name_en
+                return jsonify({'success': True, 'store': st})
+        finally:
+            conn.close()
+
     @app.route('/visionadmin/api/stores', methods=['POST'])
     def visionadmin_api_create_store():
         data = request.get_json() or {}
         website_id = data.get('website_id') or 1
         code = (data.get('code') or '').strip().lower()
-        name = data.get('name') or ''
+        raw_name = (data.get('name') or '').strip()
+        root_category_id = data.get('root_category_id') or None
+        default_store_view_id = data.get('default_store_view_id') or None
+        sort_order = int(data.get('sort_order') or 10)
         emirate = data.get('emirate') or 'Dubai'
         phone = data.get('phone') or '+971 50 506 9575'
         email = data.get('email') or ''
-        is_active = 1 if data.get('is_active', 1) else 0
+        is_active = 1 if data.get('is_active', 1) in (1, '1', True) else 0
         user_id = session.get('admin_user_id') or session.get('user_id')
 
-        if not code or not name:
-            return jsonify({'error': 'Store code and name are required.'}), 400
+        if not code or not raw_name:
+            return jsonify({'success': False, 'error': 'Store code and name are required.'}), 400
+
+        name_json = json.dumps({'en': raw_name}) if not raw_name.startswith('{') else raw_name
 
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                cursor.execute("SELECT id, deleted_at FROM stores WHERE code = %s", (code,))
+                existing = cursor.fetchone()
+                if existing:
+                    if existing.get('deleted_at') is None:
+                        return jsonify({'success': False, 'error': f"Store code '{code}' is already in use."}), 400
+                    cursor.execute("""
+                        UPDATE stores
+                        SET website_id = %s, name = %s, root_category_id = %s, default_store_view_id = %s,
+                            emirate = %s, phone = %s, email = %s, is_active = %s, sort_order = %s,
+                            deleted_at = NULL, deleted_by = NULL, updated_by = %s
+                        WHERE id = %s
+                    """, (website_id, name_json, root_category_id, default_store_view_id, emirate, phone, email, is_active, sort_order, user_id, existing['id']))
+                    conn.commit()
+                    log_activity('create', 'store', existing['id'], {'code': code, 'name': raw_name}, actor_user_id=user_id)
+                    return jsonify({'success': True, 'id': existing['id'], 'message': 'Store created successfully.'}), 201
+
                 cursor.execute("""
-                    INSERT INTO stores (website_id, code, name, emirate, phone, email, is_active, sort_order)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, 10)
-                """, (website_id, code, name, emirate, phone, email, is_active))
+                    INSERT INTO stores (
+                        website_id, code, name, root_category_id, default_store_view_id,
+                        emirate, phone, email, is_active, sort_order, created_by
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (website_id, code, name_json, root_category_id, default_store_view_id, emirate, phone, email, is_active, sort_order, user_id))
                 conn.commit()
                 new_id = cursor.lastrowid
-                log_activity('create', 'store', new_id, {'code': code, 'name': name}, actor_user_id=user_id)
-                return jsonify({'success': True, 'id': new_id, 'message': 'Store hub created successfully.'}), 201
+                log_activity('create', 'store', new_id, {'code': code, 'name': raw_name}, actor_user_id=user_id)
+                return jsonify({'success': True, 'id': new_id, 'message': 'Store created successfully.'}), 201
         finally:
             conn.close()
 
@@ -2857,27 +2958,51 @@ def register_visionadmin_api_routes(app):
     def visionadmin_api_update_store(store_id):
         data = request.get_json() or {}
         website_id = data.get('website_id') or 1
-        code = data.get('code')
-        name = data.get('name')
+        code = (data.get('code') or '').strip().lower()
+        raw_name = data.get('name')
+        root_category_id = data.get('root_category_id') or None
+        default_store_view_id = data.get('default_store_view_id') or None
+        sort_order = int(data.get('sort_order') or 10)
         emirate = data.get('emirate')
         phone = data.get('phone')
         email = data.get('email')
-        is_active = 1 if data.get('is_active', 1) else 0
+        is_active = 1 if data.get('is_active', 1) in (1, '1', True) else 0
         user_id = session.get('admin_user_id') or session.get('user_id')
 
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM stores WHERE id = %s AND deleted_at IS NULL", (store_id,))
+                existing = cursor.fetchone()
+                if not existing:
+                    return jsonify({'success': False, 'error': 'Store not found.'}), 404
+
+                name_val = existing['name']
+                if raw_name:
+                    name_str = str(raw_name).strip()
+                    if name_str.startswith('{'):
+                        name_val = name_str
+                    else:
+                        name_val = json.dumps({'en': name_str})
+
                 cursor.execute("""
                     UPDATE stores 
-                    SET website_id = %s, code = COALESCE(%s, code), name = COALESCE(%s, name),
-                        emirate = COALESCE(%s, emirate), phone = COALESCE(%s, phone),
-                        email = COALESCE(%s, email), is_active = %s
+                    SET website_id = %s,
+                        code = COALESCE(NULLIF(%s, ''), code),
+                        name = %s,
+                        root_category_id = %s,
+                        default_store_view_id = %s,
+                        emirate = COALESCE(%s, emirate),
+                        phone = COALESCE(%s, phone),
+                        email = COALESCE(%s, email),
+                        is_active = %s,
+                        sort_order = %s,
+                        updated_by = %s
                     WHERE id = %s
-                """, (website_id, code, name, emirate, phone, email, is_active, store_id))
+                """, (website_id, code, name_val, root_category_id, default_store_view_id, emirate, phone, email, is_active, sort_order, user_id, store_id))
                 conn.commit()
-                log_activity('update', 'store', store_id, {'code': code, 'name': name}, actor_user_id=user_id)
-                return jsonify({'success': True, 'message': 'Store hub updated successfully.'})
+                log_activity('update', 'store', store_id, {'code': code, 'name': raw_name}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': 'Store updated successfully.'})
         finally:
             conn.close()
 
@@ -2890,19 +3015,143 @@ def register_visionadmin_api_routes(app):
                 cursor.execute("SELECT * FROM stores WHERE id = %s AND deleted_at IS NULL", (store_id,))
                 store = cursor.fetchone()
                 if not store:
-                    return jsonify({'error': 'Store hub not found.'}), 404
+                    return jsonify({'success': False, 'error': 'Store not found.'}), 404
 
                 cursor.execute("UPDATE stores SET deleted_at = NOW(), deleted_by = %s WHERE id = %s", (user_id, store_id))
                 conn.commit()
                 log_activity('delete', 'store', store_id, store, {'deleted': True}, actor_user_id=user_id)
-                return jsonify({'success': True, 'message': f"Store hub '{store['code']}' moved to trash."})
+                return jsonify({'success': True, 'message': f"Store '{store['code']}' moved to trash."})
         finally:
             conn.close()
 
     @app.route('/visionadmin/api/store-views', methods=['GET'])
     def visionadmin_api_list_store_views():
-        views = StoreContext.get_all_store_views()
+        store_id = request.args.get('store_id')
+        views = StoreContext.get_all_store_views(store_id=store_id, include_inactive=True)
         return jsonify({'store_views': views, 'count': len(views)})
+
+    @app.route('/visionadmin/api/store-views/<int:view_id>', methods=['GET'])
+    def visionadmin_api_get_store_view(view_id):
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NULL", (view_id,))
+                view = cursor.fetchone()
+                if not view:
+                    return jsonify({'success': False, 'error': 'Store view not found.'}), 404
+                return jsonify({'success': True, 'store_view': view})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/store-views', methods=['POST'])
+    def visionadmin_api_create_store_view():
+        data = request.get_json() or {}
+        store_id = data.get('store_id')
+        name = (data.get('name') or '').strip()
+        code = (data.get('code') or '').strip().lower()
+        is_active = 1 if (data.get('status') == '1' or data.get('is_active') in (1, '1', True)) else 0
+        sort_order = int(data.get('sort_order') or 10)
+        user_id = session.get('admin_user_id') or session.get('user_id')
+
+        if not store_id or not name or not code:
+            return jsonify({'success': False, 'error': 'Store, Name, and Code are required.'}), 400
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT website_id FROM stores WHERE id = %s AND deleted_at IS NULL", (store_id,))
+                st = cursor.fetchone()
+                website_id = st['website_id'] if st else 1
+
+                locale = code.split('_')[0].lower()
+
+                cursor.execute("SELECT id, deleted_at FROM store_views WHERE store_id = %s AND code = %s", (store_id, code))
+                existing = cursor.fetchone()
+                if existing:
+                    if existing.get('deleted_at') is None:
+                        return jsonify({'success': False, 'error': f"Store view code '{code}' already exists for this store."}), 400
+                    cursor.execute("""
+                        UPDATE store_views
+                        SET website_id = %s, name = %s, locale = %s, currency_code = 'AED',
+                            is_active = %s, sort_order = %s, deleted_at = NULL, deleted_by = NULL, updated_by = %s
+                        WHERE id = %s
+                    """, (website_id, name, locale, is_active, sort_order, user_id, existing['id']))
+                    conn.commit()
+                    log_activity('create', 'store_view', existing['id'], {'code': code, 'name': name}, actor_user_id=user_id)
+                    return jsonify({'success': True, 'id': existing['id'], 'message': 'Store view created successfully.'}), 201
+
+                cursor.execute("""
+                    INSERT INTO store_views (store_id, website_id, code, name, locale, currency_code, is_active, sort_order, created_by)
+                    VALUES (%s, %s, %s, %s, %s, 'AED', %s, %s, %s)
+                """, (store_id, website_id, code, name, locale, is_active, sort_order, user_id))
+                conn.commit()
+                new_id = cursor.lastrowid
+                log_activity('create', 'store_view', new_id, {'code': code, 'name': name}, actor_user_id=user_id)
+                return jsonify({'success': True, 'id': new_id, 'message': 'Store view created successfully.'}), 201
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/store-views/<int:view_id>', methods=['PUT'])
+    def visionadmin_api_update_store_view(view_id):
+        data = request.get_json() or {}
+        store_id = data.get('store_id')
+        name = (data.get('name') or '').strip()
+        code = (data.get('code') or '').strip().lower()
+        is_active = 1 if (data.get('status') == '1' or data.get('is_active') in (1, '1', True)) else 0
+        sort_order = int(data.get('sort_order') or 10)
+        user_id = session.get('admin_user_id') or session.get('user_id')
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NULL", (view_id,))
+                existing = cursor.fetchone()
+                if not existing:
+                    return jsonify({'success': False, 'error': 'Store view not found.'}), 404
+
+                website_id = existing['website_id']
+                if store_id:
+                    cursor.execute("SELECT website_id FROM stores WHERE id = %s AND deleted_at IS NULL", (store_id,))
+                    st = cursor.fetchone()
+                    if st:
+                        website_id = st['website_id']
+
+                locale = code.split('_')[0].lower() if code else existing['locale']
+                cursor.execute("""
+                    UPDATE store_views
+                    SET store_id = COALESCE(%s, store_id),
+                        website_id = %s,
+                        name = COALESCE(NULLIF(%s, ''), name),
+                        code = COALESCE(NULLIF(%s, ''), code),
+                        locale = %s,
+                        is_active = %s,
+                        sort_order = %s,
+                        updated_by = %s
+                    WHERE id = %s
+                """, (store_id, website_id, name, code, locale, is_active, sort_order, user_id, view_id))
+                conn.commit()
+                log_activity('update', 'store_view', view_id, {'code': code, 'name': name}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': 'Store view updated successfully.'})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/store-views/<int:view_id>', methods=['DELETE'])
+    def visionadmin_api_delete_store_view(view_id):
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NULL", (view_id,))
+                view = cursor.fetchone()
+                if not view:
+                    return jsonify({'success': False, 'error': 'Store view not found.'}), 404
+
+                cursor.execute("UPDATE store_views SET deleted_at = NOW(), deleted_by = %s WHERE id = %s", (user_id, view_id))
+                conn.commit()
+                log_activity('delete', 'store_view', view_id, view, {'deleted': True}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': f"Store view '{view['name']}' moved to trash."})
+        finally:
+            conn.close()
 
     # =========================================================================
     # 8. DYNAMIC ATTRIBUTES & ATTRIBUTE SETS API

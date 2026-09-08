@@ -8,7 +8,7 @@ dynamically at runtime with translatable data persisted in DB in JSON format.
 
 import json
 import re
-from flask import request, session
+from flask import request, session, has_request_context
 
 DEFAULT_LOCALE = 'en'
 RTL_LOCALES = {'ar', 'fa', 'ur', 'he', 'ps', 'sd'}
@@ -68,6 +68,9 @@ def get_locale() -> str:
       4. Default fallback ('en')
     Accepts any valid language code matching LOCALE_REGEX.
     """
+    if not has_request_context():
+        return DEFAULT_LOCALE
+
     req_locale = (request.args.get('locale') or request.args.get('lang') or '').strip().lower()
     if req_locale and LOCALE_REGEX.match(req_locale):
         session['site_locale'] = req_locale

@@ -3,6 +3,7 @@
 {% block title %}{% if initial_view == 'edit' %}Edit Product - VisionAdmin{% else %}New Product - VisionAdmin{% endif %}{% endblock %}
 
 {% block extra_head %}
+<script src="/static/visionadmin/catalog-products.js?v={{ range(10000, 99999) | random }}"></script>
 <script src="/static/visionadmin/products.js?v={{ range(10000, 99999) | random }}"></script>
 {% endblock %}
 
@@ -757,4 +758,5 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/visionadmin/catalog-products.js?v={{ range(10000, 99999) | random }}"></script>
 {% endblock %}
