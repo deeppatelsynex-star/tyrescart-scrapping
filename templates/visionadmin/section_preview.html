@@ -797,7 +797,7 @@
           {% set faqs = sec.section_data.faqs if sec.section_data and sec.section_data.faqs else [] %}
           <div style="margin-top:36px">
             {% for f in faqs %}
-            <details {% if loop.first %}open{% endif %}>
+            <details name="faq_group" {% if loop.first %}open{% endif %}>
               <summary>{{ f.question }}</summary>
               <div class="body"><p>{{ f.answer | safe }}</p></div>
             </details>
@@ -858,5 +858,24 @@
 
   {% endif %}
 
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var faqContainers = document.querySelectorAll('.faq, .dynamic-faq-block, [id^="faq"]');
+      faqContainers.forEach(function(container) {
+        var allDetails = container.querySelectorAll('details');
+        allDetails.forEach(function(detail) {
+          detail.addEventListener('toggle', function() {
+            if (this.open) {
+              allDetails.forEach(function(other) {
+                if (other !== detail && other.open) {
+                  other.removeAttribute('open');
+                }
+              });
+            }
+          });
+        });
+      });
+    });
+  </script>
 </body>
 </html>

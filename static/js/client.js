@@ -381,9 +381,29 @@
     }
   }
 
+  /* ---------- FAQ Exclusive Accordion Handling ---------- */
+  function initFaqAccordion() {
+    var faqContainers = document.querySelectorAll('.faq, .dynamic-faq-block, [id^="faq"]');
+    faqContainers.forEach(function(container) {
+      var allDetails = container.querySelectorAll('details');
+      allDetails.forEach(function(detail) {
+        detail.addEventListener('toggle', function() {
+          if (this.open) {
+            allDetails.forEach(function(other) {
+              if (other !== detail && other.open) {
+                other.removeAttribute('open');
+              }
+            });
+          }
+        });
+      });
+    });
+  }
+
   function initAll() {
     initMobileNav();
     initNavActiveState();
+    initFaqAccordion();
   }
 
   if (document.readyState === 'loading') {
