@@ -959,3 +959,16 @@ function visionProductsApp(initialView = '', initialProductId = null) {
     }
   };
 }
+
+// Explicit global window binding & Alpine registration
+if (typeof window !== 'undefined') {
+  window.visionProductsApp = visionProductsApp;
+  if (window.Alpine) {
+    window.Alpine.data('visionProductsApp', visionProductsApp);
+  }
+  document.addEventListener('alpine:init', () => {
+    if (window.Alpine) {
+      window.Alpine.data('visionProductsApp', visionProductsApp);
+    }
+  });
+}

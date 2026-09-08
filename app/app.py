@@ -94,8 +94,22 @@ def inject_i18n():
 @app.after_request
 def add_performance_headers(response):
     """Adds caching headers for static assets, enables keep-alive, and injects API version headers."""
-    if request.path.startswith('/static/'):
+    if request.path.startswith('/static/visionadmin/'):
+        # VisionAdmin's own CSS/JS are actively developed and re-deployed constantly —
+        # a 7-day browser/CDN cache was serving stale visionProductsApp()/theme code
+        # long after a fresh deploy, even though the HTML around it was already fresh.
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, private, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    elif request.path.startswith('/static/'):
         response.headers['Cache-Control'] = 'public, max-age=604800, stale-while-revalidate=86400'
+    elif request.path.startswith(('/visionadmin', '/visonadmin', '/tcsadmin')):
+        # Authenticated admin responses must never be stored. Without an explicit policy
+        # here Cloudflare's Browser Cache TTL was stamping these pages with
+        # `max-age=2678400`, pinning stale admin HTML in the browser for 31 days.
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, private, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
     return inject_api_version_headers(response)
 
 

@@ -2,6 +2,10 @@
 
 {% block title %}Products Catalog - VisionAdmin{% endblock %}
 
+{% block extra_head %}
+<script src="/static/visionadmin/products.js?v={{ range(10000, 99999) | random }}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="space-y-6" x-data="visionProductsApp('{{ initial_view | default('', true) }}', {{ initial_product_id | default('null', true) }})" x-init="initData()">
 
@@ -693,5 +697,4 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/visionadmin/products.js?v={{ range(10000, 99999) | random }}"></script>
 {% endblock %}
