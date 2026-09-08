@@ -797,14 +797,19 @@
           {% set faqs = sec.section_data.faqs if sec.section_data and sec.section_data.faqs else [] %}
           <div style="margin-top:36px" class="faq-list">
             {% for f in faqs %}
+            {% set q_text = f.question.ar if (locale == 'ar' and f.question is mapping and f.question.ar) else (f.question.en if (f.question is mapping and f.question.en) else (f.question if f.question is string else (f.question or ''))) %}
+            {% set a_text = f.answer.ar if (locale == 'ar' and f.answer is mapping and f.answer.ar) else (f.answer.en if (f.answer is mapping and f.answer.en) else (f.answer if f.answer is string else (f.answer or ''))) %}
             <details class="faq-item" name="faq_group" {% if loop.first %}open{% endif %}>
               <summary class="faq-summary">
-                <span class="faq-summary-inner">
-                  <span class="faq-question-text">{{ f.question }}</span>
-                  <span class="faq-chevron" aria-hidden="true"></span>
-                </span>
+                <div class="faq-summary-inner">
+                  <span class="faq-question-text">{{ q_text }}</span>
+                  <span class="faq-icon-badge" aria-hidden="true">
+                    <svg class="faq-chevron-down" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    <svg class="faq-chevron-up" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                  </span>
+                </div>
               </summary>
-              <div class="body"><p>{{ f.answer | safe }}</p></div>
+              <div class="body"><p>{{ a_text | safe }}</p></div>
             </details>
             {% endfor %}
           </div>
