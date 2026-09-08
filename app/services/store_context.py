@@ -47,12 +47,14 @@ class StoreContext:
             conn.close()
 
     @staticmethod
-    def get_all_store_views(store_id=None, website_id=None):
+    def get_all_store_views(store_id=None, website_id=None, include_inactive=False):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                sql = "SELECT id, store_id, website_id, code, name, locale, currency_code, is_active, sort_order FROM store_views WHERE deleted_at IS NULL AND is_active = 1"
+                sql = "SELECT id, store_id, website_id, code, name, locale, currency_code, is_active, sort_order FROM store_views WHERE deleted_at IS NULL"
                 params = []
+                if not include_inactive:
+                    sql += " AND is_active = 1"
                 if store_id:
                     sql += " AND store_id = %s"
                     params.append(store_id)
@@ -62,6 +64,63 @@ class StoreContext:
                 sql += " ORDER BY sort_order ASC, id ASC"
                 cursor.execute(sql, params)
                 return cursor.fetchall()
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_stores_table_rows(filter_website=None, filter_store=None, filter_view=None):
+        """
+        Returns hierarchical rows matching Magento 'All Stores' view:
+        Web Site | Store | Store View
+        """
+        import json
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                sql = """
+                    SELECT 
+                        w.id AS website_id, w.name AS website_name, w.code AS website_code, w.sort_order AS website_sort_order, w.domain AS website_domain,
+                        s.id AS store_id, s.name AS store_name, s.code AS store_code, s.root_category_id, s.default_store_view_id, s.sort_order AS store_sort_order,
+                        v.id AS store_view_id, v.name AS store_view_name, v.code AS store_view_code, v.locale AS store_view_locale,
+                        v.is_active AS store_view_is_active, v.sort_order AS store_view_sort_order
+                    FROM websites w
+                    LEFT JOIN stores s ON s.website_id = w.id AND s.deleted_at IS NULL
+                    LEFT JOIN store_views v ON v.store_id = s.id AND v.deleted_at IS NULL
+                    WHERE w.deleted_at IS NULL
+                """
+                params = []
+                if filter_website:
+                    sql += " AND (LOWER(w.name) LIKE %s OR LOWER(w.code) LIKE %s)"
+                    kw = f"%{filter_website.lower().strip()}%"
+                    params.extend([kw, kw])
+                if filter_store:
+                    sql += " AND (LOWER(s.name) LIKE %s OR LOWER(s.code) LIKE %s)"
+                    kw = f"%{filter_store.lower().strip()}%"
+                    params.extend([kw, kw])
+                if filter_view:
+                    sql += " AND (LOWER(v.name) LIKE %s OR LOWER(v.code) LIKE %s)"
+                    kw = f"%{filter_view.lower().strip()}%"
+                    params.extend([kw, kw])
+
+                sql += " ORDER BY w.sort_order ASC, w.id ASC, s.sort_order ASC, s.id ASC, v.sort_order ASC, v.id ASC"
+                cursor.execute(sql, params)
+                rows = cursor.fetchall() or []
+                for r in rows:
+                    if r.get('store_name'):
+                        try:
+                            val = r['store_name']
+                            if isinstance(val, str) and val.startswith('{'):
+                                parsed = json.loads(val)
+                                r['store_display_name'] = parsed.get('en') or next(iter(parsed.values()), val)
+                            elif isinstance(val, dict):
+                                r['store_display_name'] = val.get('en') or next(iter(val.values()), '')
+                            else:
+                                r['store_display_name'] = str(val)
+                        except Exception:
+                            r['store_display_name'] = str(r['store_name'])
+                    else:
+                        r['store_display_name'] = ''
+                return rows
         finally:
             conn.close()
 

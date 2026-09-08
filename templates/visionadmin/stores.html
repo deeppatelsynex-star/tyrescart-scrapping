@@ -3,36 +3,45 @@
 {% block title %}Stores &amp; Channels Hub | VisionAdmin{% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="storesStudio()">
+<div class="space-y-6" x-data="storesStudio()" x-init="init()">
   
-  <!-- Header & Action Bar -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E8EDE4]">
+  <!-- Header & Action Bar Matching Magento Layout -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-[#E8EDE4]">
     <div>
       <div class="flex items-center gap-2">
-        <h1 class="text-xl sm:text-2xl font-black text-[#0E1108] tracking-tight">Stores &amp; Multi-Channel Hub</h1>
-        <span class="px-2 py-0.5 text-[10px] font-black uppercase rounded-full bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]">Multi-Store</span>
+        <h1 class="text-xl sm:text-2xl font-black text-[#0E1108] tracking-tight">Stores</h1>
+        <span class="px-2 py-0.5 text-[10px] font-black uppercase rounded-full bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]">Multi-Channel Hierarchy</span>
       </div>
-      <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">Configure websites, physical retail/fitting hubs, mobile van coverage, and localized currencies.</p>
+      <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">Manage Web Sites, Stores, and Store Views (Languages / Locales) in a unified Magento-style hierarchy.</p>
     </div>
     
-    <!-- Top Action Buttons -->
-    <div class="flex items-center gap-2">
+    <!-- Top Action Buttons Matching Screenshot 0 -->
+    <div class="flex flex-wrap items-center gap-2">
       <button 
         type="button" 
         @click="openAddWebsiteModal()"
         class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-[#E8EDE4] text-xs font-black text-slate-700 hover:text-[#35760F] hover:bg-[#EAF7E2] transition shadow-xs active:scale-95 cursor-pointer"
       >
         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        <span>+ Add Website</span>
+        <span>Create Web Site</span>
       </button>
 
       <button 
         type="button" 
         @click="openAddStoreModal()"
-        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] transition shadow-xs active:scale-95 cursor-pointer"
+        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-[#E8EDE4] text-xs font-black text-slate-700 hover:text-[#35760F] hover:bg-[#EAF7E2] transition shadow-xs active:scale-95 cursor-pointer"
       >
         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
-        <span>+ Add Store Hub</span>
+        <span>Create Store</span>
+      </button>
+
+      <button 
+        type="button" 
+        @click="openAddStoreViewModal()"
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] transition shadow-xs active:scale-95 cursor-pointer"
+      >
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <span>Create Store View</span>
       </button>
     </div>
   </div>
@@ -41,7 +50,7 @@
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
     <div class="p-4 rounded-2xl bg-white border border-[#E8EDE4] shadow-xs flex items-center justify-between">
       <div>
-        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Total Websites</span>
+        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Total Web Sites</span>
         <h3 class="text-2xl font-black text-[#0E1108] mt-0.5" x-text="websites.length">2</h3>
       </div>
       <div class="w-10 h-10 rounded-xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center">
@@ -51,8 +60,8 @@
 
     <div class="p-4 rounded-2xl bg-white border border-[#E8EDE4] shadow-xs flex items-center justify-between">
       <div>
-        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Store / Fitting Hubs</span>
-        <h3 class="text-2xl font-black text-[#0E1108] mt-0.5" x-text="stores.length">3</h3>
+        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Stores / Channels</span>
+        <h3 class="text-2xl font-black text-[#0E1108] mt-0.5" x-text="stores.length">2</h3>
       </div>
       <div class="w-10 h-10 rounded-xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center">
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -62,7 +71,7 @@
     <div class="p-4 rounded-2xl bg-white border border-[#E8EDE4] shadow-xs flex items-center justify-between">
       <div>
         <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Store Views / Locales</span>
-        <h3 class="text-2xl font-black text-[#0E1108] mt-0.5" x-text="storeViews.length > 0 ? `${storeViews.length} (EN / AR)` : '0 (EN / AR)'">0 (EN / AR)</h3>
+        <h3 class="text-2xl font-black text-[#0E1108] mt-0.5" x-text="storeViewsSummary">3</h3>
       </div>
       <div class="w-10 h-10 rounded-xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center">
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
@@ -70,81 +79,208 @@
     </div>
   </div>
 
-  <!-- Studio Tab Switcher -->
-  <div class="flex items-center gap-2 border-b border-[#E8EDE4] pb-2">
-    <button 
-      type="button" 
-      @click="activeTab = 'websites'"
-      :class="activeTab === 'websites' ? 'bg-[#58B31B] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
-      class="px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer"
-    >
-      🏢 Websites &amp; Domains
-    </button>
-    <button 
-      type="button" 
-      @click="activeTab = 'stores'"
-      :class="activeTab === 'stores' ? 'bg-[#58B31B] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
-      class="px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer"
-    >
-      🏪 Fitting &amp; Fulfillment Hubs
-    </button>
-  </div>
-
-  <!-- TAB 1: WEBSITES MANAGEMENT TABLE -->
-  <div x-show="activeTab === 'websites'" class="bg-white border border-[#E8EDE4] rounded-3xl shadow-xs overflow-hidden">
-    <div class="p-4 border-b border-[#F1F5F0] flex items-center justify-between">
-      <span class="text-xs font-black text-[#0E1108]">Registered Channel Websites</span>
-      <span class="text-[10px] text-slate-400 font-bold">Scoped Domain Endpoints</span>
+  <!-- ALL STORES TABLE (MATCHING SCREENSHOT 0) -->
+  <div class="bg-white border border-[#E8EDE4] rounded-3xl shadow-xs overflow-hidden">
+    
+    <!-- Table Header & Controls Bar -->
+    <div class="p-4 border-b border-[#F1F5F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FCFDFC]">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-black text-[#0E1108]">Stores Hierarchy Grid</span>
+        <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#EAF7E2] text-[#35760F]" x-text="`${tableRows.length} records found`">3 records found</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button 
+          type="button" 
+          @click="resetFilters()"
+          class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+        >
+          Reset Filter
+        </button>
+        <button 
+          type="button" 
+          @click="applyFilters()"
+          class="px-4 py-1.5 rounded-xl bg-[#0E1108] text-white text-xs font-black hover:bg-slate-800 transition cursor-pointer"
+        >
+          Search
+        </button>
+      </div>
     </div>
 
+    <!-- 3-Column Magento Grid -->
     <div class="overflow-x-auto">
-      <table id="websitesTable" class="w-full text-left text-xs">
-        <thead class="bg-[#F8FAF7] border-b border-[#E8EDE4] text-slate-400 font-black uppercase text-[10px] tracking-wider">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead class="bg-[#F8FAF7] border-b border-[#E8EDE4] text-slate-500 font-black uppercase text-[10px] tracking-wider">
           <tr>
-            <th class="py-3 px-4">Code / ID</th>
-            <th class="py-3 px-4">Website Name</th>
-            <th class="py-3 px-4">Primary Domain</th>
-            <th class="py-3 px-4">Default Scope</th>
-            <th class="py-3 px-4">Status</th>
-            <th class="py-3 px-4 text-right">Actions</th>
+            <th class="py-3 px-5 border-r border-[#E8EDE4] w-1/3">Web Site</th>
+            <th class="py-3 px-5 border-r border-[#E8EDE4] w-1/3">Store</th>
+            <th class="py-3 px-5 w-1/3">Store View</th>
+          </tr>
+          <!-- Filter Row matching Magento Grid -->
+          <tr class="bg-[#FBFDFB] border-b border-[#E8EDE4]">
+            <td class="p-2 border-r border-[#E8EDE4]">
+              <input 
+                type="text" 
+                x-model="filters.website" 
+                @keydown.enter="applyFilters()"
+                placeholder="Filter Web Site..." 
+                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B] bg-white"
+              >
+            </td>
+            <td class="p-2 border-r border-[#E8EDE4]">
+              <input 
+                type="text" 
+                x-model="filters.store" 
+                @keydown.enter="applyFilters()"
+                placeholder="Filter Store..." 
+                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B] bg-white"
+              >
+            </td>
+            <td class="p-2">
+              <input 
+                type="text" 
+                x-model="filters.store_view" 
+                @keydown.enter="applyFilters()"
+                placeholder="Filter Store View..." 
+                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B] bg-white"
+              >
+            </td>
           </tr>
         </thead>
+
         <tbody class="divide-y divide-[#F1F5F0]">
-          <template x-for="web in websites" :key="web.id">
-            <tr class="hover:bg-slate-50/80 transition">
-              <td class="py-3.5 px-4 font-mono font-bold text-slate-600">
-                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700" x-text="web.code">base</span>
+          <template x-if="loading">
+            <tr>
+              <td colspan="3" class="py-8 text-center text-slate-400">
+                <svg class="inline-block w-6 h-6 animate-spin text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" stroke-dasharray="32" stroke-dashoffset="10"/></svg>
+                <div class="mt-2 font-bold text-xs">Loading store hierarchy...</div>
               </td>
-              <td class="py-3.5 px-4">
-                <div class="font-extrabold text-[#0E1108]" x-text="formatWebsiteName(web)">TyresVision UAE</div>
-                <div class="text-[10px] text-slate-400" x-text="web.domain">www.tyresvision.com</div>
+            </tr>
+          </template>
+
+          <template x-if="!loading && tableRows.length === 0">
+            <tr>
+              <td colspan="3" class="py-8 text-center text-slate-400 font-bold">
+                No store records matching current filters.
               </td>
-              <td class="py-3.5 px-4 font-bold text-slate-700" x-text="web.domain">www.tyresvision.com</td>
-              <td class="py-3.5 px-4">
-                <template x-if="web.is_default == 1">
-                  <span class="px-2 py-0.5 text-[9px] font-black uppercase rounded-md bg-[#EAF7E2] text-[#35760F]">Default Website</span>
+            </tr>
+          </template>
+
+          <template x-for="(row, idx) in tableRows" :key="idx">
+            <tr class="hover:bg-[#F9FCF8] transition-colors">
+              
+              <!-- COLUMN 1: WEB SITE -->
+              <td class="py-4 px-5 align-top border-r border-[#F1F5F0]">
+                <template x-if="row.is_first_web_row">
+                  <div class="space-y-1">
+                    <div class="flex items-center justify-between gap-2">
+                      <a 
+                        href="javascript:void(0)" 
+                        @click="openEditWebsiteModal(row.website_id)"
+                        class="text-sm font-black text-[#0E1108] hover:text-[#58B31B] hover:underline"
+                        x-text="row.website_name"
+                      >
+                        Tyrescart
+                      </a>
+                      <button 
+                        type="button" 
+                        @click="openEditWebsiteModal(row.website_id)"
+                        class="p-1 text-slate-400 hover:text-[#35760F] hover:bg-[#EAF7E2] rounded-lg transition"
+                        title="Edit Web Site"
+                      >
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                    </div>
+                    <div class="text-[11px] font-mono text-slate-500">
+                      (Code: <span class="font-bold text-slate-700" x-text="row.website_code">base</span>)
+                    </div>
+                  </div>
                 </template>
-                <template x-if="web.is_default == 0">
-                  <span class="px-2 py-0.5 text-[9px] font-bold text-slate-400">Secondary</span>
+              </td>
+
+              <!-- COLUMN 2: STORE -->
+              <td class="py-4 px-5 align-top border-r border-[#F1F5F0]">
+                <template x-if="row.is_first_store_row && row.store_id">
+                  <div class="space-y-1">
+                    <div class="flex items-center justify-between gap-2">
+                      <a 
+                        href="javascript:void(0)" 
+                        @click="openEditStoreModal(row.store_id)"
+                        class="text-sm font-black text-[#0E1108] hover:text-[#58B31B] hover:underline"
+                        x-text="row.store_display_name"
+                      >
+                        B2C
+                      </a>
+                      <button 
+                        type="button" 
+                        @click="openEditStoreModal(row.store_id)"
+                        class="p-1 text-slate-400 hover:text-[#35760F] hover:bg-[#EAF7E2] rounded-lg transition"
+                        title="Edit Store"
+                      >
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                    </div>
+                    <div class="text-[11px] font-mono text-slate-500">
+                      (Code: <span class="font-bold text-slate-700" x-text="row.store_code">tyrescart_uae</span>)
+                    </div>
+                  </div>
+                </template>
+                <template x-if="!row.store_id">
+                  <span class="text-xs text-slate-400 italic">No stores created yet</span>
                 </template>
               </td>
-              <td class="py-3.5 px-4">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold"
-                      :class="web.status === 'active' ? 'bg-[#EAF7E2] text-[#35760F]' : 'bg-slate-100 text-slate-500'">
-                  <span class="w-1.5 h-1.5 rounded-full" :class="web.status === 'active' ? 'bg-[#58B31B]' : 'bg-slate-400'"></span>
-                  <span x-text="web.status === 'active' ? 'Active' : 'Disabled'"></span>
-                </span>
+
+              <!-- COLUMN 3: STORE VIEW -->
+              <td class="py-4 px-5 align-top">
+                <template x-if="row.store_view_id">
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="space-y-0.5">
+                      <div>
+                        <a 
+                          href="javascript:void(0)" 
+                          @click="openEditStoreViewModal(row.store_view_id)"
+                          class="text-sm font-black text-[#0E1108] hover:text-[#58B31B] hover:underline"
+                          x-text="row.store_view_name"
+                        >
+                          Arabic
+                        </a>
+                      </div>
+                      <div class="text-[11px] font-mono text-slate-500">
+                        (Code: <span class="font-bold text-slate-700" x-text="row.store_view_code">ar</span>)
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                      <span 
+                        class="px-2 py-0.5 text-[10px] font-extrabold rounded-full"
+                        :class="row.store_view_is_active == 1 ? 'bg-[#EAF7E2] text-[#35760F]' : 'bg-slate-100 text-slate-500'"
+                        x-text="row.store_view_is_active == 1 ? 'Enabled' : 'Disabled'"
+                      ></span>
+
+                      <button 
+                        type="button" 
+                        @click="openEditStoreViewModal(row.store_view_id)"
+                        class="p-1 text-slate-400 hover:text-[#35760F] hover:bg-[#EAF7E2] rounded-lg transition cursor-pointer"
+                        title="Edit Store View"
+                      >
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+
+                      <button 
+                        type="button" 
+                        @click="confirmDeleteStoreView(row.store_view_id, row.store_view_name)"
+                        class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                        title="Delete Store View"
+                      >
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </template>
+                <template x-if="!row.store_view_id && row.store_id">
+                  <span class="text-xs text-slate-400 italic">No store views configured yet</span>
+                </template>
               </td>
-              <td class="py-3.5 px-4 text-right space-x-2">
-                <button 
-                  type="button" 
-                  @click="openEditWebsiteModal(web)"
-                  class="p-1.5 rounded-lg text-slate-500 hover:text-[#35760F] hover:bg-[#EAF7E2] transition cursor-pointer"
-                  title="Edit Website"
-                >
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-              </td>
+
             </tr>
           </template>
         </tbody>
@@ -152,150 +288,353 @@
     </div>
   </div>
 
-  <!-- TAB 2: STORE HUBS MANAGEMENT TABLE -->
-  <div x-show="activeTab === 'stores'" class="bg-white border border-[#E8EDE4] rounded-3xl shadow-xs overflow-hidden">
-    <div class="p-4 border-b border-[#F1F5F0] flex items-center justify-between">
-      <span class="text-xs font-black text-[#0E1108]">Physical Fitting Centres &amp; Mobile Van Fleets</span>
-      <span class="text-[10px] text-slate-400 font-bold">Fulfillment Inventory Hubs</span>
-    </div>
-
-    <div class="overflow-x-auto">
-      <table id="storesTable" class="w-full text-left text-xs">
-        <thead class="bg-[#F8FAF7] border-b border-[#E8EDE4] text-slate-400 font-black uppercase text-[10px] tracking-wider">
-          <tr>
-            <th class="py-3 px-4">Store Code</th>
-            <th class="py-3 px-4">Store Hub Name</th>
-            <th class="py-3 px-4">Emirate / Region</th>
-            <th class="py-3 px-4">Phone / Contact</th>
-            <th class="py-3 px-4">Status</th>
-            <th class="py-3 px-4 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-[#F1F5F0]">
-          <template x-for="store in stores" :key="store.id">
-            <tr class="hover:bg-slate-50/80 transition">
-              <td class="py-3.5 px-4 font-mono font-bold text-slate-600">
-                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700" x-text="store.code">dubai_hub</span>
-              </td>
-              <td class="py-3.5 px-4">
-                <div class="font-extrabold text-[#0E1108]" x-text="formatStoreName(store.name)">Dubai Central Retail Hub</div>
-                <div class="text-[10px] text-slate-400" x-text="store.email">dubai@tyresvision.com</div>
-              </td>
-              <td class="py-3.5 px-4">
-                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold" x-text="store.emirate || 'All UAE'">Dubai</span>
-              </td>
-              <td class="py-3.5 px-4 font-mono text-slate-600" x-text="store.phone || '+971 50 506 9575'">+971 50 506 9575</td>
-              <td class="py-3.5 px-4">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold"
-                      :class="store.is_active == 1 ? 'bg-[#EAF7E2] text-[#35760F]' : 'bg-slate-100 text-slate-500'">
-                  <span class="w-1.5 h-1.5 rounded-full" :class="store.is_active == 1 ? 'bg-[#58B31B]' : 'bg-slate-400'"></span>
-                  <span x-text="store.is_active == 1 ? 'Active' : 'Disabled'"></span>
-                </span>
-              </td>
-              <td class="py-3.5 px-4 text-right space-x-2">
-                <button 
-                  type="button" 
-                  @click="openEditStoreModal(store)"
-                  class="p-1.5 rounded-lg text-slate-500 hover:text-[#35760F] hover:bg-[#EAF7E2] transition cursor-pointer"
-                  title="Edit Store Hub"
-                >
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-              </td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- WORKING ADD / EDIT WEBSITE MODAL -->
-  <div x-show="showWebsiteModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showWebsiteModal = false">
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: STORE VIEW INFORMATION (MATCHING SCREENSHOT 1)               -->
+  <!-- ===================================================================== -->
+  <div x-show="showStoreViewModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-5 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showStoreViewModal = false">
+      
+      <!-- Modal Top Bar Matching Screenshot 1 -->
       <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
-        <h3 class="text-base font-black text-[#0E1108]" x-text="websiteForm.id ? 'Edit Website' : 'Add New Website'"></h3>
-        <button type="button" @click="showWebsiteModal = false" class="text-slate-400 hover:text-slate-700">✕</button>
+        <div>
+          <h3 class="text-base font-black text-[#0E1108]" x-text="viewForm.id ? 'Edit Store View' : 'New Store View'">New Store View</h3>
+          <p class="text-[11px] text-slate-400 font-medium">Store View Information &amp; Language Locale Config</p>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <button 
+            type="button" 
+            @click="showStoreViewModal = false"
+            class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+          >
+            &lt; Back
+          </button>
+          <button 
+            type="button" 
+            @click="resetStoreViewForm()"
+            class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+          >
+            Reset
+          </button>
+          <template x-if="viewForm.id">
+            <button 
+              type="button" 
+              @click="confirmDeleteStoreView(viewForm.id, viewForm.name)"
+              class="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold hover:bg-rose-100 transition cursor-pointer"
+            >
+              Delete
+            </button>
+          </template>
+          <button 
+            type="button" 
+            @click="saveStoreView()"
+            class="px-4 py-1.5 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] transition shadow-xs cursor-pointer"
+          >
+            Save Store View
+          </button>
+        </div>
       </div>
 
-      <form @submit.prevent="saveWebsite()" class="space-y-3.5">
+      <!-- Form Section: Store View Information -->
+      <form @submit.prevent="saveStoreView()" class="space-y-4">
+        <div class="text-xs font-black uppercase text-slate-400 tracking-wider pb-1 border-b border-slate-100">
+          Store View Information
+        </div>
+
+        <!-- Store * Dropdown -->
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Website Code (Identifier) *</label>
-          <input type="text" x-model="websiteForm.code" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono" placeholder="e.g. tyresvision_ksa">
+          <label class="block text-xs font-bold text-slate-700 mb-1">Store <span class="text-rose-500">*</span></label>
+          <select x-model="viewForm.store_id" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]">
+            <template x-for="web in websites" :key="web.id">
+              <optgroup :label="formatWebsiteName(web)">
+                <template x-for="st in getStoresForWebsite(web.id)" :key="st.id">
+                  <option :value="st.id" x-text="formatStoreName(st.name)"></option>
+                </template>
+              </optgroup>
+            </template>
+          </select>
         </div>
 
+        <!-- Name * Text Input -->
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Website Name *</label>
-          <input type="text" x-model="websiteForm.name" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold" placeholder="e.g. TyresVision Saudi Arabia">
+          <label class="block text-xs font-bold text-slate-700 mb-1">Name <span class="text-rose-500">*</span></label>
+          <input 
+            type="text" 
+            x-model="viewForm.name" 
+            required 
+            placeholder="e.g. Arabic, English, German, French" 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]"
+          >
         </div>
 
+        <!-- Code * Text Input -->
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Primary Domain *</label>
-          <input type="text" x-model="websiteForm.domain" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs" placeholder="e.g. tyresvision.sa">
+          <label class="block text-xs font-bold text-slate-700 mb-1">Code <span class="text-rose-500">*</span></label>
+          <input 
+            type="text" 
+            x-model="viewForm.code" 
+            required 
+            placeholder="e.g. ar, en, de, fr, en_b2b" 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono font-bold focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]"
+          >
+          <p class="text-[11px] text-slate-400 mt-1">This code is registered dynamically in database and used across translation APIs and URL routing (e.g. 'de' for German).</p>
         </div>
 
-        <div class="flex items-center gap-4 pt-2">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" x-model="websiteForm.is_default" class="w-4 h-4 rounded text-[#58B31B] focus:ring-0">
-            <span class="text-xs font-bold text-slate-700">Set as Default Website</span>
-          </label>
+        <!-- Status * Dropdown -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Status <span class="text-rose-500">*</span></label>
+          <select x-model="viewForm.status" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]">
+            <option value="1">Enabled</option>
+            <option value="0">Disabled</option>
+          </select>
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-4 border-t border-[#F1F5F0]">
-          <button type="button" @click="showWebsiteModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] shadow-xs">Save Website</button>
+        <!-- Sort Order Input -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Sort Order</label>
+          <input 
+            type="number" 
+            x-model="viewForm.sort_order" 
+            placeholder="10" 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]"
+          >
         </div>
       </form>
     </div>
   </div>
 
-  <!-- WORKING ADD / EDIT STORE HUB MODAL -->
-  <div x-show="showStoreModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showStoreModal = false">
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: STORE INFORMATION (MATCHING SCREENSHOT 2)                    -->
+  <!-- ===================================================================== -->
+  <div x-show="showStoreModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-5 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showStoreModal = false">
+      
+      <!-- Modal Top Bar Matching Screenshot 2 -->
       <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
-        <h3 class="text-base font-black text-[#0E1108]" x-text="storeForm.id ? 'Edit Store Hub' : 'Add New Store Hub'"></h3>
-        <button type="button" @click="showStoreModal = false" class="text-slate-400 hover:text-slate-700">✕</button>
+        <div>
+          <h3 class="text-base font-black text-[#0E1108]" x-text="storeForm.id ? 'Edit Store' : 'New Store'">New Store</h3>
+          <p class="text-[11px] text-slate-400 font-medium">Store Information &amp; Root Category Mapping</p>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <button 
+            type="button" 
+            @click="showStoreModal = false"
+            class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+          >
+            &lt; Back
+          </button>
+          <button 
+            type="button" 
+            @click="resetStoreForm()"
+            class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+          >
+            Reset
+          </button>
+          <template x-if="storeForm.id">
+            <button 
+              type="button" 
+              @click="confirmDeleteStore(storeForm.id, storeForm.name)"
+              class="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold hover:bg-rose-100 transition cursor-pointer"
+            >
+              Delete
+            </button>
+          </template>
+          <button 
+            type="button" 
+            @click="saveStore()"
+            class="px-4 py-1.5 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] transition shadow-xs cursor-pointer"
+          >
+            Save Store
+          </button>
+        </div>
       </div>
 
-      <form @submit.prevent="saveStore()" class="space-y-3.5">
+      <!-- Form Section: Store Information -->
+      <form @submit.prevent="saveStore()" class="space-y-4">
+        <div class="text-xs font-black uppercase text-slate-400 tracking-wider pb-1 border-b border-slate-100">
+          Store Information
+        </div>
+
+        <!-- Web Site * Dropdown -->
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Parent Website *</label>
-          <select x-model="storeForm.website_id" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold">
+          <label class="block text-xs font-bold text-slate-700 mb-1">Web Site <span class="text-rose-500">*</span></label>
+          <select x-model="storeForm.website_id" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]">
             <template x-for="web in websites" :key="web.id">
-              <option :value="web.id" x-text="web.name"></option>
+              <option :value="web.id" x-text="formatWebsiteName(web)"></option>
             </template>
           </select>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Store Code *</label>
-            <input type="text" x-model="storeForm.code" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono" placeholder="e.g. rak_hub">
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Emirate / Region *</label>
-            <input type="text" x-model="storeForm.emirate" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold" placeholder="e.g. Ras Al Khaimah">
-          </div>
+        <!-- Name * Text Input -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Name <span class="text-rose-500">*</span></label>
+          <input 
+            type="text" 
+            x-model="storeForm.name" 
+            required 
+            placeholder="e.g. B2C, B2B, Tyrescart UAE" 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]"
+          >
+        </div>
+
+        <!-- Code * Text Input -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Code <span class="text-rose-500">*</span></label>
+          <input 
+            type="text" 
+            x-model="storeForm.code" 
+            required 
+            placeholder="e.g. tyrescart_uae, b2b" 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono font-bold focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]"
+          >
+        </div>
+
+        <!-- Root Category * Dropdown -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Root Category <span class="text-rose-500">*</span></label>
+          <select x-model="storeForm.root_category_id" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]">
+            <option value="1">Default Category</option>
+            <template x-for="cat in categories" :key="cat.id">
+              <option :value="cat.id" x-text="formatCategoryName(cat)"></option>
+            </template>
+          </select>
+        </div>
+
+        <!-- Default Store View Dropdown -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Default Store View</label>
+          <select x-model="storeForm.default_store_view_id" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]">
+            <option value="">-- None / Automatic --</option>
+            <template x-for="v in getViewsForStore(storeForm.id)" :key="v.id">
+              <option :value="v.id" x-text="`${v.name} (${v.code})`"></option>
+            </template>
+          </select>
+        </div>
+
+        <!-- Sort Order Input -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Sort Order</label>
+          <input 
+            type="number" 
+            x-model="storeForm.sort_order" 
+            placeholder="10" 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]"
+          >
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: WEB SITE INFORMATION                                         -->
+  <!-- ===================================================================== -->
+  <div x-show="showWebsiteModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-5 shadow-2xl border border-[#E8EDE4] animate-in fade-in zoom-in-95" @click.away="showWebsiteModal = false">
+      
+      <!-- Modal Top Bar -->
+      <div class="flex items-center justify-between pb-3 border-b border-[#F1F5F0]">
+        <div>
+          <h3 class="text-base font-black text-[#0E1108]" x-text="websiteForm.id ? 'Edit Web Site' : 'New Web Site'">New Web Site</h3>
+          <p class="text-[11px] text-slate-400 font-medium">Web Site Domain &amp; Top-Level Scope</p>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <button 
+            type="button" 
+            @click="showWebsiteModal = false"
+            class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+          >
+            &lt; Back
+          </button>
+          <button 
+            type="button" 
+            @click="resetWebsiteForm()"
+            class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+          >
+            Reset
+          </button>
+          <template x-if="websiteForm.id && !websiteForm.is_default">
+            <button 
+              type="button" 
+              @click="confirmDeleteWebsite(websiteForm.id, websiteForm.name)"
+              class="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold hover:bg-rose-100 transition cursor-pointer"
+            >
+              Delete
+            </button>
+          </template>
+          <button 
+            type="button" 
+            @click="saveWebsite()"
+            class="px-4 py-1.5 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] transition shadow-xs cursor-pointer"
+          >
+            Save Web Site
+          </button>
+        </div>
+      </div>
+
+      <!-- Form Section: Web Site Information -->
+      <form @submit.prevent="saveWebsite()" class="space-y-4">
+        <div class="text-xs font-black uppercase text-slate-400 tracking-wider pb-1 border-b border-slate-100">
+          Web Site Information
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Store Name *</label>
-          <input type="text" x-model="storeForm.name_en" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold" placeholder="e.g. Ras Al Khaimah Central Fitting Hub">
+          <label class="block text-xs font-bold text-slate-700 mb-1">Name <span class="text-rose-500">*</span></label>
+          <input 
+            type="text" 
+            x-model="websiteForm.name" 
+            required 
+            placeholder="e.g. Tyrescart, TyrescartB2B" 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]"
+          >
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Code <span class="text-rose-500">*</span></label>
+          <input 
+            type="text" 
+            x-model="websiteForm.code" 
+            required 
+            placeholder="e.g. base, kleverb2b" 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono font-bold focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]"
+          >
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Primary Domain</label>
+          <input 
+            type="text" 
+            x-model="websiteForm.domain" 
+            placeholder="https://www.tyrescart.com/" 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-1 focus:ring-[#58B31B] focus:border-[#58B31B]"
+          >
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Contact Phone</label>
-            <input type="text" x-model="storeForm.phone" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs" placeholder="+971 50 506 9575">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Status</label>
+            <select x-model="websiteForm.status" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Contact Email</label>
-            <input type="email" x-model="storeForm.email" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs" placeholder="hub@tyresvision.com">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Sort Order</label>
+            <input 
+              type="number" 
+              x-model="websiteForm.sort_order" 
+              placeholder="10" 
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono"
+            >
           </div>
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-4 border-t border-[#F1F5F0]">
-          <button type="button" @click="showStoreModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-black hover:bg-[#489915] shadow-xs">Save Store Hub</button>
+        <div class="pt-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" x-model="websiteForm.is_default" class="w-4 h-4 rounded text-[#58B31B] focus:ring-0">
+            <span class="text-xs font-bold text-slate-700">Set as Primary Default Web Site</span>
+          </label>
         </div>
       </form>
     </div>
@@ -306,105 +645,372 @@
 <script>
 function storesStudio() {
   return {
-    activeTab: 'websites',
+    loading: false,
     websites: [],
     stores: [],
     storeViews: [],
+    categories: [],
+    tableRows: [],
+    storeViewsSummary: '0',
+
+    filters: {
+      website: '',
+      store: '',
+      store_view: ''
+    },
+
+    // Modal toggles
     showWebsiteModal: false,
     showStoreModal: false,
-    websiteForm: { id: null, code: '', name: '', domain: '', is_default: false, status: 'active' },
-    storeForm: { id: null, website_id: 1, code: '', name_en: '', name_ar: '', emirate: '', phone: '', email: '', is_active: 1 },
+    showStoreViewModal: false,
+
+    // Form Models
+    websiteForm: { id: null, name: '', code: '', domain: '', sort_order: 10, status: 'active', is_default: false },
+    storeForm: { id: null, website_id: 1, name: '', code: '', root_category_id: 1, default_store_view_id: '', sort_order: 10 },
+    viewForm: { id: null, store_id: 1, name: '', code: '', status: '1', sort_order: 10 },
 
     async init() {
       await this.loadData();
     },
 
     async loadData() {
+      this.loading = true;
       try {
-        const [webRes, storeRes, viewsRes] = await Promise.all([
+        const queryParams = new URLSearchParams();
+        if (this.filters.website.trim()) queryParams.set('website', this.filters.website.trim());
+        if (this.filters.store.trim()) queryParams.set('store', this.filters.store.trim());
+        if (this.filters.store_view.trim()) queryParams.set('store_view', this.filters.store_view.trim());
+
+        const [allStoresRes, webRes, storeRes, viewsRes, catRes] = await Promise.all([
+          fetch(`/visionadmin/api/all-stores?${queryParams.toString()}`),
           fetch('/visionadmin/api/websites'),
           fetch('/visionadmin/api/stores'),
-          fetch('/visionadmin/api/store-views')
+          fetch('/visionadmin/api/store-views'),
+          fetch('/visionadmin/api/categories')
         ]);
+
+        const allStoresData = await allStoresRes.json();
         const webData = await webRes.json();
         const storeData = await storeRes.json();
         const viewsData = await viewsRes.json();
+        const catData = await catRes.json();
+
         this.websites = webData.websites || [];
         this.stores = storeData.stores || [];
         this.storeViews = viewsData.store_views || [];
+        this.categories = catData.categories || [];
+
+        // Build summary string of locales
+        const distinctLocales = [...new Set(this.storeViews.map(v => (v.locale || v.code || '').toUpperCase()))].filter(Boolean);
+        this.storeViewsSummary = distinctLocales.length > 0 ? `${this.storeViews.length} (${distinctLocales.join(' / ')})` : `${this.storeViews.length}`;
+
+        // Tag table rows with Magento-like grouping flags (is_first_web_row, is_first_store_row)
+        const rawRows = allStoresData.rows || [];
+        let lastWebId = null;
+        let lastStoreId = null;
+
+        this.tableRows = rawRows.map((r) => {
+          const isFirstWeb = r.website_id !== lastWebId;
+          const isFirstStore = (r.store_id !== lastStoreId) || isFirstWeb;
+          lastWebId = r.website_id;
+          lastStoreId = r.store_id;
+
+          return {
+            ...r,
+            is_first_web_row: isFirstWeb,
+            is_first_store_row: isFirstStore
+          };
+        });
+
       } catch (err) {
-        console.error('Error loading stores data:', err);
+        console.error('Error loading stores hierarchy data:', err);
+      } finally {
+        this.loading = false;
       }
+    },
+
+    applyFilters() {
+      this.loadData();
+    },
+
+    resetFilters() {
+      this.filters.website = '';
+      this.filters.store = '';
+      this.filters.store_view = '';
+      this.loadData();
+    },
+
+    formatWebsiteName(web) {
+      if (!web) return '';
+      return web.name || web.code || 'Web Site';
     },
 
     formatStoreName(rawName) {
       if (!rawName) return '';
       if (typeof rawName === 'object' && rawName !== null) {
-        return rawName.en || rawName.ar || '';
+        return rawName.en || rawName.ar || Object.values(rawName)[0] || '';
       }
       try {
         if (typeof rawName === 'string' && rawName.trim().startsWith('{')) {
           const parsed = JSON.parse(rawName);
-          return parsed.en || parsed.ar || rawName;
+          return parsed.en || parsed.ar || Object.values(parsed)[0] || rawName;
         }
       } catch (e) {}
       return rawName;
     },
 
-    formatWebsiteName(web) {
-      if (!web) return '';
-      const raw = web.name;
-      if (typeof raw === 'object' && raw !== null) return raw.en || raw.ar || web.code;
-      if (typeof raw === 'string' && raw.trim().startsWith('{')) {
-        try {
-          const parsed = JSON.parse(raw);
-          return parsed.en || parsed.ar || raw;
-        } catch (e) {}
+    formatCategoryName(cat) {
+      if (!cat) return '';
+      if (cat.display_name) return cat.display_name;
+      if (typeof cat.name === 'object' && cat.name !== null) {
+        return cat.name.en || Object.values(cat.name)[0] || '';
       }
-      return raw || web.code;
-    },
-
-    openAddWebsiteModal() {
-      this.websiteForm = { id: null, code: '', name: '', domain: '', is_default: false, status: 'active' };
-      this.showWebsiteModal = true;
-    },
-
-    openEditWebsiteModal(web) {
-      this.websiteForm = { ...web, is_default: web.is_default == 1 };
-      this.showWebsiteModal = true;
-    },
-
-    openAddStoreModal() {
-      this.storeForm = { id: null, website_id: this.websites[0]?.id || 1, code: '', name_en: '', name_ar: '', emirate: '', phone: '', email: '', is_active: 1 };
-      this.showStoreModal = true;
-    },
-
-    openEditStoreModal(store) {
-      let nameEn = store.name;
-      let nameAr = '';
       try {
-        if (typeof store.name === 'string' && store.name.startsWith('{')) {
-          const parsed = JSON.parse(store.name);
-          nameEn = parsed.en || '';
-          nameAr = parsed.ar || '';
+        if (typeof cat.name === 'string' && cat.name.trim().startsWith('{')) {
+          const p = JSON.parse(cat.name);
+          return p.en || Object.values(p)[0] || cat.name;
         }
       } catch (e) {}
+      return cat.name || `Category #${cat.id}`;
+    },
 
+    getStoresForWebsite(webId) {
+      return this.stores.filter(s => s.website_id == webId);
+    },
+
+    getViewsForStore(storeId) {
+      return this.storeViews.filter(v => v.store_id == storeId);
+    },
+
+    // -------------------------------------------------------------
+    // STORE VIEW ACTIONS
+    // -------------------------------------------------------------
+    openAddStoreViewModal() {
+      const firstStore = this.stores[0];
+      this.viewForm = {
+        id: null,
+        store_id: firstStore ? firstStore.id : 1,
+        name: '',
+        code: '',
+        status: '1',
+        sort_order: 10
+      };
+      this.showStoreViewModal = true;
+    },
+
+    async openEditStoreViewModal(viewId) {
+      try {
+        const res = await fetch(`/visionadmin/api/store-views/${viewId}`);
+        const data = await res.json();
+        if (data.success && data.store_view) {
+          const v = data.store_view;
+          this.viewForm = {
+            id: v.id,
+            store_id: v.store_id,
+            name: v.name,
+            code: v.code,
+            status: v.is_active == 1 ? '1' : '0',
+            sort_order: v.sort_order || 10
+          };
+          this.showStoreViewModal = true;
+        }
+      } catch (e) {
+        console.error('Error fetching store view:', e);
+      }
+    },
+
+    resetStoreViewForm() {
+      if (this.viewForm.id) {
+        this.openEditStoreViewModal(this.viewForm.id);
+      } else {
+        this.openAddStoreViewModal();
+      }
+    },
+
+    async saveStoreView() {
+      if (!this.viewForm.name || !this.viewForm.code) {
+        alert('Please fill in Name and Code.');
+        return;
+      }
+      try {
+        const method = this.viewForm.id ? 'PUT' : 'POST';
+        const url = this.viewForm.id ? `/visionadmin/api/store-views/${this.viewForm.id}` : '/visionadmin/api/store-views';
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.viewForm)
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.showStoreViewModal = false;
+          await this.loadData();
+          if (window.showToast) window.showToast(data.message || 'Store View saved successfully!', 'success');
+        } else {
+          alert(data.error || 'Failed to save store view.');
+        }
+      } catch (err) {
+        console.error('Error saving store view:', err);
+      }
+    },
+
+    async confirmDeleteStoreView(viewId, viewName) {
+      if (!confirm(`Are you sure you want to delete Store View "${viewName}"?`)) return;
+      try {
+        const res = await fetch(`/visionadmin/api/store-views/${viewId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          this.showStoreViewModal = false;
+          await this.loadData();
+          if (window.showToast) window.showToast(data.message || 'Store view deleted.', 'success');
+        } else {
+          alert(data.error || 'Failed to delete store view.');
+        }
+      } catch (e) {
+        console.error('Error deleting store view:', e);
+      }
+    },
+
+    // -------------------------------------------------------------
+    // STORE ACTIONS
+    // -------------------------------------------------------------
+    openAddStoreModal() {
+      const firstWeb = this.websites[0];
       this.storeForm = {
-        id: store.id,
-        website_id: store.website_id || 1,
-        code: store.code,
-        name_en: nameEn,
-        name_ar: nameAr,
-        emirate: store.emirate || '',
-        phone: store.phone || '',
-        email: store.email || '',
-        is_active: store.is_active || 1
+        id: null,
+        website_id: firstWeb ? firstWeb.id : 1,
+        name: '',
+        code: '',
+        root_category_id: 1,
+        default_store_view_id: '',
+        sort_order: 10
       };
       this.showStoreModal = true;
     },
 
+    async openEditStoreModal(storeId) {
+      try {
+        const res = await fetch(`/visionadmin/api/stores/${storeId}`);
+        const data = await res.json();
+        if (data.success && data.store) {
+          const s = data.store;
+          this.storeForm = {
+            id: s.id,
+            website_id: s.website_id,
+            name: s.display_name || this.formatStoreName(s.name),
+            code: s.code,
+            root_category_id: s.root_category_id || 1,
+            default_store_view_id: s.default_store_view_id || '',
+            sort_order: s.sort_order || 10
+          };
+          this.showStoreModal = true;
+        }
+      } catch (e) {
+        console.error('Error fetching store:', e);
+      }
+    },
+
+    resetStoreForm() {
+      if (this.storeForm.id) {
+        this.openEditStoreModal(this.storeForm.id);
+      } else {
+        this.openAddStoreModal();
+      }
+    },
+
+    async saveStore() {
+      if (!this.storeForm.name || !this.storeForm.code) {
+        alert('Please fill in Name and Code.');
+        return;
+      }
+      try {
+        const method = this.storeForm.id ? 'PUT' : 'POST';
+        const url = this.storeForm.id ? `/visionadmin/api/stores/${this.storeForm.id}` : '/visionadmin/api/stores';
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.storeForm)
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.showStoreModal = false;
+          await this.loadData();
+          if (window.showToast) window.showToast(data.message || 'Store saved successfully!', 'success');
+        } else {
+          alert(data.error || 'Failed to save store.');
+        }
+      } catch (err) {
+        console.error('Error saving store:', err);
+      }
+    },
+
+    async confirmDeleteStore(storeId, storeName) {
+      if (!confirm(`Are you sure you want to delete Store "${storeName}"?`)) return;
+      try {
+        const res = await fetch(`/visionadmin/api/stores/${storeId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          this.showStoreModal = false;
+          await this.loadData();
+          if (window.showToast) window.showToast(data.message || 'Store deleted.', 'success');
+        } else {
+          alert(data.error || 'Failed to delete store.');
+        }
+      } catch (e) {
+        console.error('Error deleting store:', e);
+      }
+    },
+
+    // -------------------------------------------------------------
+    // WEB SITE ACTIONS
+    // -------------------------------------------------------------
+    openAddWebsiteModal() {
+      this.websiteForm = {
+        id: null,
+        name: '',
+        code: '',
+        domain: '',
+        sort_order: 10,
+        status: 'active',
+        is_default: false
+      };
+      this.showWebsiteModal = true;
+    },
+
+    async openEditWebsiteModal(webId) {
+      try {
+        const res = await fetch(`/visionadmin/api/websites/${webId}`);
+        const data = await res.json();
+        if (data.success && data.website) {
+          const w = data.website;
+          this.websiteForm = {
+            id: w.id,
+            name: w.name,
+            code: w.code,
+            domain: w.domain || '',
+            sort_order: w.sort_order || 10,
+            status: w.status || 'active',
+            is_default: w.is_default == 1
+          };
+          this.showWebsiteModal = true;
+        }
+      } catch (e) {
+        console.error('Error fetching website:', e);
+      }
+    },
+
+    resetWebsiteForm() {
+      if (this.websiteForm.id) {
+        this.openEditWebsiteModal(this.websiteForm.id);
+      } else {
+        this.openAddWebsiteModal();
+      }
+    },
+
     async saveWebsite() {
+      if (!this.websiteForm.name || !this.websiteForm.code) {
+        alert('Please fill in Name and Code.');
+        return;
+      }
       try {
         const method = this.websiteForm.id ? 'PUT' : 'POST';
         const url = this.websiteForm.id ? `/visionadmin/api/websites/${this.websiteForm.id}` : '/visionadmin/api/websites';
@@ -417,42 +1023,32 @@ function storesStudio() {
         if (data.success) {
           this.showWebsiteModal = false;
           await this.loadData();
-          if (window.showToast) window.showToast('Website saved successfully!', 'success');
+          if (window.showToast) window.showToast(data.message || 'Web Site saved successfully!', 'success');
+        } else {
+          alert(data.error || 'Failed to save website.');
         }
       } catch (err) {
         console.error('Error saving website:', err);
       }
     },
 
-    async saveStore() {
+    async confirmDeleteWebsite(webId, webName) {
+      if (!confirm(`Are you sure you want to delete Web Site "${webName}"?`)) return;
       try {
-        const method = this.storeForm.id ? 'PUT' : 'POST';
-        const url = this.storeForm.id ? `/visionadmin/api/stores/${this.storeForm.id}` : '/visionadmin/api/stores';
-        const payload = {
-          website_id: this.storeForm.website_id,
-          code: this.storeForm.code,
-          name: JSON.stringify({ en: this.storeForm.name_en, ar: this.storeForm.name_ar }),
-          emirate: this.storeForm.emirate,
-          phone: this.storeForm.phone,
-          email: this.storeForm.email,
-          is_active: this.storeForm.is_active
-        };
-
-        const res = await fetch(url, {
-          method: method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        const res = await fetch(`/visionadmin/api/websites/${webId}`, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) {
-          this.showStoreModal = false;
+          this.showWebsiteModal = false;
           await this.loadData();
-          if (window.showToast) window.showToast('Store hub saved successfully!', 'success');
+          if (window.showToast) window.showToast(data.message || 'Web Site deleted.', 'success');
+        } else {
+          alert(data.error || 'Failed to delete website.');
         }
-      } catch (err) {
-        console.error('Error saving store hub:', err);
+      } catch (e) {
+        console.error('Error deleting website:', e);
       }
     }
+
   };
 }
 </script>
