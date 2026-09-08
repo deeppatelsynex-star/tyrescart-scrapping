@@ -2,9 +2,9 @@
 
 {% block title %}
   {% if page and page.title %}
-    {{ page.title }} | {% if locale == 'ar' %}تايرز فيجن الإمارات{% else %}TyresVision UAE{% endif %}
+    {{ page.title }} | {{ _('TyresVision UAE') }}
   {% else %}
-    {% if locale == 'ar' %}من نحن | تايرز فيجن الإمارات — إطارات أصلية وخدمة موثوقة{% else %}About Us | TyresVision UAE — Driven by Confidence, Built for the Road{% endif %}
+    {{ _('About Us | TyresVision UAE — Driven by Confidence, Built for the Road') }}
   {% endif %}
 {% endblock %}
 
@@ -12,7 +12,7 @@
   {% if page and page.meta_description %}
     {{ page.meta_description }}
   {% else %}
-    {% if locale == 'ar' %}في تايرز فيجن، نقدم إطارات سيارات أصلية معتمدة، وأسعار شفافة، وخدمة تركيب متنقلة عند باب منزلك أو في مراكزنا المعتمدة في كافة أنحاء الإمارات.{% else %}At TyresVision, we deliver premium tyres that combine cutting-edge technology, superior performance, and lasting reliability across the UAE.{% endif %}
+    {{ _('At TyresVision, we deliver premium tyres that combine cutting-edge technology, superior performance, and lasting reliability across the UAE.') }}
   {% endif %}
 {% endblock %}
 

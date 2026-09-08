@@ -224,33 +224,33 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
     # -------------------------------------------------------------------------
     # Localized Property Accessors
     # -------------------------------------------------------------------------
-    def get_title(self, locale: str = 'en') -> str:
-        """Returns the localized title string (fallback to 'en' or first available)."""
-        if isinstance(self.title, dict):
-            return self.title.get(locale) or self.title.get('en') or next(iter(self.title.values()), "")
-        return str(self.title or "")
+    def get_title(self, locale: str = None) -> str:
+        """Returns the localized title string for any dynamic language."""
+        from i18n import localize_value
+        return localize_value(self.title, locale)
 
-    def get_content(self, locale: str = 'en') -> str:
-        """Returns the localized HTML body content."""
-        if isinstance(self.content, dict):
-            return self.content.get(locale) or self.content.get('en') or next(iter(self.content.values()), "")
-        return str(self.content or "")
+    def get_content(self, locale: str = None) -> str:
+        """Returns the localized HTML body content for any dynamic language."""
+        from i18n import localize_value
+        return localize_value(self.content, locale)
 
-    def get_seo_title(self, locale: str = 'en') -> str:
+    def get_seo_title(self, locale: str = None) -> str:
         """Returns the localized SEO title (defaults to title if not specified)."""
-        if isinstance(self.seo_title, dict) and self.seo_title.get(locale):
-            return self.seo_title.get(locale)
+        from i18n import localize_value
+        if isinstance(self.seo_title, dict) and self.seo_title:
+            loc_seo = localize_value(self.seo_title, locale)
+            if loc_seo:
+                return loc_seo
         return self.get_title(locale)
 
-    def get_meta_title(self, locale: str = 'en') -> str:
+    def get_meta_title(self, locale: str = None) -> str:
         """Alias for get_seo_title."""
         return self.get_seo_title(locale)
 
-    def get_meta_desc(self, locale: str = 'en') -> str:
-        """Returns the localized meta description."""
-        if isinstance(self.meta_description, dict):
-            return self.meta_description.get(locale) or self.meta_description.get('en') or ""
-        return str(self.meta_description or "")
+    def get_meta_desc(self, locale: str = None) -> str:
+        """Returns the localized meta description for any dynamic language."""
+        from i18n import localize_value
+        return localize_value(self.meta_description, locale)
 
     def to_dict(self, locale: str = None) -> dict:
         """Serializes page record for API responses or template context."""

@@ -226,35 +226,32 @@ class PageSection:
         }
 
     @classmethod
-    def to_localized_dict(cls, section: dict, locale: str = "en"):
-        """Resolves bilingual JSON dictionaries into strings for the given locale."""
+    def to_localized_dict(cls, section: dict, locale: str = None):
+        """Resolves dynamic multi-language JSON dictionaries into strings for the given locale."""
         if not section:
             return {}
 
-        def get_loc(val):
-            if val is None:
-                return ""
-            if isinstance(val, dict):
-                return val.get(locale) or val.get("en") or val.get("ar") or ""
-            return str(val)
+        from i18n import localize_value as resolve_loc, LOCALE_REGEX, get_locale
+        target_locale = locale or get_locale()
 
-        def localize_value(v):
-            # Recursively resolves bilingual {"en":..,"ar":..} dicts anywhere
-            # in section_data, including dicts-of-dicts (e.g. quote_card)
-            # and lists of dicts (e.g. badges), not just top-level fields.
+        def get_loc(val):
+            return resolve_loc(val, target_locale)
+
+        def localize_item(v):
             if isinstance(v, dict):
-                if "en" in v or "ar" in v:
-                    return get_loc(v)
-                return {sub_k: localize_value(sub_v) for sub_k, sub_v in v.items()}
+                # If dict keys are locale codes, resolve the translation
+                if v and all(isinstance(k, str) and LOCALE_REGEX.match(k) for k in v.keys()):
+                    return resolve_loc(v, target_locale)
+                return {sub_k: localize_item(sub_v) for sub_k, sub_v in v.items()}
             if isinstance(v, list):
-                return [localize_value(item) for item in v]
+                return [localize_item(item) for item in v]
             return v
 
         sec_data = section.get("section_data") or {}
         localized_data = {}
         if isinstance(sec_data, dict):
             for k, v in sec_data.items():
-                localized_data[k] = localize_value(v)
+                localized_data[k] = localize_item(v)
 
         return {
             "id": section.get("id"),

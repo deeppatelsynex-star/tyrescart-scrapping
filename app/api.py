@@ -57,9 +57,8 @@ from models.page_section import PageSection
 from models.product import Product
 from models.brand import Brand
 from models.category import Category
-from siteapp.clientroute import _get_locale
+from i18n import get_locale, localize_value, translate, is_rtl
 from services.audit_service import log_activity, get_activity_logs, get_current_admin_user_id
-from services.store_context import StoreContext
 from services.attribute_service import AttributeService
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
@@ -1653,7 +1652,7 @@ def register_visionadmin_api_routes(app):
     def visionadmin_get_categories():
         """Returns all categories from blog_categories table."""
         categories = Blog.get_all_categories()
-        names = [c['name_en'] for c in categories if c.get('name_en')] or Blog.distinct_categories()
+        names = [c.get('display_name') or localize_value(c.get('name')) for c in categories if (c.get('display_name') or c.get('name'))] or Blog.distinct_categories()
         return jsonify({
             'success': True,
             'categories': categories,
@@ -1823,42 +1822,48 @@ def register_visionadmin_api_routes(app):
     def visionadmin_create_blog_category():
         """Creates or retrieves a blog category in blog_categories table."""
         data = request.get_json(silent=True) or {}
-        name_en = (data.get('name_en') or data.get('name') or '').strip()
-        name_ar = (data.get('name_ar') or '').strip() or None
+        name_val = data.get('name') or data.get('name_en')
+        if isinstance(name_val, dict):
+            display_name = localize_value(name_val)
+        else:
+            display_name = str(name_val or '').strip()
+
+        if not display_name:
+            return jsonify({'error': 'Category name is required.'}), 400
+
         user_id = session.get('user_id')
-
-        if not name_en:
-            return jsonify({'error': 'English category name is required.'}), 400
-
-        cat = Blog.get_or_create_category(name_en, name_ar=name_ar, user_id=user_id)
-        log_activity('create', 'blog_category', cat['id'], None, {'name_en': name_en, 'name_ar': name_ar, 'slug': cat.get('slug')}, user_id=user_id)
+        cat = Blog.get_or_create_category(name_val, user_id=user_id, **data)
+        log_activity('create', 'blog_category', cat['id'], None, {'name': cat.get('name'), 'slug': cat.get('slug')}, user_id=user_id)
         return jsonify({
             'success': True,
             'category': cat,
-            'message': f"Category '{name_en}' saved successfully."
+            'message': f"Category '{display_name}' saved successfully."
         }), 201
 
     @app.route('/visionadmin/api/blog-categories/<int:cat_id>', methods=['PUT'])
     def visionadmin_update_blog_category(cat_id):
         """Updates an existing category in blog_categories table."""
         data = request.get_json(silent=True) or {}
-        name_en = (data.get('name_en') or data.get('name') or '').strip()
-        name_ar = (data.get('name_ar') or '').strip() or None
+        name_val = data.get('name') or data.get('name_en')
+        if isinstance(name_val, dict):
+            display_name = localize_value(name_val)
+        else:
+            display_name = str(name_val or '').strip()
         slug = (data.get('slug') or '').strip() or None
         user_id = session.get('user_id')
 
-        if not name_en:
-            return jsonify({'error': 'English category name is required.'}), 400
+        if not display_name:
+            return jsonify({'error': 'Category name is required.'}), 400
 
-        cat = Blog.update_category(cat_id, name_en, name_ar=name_ar, slug=slug, user_id=user_id)
+        cat = Blog.update_category(cat_id, name_val, slug=slug, user_id=user_id, **data)
         if not cat:
             return jsonify({'error': 'Category not found.'}), 404
 
-        log_activity('update', 'blog_category', cat_id, None, {'name_en': name_en, 'name_ar': name_ar, 'slug': cat.get('slug')}, user_id=user_id)
+        log_activity('update', 'blog_category', cat_id, None, {'name': cat.get('name'), 'slug': cat.get('slug')}, user_id=user_id)
         return jsonify({
             'success': True,
             'category': cat,
-            'message': f"Category '{name_en}' updated successfully."
+            'message': f"Category '{display_name}' updated successfully."
         })
 
     @app.route('/visionadmin/api/blog-categories/<int:cat_id>', methods=['DELETE'])
@@ -2087,40 +2092,46 @@ def register_visionadmin_api_routes(app):
                 snippet = snippet + '...'
             return snippet
 
-        # 1. Search Pages
+        locale = get_locale()
+
+        # 1. Search Pages across all stored language JSON values
         all_pages = [p for p in Page.all(include_deleted=False) if p.deleted_at is None]
         matched_pages = []
         for p in all_pages:
-            title_en = p.get_title('en') or ''
-            title_ar = p.get_title('ar') or ''
             slug = p.slug or ''
-            content_en = clean_html(p.get_content('en') or '')
-            content_ar = clean_html(p.get_content('ar') or '')
-            meta_desc = clean_html(p.get_meta_desc('en') or '')
+            title_vals = [str(v) for v in (p.title.values() if isinstance(p.title, dict) else [p.title]) if v]
+            content_vals = [clean_html(str(v)) for v in (p.content.values() if isinstance(p.content, dict) else [p.content]) if v]
+            meta_vals = [clean_html(str(v)) for v in (p.meta_description.values() if isinstance(p.meta_description, dict) else [p.meta_description]) if v]
+            display_title = p.get_title(locale) or (title_vals[0] if title_vals else slug)
 
             match_found = False
             snippet = ''
-            if q_lower in title_en.lower() or q_lower in title_ar.lower():
-                match_found = True
-                snippet = title_en or title_ar
-            elif q_lower in slug.lower():
+            for t in title_vals:
+                if q_lower in t.lower():
+                    match_found = True
+                    snippet = t
+                    break
+            if not match_found and q_lower in slug.lower():
                 match_found = True
                 snippet = f"/{slug.lstrip('/')}"
-            elif q_lower in content_en.lower():
-                match_found = True
-                snippet = make_snippet(content_en, q_lower)
-            elif q_lower in content_ar.lower():
-                match_found = True
-                snippet = make_snippet(content_ar, q_lower)
-            elif q_lower in meta_desc.lower():
-                match_found = True
-                snippet = make_snippet(meta_desc, q_lower)
+            if not match_found:
+                for c in content_vals:
+                    if q_lower in c.lower():
+                        match_found = True
+                        snippet = make_snippet(c, q_lower)
+                        break
+            if not match_found:
+                for m in meta_vals:
+                    if q_lower in m.lower():
+                        match_found = True
+                        snippet = make_snippet(m, q_lower)
+                        break
 
             if match_found:
                 matched_pages.append({
                     'id': p.id,
                     'type': 'page',
-                    'title': title_en or slug,
+                    'title': display_title,
                     'slug': f"/{slug.lstrip('/')}",
                     'snippet': snippet,
                     'is_active': bool(p.is_active),
@@ -2145,33 +2156,42 @@ def register_visionadmin_api_routes(app):
                     page_slug = row.get('page_slug') or 'about-us'
                     sec_type = row.get('section_type') or 'section'
                     sec_title_raw = PageSection._parse_json(row.get('section_title'))
-                    sec_title_en = (sec_title_raw.get('en') if isinstance(sec_title_raw, dict) else str(sec_title_raw or '')) or ''
                     sec_sub_raw = PageSection._parse_json(row.get('section_subtitle'))
-                    sec_sub_en = (sec_sub_raw.get('en') if isinstance(sec_sub_raw, dict) else str(sec_sub_raw or '')) or ''
                     sec_content_raw = PageSection._parse_json(row.get('content'))
-                    sec_content_en = clean_html(sec_content_raw.get('en') if isinstance(sec_content_raw, dict) else str(sec_content_raw or ''))
                     sec_data_str = json.dumps(row.get('section_data') or {})
+
+                    title_vals = [str(v) for v in (sec_title_raw.values() if isinstance(sec_title_raw, dict) else [sec_title_raw]) if v]
+                    sub_vals = [str(v) for v in (sec_sub_raw.values() if isinstance(sec_sub_raw, dict) else [sec_sub_raw]) if v]
+                    content_vals = [clean_html(str(v)) for v in (sec_content_raw.values() if isinstance(sec_content_raw, dict) else [sec_content_raw]) if v]
+                    display_title = localize_value(sec_title_raw, locale) or (title_vals[0] if title_vals else f"{page_slug.replace('-', ' ').title()} {sec_type.title()} Section")
 
                     match_found = False
                     snippet = ''
-                    if q_lower in sec_title_en.lower():
-                        match_found = True
-                        snippet = sec_title_en
-                    elif q_lower in sec_sub_en.lower():
-                        match_found = True
-                        snippet = sec_sub_en
-                    elif q_lower in sec_content_en.lower():
-                        match_found = True
-                        snippet = make_snippet(sec_content_en, q_lower)
-                    elif q_lower in sec_data_str.lower():
+                    for t in title_vals:
+                        if q_lower in t.lower():
+                            match_found = True
+                            snippet = t
+                            break
+                    if not match_found:
+                        for s in sub_vals:
+                            if q_lower in s.lower():
+                                match_found = True
+                                snippet = s
+                                break
+                    if not match_found:
+                        for c in content_vals:
+                            if q_lower in c.lower():
+                                match_found = True
+                                snippet = make_snippet(c, q_lower)
+                                break
+                    if not match_found and q_lower in sec_data_str.lower():
                         match_found = True
                         snippet = make_snippet(sec_data_str, q_lower)
-                    elif q_lower in page_slug.lower() or q_lower in sec_type.lower():
+                    elif not match_found and (q_lower in page_slug.lower() or q_lower in sec_type.lower()):
                         match_found = True
                         snippet = f"Page: {page_slug} ({sec_type})"
 
                     if match_found:
-                        display_title = sec_title_en or f"{page_slug.replace('-', ' ').title()} {sec_type.title()} Section"
                         matched_sections.append({
                             'id': sec_id,
                             'type': 'section',
@@ -2199,12 +2219,7 @@ def register_visionadmin_api_routes(app):
                 """, (f"%{q_lower}%", f"%{q_lower}%", f"%{q_lower}%", f"%{q_lower}%"))
                 prod_rows = cursor.fetchall() or []
                 for pr in prod_rows:
-                    pr_name = pr.get('name')
-                    if isinstance(pr_name, str):
-                        try:
-                            pr_name = json.loads(pr_name).get('en') or pr.get('sku')
-                        except Exception:
-                            pass
+                    pr_name = localize_value(pr.get('name'), locale) or pr.get('sku')
                     matched_products.append({
                         'id': pr['id'],
                         'type': 'product',
@@ -2217,35 +2232,41 @@ def register_visionadmin_api_routes(app):
         finally:
             conn.close()
 
-        # 3. Search Blogs & Articles
+        # 3. Search Blogs & Articles across all stored language JSON values
         all_blogs = [b for b in Blog.all(include_deleted=False) if b.deleted_at is None]
         matched_blogs = []
         for b in all_blogs:
-            title_en = b.get_title('en') or ''
             slug = b.slug or ''
-            content_en = clean_html(b.get_content('en') or '')
             cat_name = b.category_name or ''
+            title_vals = [str(v) for v in (b.title.values() if isinstance(b.title, dict) else [b.title]) if v]
+            content_vals = [clean_html(str(v)) for v in (b.content.values() if isinstance(b.content, dict) else [b.content]) if v]
+            display_title = b.get_title(locale) or (title_vals[0] if title_vals else slug)
 
             match_found = False
             snippet = ''
-            if q_lower in title_en.lower():
-                match_found = True
-                snippet = title_en
-            elif q_lower in slug.lower():
+            for t in title_vals:
+                if q_lower in t.lower():
+                    match_found = True
+                    snippet = t
+                    break
+            if not match_found and q_lower in slug.lower():
                 match_found = True
                 snippet = f"/blog/{slug}"
-            elif q_lower in cat_name.lower():
+            if not match_found and q_lower in cat_name.lower():
                 match_found = True
                 snippet = f"Category: {cat_name}"
-            elif q_lower in content_en.lower():
-                match_found = True
-                snippet = make_snippet(content_en, q_lower)
+            if not match_found:
+                for c in content_vals:
+                    if q_lower in c.lower():
+                        match_found = True
+                        snippet = make_snippet(c, q_lower)
+                        break
 
             if match_found:
                 matched_blogs.append({
                     'id': b.id,
                     'type': 'blog',
-                    'title': title_en or slug,
+                    'title': display_title,
                     'slug': f"/blog/{slug.lstrip('/')}",
                     'category': cat_name,
                     'snippet': snippet,
@@ -3678,7 +3699,9 @@ def register_visionadmin_api_routes(app):
         """Create new category."""
         try:
             data = request.get_json(force=True) or {}
-            if not (data.get('name_en') or data.get('name') or '').strip():
+            name_input = data.get('name') or data.get('name_en')
+            has_name = bool(localize_value(name_input)) if isinstance(name_input, dict) else bool(str(name_input or '').strip())
+            if not has_name:
                 return jsonify({'success': False, 'error': 'Category name is required'}), 400
 
             user_id = session.get('user_id')
@@ -3693,7 +3716,9 @@ def register_visionadmin_api_routes(app):
         """Update existing category."""
         try:
             data = request.get_json(force=True) or {}
-            if not (data.get('name_en') or data.get('name') or '').strip():
+            name_input = data.get('name') or data.get('name_en')
+            has_name = bool(localize_value(name_input)) if isinstance(name_input, dict) else bool(str(name_input or '').strip())
+            if not has_name:
                 return jsonify({'success': False, 'error': 'Category name is required'}), 400
 
             user_id = session.get('user_id')
@@ -4176,7 +4201,7 @@ def register_client_api_routes(app):
         Public JSON API: Fetch published blogs with pagination, locale,
         search, and category filtering.
         """
-        locale = request.args.get('locale') or _get_locale()
+        locale = request.args.get('locale') or request.args.get('lang') or get_locale()
         query = (request.args.get('q') or '').strip().lower()
         cat_filter = (request.args.get('category') or '').strip().lower()
 
@@ -4201,9 +4226,9 @@ def register_client_api_routes(app):
                 short_desc = b.get_short_desc(locale)
                 content = b.get_content(locale)
 
-                cat_name = b.category_name or ('Blog' if locale != 'ar' else 'مدونة')
+                cat_name = b.get_category_name(locale) or translate('Blog', locale)
 
-                prefix = f'/{locale}' if locale in ('en', 'ar') else ''
+                prefix = f'/{locale}' if locale and locale != 'en' else ''
                 blog_url = f'{prefix}/blog/{b.slug}'
 
                 formatted_blogs.append({
@@ -4219,7 +4244,7 @@ def register_client_api_routes(app):
                     'published_at_raw': b.published_at.isoformat() if b.published_at else (b.created_at.isoformat() if b.created_at else None),
                     'category': cat_name,
                     'thumb_class': 't-buying' if 'choose' in (b.slug or '') else 't-maint',
-                    'read_time': '4 min read' if locale != 'ar' else 'قراءة 4 دقائق',
+                    'read_time': translate('4 min read', locale),
                     'url': blog_url
                 })
 
@@ -4277,7 +4302,7 @@ def register_client_api_routes(app):
         """
         Public JSON API: Fetch a single blog article by slug.
         """
-        locale = request.args.get('locale') or _get_locale()
+        locale = request.args.get('locale') or request.args.get('lang') or get_locale()
         blog = Blog.find_by_slug(slug)
 
         if not blog:
@@ -4295,8 +4320,8 @@ def register_client_api_routes(app):
             'meta_title': blog.get_meta_title(locale),
             'meta_desc': blog.get_meta_desc(locale),
             'author': {
-                'name': 'Sharvil Kumar' if locale != 'ar' else 'شارفيل كومار',
-                'role': 'Tyre Selection Specialist, TyresVision' if locale != 'ar' else 'أخصائي اختيار الإطارات، تايرز فيجن',
+                'name': translate('Sharvil Kumar', locale),
+                'role': translate('Tyre Selection Specialist, TyresVision', locale),
                 'avatar_initials': 'SK'
             }
         }
@@ -4317,7 +4342,7 @@ def register_client_api_routes(app):
     def public_get_page_sections(slug=None):
         """Public API returning active sections and page metadata for a page ordered by sort_order."""
         target_slug = request.args.get('page') or slug or 'about-us'
-        locale = request.args.get('locale') or request.args.get('lang') or 'en'
+        locale = request.args.get('locale') or request.args.get('lang') or get_locale()
         sections = PageSection.all_for_page(page_slug=target_slug, include_inactive=False)
         formatted = [PageSection.to_localized_dict(s, locale=locale) for s in sections]
 
@@ -4330,8 +4355,18 @@ def register_client_api_routes(app):
             'seo_title': target_slug.replace('-', ' ').title()
         }
 
+        labels = {
+            'home': translate('Home', locale),
+            'about_us': translate('About Us', locale),
+            'site_title': translate('TyresVision UAE', locale),
+            'loading': translate('Loading...', locale),
+            'notice': translate('Notice', locale),
+        }
+
         return jsonify({
             'success': True,
+            'locale': locale,
+            'labels': labels,
             'page': page_data,
             'sections': formatted,
             'count': len(formatted)

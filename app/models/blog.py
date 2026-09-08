@@ -25,6 +25,7 @@ import json
 import re
 from datetime import datetime, timezone
 from db import get_connection
+from i18n import localize_value, dump_json_dict, parse_json_dict, DEFAULT_LOCALE
 
 
 # ============================================================================
@@ -187,9 +188,16 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         self.content = self._parse_json(data.get('content'))
         self.short_description = self._parse_json(data.get('short_description'))
         self.image = data.get('image')
-        self.category_id = data.get('category_id') or data.get('blog_category_id')
-        self.category_name = data.get('category_name') or ''
-        self.category_name_ar = data.get('category_name_ar') or ''
+        cat_raw = data.get('category_name')
+        if isinstance(cat_raw, (dict, list)):
+            self.category_name = cat_raw
+        elif isinstance(cat_raw, str) and cat_raw.strip().startswith('{'):
+            try:
+                self.category_name = json.loads(cat_raw)
+            except Exception:
+                self.category_name = cat_raw or ''
+        else:
+            self.category_name = cat_raw or ''
         self.category_slug = data.get('category_slug') or ''
         self.author_id = data.get('author_id')
         self.status = data.get('status') or 'draft'
@@ -308,6 +316,19 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
             return result
         return []
 
+    def get_category_name(self, locale: str = None) -> str:
+        """Returns the localized category name string for any dynamic language."""
+        if not self.category_name:
+            return ""
+        if isinstance(self.category_name, dict):
+            return localize_value(self.category_name, locale)
+        return str(self.category_name or "")
+
+    @property
+    def category_name_ar(self):
+        """Backward-compatible alias returning Arabic translation if available."""
+        return self.get_category_name('ar')
+
     @property
     def is_published(self) -> bool:
         """Checks if blog post is published and not deleted."""
@@ -315,13 +336,15 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
 
     def to_dict(self, locale: str = None) -> dict:
         """Serializes blog record for API responses or template rendering."""
+        cat_display = self.get_category_name(locale) if locale else (
+            self.category_name if isinstance(self.category_name, (dict, str)) else str(self.category_name or '')
+        )
         base = {
             'id': self.id,
             'slug': self.slug,
             'image': self.image,
             'category_id': self.category_id,
-            'category_name': self.category_name or '',
-            'category_name_ar': self.category_name_ar or '',
+            'category_name': cat_display or '',
             'category_slug': self.category_slug or '',
             'blog_category_id': self.category_id,
             'author_id': self.author_id,
@@ -357,40 +380,65 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
     # Query Helpers
     # -------------------------------------------------------------------------
     @classmethod
-    def get_all_categories(cls) -> list:
+    def get_all_categories(cls, locale: str = None) -> list:
         """Returns all active categories from blog_categories table with blog counts."""
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    SELECT c.id, c.name_en, c.name_ar, c.slug, c.sort_order, c.created_at, c.updated_at,
+                    SELECT c.id, c.name, c.slug, c.sort_order, c.created_at, c.updated_at,
                            COUNT(b.id) AS blogs_count
                     FROM blog_categories c
                     LEFT JOIN blogs b ON b.category_id = c.id AND b.deleted_at IS NULL
                     WHERE c.deleted_at IS NULL
-                    GROUP BY c.id
-                    ORDER BY c.sort_order ASC, c.name_en ASC
+                    GROUP BY c.id, c.name, c.slug, c.sort_order,
+                             c.created_at, c.updated_at
+                    ORDER BY c.sort_order ASC, c.id ASC
                 """)
-                return cursor.fetchall()
+                rows = cursor.fetchall() or []
+                for r in rows:
+                    name_parsed = cls._parse_json(r.get('name'))
+                    r['name'] = name_parsed
+                    r['display_name'] = localize_value(name_parsed, locale)
+                    r['name_en'] = localize_value(name_parsed, 'en')
+                    r['name_ar'] = localize_value(name_parsed, 'ar')
+                return rows
         finally:
             conn.close()
 
     @classmethod
-    def update_category(cls, cat_id: int, name_en: str, name_ar: str = None, slug: str = None, user_id: int = None) -> dict:
-        """Updates an existing category in blog_categories and updates linked blogs."""
-        clean_name = name_en.strip()
-        slug = SlugMixin.slugify(slug) if slug else SlugMixin.slugify(clean_name)
+    def update_category(cls, cat_id: int, name, slug: str = None, user_id: int = None, **kwargs) -> dict:
+        """Updates an existing category in blog_categories storing name as JSON."""
+        name_dict = name if isinstance(name, dict) else cls._parse_json(name)
+        if not isinstance(name_dict, dict) or not name_dict:
+            name_dict = {DEFAULT_LOCALE: str(name).strip()} if name else {}
+
+        if kwargs.get('name_en'):
+            name_dict['en'] = kwargs['name_en'].strip()
+        if kwargs.get('name_ar'):
+            name_dict['ar'] = kwargs['name_ar'].strip()
+
+        name_json = dump_json_dict(name_dict)
+        slug_seed = name_dict.get('en') or next(iter(name_dict.values()), '')
+        slug = SlugMixin.slugify(slug) if slug else SlugMixin.slugify(slug_seed or '')
+
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
                     UPDATE blog_categories
-                    SET name_en = %s, name_ar = %s, slug = %s, updated_at = NOW(), updated_by = %s
+                    SET name = %s, slug = %s, updated_at = NOW(), updated_by = %s
                     WHERE id = %s AND deleted_at IS NULL
-                """, (clean_name, name_ar or clean_name, slug, user_id, cat_id))
+                """, (name_json, slug, user_id, cat_id))
                 conn.commit()
                 cursor.execute("SELECT * FROM blog_categories WHERE id = %s", (cat_id,))
-                return cursor.fetchone()
+                row = cursor.fetchone()
+                if row:
+                    row['name'] = cls._parse_json(row.get('name'))
+                    row['display_name'] = localize_value(row['name'])
+                    row['name_en'] = localize_value(row['name'], 'en')
+                    row['name_ar'] = localize_value(row['name'], 'ar')
+                return row
         finally:
             conn.close()
 
@@ -417,45 +465,67 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
             conn.close()
 
     @classmethod
-    def get_or_create_category(cls, name_en: str, name_ar: str = None, user_id: int = None) -> dict:
-        """Finds existing or creates a new category record in blog_categories table."""
-        if not name_en or not name_en.strip():
+    def get_or_create_category(cls, name, user_id: int = None, **kwargs) -> dict:
+        """Finds existing or creates a new category record in blog_categories table using JSON storage."""
+        if not name:
             return None
-        clean_name = name_en.strip()
-        slug = SlugMixin.slugify(clean_name)
+        name_dict = name if isinstance(name, dict) else cls._parse_json(name)
+        if not isinstance(name_dict, dict) or not name_dict:
+            name_dict = {DEFAULT_LOCALE: str(name).strip()}
+
+        if kwargs.get('name_en'):
+            name_dict['en'] = kwargs['name_en'].strip()
+        if kwargs.get('name_ar'):
+            name_dict['ar'] = kwargs['name_ar'].strip()
+
+        slug_seed = name_dict.get('en') or next(iter(name_dict.values()), '')
+        slug = SlugMixin.slugify(slug_seed)
+        name_json = dump_json_dict(name_dict)
+
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    SELECT id, name_en, name_ar, slug, sort_order
+                    SELECT id, name, slug, sort_order
                     FROM blog_categories
-                    WHERE (name_en = %s OR slug = %s) AND deleted_at IS NULL
+                    WHERE slug = %s AND deleted_at IS NULL
                     LIMIT 1
-                """, (clean_name, slug))
+                """, (slug,))
                 row = cursor.fetchone()
                 if row:
-                    if name_ar and not row.get('name_ar'):
-                        cursor.execute("UPDATE blog_categories SET name_ar = %s, updated_at = NOW() WHERE id = %s", (name_ar, row['id']))
+                    row['name'] = cls._parse_json(row.get('name'))
+                    if isinstance(row['name'], dict) and any(k not in row['name'] for k in name_dict):
+                        row['name'].update(name_dict)
+                        cursor.execute("UPDATE blog_categories SET name = %s, updated_at = NOW() WHERE id = %s", (dump_json_dict(row['name']), row['id']))
                         conn.commit()
-                        row['name_ar'] = name_ar
+                    row['display_name'] = localize_value(row['name'])
+                    row['name_en'] = localize_value(row['name'], 'en')
+                    row['name_ar'] = localize_value(row['name'], 'ar')
                     return row
 
                 cursor.execute("""
-                    INSERT INTO blog_categories (name_en, name_ar, slug, sort_order, created_at, updated_at, created_by, updated_by)
-                    VALUES (%s, %s, %s, 0, NOW(), NOW(), %s, %s)
-                """, (clean_name, name_ar or clean_name, slug, user_id, user_id))
+                    INSERT INTO blog_categories (name, slug, sort_order, created_at, updated_at, created_by, updated_by)
+                    VALUES (%s, %s, 0, NOW(), NOW(), %s, %s)
+                """, (name_json, slug, user_id, user_id))
                 conn.commit()
                 cat_id = cursor.lastrowid
-                return {'id': cat_id, 'name_en': clean_name, 'name_ar': name_ar or clean_name, 'slug': slug}
+                return {
+                    'id': cat_id,
+                    'name': name_dict,
+                    'display_name': localize_value(name_dict),
+                    'name_en': localize_value(name_dict, 'en'),
+                    'name_ar': localize_value(name_dict, 'ar'),
+                    'slug': slug
+                }
         finally:
             conn.close()
 
     @classmethod
-    def distinct_categories(cls) -> list:
-        """Returns distinct category names stored in blog_categories table, with fallback to blogs."""
-        cats = cls.get_all_categories()
+    def distinct_categories(cls, locale: str = None) -> list:
+        """Returns distinct category names stored in blog_categories table, localized for any requested locale."""
+        cats = cls.get_all_categories(locale=locale)
         if cats:
-            return [c['name_en'] for c in cats if c.get('name_en')]
+            return [c.get('display_name') or localize_value(c.get('name'), locale) for c in cats if c.get('name')]
 
         conn = get_connection()
         try:
@@ -469,10 +539,18 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     ORDER BY category_name ASC
                 """)
                 rows = cursor.fetchall()
-                found = [r['category_name'].strip() for r in rows if r.get('category_name') and r['category_name'].strip()]
+                found = []
+                for r in rows:
+                    c_val = r.get('category_name')
+                    if c_val:
+                        if isinstance(c_val, str) and c_val.strip().startswith('{'):
+                            found.append(localize_value(cls._parse_json(c_val), locale))
+                        else:
+                            found.append(str(c_val).strip())
                 return found
         finally:
             conn.close()
+
     @classmethod
     def all(cls, include_deleted: bool = False, status: str = None):
         """Returns all blogs with optional status/trash filtering, joining category details."""
@@ -481,8 +559,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
             with conn.cursor() as cursor:
                 sql = """
                     SELECT b.*,
-                           c.name_en AS category_name,
-                           c.name_ar AS category_name_ar,
+                           c.name AS category_name,
                            c.slug AS category_slug
                     FROM blogs b
                     LEFT JOIN blog_categories c ON b.category_id = c.id
@@ -508,8 +585,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
             with conn.cursor() as cursor:
                 sql = """
                     SELECT b.*,
-                           c.name_en AS category_name,
-                           c.name_ar AS category_name_ar,
+                           c.name AS category_name,
                            c.slug AS category_slug
                     FROM blogs b
                     LEFT JOIN blog_categories c ON b.category_id = c.id
@@ -533,8 +609,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                 if include_drafts:
                     sql = """
                         SELECT b.*,
-                               c.name_en AS category_name,
-                               c.name_ar AS category_name_ar,
+                               c.name AS category_name,
                                c.slug AS category_slug
                         FROM blogs b
                         LEFT JOIN blog_categories c ON b.category_id = c.id
@@ -543,8 +618,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                 else:
                     sql = """
                         SELECT b.*,
-                               c.name_en AS category_name,
-                               c.name_ar AS category_name_ar,
+                               c.name AS category_name,
                                c.slug AS category_slug
                         FROM blogs b
                         LEFT JOIN blog_categories c ON b.category_id = c.id
@@ -564,8 +638,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
             with conn.cursor() as cursor:
                 cursor.execute("""
                     SELECT b.*,
-                           c.name_en AS category_name,
-                           c.name_ar AS category_name_ar,
+                           c.name AS category_name,
                            c.slug AS category_slug
                     FROM blogs b
                     LEFT JOIN blog_categories c ON b.category_id = c.id

@@ -8,6 +8,9 @@ from datetime import datetime, timezone
 from db import get_connection
 
 
+from i18n import localize_value, dump_json_dict, parse_json_dict, DEFAULT_LOCALE
+
+
 class Category:
     @staticmethod
     def slugify(text: str) -> str:
@@ -19,22 +22,40 @@ class Category:
         return text.strip('-')
 
     @classmethod
-    def all_active(cls):
+    def _normalize_category_row(cls, r: dict, locale: str = None) -> dict:
+        if not r:
+            return r
+        r['name'] = parse_json_dict(r.get('name'))
+        r['description'] = parse_json_dict(r.get('description'))
+        r['meta_title'] = parse_json_dict(r.get('meta_title'))
+        r['meta_desc'] = parse_json_dict(r.get('meta_desc'))
+        r['display_name'] = localize_value(r['name'], locale)
+        # Compatibility aliases for templates / legacy UI
+        r['name_en'] = localize_value(r['name'], 'en') or r.get('display_name')
+        r['name_ar'] = localize_value(r['name'], 'ar')
+        r['description_en'] = localize_value(r['description'], 'en')
+        r['meta_title_en'] = localize_value(r['meta_title'], 'en')
+        r['meta_desc_en'] = localize_value(r['meta_desc'], 'en')
+        return r
+
+    @classmethod
+    def all_active(cls, locale: str = None):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    SELECT id, name_en, slug, parent_id, image, sort_order, status
+                    SELECT id, name, slug, parent_id, image, sort_order, status
                     FROM categories
                     WHERE deleted_at IS NULL AND status = 'active'
-                    ORDER BY sort_order ASC, name_en ASC
+                    ORDER BY sort_order ASC, id ASC
                 """)
-                return cursor.fetchall() or []
+                rows = cursor.fetchall() or []
+                return [cls._normalize_category_row(r, locale) for r in rows]
         finally:
             conn.close()
 
     @classmethod
-    def search_and_paginate(cls, query: str = None, status: str = None, parent_id: int = None, page: int = 1, per_page: int = 15):
+    def search_and_paginate(cls, query: str = None, status: str = None, parent_id: int = None, page: int = 1, per_page: int = 15, locale: str = None):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
@@ -43,7 +64,7 @@ class Category:
 
                 if query and query.strip():
                     term = f"%{query.strip()}%"
-                    where_clauses.append("(c.name_en LIKE %s OR c.slug LIKE %s)")
+                    where_clauses.append("(c.name LIKE %s OR c.slug LIKE %s)")
                     params.extend([term, term])
 
                 if status and status.strip() and status != 'all':
@@ -64,19 +85,26 @@ class Category:
 
                 cursor.execute(f"""
                     SELECT c.*,
-                           p_cat.name_en AS parent_name,
+                           p_cat.name AS parent_name,
                            (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.deleted_at IS NULL) AS product_count
                     FROM categories c
                     LEFT JOIN categories p_cat ON c.parent_id = p_cat.id
                     WHERE {where_sql}
-                    ORDER BY c.sort_order ASC, c.name_en ASC
+                    ORDER BY c.sort_order ASC, c.id ASC
                     LIMIT %s OFFSET %s
                 """, query_params)
                 items = cursor.fetchall() or []
+                normalized_items = []
+                for item in items:
+                    item = cls._normalize_category_row(item, locale)
+                    if item.get('parent_name'):
+                        p_name_dict = parse_json_dict(item['parent_name'])
+                        item['parent_name'] = localize_value(p_name_dict, locale) or localize_value(p_name_dict, 'en')
+                    normalized_items.append(item)
 
                 total_pages = max(1, (total + per_page - 1) // per_page)
                 return {
-                    'items': items,
+                    'items': normalized_items,
                     'total': total,
                     'page': page,
                     'per_page': per_page,
@@ -86,24 +114,30 @@ class Category:
             conn.close()
 
     @classmethod
-    def find_by_id(cls, cat_id: int):
+    def find_by_id(cls, cat_id: int, locale: str = None):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
                     SELECT c.*,
-                           p_cat.name_en AS parent_name,
+                           p_cat.name AS parent_name,
                            (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.deleted_at IS NULL) AS product_count
                     FROM categories c
                     LEFT JOIN categories p_cat ON c.parent_id = p_cat.id
                     WHERE c.id = %s AND c.deleted_at IS NULL
                 """, (cat_id,))
-                return cursor.fetchone()
+                row = cursor.fetchone()
+                if row:
+                    row = cls._normalize_category_row(row, locale)
+                    if row.get('parent_name'):
+                        p_name_dict = parse_json_dict(row['parent_name'])
+                        row['parent_name'] = localize_value(p_name_dict, locale) or localize_value(p_name_dict, 'en')
+                return row
         finally:
             conn.close()
 
     @classmethod
-    def find_by_slug(cls, slug: str):
+    def find_by_slug(cls, slug: str, locale: str = None):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
@@ -111,7 +145,8 @@ class Category:
                     SELECT * FROM categories
                     WHERE slug = %s AND deleted_at IS NULL
                 """, (slug,))
-                return cursor.fetchone()
+                row = cursor.fetchone()
+                return cls._normalize_category_row(row, locale) if row else None
         finally:
             conn.close()
 
@@ -120,25 +155,42 @@ class Category:
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                name_en = (data.get('name_en') or data.get('name') or '').strip()
-                slug = cls.slugify(data.get('slug') or name_en)
+                name_input = data.get('name') or data.get('name_en') or ''
+                name_dict = name_input if isinstance(name_input, dict) else parse_json_dict(name_input)
+                if not isinstance(name_dict, dict) or not name_dict:
+                    name_dict = {DEFAULT_LOCALE: str(name_input).strip()}
+                if data.get('name_en'):
+                    name_dict['en'] = data['name_en'].strip()
+                if data.get('name_ar'):
+                    name_dict['ar'] = data['name_ar'].strip()
+                name_json = dump_json_dict(name_dict)
+
+                slug_seed = name_dict.get('en') or next(iter(name_dict.values()), '')
+                slug = cls.slugify(data.get('slug') or slug_seed)
                 parent_id = int(data.get('parent_id')) if data.get('parent_id') else None
                 image = data.get('image') or None
-                description_en = data.get('description_en') or None
+
+                desc_input = data.get('description') or data.get('description_en')
+                desc_json = dump_json_dict(desc_input) if desc_input else None
+
+                meta_t_input = data.get('meta_title') or data.get('meta_title_en')
+                meta_t_json = dump_json_dict(meta_t_input) if meta_t_input else None
+
+                meta_d_input = data.get('meta_desc') or data.get('meta_desc_en')
+                meta_d_json = dump_json_dict(meta_d_input) if meta_d_input else None
+
                 sort_order = int(data.get('sort_order') or 0)
                 status = data.get('status') or 'active'
-                meta_title_en = data.get('meta_title_en') or None
-                meta_desc_en = data.get('meta_desc_en') or None
                 now = datetime.now(timezone.utc)
 
                 cursor.execute("""
                     INSERT INTO categories (
-                        name_en, slug, parent_id, image, description_en, sort_order,
-                        status, meta_title_en, meta_desc_en, created_by, created_at, updated_at
+                        name, slug, parent_id, image, description, sort_order,
+                        status, meta_title, meta_desc, created_by, created_at, updated_at
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    name_en, slug, parent_id, image, description_en, sort_order,
-                    status, meta_title_en, meta_desc_en, user_id, now, now
+                    name_json, slug, parent_id, image, desc_json, sort_order,
+                    status, meta_t_json, meta_d_json, user_id, now, now
                 ))
                 conn.commit()
                 return cursor.lastrowid
@@ -150,34 +202,60 @@ class Category:
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                name_en = (data.get('name_en') or data.get('name') or '').strip()
-                slug = cls.slugify(data.get('slug') or name_en)
+                cursor.execute("SELECT * FROM categories WHERE id = %s AND deleted_at IS NULL", (cat_id,))
+                existing = cursor.fetchone()
+                if not existing:
+                    return False
+
+                name_input = data.get('name') or data.get('name_en')
+                if name_input:
+                    name_dict = name_input if isinstance(name_input, dict) else parse_json_dict(name_input)
+                    if not isinstance(name_dict, dict) or not name_dict:
+                        name_dict = {DEFAULT_LOCALE: str(name_input).strip()}
+                    if data.get('name_en'):
+                        name_dict['en'] = data['name_en'].strip()
+                    if data.get('name_ar'):
+                        name_dict['ar'] = data['name_ar'].strip()
+                    name_json = dump_json_dict(name_dict)
+                    slug_seed = name_dict.get('en') or next(iter(name_dict.values()), '')
+                    slug = cls.slugify(data.get('slug') or slug_seed)
+                else:
+                    name_json = existing.get('name')
+                    slug = data.get('slug') or existing.get('slug')
+
                 parent_id = int(data.get('parent_id')) if data.get('parent_id') else None
-                image = data.get('image') or None
-                description_en = data.get('description_en') or None
-                sort_order = int(data.get('sort_order') or 0)
-                status = data.get('status') or 'active'
-                meta_title_en = data.get('meta_title_en') or None
-                meta_desc_en = data.get('meta_desc_en') or None
+                image = data.get('image') if 'image' in data else existing.get('image')
+
+                desc_input = data.get('description') or data.get('description_en')
+                desc_json = dump_json_dict(desc_input) if desc_input else existing.get('description')
+
+                meta_t_input = data.get('meta_title') or data.get('meta_title_en')
+                meta_t_json = dump_json_dict(meta_t_input) if meta_t_input else existing.get('meta_title')
+
+                meta_d_input = data.get('meta_desc') or data.get('meta_desc_en')
+                meta_d_json = dump_json_dict(meta_d_input) if meta_d_input else existing.get('meta_desc')
+
+                sort_order = int(data.get('sort_order', existing.get('sort_order') or 0))
+                status = data.get('status') or existing.get('status') or 'active'
                 now = datetime.now(timezone.utc)
 
                 cursor.execute("""
                     UPDATE categories SET
-                        name_en = %s,
+                        name = %s,
                         slug = %s,
                         parent_id = %s,
                         image = %s,
-                        description_en = %s,
+                        description = %s,
                         sort_order = %s,
                         status = %s,
-                        meta_title_en = %s,
-                        meta_desc_en = %s,
+                        meta_title = %s,
+                        meta_desc = %s,
                         updated_by = %s,
                         updated_at = %s
                     WHERE id = %s AND deleted_at IS NULL
                 """, (
-                    name_en, slug, parent_id, image, description_en, sort_order,
-                    status, meta_title_en, meta_desc_en, user_id, now, cat_id
+                    name_json, slug, parent_id, image, desc_json, sort_order,
+                    status, meta_t_json, meta_d_json, user_id, now, cat_id
                 ))
                 conn.commit()
                 return cursor.rowcount > 0

@@ -8,6 +8,9 @@ from datetime import datetime, timezone
 from db import get_connection
 
 
+from i18n import localize_value, dump_json_dict, parse_json_dict
+
+
 class Brand:
     @staticmethod
     def slugify(text: str) -> str:
@@ -19,7 +22,19 @@ class Brand:
         return text.strip('-')
 
     @classmethod
-    def all_active(cls):
+    def _normalize_brand_row(cls, r: dict, locale: str = None) -> dict:
+        if not r:
+            return r
+        r['description'] = parse_json_dict(r.get('description'))
+        r['meta_title'] = parse_json_dict(r.get('meta_title'))
+        r['meta_desc'] = parse_json_dict(r.get('meta_desc'))
+        r['description_en'] = localize_value(r['description'], 'en') or localize_value(r['description'], locale)
+        r['meta_title_en'] = localize_value(r['meta_title'], 'en') or localize_value(r['meta_title'], locale)
+        r['meta_desc_en'] = localize_value(r['meta_desc'], 'en') or localize_value(r['meta_desc'], locale)
+        return r
+
+    @classmethod
+    def all_active(cls, locale: str = None):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
@@ -29,12 +44,13 @@ class Brand:
                     WHERE deleted_at IS NULL AND status = 'active'
                     ORDER BY sort_order ASC, name ASC
                 """)
-                return cursor.fetchall() or []
+                rows = cursor.fetchall() or []
+                return [cls._normalize_brand_row(r, locale) for r in rows]
         finally:
             conn.close()
 
     @classmethod
-    def search_and_paginate(cls, query: str = None, status: str = None, page: int = 1, per_page: int = 15):
+    def search_and_paginate(cls, query: str = None, status: str = None, page: int = 1, per_page: int = 15, locale: str = None):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
@@ -52,7 +68,6 @@ class Brand:
 
                 where_sql = " AND ".join(where_clauses)
 
-                # Total count
                 cursor.execute(f"SELECT COUNT(*) AS total FROM brands b WHERE {where_sql}", params)
                 total = cursor.fetchone()['total']
 
@@ -71,7 +86,7 @@ class Brand:
 
                 total_pages = max(1, (total + per_page - 1) // per_page)
                 return {
-                    'items': items,
+                    'items': [cls._normalize_brand_row(it, locale) for it in items],
                     'total': total,
                     'page': page,
                     'per_page': per_page,
@@ -81,7 +96,7 @@ class Brand:
             conn.close()
 
     @classmethod
-    def find_by_id(cls, brand_id: int):
+    def find_by_id(cls, brand_id: int, locale: str = None):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
@@ -91,12 +106,13 @@ class Brand:
                     FROM brands b
                     WHERE b.id = %s AND b.deleted_at IS NULL
                 """, (brand_id,))
-                return cursor.fetchone()
+                row = cursor.fetchone()
+                return cls._normalize_brand_row(row, locale) if row else None
         finally:
             conn.close()
 
     @classmethod
-    def find_by_slug(cls, slug: str):
+    def find_by_slug(cls, slug: str, locale: str = None):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
@@ -104,7 +120,8 @@ class Brand:
                     SELECT * FROM brands
                     WHERE slug = %s AND deleted_at IS NULL
                 """, (slug,))
-                return cursor.fetchone()
+                row = cursor.fetchone()
+                return cls._normalize_brand_row(row, locale) if row else None
         finally:
             conn.close()
 
@@ -116,24 +133,31 @@ class Brand:
                 name = (data.get('name') or '').strip()
                 slug = cls.slugify(data.get('slug') or name)
                 logo = data.get('logo') or None
-                description_en = data.get('description_en') or None
                 country = data.get('country') or None
                 sort_order = int(data.get('sort_order') or 0)
                 is_featured = 1 if data.get('is_featured') else 0
                 status = data.get('status') or 'active'
-                meta_title_en = data.get('meta_title_en') or None
-                meta_desc_en = data.get('meta_desc_en') or None
+
+                desc_input = data.get('description') or data.get('description_en')
+                desc_json = dump_json_dict(desc_input) if desc_input else None
+
+                meta_t_input = data.get('meta_title') or data.get('meta_title_en')
+                meta_t_json = dump_json_dict(meta_t_input) if meta_t_input else None
+
+                meta_d_input = data.get('meta_desc') or data.get('meta_desc_en')
+                meta_d_json = dump_json_dict(meta_d_input) if meta_d_input else None
+
                 now = datetime.now(timezone.utc)
 
                 cursor.execute("""
                     INSERT INTO brands (
-                        name, slug, logo, description_en, country, sort_order,
-                        is_featured, status, meta_title_en, meta_desc_en,
+                        name, slug, logo, description, country, sort_order,
+                        is_featured, status, meta_title, meta_desc,
                         created_by, created_at, updated_at
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    name, slug, logo, description_en, country, sort_order,
-                    is_featured, status, meta_title_en, meta_desc_en,
+                    name, slug, logo, desc_json, country, sort_order,
+                    is_featured, status, meta_t_json, meta_d_json,
                     user_id, now, now
                 ))
                 conn.commit()
@@ -146,16 +170,28 @@ class Brand:
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                name = (data.get('name') or '').strip()
+                cursor.execute("SELECT * FROM brands WHERE id = %s AND deleted_at IS NULL", (brand_id,))
+                existing = cursor.fetchone()
+                if not existing:
+                    return False
+
+                name = (data.get('name') or existing.get('name') or '').strip()
                 slug = cls.slugify(data.get('slug') or name)
-                logo = data.get('logo') or None
-                description_en = data.get('description_en') or None
-                country = data.get('country') or None
-                sort_order = int(data.get('sort_order') or 0)
-                is_featured = 1 if data.get('is_featured') else 0
-                status = data.get('status') or 'active'
-                meta_title_en = data.get('meta_title_en') or None
-                meta_desc_en = data.get('meta_desc_en') or None
+                logo = data.get('logo') if 'logo' in data else existing.get('logo')
+                country = data.get('country') if 'country' in data else existing.get('country')
+                sort_order = int(data.get('sort_order', existing.get('sort_order') or 0))
+                is_featured = 1 if data.get('is_featured') else (0 if 'is_featured' in data else existing.get('is_featured', 0))
+                status = data.get('status') or existing.get('status') or 'active'
+
+                desc_input = data.get('description') or data.get('description_en')
+                desc_json = dump_json_dict(desc_input) if desc_input else existing.get('description')
+
+                meta_t_input = data.get('meta_title') or data.get('meta_title_en')
+                meta_t_json = dump_json_dict(meta_t_input) if meta_t_input else existing.get('meta_title')
+
+                meta_d_input = data.get('meta_desc') or data.get('meta_desc_en')
+                meta_d_json = dump_json_dict(meta_d_input) if meta_d_input else existing.get('meta_desc')
+
                 now = datetime.now(timezone.utc)
 
                 cursor.execute("""
@@ -163,19 +199,19 @@ class Brand:
                         name = %s,
                         slug = %s,
                         logo = %s,
-                        description_en = %s,
+                        description = %s,
                         country = %s,
                         sort_order = %s,
                         is_featured = %s,
                         status = %s,
-                        meta_title_en = %s,
-                        meta_desc_en = %s,
+                        meta_title = %s,
+                        meta_desc = %s,
                         updated_by = %s,
                         updated_at = %s
                     WHERE id = %s AND deleted_at IS NULL
                 """, (
-                    name, slug, logo, description_en, country, sort_order,
-                    is_featured, status, meta_title_en, meta_desc_en,
+                    name, slug, logo, desc_json, country, sort_order,
+                    is_featured, status, meta_t_json, meta_d_json,
                     user_id, now, brand_id
                 ))
                 conn.commit()

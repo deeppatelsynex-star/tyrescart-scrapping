@@ -1,7 +1,7 @@
 {% extends 'Client/layout.html' %}
 
 {% block title %}
-  {{ post.title }} | {% if locale == 'ar' %}مدونة تايرز فيجن{% else %}TyresVision Blog{% endif %}
+  {{ post.title }} | {{ _('TyresVision Blog') }}
 {% endblock %}
 
 {% block meta_description %}{{ post.short_description or (post.title ~ ' — expert advice and tyre guide for UAE drivers.') }}{% endblock %}
@@ -15,9 +15,9 @@
     
     <!-- Breadcrumb: Home > Blog > Category > Title -->
     <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-      <a href="/">Home</a>
+      <a href="/">{{ _('Home') }}</a>
       <span class="sep">&rsaquo;</span>
-      <a href="/blog">Blog</a>
+      <a href="/blog">{{ _('Blog') }}</a>
       <span class="sep">&rsaquo;</span>
       <a href="/blog?category={{ post.category | urlencode }}">{{ post.category }}</a>
       <span class="sep">&rsaquo;</span>
@@ -76,14 +76,10 @@
             {{ post.content | safe }}
           {% else %}
             <h2 id="benefits">
-              {% if locale == 'ar' %}أهم النصائح والفوائد لقائدي السيارات{% else %}Top Tyre Care &amp; Safety Guidelines{% endif %}
+              {{ _('Top Tyre Care & Safety Guidelines') }}
             </h2>
             <p>
-              {% if locale == 'ar' %}
-                تتطلب القيادة في مناخ الخليج العربي اهتماماً خاصاً بضغط الإطارات وحالتها الفنية. إليك أهم المعايير التي يوصي بها خبراؤنا:
-              {% else %}
-                Driving in extreme UAE summer conditions requires special attention to tyre temperature, pressure retention, and tread integrity.
-              {% endif %}
+              {{ _('Driving in extreme UAE summer conditions requires special attention to tyre temperature, pressure retention, and tread integrity.') }}
             </p>
 
             <!-- Green Checkmark Feature List -->
@@ -91,42 +87,38 @@
               <li>
                 <svg class="check-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" clip-rule="evenodd"/></svg>
                 <div>
-                  <strong>{% if locale == 'ar' %}ضغط الإطار المنتظم:{% else %}Optimal Inflation Pressure:{% endif %}</strong> 
-                  {% if locale == 'ar' %}يجب فحص ضغط الهواء شهرياً والإطار بارد تماماً لمنع ارتفاع الحرارة المفاجئ.{% else %}Check pressures monthly when tyres are cold to prevent heat buildup on highways.{% endif %}
+                  <strong>{{ _('Optimal Inflation Pressure:') }}</strong> 
+                  {{ _('Check pressures monthly when tyres are cold to prevent heat buildup on highways.') }}
                 </div>
               </li>
               <li>
                 <svg class="check-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" clip-rule="evenodd"/></svg>
                 <div>
-                  <strong>{% if locale == 'ar' %}مواصفات دول الخليج (GCC Specs):{% else %}GCC Certified Compounds:{% endif %}</strong> 
-                  {% if locale == 'ar' %}تأكد من وجود تصنيف درجات الحرارة Temperature A لتحمل حرارة الإسفلت العالية.{% else %}Ensure tyres feature Temperature Grade A ratings to withstand intense tarmac friction.{% endif %}
+                  <strong>{{ _('GCC Certified Compounds:') }}</strong> 
+                  {{ _('Ensure tyres feature Temperature Grade A ratings to withstand intense tarmac friction.') }}
                 </div>
               </li>
               <li>
                 <svg class="check-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" clip-rule="evenodd"/></svg>
                 <div>
-                  <strong>{% if locale == 'ar' %}تدوير الإطارات الدوري:{% else %}Regular Tyre Rotation:{% endif %}</strong> 
-                  {% if locale == 'ar' %}يساعد تدوير الإطارات كل 10,000 كم في تحقيق التآكل المتوازن وإطالة عمر الطقم.{% else %}Rotate tyres every 10,000 km to guarantee uniform tread wear across front and rear axles.{% endif %}
+                  <strong>{{ _('Regular Tyre Rotation:') }}</strong> 
+                  {{ _('Rotate tyres every 10,000 km to guarantee uniform tread wear across front and rear axles.') }}
                 </div>
               </li>
               <li>
                 <svg class="check-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" clip-rule="evenodd"/></svg>
                 <div>
-                  <strong>{% if locale == 'ar' %}التركيب والترصيص الاحترافي:{% else %}Professional Mobile Balancing:{% endif %}</strong> 
-                  {% if locale == 'ar' %}الترصيص الدقيق يمنع اهتزاز المقود ويحافظ على سلامة نظام التعليق والمكابح.{% else %}Laser balancing eliminates high-speed steering vibrations and protects suspension components.{% endif %}
+                  <strong>{{ _('Professional Mobile Balancing:') }}</strong> 
+                  {{ _('Laser balancing eliminates high-speed steering vibrations and protects suspension components.') }}
                 </div>
               </li>
             </ul>
 
             <h2 id="conclusion">
-              {% if locale == 'ar' %}الخاتمة والتوصيات{% else %}Conclusion &amp; Next Steps{% endif %}
+              {{ _('Conclusion & Next Steps') }}
             </h2>
             <p>
-              {% if locale == 'ar' %}
-                سلامتك على الطريق تبدأ من جودة واختيار الإطارات المناسبة. إذا كنت بحاجة إلى استشارة أو فحص مجاني لمقاس إطارات سيارتك، فإن فريق تايرز فيجن جاهز لمساعدتك عبر واتساب فوراً.
-              {% else %}
-                Safe and smooth driving across the UAE begins with the right set of tyres. If you need sizing guidance or instant quotes across 60+ premium brands, WhatsApp our specialists today.
-              {% endif %}
+              {{ _('Safe and smooth driving across the UAE begins with the right set of tyres. If you need sizing guidance or instant quotes across 60+ premium brands, WhatsApp our specialists today.') }}
             </p>
           {% endif %}
 
@@ -138,7 +130,7 @@
         <!-- Social Share Row -->
         <div class="share-section">
           <div class="share-label">
-            {% if locale == 'ar' %}شارك هذا المقال{% else %}Share this article{% endif %}
+            {{ _('Share this article') }}
           </div>
           <div class="share-buttons-row">
             <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url | urlencode }}" target="_blank" rel="noopener" class="share-btn btn-fb" aria-label="Share on Facebook">
@@ -168,15 +160,15 @@
               <img src="{{ prev_post.cover_image_url }}" alt="{{ prev_post.title }}">
             </div>
             <div class="prev-next-text">
-              <span class="prev-next-sub">{% if locale == 'ar' %}&rarr; المقال السابق{% else %}&larr; Previous Blog{% endif %}</span>
+              <span class="prev-next-sub">&larr; {{ _('Previous Blog') }}</span>
               <p class="prev-next-title">{{ prev_post.title }}</p>
             </div>
           </a>
           {% else %}
           <div class="prev-next-item" style="opacity:.6;">
             <div class="prev-next-text">
-              <span class="prev-next-sub">{% if locale == 'ar' %}بداية المدونة{% else %}Start of Blog{% endif %}</span>
-              <p class="prev-next-title">{% if locale == 'ar' %}أنت في المقال الأول{% else %}You are at the first article{% endif %}</p>
+              <span class="prev-next-sub">{{ _('Start of Blog') }}</span>
+              <p class="prev-next-title">{{ _('You are at the first article') }}</p>
             </div>
           </div>
           {% endif %}
@@ -185,7 +177,7 @@
           {% if next_post %}
           <a href="{{ next_post.url }}" class="prev-next-item next">
             <div class="prev-next-text">
-              <span class="prev-next-sub">{% if locale == 'ar' %}المقال التالي &larr;{% else %}Next Blog &rarr;{% endif %}</span>
+              <span class="prev-next-sub">{{ _('Next Blog') }} &rarr;</span>
               <p class="prev-next-title">{{ next_post.title }}</p>
             </div>
             <div class="prev-next-thumb">
@@ -195,8 +187,8 @@
           {% else %}
           <div class="prev-next-item next" style="opacity:.6;">
             <div class="prev-next-text">
-              <span class="prev-next-sub">{% if locale == 'ar' %}نهاية المدونة{% else %}End of Blog{% endif %}</span>
-              <p class="prev-next-title">{% if locale == 'ar' %}أحدث مقال تم نشره{% else %}Latest article published{% endif %}</p>
+              <span class="prev-next-sub">{{ _('End of Blog') }}</span>
+              <p class="prev-next-title">{{ _('Latest article published') }}</p>
             </div>
           </div>
           {% endif %}
@@ -210,7 +202,7 @@
         <!-- Widget 1: Related Blogs -->
         <div class="sidebar-card">
           <h3 class="widget-title-accent">
-            {% if locale == 'ar' %}مقالات ذات صلة{% else %}Related Blogs{% endif %}
+            {{ _('Related Blogs') }}
           </h3>
           
           <div class="related-blogs-list">
@@ -244,7 +236,7 @@
         <!-- Widget 2: Categories -->
         <div class="sidebar-card">
           <h3 class="widget-title-accent">
-            Categories
+            {{ _('Categories') }}
           </h3>
 
           <div class="sidebar-cat-list">
@@ -305,8 +297,9 @@
           const bio = escapeHtml(reviewer.bio || '');
           const reviewedDate = escapeHtml(post.reviewed_at || post.published_at || '');
 
-          const labelText = locale === 'ar' ? 'تمت المراجعة بواسطة' : 'REVIEWED BY';
-          const dateText = locale === 'ar' ? `تمت المراجعة في ${reviewedDate}` : `Reviewed on ${reviewedDate}`;
+          const labelText = {{ _('REVIEWED BY') | tojson }};
+          const dateTpl = {{ _('Reviewed on {date}') | tojson }};
+          const dateText = dateTpl.replace('{date}', reviewedDate);
 
           reviewerContainer.innerHTML = `
             <div class="reviewed-by-card">
@@ -347,7 +340,7 @@
         const faqs = rawFaqs.filter(f => f && f.question && String(f.question).trim().length > 0);
 
         if (faqs.length > 0) {
-          const sectionTitle = locale === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions';
+          const sectionTitle = {{ _('Frequently Asked Questions') | tojson }};
           
           let itemsHtml = '';
           faqs.forEach((faq, idx) => {
