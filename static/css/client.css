@@ -1531,24 +1531,52 @@ header {
   background: var(--bg-soft);
 }
 
-details {
+details,
+.faq-item {
   background: #ffffff;
   border: 1px solid var(--line, #E2E8F0);
   border-radius: 14px;
   margin-bottom: 12px;
   overflow: hidden;
   transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-details[open] {
+details[open],
+.faq-item[open] {
   border-color: var(--primary-light, #38BDF8);
   box-shadow: 0 4px 18px rgba(37, 99, 255, 0.08);
   background: #ffffff;
 }
 
-summary {
+details.is-closing,
+.faq-item.is-closing {
+  border-color: var(--line, #E2E8F0) !important;
+  box-shadow: none !important;
+}
+
+summary,
+.faq-summary {
+  display: block;
   cursor: pointer;
   list-style: none;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+summary::-webkit-details-marker,
+summary::marker {
+  display: none !important;
+  content: "" !important;
+}
+
+/* Inner flex container: 100% iOS Safari & WebKit compatible */
+.faq-summary-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1557,18 +1585,53 @@ summary {
   font-weight: 700;
   font-size: 1rem;
   color: var(--text-heading, #0F172A);
-  position: relative;
   transition: color 0.2s ease;
-  user-select: none;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-summary::-webkit-details-marker,
-summary::marker {
-  display: none;
-  content: "";
+.faq-question-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.45;
 }
 
-summary::after {
+/* Fallback if no .faq-summary-inner wrapper is used */
+summary:not(:has(.faq-summary-inner)) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-heading, #0F172A);
+  transition: color 0.2s ease;
+}
+
+/* Chevron Icon */
+.faq-chevron {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-right: 2.5px solid var(--primary, #2563FF);
+  border-bottom: 2.5px solid var(--primary, #2563FF);
+  transform: rotate(45deg);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  margin-inline-start: auto;
+}
+
+details[open] .faq-chevron {
+  transform: rotate(225deg);
+}
+
+details.is-closing .faq-chevron {
+  transform: rotate(45deg) !important;
+}
+
+/* Fallback pseudo-element chevron when no .faq-chevron span exists */
+summary:not(:has(.faq-chevron))::after {
   content: "";
   display: inline-block;
   width: 9px;
@@ -1576,36 +1639,33 @@ summary::after {
   border-right: 2.5px solid var(--primary, #2563FF);
   border-bottom: 2.5px solid var(--primary, #2563FF);
   transform: rotate(45deg);
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
   margin-inline-start: auto;
 }
 
-details[open] summary::after {
+details[open] summary:not(:has(.faq-chevron))::after {
   transform: rotate(225deg);
 }
 
+details.is-closing summary:not(:has(.faq-chevron))::after {
+  transform: rotate(45deg) !important;
+}
+
+details[open] .faq-summary-inner,
 details[open] summary {
   color: var(--primary, #2563FF);
+}
+
+details.is-closing .faq-summary-inner,
+details.is-closing summary {
+  color: var(--text-heading, #0F172A) !important;
 }
 
 summary:focus-visible {
   outline: 2px solid var(--primary, #2563FF);
   outline-offset: 2px;
   border-radius: 12px;
-}
-
-details.is-closing {
-  border-color: var(--line, #E2E8F0) !important;
-  box-shadow: none !important;
-}
-
-details.is-closing summary {
-  color: var(--text-heading, #0F172A) !important;
-}
-
-details.is-closing summary::after {
-  transform: rotate(45deg) !important;
 }
 
 details .body {
