@@ -60,7 +60,7 @@
   --gradient-blue-sky: linear-gradient(135deg, #2563FF 0%, #38BDF8 100%);
   --gradient-violet-purple: linear-gradient(135deg, #8B5CF6 0%, #C084FC 100%);
   --gradient-azure: linear-gradient(135deg, #0EA5FF 0%, #38BDF8 100%);
-  --gradient-footer: linear-gradient(180deg, #1D4ED8 0%, #0D266B 100%);
+  --gradient-footer: #000000;
 
   /* Antigravity Spatial Depths & Shadows */
   --shadow-flat: 0 1px 3px rgba(15, 23, 42, 0.05);
@@ -1597,8 +1597,8 @@ body.lang-ar .faq-summary {
 }
 
 .faq-summary:focus-visible {
-  outline: 2px solid var(--primary, #2563FF);
-  outline-offset: -2px;
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--primary, #2563FF);
   border-radius: 16px;
 }
 
@@ -2123,9 +2123,9 @@ body.modal-open {
 
 /* ---------------- FOOTER ---------------- */
 footer {
-  background: var(--gradient-footer, linear-gradient(180deg, #1D4ED8 0%, #0D266B 100%));
+  background: #000000;
   color: rgba(255, 255, 255, .82);
-  border-top: 1px solid rgba(255, 255, 255, .15);
+  border-top: 1px solid rgba(255, 255, 255, .1);
   font-size: .9rem;
 }
 
@@ -2133,7 +2133,7 @@ footer {
   font-size: .79rem;
   line-height: 1.6;
   color: rgba(255, 255, 255, .72);
-  border-top: 1px solid rgba(255, 255, 255, .16);
+  border-top: 1px solid rgba(255, 255, 255, .12);
   padding-top: 20px;
   margin-bottom: 20px;
   max-width: 78ch;
@@ -2187,7 +2187,7 @@ footer ul {
 }
 
 footer a {
-  color: #E0F2FE;
+  color: #CBD5E1;
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -2202,14 +2202,14 @@ footer .tagline {
 }
 
 .f-bottom {
-  border-top: 1px solid rgba(255, 255, 255, .16);
+  border-top: 1px solid rgba(255, 255, 255, .12);
   padding-top: 22px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   justify-content: space-between;
   font-size: .83rem;
-  color: rgba(255, 255, 255, .78);
+  color: rgba(255, 255, 255, .65);
 }
 
 /* ---------------- STICKY MOBILE CTA ---------------- */
