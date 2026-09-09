@@ -3088,6 +3088,12 @@ def register_visionadmin_api_routes(app):
                 new_id = cursor.lastrowid
                 log_activity('create', 'store_view', new_id, {'code': code, 'name': name}, actor_user_id=user_id)
                 return jsonify({'success': True, 'id': new_id, 'message': 'Store view created successfully.'}), 201
+        except pymysql.err.IntegrityError as ie:
+            conn.rollback()
+            return jsonify({'success': False, 'error': f"Database integrity error: {str(ie)}"}), 400
+        except Exception as e:
+            conn.rollback()
+            return jsonify({'success': False, 'error': f"Failed to create store view: {str(e)}"}), 500
         finally:
             conn.close()
 
@@ -3109,6 +3115,25 @@ def register_visionadmin_api_routes(app):
                 if not existing:
                     return jsonify({'success': False, 'error': 'Store view not found.'}), 404
 
+                target_store_id = store_id if store_id is not None else existing['store_id']
+                target_code = code if code else existing['code']
+
+                # Check if target_code is already used in target_store_id by ANOTHER active view
+                cursor.execute("""
+                    SELECT id FROM store_views 
+                    WHERE store_id = %s AND code = %s AND id != %s AND deleted_at IS NULL
+                """, (target_store_id, target_code, view_id))
+                active_conflict = cursor.fetchone()
+                if active_conflict:
+                    return jsonify({'success': False, 'error': f"Store view code '{target_code}' is already in use by another active store view in this store."}), 400
+
+                # Clean up / rename any soft-deleted views occupying (target_store_id, target_code)
+                cursor.execute("""
+                    UPDATE store_views
+                    SET code = CONCAT(code, '__deleted_', id, '_', UNIX_TIMESTAMP())
+                    WHERE store_id = %s AND code = %s AND id != %s AND deleted_at IS NOT NULL
+                """, (target_store_id, target_code, view_id))
+
                 website_id = existing['website_id']
                 if store_id:
                     cursor.execute("SELECT website_id FROM stores WHERE id = %s AND deleted_at IS NULL", (store_id,))
@@ -3116,7 +3141,7 @@ def register_visionadmin_api_routes(app):
                     if st:
                         website_id = st['website_id']
 
-                locale = code.split('_')[0].lower() if code else existing['locale']
+                locale = target_code.split('_')[0].lower() if target_code else existing['locale']
                 cursor.execute("""
                     UPDATE store_views
                     SET store_id = COALESCE(%s, store_id),
@@ -3130,8 +3155,14 @@ def register_visionadmin_api_routes(app):
                     WHERE id = %s
                 """, (store_id, website_id, name, code, locale, is_active, sort_order, user_id, view_id))
                 conn.commit()
-                log_activity('update', 'store_view', view_id, {'code': code, 'name': name}, actor_user_id=user_id)
+                log_activity('update', 'store_view', view_id, {'code': target_code, 'name': name or existing['name']}, actor_user_id=user_id)
                 return jsonify({'success': True, 'message': 'Store view updated successfully.'})
+        except pymysql.err.IntegrityError as ie:
+            conn.rollback()
+            return jsonify({'success': False, 'error': f"Database integrity error: {str(ie)}"}), 400
+        except Exception as e:
+            conn.rollback()
+            return jsonify({'success': False, 'error': f"Failed to update store view: {str(e)}"}), 500
         finally:
             conn.close()
 
@@ -3146,10 +3177,19 @@ def register_visionadmin_api_routes(app):
                 if not view:
                     return jsonify({'success': False, 'error': 'Store view not found.'}), 404
 
-                cursor.execute("UPDATE store_views SET deleted_at = NOW(), deleted_by = %s WHERE id = %s", (user_id, view_id))
+                cursor.execute("""
+                    UPDATE store_views 
+                    SET deleted_at = NOW(), 
+                        deleted_by = %s, 
+                        code = CONCAT(code, '__deleted_', id, '_', UNIX_TIMESTAMP()) 
+                    WHERE id = %s
+                """, (user_id, view_id))
                 conn.commit()
                 log_activity('delete', 'store_view', view_id, view, {'deleted': True}, actor_user_id=user_id)
                 return jsonify({'success': True, 'message': f"Store view '{view['name']}' moved to trash."})
+        except Exception as e:
+            conn.rollback()
+            return jsonify({'success': False, 'error': f"Failed to delete store view: {str(e)}"}), 500
         finally:
             conn.close()
 
@@ -3206,6 +3246,7 @@ def register_visionadmin_api_routes(app):
         attr_type = data.get('type') or 'text'
         scope = data.get('scope') or 'global'
         unit = data.get('unit')
+        default_value = data.get('default_value')
         user_id = get_current_admin_user_id()
 
         if not code:
@@ -3217,6 +3258,31 @@ def register_visionadmin_api_routes(app):
                 cursor.execute("SELECT id FROM attributes WHERE code = %s AND deleted_at IS NULL", (code,))
                 if cursor.fetchone():
                     return jsonify({'error': f"Attribute code '{code}' already exists."}), 400
+
+                validation_rules = data.get('validation_rules') or {}
+                if isinstance(validation_rules, str):
+                    try:
+                        validation_rules = json.loads(validation_rules)
+                    except Exception:
+                        validation_rules = {}
+
+                for k in [
+                    'input_validation', 'add_to_columns', 'use_in_filter_options',
+                    'use_in_promo_rules', 'allow_html_tags', 'used_in_product_listing',
+                    'used_for_sort_by', 'use_in_search_results_nav',
+                    'facet_coverage_rate', 'facet_max_size', 'facet_sort_order', 'facet_internal_logic',
+                    'layered_nav'
+                ]:
+                    if k in data:
+                        validation_rules[k] = data[k]
+
+                is_required = 1 if data.get('is_required') in (1, '1', True) else 0
+                is_unique = 1 if data.get('is_unique') in (1, '1', True) else 0
+                is_filterable = 1 if data.get('is_filterable') in (1, '1', True, 'filterable_results', 'filterable_no_results') else 0
+                is_searchable = 1 if data.get('is_searchable') in (1, '1', True) else 0
+                is_comparable = 1 if data.get('is_comparable') in (1, '1', True) else 0
+                is_visible_on_front = 1 if data.get('is_visible_on_front') in (1, '1', True) else 0
+                sort_order = int(data.get('sort_order') or data.get('position') or 0)
 
                 cursor.execute("""
                     INSERT INTO attributes (
@@ -3231,34 +3297,35 @@ def register_visionadmin_api_routes(app):
                     attr_type,
                     scope,
                     unit,
-                    data.get('default_value'),
-                    json.dumps(data.get('validation_rules')) if data.get('validation_rules') else None,
-                    1 if data.get('is_required') else 0,
-                    1 if data.get('is_unique') else 0,
-                    1 if data.get('is_filterable', True) else 0,
-                    1 if data.get('is_searchable', True) else 0,
-                    1 if data.get('is_comparable', True) else 0,
-                    1 if data.get('is_visible_on_front', True) else 0,
+                    default_value,
+                    json.dumps(validation_rules) if validation_rules else None,
+                    is_required,
+                    is_unique,
+                    is_filterable,
+                    is_searchable,
+                    is_comparable,
+                    is_visible_on_front,
                     0,
-                    int(data.get('sort_order', 0)),
+                    sort_order,
                     user_id,
                     user_id
                 ))
                 attr_id = cursor.lastrowid
 
-                # Insert options if select/multiselect
+                # Insert options if select/multiselect/swatch
                 options = data.get('options') or []
                 for idx, opt in enumerate(options, start=1):
                     val = opt.get('value') if isinstance(opt, dict) else str(opt)
-                    lbl = opt.get('label') if isinstance(opt, dict) else {'en': str(opt), 'ar': str(opt)}
+                    lbl = opt.get('label') if isinstance(opt, dict) else {'default': str(opt)}
                     is_def = 1 if (isinstance(opt, dict) and opt.get('is_default')) else 0
-                    cursor.execute("""
-                        INSERT INTO attribute_options (attribute_id, value, label, sort_order, is_default, created_by, updated_by)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    """, (attr_id, val, json.dumps(lbl) if isinstance(lbl, dict) else str(lbl), idx, is_def, user_id, user_id))
+                    swatch_val = opt.get('swatch_value') if isinstance(opt, dict) else None
+                    if val:
+                        cursor.execute("""
+                            INSERT INTO attribute_options (attribute_id, value, label, swatch_value, sort_order, is_default, created_by, updated_by)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        """, (attr_id, val, json.dumps(lbl) if isinstance(lbl, dict) else str(lbl), swatch_val, idx, is_def, user_id, user_id))
 
                 conn.commit()
-
                 log_activity('create', 'attribute', attr_id, None, data, user_id=user_id)
                 return jsonify({'success': True, 'id': attr_id, 'message': f"Attribute '{code}' created successfully."}), 201
         finally:
@@ -3272,6 +3339,7 @@ def register_visionadmin_api_routes(app):
         attr_type = data.get('type')
         scope = data.get('scope')
         unit = data.get('unit')
+        default_value = data.get('default_value')
         user_id = get_current_admin_user_id()
 
         conn = get_connection()
@@ -3282,21 +3350,42 @@ def register_visionadmin_api_routes(app):
                 if not old_attr:
                     return jsonify({'error': 'Attribute not found.'}), 404
 
-                def _to_json_str(val, default=None):
-                    if val is None or val == '':
-                        return default
-                    if isinstance(val, (dict, list)):
-                        return json.dumps(val)
-                    if isinstance(val, str):
-                        try:
-                            parsed = json.loads(val)
-                            return json.dumps(parsed)
-                        except Exception:
-                            return json.dumps(val)
-                    return json.dumps(val)
+                existing_vr = {}
+                if old_attr.get('validation_rules'):
+                    try:
+                        existing_vr = json.loads(old_attr['validation_rules']) if isinstance(old_attr['validation_rules'], str) else old_attr['validation_rules']
+                    except Exception:
+                        existing_vr = {}
 
-                name_val = json.dumps(name) if isinstance(name, dict) else _to_json_str(name, default=json.dumps({"en": str(name), "ar": str(name)}))
-                val_rules_val = _to_json_str(data.get('validation_rules'))
+                req_vr = data.get('validation_rules') or {}
+                if isinstance(req_vr, str):
+                    try:
+                        req_vr = json.loads(req_vr)
+                    except Exception:
+                        req_vr = {}
+                if isinstance(req_vr, dict):
+                    existing_vr.update(req_vr)
+
+                for k in [
+                    'input_validation', 'add_to_columns', 'use_in_filter_options',
+                    'use_in_promo_rules', 'allow_html_tags', 'used_in_product_listing',
+                    'used_for_sort_by', 'use_in_search_results_nav',
+                    'facet_coverage_rate', 'facet_max_size', 'facet_sort_order', 'facet_internal_logic',
+                    'layered_nav'
+                ]:
+                    if k in data:
+                        existing_vr[k] = data[k]
+
+                name_val = json.dumps(name) if isinstance(name, dict) else (old_attr.get('name') or json.dumps({'default': str(name)}))
+                val_rules_val = json.dumps(existing_vr) if existing_vr else None
+
+                is_required = 1 if data.get('is_required') in (1, '1', True) else 0
+                is_unique = 1 if data.get('is_unique') in (1, '1', True) else 0
+                is_filterable = 1 if data.get('is_filterable') in (1, '1', True, 'filterable_results', 'filterable_no_results') else 0
+                is_searchable = 1 if data.get('is_searchable') in (1, '1', True) else 0
+                is_comparable = 1 if data.get('is_comparable') in (1, '1', True) else 0
+                is_visible_on_front = 1 if data.get('is_visible_on_front') in (1, '1', True) else 0
+                sort_order = int(data.get('sort_order') or data.get('position') or old_attr.get('sort_order') or 0)
 
                 cursor.execute("""
                     UPDATE attributes 
@@ -3304,6 +3393,7 @@ def register_visionadmin_api_routes(app):
                         type = COALESCE(%s, type),
                         scope = COALESCE(%s, scope),
                         unit = %s,
+                        default_value = %s,
                         is_required = %s,
                         is_unique = %s,
                         is_filterable = %s,
@@ -3320,13 +3410,14 @@ def register_visionadmin_api_routes(app):
                     attr_type,
                     scope,
                     unit,
-                    1 if data.get('is_required') in (1, '1', True) else 0,
-                    1 if data.get('is_unique') in (1, '1', True) else 0,
-                    1 if data.get('is_filterable') in (1, '1', True) else 0,
-                    1 if data.get('is_searchable') in (1, '1', True) else 0,
-                    1 if data.get('is_comparable') in (1, '1', True) else 0,
-                    1 if data.get('is_visible_on_front') in (1, '1', True) else 0,
-                    int(data.get('sort_order') or 0),
+                    default_value,
+                    is_required,
+                    is_unique,
+                    is_filterable,
+                    is_searchable,
+                    is_comparable,
+                    is_visible_on_front,
+                    sort_order,
                     val_rules_val,
                     user_id,
                     attr_id
@@ -3338,13 +3429,14 @@ def register_visionadmin_api_routes(app):
                     options = data.get('options') or []
                     for idx, opt in enumerate(options, start=1):
                         val = opt.get('value') if isinstance(opt, dict) else str(opt)
-                        lbl = opt.get('label') if isinstance(opt, dict) else {'en': str(opt), 'ar': str(opt)}
+                        lbl = opt.get('label') if isinstance(opt, dict) else {'default': str(opt)}
                         is_def = 1 if (isinstance(opt, dict) and opt.get('is_default')) else 0
+                        swatch_val = opt.get('swatch_value') if isinstance(opt, dict) else None
                         if val:
                             cursor.execute("""
-                                INSERT INTO attribute_options (attribute_id, value, label, sort_order, is_default, created_by, updated_by)
-                                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                            """, (attr_id, val, json.dumps(lbl) if isinstance(lbl, dict) else str(lbl), idx, is_def, user_id, user_id))
+                                INSERT INTO attribute_options (attribute_id, value, label, swatch_value, sort_order, is_default, created_by, updated_by)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            """, (attr_id, val, json.dumps(lbl) if isinstance(lbl, dict) else str(lbl), swatch_val, idx, is_def, user_id, user_id))
 
                 conn.commit()
                 log_activity('update', 'attribute', attr_id, old_attr, data, user_id=user_id)
