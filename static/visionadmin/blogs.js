@@ -613,7 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnSaveCat?.addEventListener('click', async () => {
     const name_en = catNameEnInput?.value.trim();
-    const name_ar = name_en;
+    const name_ar = catNameArInput?.value.trim() || name_en;
     const slug = catSlugInput?.value.trim();
     const editId = catEditIdInput?.value;
 
@@ -654,6 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (catEditIdInput) catEditIdInput.value = cat.id;
     if (catNameEnInput) catNameEnInput.value = cat.name_en || '';
+    if (catNameArInput) catNameArInput.value = cat.name_ar || '';
     if (catSlugInput) catSlugInput.value = cat.slug || '';
     if (catFormTitle) catFormTitle.textContent = `✏️ Edit Category: ${cat.name_en}`;
     if (btnSaveCatText) btnSaveCatText.textContent = 'Update Category';
@@ -682,6 +683,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   document.getElementById('btn-manage-categories')?.addEventListener('click', openCategoriesModal);
+  document.getElementById('btn-quick-manage-cats')?.addEventListener('click', openCategoriesModal);
   document.getElementById('btn-close-categories-modal')?.addEventListener('click', closeCategoriesModal);
   document.getElementById('btn-done-categories-modal')?.addEventListener('click', closeCategoriesModal);
   document.getElementById('categories-modal-backdrop')?.addEventListener('click', closeCategoriesModal);
@@ -905,4 +907,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial Load
   loadBlogs();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('open') === 'categories' || window.location.hash === '#categories') {
+    openCategoriesModal();
+  }
 });

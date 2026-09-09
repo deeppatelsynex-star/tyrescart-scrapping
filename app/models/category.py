@@ -34,6 +34,7 @@ class Category:
         r['name_en'] = localize_value(r['name'], 'en') or r.get('display_name')
         r['name_ar'] = localize_value(r['name'], 'ar')
         r['description_en'] = localize_value(r['description'], 'en')
+        r['description_ar'] = localize_value(r['description'], 'ar')
         r['meta_title_en'] = localize_value(r['meta_title'], 'en')
         r['meta_desc_en'] = localize_value(r['meta_desc'], 'en')
         return r
@@ -179,7 +180,15 @@ class Category:
                 image = data.get('image') or None
 
                 desc_input = data.get('description') or data.get('description_en')
-                desc_json = dump_json_dict(desc_input) if desc_input else None
+                desc_dict = desc_input if isinstance(desc_input, dict) else parse_json_dict(desc_input)
+                if not isinstance(desc_dict, dict) or not desc_dict:
+                    desc_dict = {DEFAULT_LOCALE: str(desc_input).strip()} if desc_input else {}
+                if data.get('description_en'):
+                    desc_dict['en'] = str(data['description_en']).strip()
+                if data.get('description_ar'):
+                    desc_dict['ar'] = str(data['description_ar']).strip()
+                desc_dict = {k: v for k, v in desc_dict.items() if v}
+                desc_json = dump_json_dict(desc_dict) if desc_dict else None
 
                 meta_t_input = data.get('meta_title') or data.get('meta_title_en')
                 meta_t_json = dump_json_dict(meta_t_input) if meta_t_input else None
@@ -235,7 +244,32 @@ class Category:
                 image = data.get('image') if 'image' in data else existing.get('image')
 
                 desc_input = data.get('description') or data.get('description_en')
-                desc_json = dump_json_dict(desc_input) if desc_input else existing.get('description')
+                if desc_input is not None or 'description' in data or 'description_en' in data or 'description_ar' in data:
+                    base_dict = parse_json_dict(existing.get('description')) if existing.get('description') else {}
+                    if not isinstance(base_dict, dict):
+                        base_dict = {}
+                    if desc_input is not None:
+                        new_dict = desc_input if isinstance(desc_input, dict) else parse_json_dict(desc_input)
+                        if isinstance(new_dict, dict):
+                            base_dict.update(new_dict)
+                        elif str(desc_input).strip():
+                            base_dict[DEFAULT_LOCALE] = str(desc_input).strip()
+                    if data.get('description_en') is not None:
+                        val_en = str(data['description_en']).strip()
+                        if val_en:
+                            base_dict['en'] = val_en
+                        else:
+                            base_dict.pop('en', None)
+                    if data.get('description_ar') is not None:
+                        val_ar = str(data['description_ar']).strip()
+                        if val_ar:
+                            base_dict['ar'] = val_ar
+                        else:
+                            base_dict.pop('ar', None)
+                    clean_dict = {k: v for k, v in base_dict.items() if v}
+                    desc_json = dump_json_dict(clean_dict) if clean_dict else None
+                else:
+                    desc_json = existing.get('description')
 
                 meta_t_input = data.get('meta_title') or data.get('meta_title_en')
                 meta_t_json = dump_json_dict(meta_t_input) if meta_t_input else existing.get('meta_title')
