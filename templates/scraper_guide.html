@@ -699,7 +699,7 @@ if __name__ == "__main__":                                             # KEEP
             <tbody class="divide-y divide-slate-100">
               <tr>
                 <td class="px-4 py-2 font-mono text-xs">Spider class + CrawlerProcess</td>
-                <td class="px-4 py-2 font-semibold text-emerald-700">Keep</td>
+                <td class="px-4 py-2 font-semibold text-blue-700">Keep</td>
                 <td class="px-4 py-2">Required Scrapy structure the app's launch command relies on.</td>
               </tr>
               <tr>
@@ -709,7 +709,7 @@ if __name__ == "__main__":                                             # KEEP
               </tr>
               <tr>
                 <td class="px-4 py-2 font-mono text-xs">sys.argv[1] / sys.argv[2]</td>
-                <td class="px-4 py-2 font-semibold text-emerald-700">Keep</td>
+                <td class="px-4 py-2 font-semibold text-blue-700">Keep</td>
                 <td class="px-4 py-2">The app's output path and input CSV path.</td>
               </tr>
               <tr>
@@ -719,7 +719,7 @@ if __name__ == "__main__":                                             # KEEP
               </tr>
               <tr>
                 <td class="px-4 py-2 font-mono text-xs">emit_status() / URL_STATUS format</td>
-                <td class="px-4 py-2 font-semibold text-emerald-700">Keep exactly</td>
+                <td class="px-4 py-2 font-semibold text-blue-700">Keep exactly</td>
                 <td class="px-4 py-2">The app's live-progress parser depends on this exact shape.</td>
               </tr>
               <tr>
@@ -756,27 +756,27 @@ if __name__ == "__main__":                                             # KEEP
         <h2 class="text-lg font-bold text-slate-900">7-step quick guide</h2>
         <ol class="mt-2 space-y-2 text-sm text-slate-700">
           <li><span
-              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">1</span>Copy
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">1</span>Copy
             the template above.</li>
           <li><span
-              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">2</span>Change
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">2</span>Change
             the Spider's <code>name</code>.</li>
           <li><span
-              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">3</span>Keep
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">3</span>Keep
             <code>sys.argv[1]</code> for the output path.</li>
           <li><span
-              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">4</span>Keep
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">4</span>Keep
             <code>sys.argv[2]</code> for the input CSV.</li>
           <li><span
-              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">5</span>Replace
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">5</span>Replace
             the CSS/XPath selectors with your target site's.</li>
           <li><span
-              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">6</span>Add
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">6</span>Add
             the data fields you actually need.</li>
           <li><span
-              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">7</span>Test
+              class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">7</span>Test
             it locally (<code>python your_scraper.py out.xlsx urls.csv</code>), then upload it on the <a
-              href="/tcsadmin" class="font-semibold text-emerald-700 underline">Files</a> page.</li>
+              href="/tcsadmin" class="font-semibold text-blue-700 underline">Files</a> page.</li>
         </ol>
       </section>
 
@@ -787,9 +787,9 @@ if __name__ == "__main__":                                             # KEEP
           Scrapy. It has to follow the app's conventions specifically.
         </div>
         <div class="mt-4 grid gap-4 sm:grid-cols-2">
-          <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-            <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Application-required</p>
-            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-emerald-800">
+          <div class="rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Application-required</p>
+            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-blue-800">
               <li><code>sys.argv[1]</code> / <code>sys.argv[2]</code></li>
               <li><code>output_file</code> written to the given path</li>
               <li><code>custom_settings</code> / <code>FEEDS</code></li>

@@ -86,7 +86,7 @@
   function statusBadgeHtml(row) {
     if (row.working) {
       if (row.is_owner) {
-        return `<a href="/tcsadmin/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors" title="Click to view your live progress"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Running</a>`;
+        return `<a href="/tcsadmin/scraperpage?fileId=${row.fileId}" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 hover:bg-emerald-200 transition-colors" title="Click to view your live progress"><span class="w-1.5 h-1.5 rounded-full bg-[#2563FF] animate-pulse"></span>Running</a>`;
       }
       return `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200/80" title="This scraper is currently being used by another user">In Use</span>`;
     }
@@ -112,11 +112,11 @@
     } else {
       const startStopLabel = busyAction === 'start' ? 'Please wait…' : 'Start';
       const startStopDisabled = !row.isEnabled ? 'disabled title="Enable scraper before starting"' : (busy ? 'disabled' : '');
-      startStopBtn = `<button type="button" data-action="start" data-id="${row.fileId}" ${startStopDisabled} class="text-xs font-semibold ${busy ? 'text-slate-400 cursor-not-allowed' : 'text-emerald-600 hover:underline cursor-pointer'}">${startStopLabel}</button>`;
+      startStopBtn = `<button type="button" data-action="start" data-id="${row.fileId}" ${startStopDisabled} class="text-xs font-semibold ${busy ? 'text-slate-400 cursor-not-allowed' : 'text-[#2563FF] hover:underline cursor-pointer'}">${startStopLabel}</button>`;
     }
 
     const downloadBtn = row.outputAvailable && !row.working
-      ? `<a href="/tcsadmin/api/files/${row.fileId}/download" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer" title="Download output Excel">Download</a>`
+      ? `<a href="/tcsadmin/api/files/${row.fileId}/download" class="text-xs font-semibold text-[#2563FF] hover:text-blue-700 hover:underline cursor-pointer" title="Download output Excel">Download</a>`
       : '';
     const logBtn = `<button type="button" data-action="view-logs" data-id="${row.fileId}" class="text-xs font-semibold text-indigo-600 hover:underline cursor-pointer">Log</button>`;
 
@@ -441,7 +441,7 @@
       }
       urlsTextarea.value = data.urls.join('\n');
       urlsStatus.textContent = `Imported ${data.urls.length} URL(s) from the CSV -- review the list above before saving.`;
-      urlsStatus.className = 'text-emerald-600';
+      urlsStatus.className = 'text-[#2563FF]';
     } catch (err) {
       urlsStatus.textContent = 'Network error during upload.';
       urlsStatus.className = 'text-rose-600';
@@ -473,7 +473,7 @@
       }
       uploadedFileName = data.fileName;
       uploadStatus.textContent = `Uploaded: ${data.fileName}`;
-      uploadStatus.className = 'text-[11px] text-emerald-600';
+      uploadStatus.className = 'text-[11px] text-[#2563FF]';
     } catch (err) {
       uploadStatus.textContent = 'Network error during upload.';
       uploadStatus.className = 'text-[11px] text-rose-600';
@@ -774,8 +774,8 @@
     let badgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
     let statusLabel = st;
     if (st === 'RUNNING') {
-      badgeClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      statusLabel = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>RUNNING';
+      badgeClass = 'bg-blue-100 text-blue-700 border-blue-200';
+      statusLabel = '<span class="w-1.5 h-1.5 rounded-full bg-[#2563FF] animate-pulse"></span>RUNNING';
     } else if (st === 'SUCCESS' || st === 'FINISHED') {
       badgeClass = 'bg-sky-100 text-sky-700 border-sky-200';
       statusLabel = 'SUCCESS';

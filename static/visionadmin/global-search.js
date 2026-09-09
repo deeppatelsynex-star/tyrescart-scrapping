@@ -261,7 +261,7 @@
             data-title="${escapeHtml(item.title)}"
           >
             <div class="flex items-center gap-3 min-w-0 pr-3">
-              <div class="w-8 h-8 rounded-lg bg-emerald-50 text-[#35760F] flex items-center justify-center shrink-0 border border-[#D1E7C4]">
+              <div class="w-8 h-8 rounded-lg bg-blue-50 text-[#1D4ED8] flex items-center justify-center shrink-0 border border-[#DBEAFE]">
                 <svg class="w-4 h-4 text-[var(--green)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                   <rect x="3" y="3" width="7" height="7"/>
                   <rect x="14" y="3" width="7" height="7"/>

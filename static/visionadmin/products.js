@@ -951,7 +951,7 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       }
       toastEl.textContent = message;
       toastEl.className = 'fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-0 opacity-100 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl border text-sm font-bold ' +
-        (type === 'success' ? 'bg-[#0E1108] text-[#58B31B] border-[#58B31B]/40' : 'bg-rose-900 text-white border-rose-700');
+        (type === 'success' ? 'bg-[#0E1108] text-[#2563FF] border-[#2563FF]/40' : 'bg-rose-900 text-white border-rose-700');
 
       setTimeout(() => {
         toastEl.className = 'fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl border text-sm font-semibold';

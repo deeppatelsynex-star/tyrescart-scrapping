@@ -59,7 +59,7 @@
     // Trigger button
     const trigger = document.createElement('button');
     trigger.type = 'button';
-    trigger.className = 'va-custom-dropdown-trigger w-full flex items-center justify-between gap-3 pl-4 pr-3.5 py-2.5 rounded-full bg-white hover:bg-[#F8FAF7] border border-[#58B31B] hover:border-[#35760F] text-xs font-bold text-[#0E1108] shadow-2xs transition-all cursor-pointer select-none';
+    trigger.className = 'va-custom-dropdown-trigger w-full flex items-center justify-between gap-3 pl-4 pr-3.5 py-2.5 rounded-full bg-white hover:bg-[#F8FAF7] border border-[#2563FF] hover:border-[#1D4ED8] text-xs font-bold text-[#0E1108] shadow-2xs transition-all cursor-pointer select-none';
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-haspopup', 'true');
 
@@ -70,10 +70,10 @@
 
     trigger.innerHTML = `
       <div class="flex items-center gap-2 min-w-0">
-        <span class="va-custom-dropdown-dot w-2 h-2 rounded-full bg-[#58B31B] shrink-0"></span>
+        <span class="va-custom-dropdown-dot w-2 h-2 rounded-full bg-[#2563FF] shrink-0"></span>
         <span class="va-custom-dropdown-current-label truncate font-extrabold text-[#0E1108]">Select...</span>
       </div>
-      <svg class="va-custom-dropdown-chevron w-4 h-4 text-[#35760F] transition-transform duration-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <svg class="va-custom-dropdown-chevron w-4 h-4 text-[#1D4ED8] transition-transform duration-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <polyline points="6 9 12 15 18 9"/>
       </svg>
     `;
@@ -122,20 +122,20 @@
             type="button" 
             class="va-option-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all text-left cursor-pointer ${
               isSelected 
-                ? 'bg-[#EAF7E2] text-[#0E1108] font-extrabold' 
+                ? 'bg-[#EFF6FF] text-[#0E1108] font-extrabold' 
                 : 'text-slate-700 hover:bg-[#F8FAF7] hover:text-[#0E1108] font-bold'
             }"
             data-value="${escapeHtml(opt.value)}"
             data-index="${idx}"
           >
             <div class="flex items-center gap-2 min-w-0">
-              <span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-[#58B31B]' : 'bg-slate-300'} shrink-0"></span>
+              <span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-[#2563FF]' : 'bg-slate-300'} shrink-0"></span>
               <span class="truncate">
                 ${escapeHtml(parsed.main)}
                 ${parsed.sub ? `<span class="text-[11px] text-slate-400 font-semibold ml-1">${escapeHtml(parsed.sub)}</span>` : ''}
               </span>
             </div>
-            ${isSelected ? '<svg class="w-4 h-4 text-[#35760F] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+            ${isSelected ? '<svg class="w-4 h-4 text-[#1D4ED8] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
           </button>
         `;
       }).join('');

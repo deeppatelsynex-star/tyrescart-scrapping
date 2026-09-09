@@ -21,7 +21,7 @@
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
     <div>
       <h1 class="text-3xl sm:text-4xl font-black text-[#0E1108] tracking-tight">Admin Users Management</h1>
-      <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">Manage VisionAdmin credentials, RBAC roles, and account access from the <code class="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">admin_users</code> table.</p>
+      <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">Manage VisionAdmin credentials, RBAC roles, and account access from the <code class="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">admin_users</code> table.</p>
     </div>
 
     <!-- Create User Button -->
@@ -41,7 +41,7 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
     <!-- 1. Total Admins -->
     <div class="bg-[#F8FAF7] rounded-3xl p-4 sm:p-5 border border-[#E8EDE4] shadow-2xs flex items-center gap-3.5">
-      <div class="w-10 h-10 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center shrink-0">
+      <div class="w-10 h-10 rounded-2xl bg-[#EFF6FF] text-[#1D4ED8] flex items-center justify-center shrink-0">
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
           <circle cx="9" cy="7" r="4"/>
@@ -84,7 +84,7 @@
 
     <!-- 4. Active Accounts -->
     <div class="bg-[#F8FAF7] rounded-3xl p-4 sm:p-5 border border-[#E8EDE4] shadow-2xs flex items-center gap-3.5">
-      <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-[#00A650] flex items-center justify-center shrink-0 border border-emerald-200/50">
+      <div class="w-10 h-10 rounded-2xl bg-blue-50 text-[#00A650] flex items-center justify-center shrink-0 border border-blue-200/50">
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
           <polyline points="22 4 12 14.01 9 11.01"/>
@@ -115,7 +115,7 @@
   <div class="bg-white rounded-3xl p-4 sm:p-5 border border-[#E8EDE4] shadow-2xs flex flex-col md:flex-row items-center justify-between gap-4">
     <!-- View Switcher Tabs (Active vs Trash) -->
     <div class="flex items-center gap-1.5 p-1 bg-[#F8FAF7] border border-[#E8EDE4] rounded-2xl text-xs font-bold w-full md:w-auto">
-      <button type="button" id="tab-btn-active" class="tab-user-view px-4 py-2 rounded-xl bg-[#EAF7E2] text-[#35760F] shadow-2xs transition cursor-pointer" data-view="active">
+      <button type="button" id="tab-btn-active" class="tab-user-view px-4 py-2 rounded-xl bg-[#EFF6FF] text-[#1D4ED8] shadow-2xs transition cursor-pointer" data-view="active">
         Active Users
       </button>
       <button type="button" id="tab-btn-trash" class="tab-user-view px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white transition cursor-pointer flex items-center gap-1.5" data-view="trash">
@@ -138,18 +138,18 @@
           type="text" 
           id="input-user-search" 
           placeholder="Search name or email..." 
-          class="w-full pl-10 pr-4 py-2 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] text-xs font-bold text-[#0E1108] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#58B31B] transition"
+          class="w-full pl-10 pr-4 py-2 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] text-xs font-bold text-[#0E1108] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2563FF] transition"
         />
       </div>
 
-      <select id="select-role-filter" class="px-3.5 py-2 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#58B31B] cursor-pointer">
+      <select id="select-role-filter" class="px-3.5 py-2 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2563FF] cursor-pointer">
         <option value="all">All Roles</option>
         <option value="super_admin">Super Admin</option>
         <option value="manager">Manager</option>
         <option value="support">Support</option>
       </select>
 
-      <select id="select-status-filter" class="px-3.5 py-2 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#58B31B] cursor-pointer">
+      <select id="select-status-filter" class="px-3.5 py-2 rounded-2xl bg-[#F8FAF7] border border-[#E8EDE4] text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2563FF] cursor-pointer">
         <option value="all">All Status</option>
         <option value="active">Active Only</option>
         <option value="inactive">Disabled Only</option>
@@ -183,7 +183,7 @@
           <!-- Populated by JavaScript -->
           <tr>
             <td colspan="6" class="py-12 text-center text-slate-400">
-              <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#58B31B]"></div>
+              <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563FF]"></div>
               <p class="text-xs font-bold text-slate-500 mt-2">Loading administrator accounts...</p>
             </td>
           </tr>
@@ -203,7 +203,7 @@
     
     <div class="flex items-center justify-between border-b border-slate-100 pb-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-[#EAF7E2] text-[#35760F] flex items-center justify-center">
+        <div class="w-10 h-10 rounded-2xl bg-[#EFF6FF] text-[#1D4ED8] flex items-center justify-center">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
             <circle cx="8.5" cy="7" r="4"/>
@@ -213,7 +213,7 @@
         </div>
         <div>
           <h3 class="text-lg font-black text-[#0E1108]">Add New Administrator</h3>
-          <p class="text-xs text-slate-400">Create a user record in <code class="font-mono text-emerald-700">admin_users</code></p>
+          <p class="text-xs text-slate-400">Create a user record in <code class="font-mono text-blue-700">admin_users</code></p>
         </div>
       </div>
       <button type="button" class="btn-close-modal p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition cursor-pointer">
@@ -231,19 +231,19 @@
       <!-- Name -->
       <div class="space-y-1.5">
         <label for="create-name" class="block text-xs font-extrabold text-slate-700">Full Name <span class="text-rose-500">*</span></label>
-        <input type="text" id="create-name" required placeholder="e.g. John Doe" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#58B31B]">
+        <input type="text" id="create-name" required placeholder="e.g. John Doe" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#2563FF]">
       </div>
 
       <!-- Email -->
       <div class="space-y-1.5">
         <label for="create-email" class="block text-xs font-extrabold text-slate-700">Email Address <span class="text-rose-500">*</span></label>
-        <input type="email" id="create-email" required placeholder="admin@tyresvision.com" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#58B31B]">
+        <input type="email" id="create-email" required placeholder="admin@tyresvision.com" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#2563FF]">
       </div>
 
       <!-- Role Selection -->
       <div class="space-y-1.5">
         <label for="create-role" class="block text-xs font-extrabold text-slate-700">Role & Access Level <span class="text-rose-500">*</span></label>
-        <select id="create-role" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#58B31B] cursor-pointer">
+        <select id="create-role" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#2563FF] cursor-pointer">
           <option value="manager" selected>Manager (Content & Sections Editor)</option>
           <option value="support">Support (Read & Enquiries Access)</option>
           <option value="super_admin">Super Administrator (Full System & User Access)</option>
@@ -253,12 +253,12 @@
       <!-- Password -->
       <div class="space-y-1.5">
         <label for="create-password" class="block text-xs font-extrabold text-slate-700">Password <span class="text-slate-400 font-medium">(min. 8 characters or leave blank to email setup link)</span></label>
-        <input type="password" id="create-password" autocomplete="new-password" placeholder="Leave blank to let user set their password" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#58B31B]">
+        <input type="password" id="create-password" autocomplete="new-password" placeholder="Leave blank to let user set their password" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#2563FF]">
       </div>
 
       <!-- Active Status Checkbox -->
       <div class="flex items-center gap-2.5 pt-2">
-        <input type="checkbox" id="create-is-active" checked class="w-4 h-4 rounded text-[#00A650] focus:ring-[#58B31B] border-slate-300 cursor-pointer">
+        <input type="checkbox" id="create-is-active" checked class="w-4 h-4 rounded text-[#00A650] focus:ring-[#2563FF] border-slate-300 cursor-pointer">
         <label for="create-is-active" class="text-xs font-bold text-slate-700 cursor-pointer">Account is active and permitted to log in</label>
       </div>
 
@@ -309,19 +309,19 @@
       <!-- Name -->
       <div class="space-y-1.5">
         <label for="edit-name" class="block text-xs font-extrabold text-slate-700">Full Name <span class="text-rose-500">*</span></label>
-        <input type="text" id="edit-name" required class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#58B31B]">
+        <input type="text" id="edit-name" required class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#2563FF]">
       </div>
 
       <!-- Email -->
       <div class="space-y-1.5">
         <label for="edit-email" class="block text-xs font-extrabold text-slate-700">Email Address <span class="text-rose-500">*</span></label>
-        <input type="email" id="edit-email" required class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#58B31B]">
+        <input type="email" id="edit-email" required class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#2563FF]">
       </div>
 
       <!-- Role Selection -->
       <div class="space-y-1.5">
         <label for="edit-role" class="block text-xs font-extrabold text-slate-700">Role & Access Level <span class="text-rose-500">*</span></label>
-        <select id="edit-role" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#58B31B] cursor-pointer">
+        <select id="edit-role" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#2563FF] cursor-pointer">
           <option value="manager">Manager (Content & Sections Editor)</option>
           <option value="support">Support (Read & Enquiries Access)</option>
           <option value="super_admin">Super Administrator (Full System & User Access)</option>
@@ -331,12 +331,12 @@
       <!-- Optional New Password -->
       <div class="space-y-1.5">
         <label for="edit-password" class="block text-xs font-extrabold text-slate-700">New Password <span class="text-slate-400 font-medium">(Leave blank to keep existing password)</span></label>
-        <input type="password" id="edit-password" autocomplete="new-password" placeholder="Leave blank to keep current" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#58B31B]">
+        <input type="password" id="edit-password" autocomplete="new-password" placeholder="Leave blank to keep current" class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-[#0E1108] focus:outline-none focus:ring-2 focus:ring-[#2563FF]">
       </div>
 
       <!-- Active Status Checkbox -->
       <div class="flex items-center gap-2.5 pt-2">
-        <input type="checkbox" id="edit-is-active" class="w-4 h-4 rounded text-[#00A650] focus:ring-[#58B31B] border-slate-300 cursor-pointer">
+        <input type="checkbox" id="edit-is-active" class="w-4 h-4 rounded text-[#00A650] focus:ring-[#2563FF] border-slate-300 cursor-pointer">
         <label for="edit-is-active" class="text-xs font-bold text-slate-700 cursor-pointer">Account is active and permitted to log in</label>
       </div>
 
@@ -386,7 +386,7 @@
 <div id="modal-restore-user" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
   <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-8 space-y-5 transform transition-all text-center">
     
-    <div class="w-14 h-14 rounded-full bg-emerald-50 text-[#00A650] border border-emerald-100 flex items-center justify-center mx-auto">
+    <div class="w-14 h-14 rounded-full bg-blue-50 text-[#00A650] border border-blue-100 flex items-center justify-center mx-auto">
       <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <polyline points="1 4 1 10 7 10"></polyline>
         <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>

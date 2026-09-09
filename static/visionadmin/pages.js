@@ -198,8 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const statusBadge = p.is_active 
-        ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8] inline-flex items-center gap-1.5">
-             <span class="w-1.5 h-1.5 rounded-full bg-[#58B31B]"></span>
+        ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] inline-flex items-center gap-1.5">
+             <span class="w-1.5 h-1.5 rounded-full bg-[#2563FF]"></span>
              <span>Active (Live)</span>
            </span>`
         : `<span class="px-3 py-1 rounded-full text-xs font-bold bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A] inline-flex items-center gap-1.5">
@@ -230,9 +230,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="font-black text-sm text-[#0E1108]">${escapeHtml(enTitle)}</span>
               </div>
               <div class="flex items-center gap-2 text-xs">
-                <a href="/${p.slug}" target="_blank" class="text-[#58B31B] font-semibold hover:underline inline-flex items-center gap-1">
+                <a href="/${p.slug}" target="_blank" class="text-[#2563FF] font-semibold hover:underline inline-flex items-center gap-1">
                   <span>/${p.slug}</span>
-                  <svg class="w-3 h-3 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  <svg class="w-3 h-3 text-[#2563FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               </div>
             </div>
@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ${p.banner_image ? `
               <div class="flex items-center gap-2.5">
                 <img src="${escapeHtml(p.banner_image)}" alt="Banner" class="w-10 h-7 object-cover rounded-lg border border-[#E8EDE4] shadow-2xs shrink-0" />
-                <a href="${escapeHtml(p.banner_image)}" target="_blank" class="px-3 py-1 rounded-xl bg-white hover:bg-slate-50 border border-[#E8EDE4] text-xs font-bold text-slate-700 hover:text-[#35760F] hover:border-[#58B31B] shadow-2xs transition">View</a>
+                <a href="${escapeHtml(p.banner_image)}" target="_blank" class="px-3 py-1 rounded-xl bg-white hover:bg-slate-50 border border-[#E8EDE4] text-xs font-bold text-slate-700 hover:text-[#1D4ED8] hover:border-[#2563FF] shadow-2xs transition">View</a>
               </div>
             ` : '<span class="text-xs text-slate-400 font-medium">None</span>'}
           </td>
@@ -263,8 +263,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="py-4 px-4 sm:px-6 text-right whitespace-nowrap">
             <div class="inline-flex items-center gap-2">
               ${!isTrash ? `
-                <a href="/visionadmin/sections?page=${encodeURIComponent(p.slug)}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#D1E7C4] bg-white hover:bg-[#EAF7E2] text-[#35760F] text-xs font-bold shadow-2xs transition">
-                  <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <a href="/visionadmin/sections?page=${encodeURIComponent(p.slug)}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#DBEAFE] bg-white hover:bg-[#EFF6FF] text-[#1D4ED8] text-xs font-bold shadow-2xs transition">
+                  <svg class="w-3.5 h-3.5 text-[#2563FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                   <span>Sections</span>
                 </a>
                 <button type="button" onclick="window.editPage(${p.id})" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-[#E8EDE4] text-slate-700 text-xs font-bold shadow-2xs transition cursor-pointer">
@@ -279,8 +279,8 @@ document.addEventListener('DOMContentLoaded', () => {
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                 </button>
               ` : `
-                <button type="button" onclick="window.restorePage(${p.id})" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#EAF7E2] hover:bg-[#D1E7C4] border border-[#C8E8B8] text-[#35760F] text-xs font-bold transition cursor-pointer">
-                  <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                <button type="button" onclick="window.restorePage(${p.id})" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#EFF6FF] hover:bg-[#DBEAFE] border border-[#BFDBFE] text-[#1D4ED8] text-xs font-bold transition cursor-pointer">
+                  <svg class="w-3.5 h-3.5 text-[#2563FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                   <span>Restore</span>
                 </button>
                 <button type="button" onclick="window.deletePage(${p.id}, '${escapeHtml(enTitle)}', true)" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-extrabold shadow-sm hover:shadow-md transition cursor-pointer">
@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.tab-filter').forEach(b => {
         b.className = 'tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer';
       });
-      btn.className = 'tab-filter px-4 py-2 rounded-xl bg-[#EAF7E2] text-[#35760F] font-bold transition cursor-pointer';
+      btn.className = 'tab-filter px-4 py-2 rounded-xl bg-[#EFF6FF] text-[#1D4ED8] font-bold transition cursor-pointer';
       currentFilter = btn.dataset.status;
       loadPages();
     });

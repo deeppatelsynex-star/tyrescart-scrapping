@@ -20,7 +20,7 @@
     href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Quicksand:wght@400;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='19' fill='%230E1108'/%3E%3Ccircle cx='20' cy='20' r='11' fill='none' stroke='%2358B31B' stroke-width='4.5'/%3E%3Ccircle cx='20' cy='20' r='4' fill='%2358B31B'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='19' fill='%230E1108'/%3E%3Ccircle cx='20' cy='20' r='11' fill='none' stroke='%232563FF' stroke-width='4.5'/%3E%3Ccircle cx='20' cy='20' r='4' fill='%232563FF'/%3E%3C/svg%3E">
   <link rel="icon" type="image/webp" href="/static/assets/images/favicon-color.webp">
   <link rel="shortcut icon" href="/static/assets/images/favicon-color.webp" type="image/x-icon">
   <link rel="apple-touch-icon" href="/static/assets/images/apple-touch-icon.png">
@@ -42,8 +42,8 @@
           class="flex items-center justify-center p-1 hover:scale-105 transition-transform" aria-label="TyresVision">
           <svg class="w-9 h-9 shrink-0 drop-shadow-xs" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="20" cy="20" r="19" fill="#0E1108"/>
-            <circle cx="20" cy="20" r="11" fill="none" stroke="#58B31B" stroke-width="4.5"/>
-            <circle cx="20" cy="20" r="4" fill="#58B31B"/>
+            <circle cx="20" cy="20" r="11" fill="none" stroke="#2563FF" stroke-width="4.5"/>
+            <circle cx="20" cy="20" r="4" fill="#2563FF"/>
           </svg>
         </a>
 
@@ -148,7 +148,7 @@
 
     <div class="flex-1 flex min-w-0 overflow-hidden">
       <div
-        class="flex w-full h-full overflow-hidden bg-slate-50 text-slate-800 font-sens antialiased selection:bg-emerald-500 selection:text-white transition-colors duration-200 relative">
+        class="flex w-full h-full overflow-hidden bg-slate-50 text-slate-800 font-sens antialiased selection:bg-[#2563FF] selection:text-white transition-colors duration-200 relative">
         <main class="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-hidden">
           <header
             class="shell-header flex-none min-h-[56px] sm:min-h-[64px] px-3 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-3">
@@ -156,8 +156,8 @@
               <a href="/tcsadmin/docs/scraper" class="sm:hidden shrink-0" aria-label="TyresVision">
                 <svg class="w-7 h-7 shrink-0" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="20" cy="20" r="19" fill="#0E1108"/>
-                  <circle cx="20" cy="20" r="11" fill="none" stroke="#58B31B" stroke-width="4.5"/>
-                  <circle cx="20" cy="20" r="4" fill="#58B31B"/>
+                  <circle cx="20" cy="20" r="11" fill="none" stroke="#2563FF" stroke-width="4.5"/>
+                  <circle cx="20" cy="20" r="4" fill="#2563FF"/>
                 </svg>
               </a>
               <h1 class="text-base sm:text-lg font-bold tracking-tight truncate">
@@ -179,7 +179,7 @@
                   <div class="hidden sm:block text-left">
                     <p id="profile-name-header" class="text-xs font-bold text-[#0E1108] leading-tight">{{ session.get('name') or 'Super Admin' }}</p>
                     <div class="flex items-center gap-1.5 mt-0.5">
-                      <span class="inline-block w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                      <span class="inline-block w-2 h-2 rounded-full bg-[#2563FF]"></span>
                       <p class="text-[11px] text-slate-500 font-semibold leading-tight">{{ session.get('role') or 'SuperAdmin' }}</p>
                     </div>
                   </div>
@@ -275,8 +275,8 @@
 
               <div class="flex items-center gap-3 max-xl:min-w-0 max-lx:overflow-x-auto">
                 <div class="action-btn flex items-center gap-3 2x1:gap-2 5 shrink-0">
-                  <button type="button" title="Copy Search Results" aria-label="Copy Result" class="h-9 flex items-center gap-1.5 px-2.5 2xl:px-3 text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:border-emerald-500 hover:text-emerald-600 rounded-lg shadow-2xs transition-all active:scale-[0.98] shrink-0 cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon" class="w-4 h-4 text-emerald-600 shrink-0">
+                  <button type="button" title="Copy Search Results" aria-label="Copy Result" class="h-9 flex items-center gap-1.5 px-2.5 2xl:px-3 text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:border-emerald-500 hover:text-[#2563FF] rounded-lg shadow-2xs transition-all active:scale-[0.98] shrink-0 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon" class="w-4 h-4 text-[#2563FF] shrink-0">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5A3.375 3.375 0 0 0 6.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0 0 15 2.25h-1.5a2.251 2.251 0 0 0-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 0 0-9-9Z"></path>
                     </svg>
                     <span class="whitespace-nowrap">Copy Result</span>
@@ -297,7 +297,7 @@
         class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
       <div class="flex flex-col items-center text-center gap-2">
         <span id="vp-avatar"
-          class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-semibold overflow-hidden">?</span>
+          class="w-16 h-16 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-2xl font-semibold overflow-hidden">?</span>
         <h3 id="vp-name" class="text-base font-bold text-slate-900">—</h3>
         <p id="vp-email" class="text-xs text-slate-500">—</p>
       </div>
@@ -327,26 +327,26 @@
       <div id="cp-error"
         class="hidden mb-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs px-3 py-2"></div>
       <div id="cp-success"
-        class="hidden mb-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs px-3 py-2"></div>
+        class="hidden mb-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-xs px-3 py-2"></div>
       <form id="change-profile-form" class="space-y-3">
         <div class="flex flex-col items-center gap-2 mb-2">
           <span id="cp-avatar-preview"
-            class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl font-semibold overflow-hidden">?</span>
+            class="w-14 h-14 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-semibold overflow-hidden">?</span>
         </div>
         <div>
           <label class="block text-xs font-medium text-slate-600 mb-1">Full Name</label>
           <input id="cp-name" type="text" required
-            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" />
         </div>
         <div>
           <label class="block text-xs font-medium text-slate-600 mb-1">Email</label>
           <input id="cp-email" type="email" required
-            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" />
         </div>
         <div>
           <label class="block text-xs font-medium text-slate-600 mb-1">Avatar Image URL</label>
           <input id="cp-avatar-url" type="text" placeholder="https://…"
-            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" />
           <button type="button" id="cp-remove-avatar"
             class="mt-1 text-xs text-rose-600 hover:underline cursor-pointer">Remove avatar</button>
         </div>
@@ -368,7 +368,7 @@
       <div id="pw-error"
         class="hidden mb-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs px-3 py-2"></div>
       <div id="pw-success"
-        class="hidden mb-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs px-3 py-2"></div>
+        class="hidden mb-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-xs px-3 py-2"></div>
       <form id="change-password-form" class="space-y-3">
         <input type="text" name="username" value="{{ session.get('email', '') }}" autocomplete="username" class="hidden"
           style="display:none;" />
@@ -376,7 +376,7 @@
           <label class="block text-xs font-medium text-slate-600 mb-1">Current Password</label>
           <div class="relative">
             <input id="pw-current" type="password" required autocomplete="current-password"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" />
             <button type="button" data-toggle-password="pw-current" tabindex="-1"
               class="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 hover:text-slate-600 cursor-pointer">
               <svg class="icon-eye-open w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -397,7 +397,7 @@
           <label class="block text-xs font-medium text-slate-600 mb-1">New Password</label>
           <div class="relative">
             <input id="pw-new" type="password" required minlength="8" autocomplete="new-password"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" />
             <button type="button" data-toggle-password="pw-new" tabindex="-1"
               class="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 hover:text-slate-600 cursor-pointer">
               <svg class="icon-eye-open w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -418,7 +418,7 @@
           <label class="block text-xs font-medium text-slate-600 mb-1">Confirm New Password</label>
           <div class="relative">
             <input id="pw-confirm" type="password" required minlength="8" autocomplete="new-password"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" />
             <button type="button" data-toggle-password="pw-confirm" tabindex="-1"
               class="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 hover:text-slate-600 cursor-pointer">
               <svg class="icon-eye-open w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"

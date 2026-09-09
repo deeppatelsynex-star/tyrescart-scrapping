@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let statusBadge = '';
       if (b.status === 'published') {
-        statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Published</span>';
+        statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">Published</span>';
       } else if (b.status === 'archived') {
         statusBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Archived</span>';
       } else {
@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${arTitle ? `<span class="text-xs text-slate-400" dir="rtl">(${escapeHtml(arTitle)})</span>` : ''}
               </div>
               <div class="flex items-center gap-2 text-xs">
-                <a href="/blog/${b.slug}" target="_blank" class="text-emerald-600 font-mono hover:underline inline-flex items-center gap-1">
+                <a href="/blog/${b.slug}" target="_blank" class="text-[#2563FF] font-mono hover:underline inline-flex items-center gap-1">
                   <span>/blog/${b.slug}</span>
                   <svg class="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
@@ -262,8 +262,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>Trash</span>
               </button>
             ` : `
-              <button type="button" onclick="window.restoreBlog(${b.id})" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 text-emerald-700 text-xs font-bold transition cursor-pointer">
-                <svg class="w-3.5 h-3.5 text-emerald-600 group-hover:rotate-180 transition-transform duration-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <button type="button" onclick="window.restoreBlog(${b.id})" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200/80 text-blue-700 text-xs font-bold transition cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-[#2563FF] group-hover:rotate-180 transition-transform duration-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                 <span>Restore</span>
               </button>
               <button type="button" onclick="window.deleteBlog(${b.id}, '${escapeHtml(enTitle)}', true)" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-extrabold shadow-sm hover:shadow-md transition cursor-pointer">
@@ -316,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.tab-filter').forEach(b => {
         b.className = 'tab-filter px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer';
       });
-      btn.className = 'tab-filter px-4 py-2 rounded-xl bg-[#EAF7E2] text-[#35760F] font-bold transition cursor-pointer';
+      btn.className = 'tab-filter px-4 py-2 rounded-xl bg-[#EFF6FF] text-[#1D4ED8] font-bold transition cursor-pointer';
       currentFilter = btn.dataset.status;
       loadBlogs();
     });
@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
       faqListContainer.innerHTML = `
         <div class="py-6 px-4 rounded-xl border border-dashed border-slate-200 text-center bg-white/60">
           <p class="text-xs text-slate-400 font-semibold">No FAQ items added yet for this article.</p>
-          <button type="button" class="mt-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 underline cursor-pointer" onclick="document.getElementById('btn-add-faq-item').click()">
+          <button type="button" class="mt-2 text-xs font-bold text-[#2563FF] hover:text-blue-700 underline cursor-pointer" onclick="document.getElementById('btn-add-faq-item').click()">
             + Add first FAQ question &amp; answer
           </button>
         </div>
@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-3.5" data-faq-idx="${idx}">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100">
             <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-              <span class="w-5 h-5 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center text-[10px] font-black">${idx + 1}</span>
+              <span class="w-5 h-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-[10px] font-black">${idx + 1}</span>
               <span>FAQ Item #${idx + 1}</span>
             </span>
             <button type="button" class="btn-remove-faq text-[11px] font-bold text-rose-500 hover:text-rose-700 transition flex items-center gap-1 cursor-pointer" data-idx="${idx}">
@@ -413,11 +413,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">Question (English)</label>
-              <input type="text" class="faq-input-q-en w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="e.g. How often should tyres be rotated?" value="${qEn}" />
+              <input type="text" class="faq-input-q-en w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-inner" placeholder="e.g. How often should tyres be rotated?" value="${qEn}" />
             </div>
             <div>
               <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">Question (Arabic)</label>
-              <input type="text" dir="rtl" class="faq-input-q-ar w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="السؤال بالعربية (مثال: كم مرة يجب تدوير الإطارات؟)..." value="${qAr}" />
+              <input type="text" dir="rtl" class="faq-input-q-ar w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-inner" placeholder="السؤال بالعربية (مثال: كم مرة يجب تدوير الإطارات؟)..." value="${qAr}" />
             </div>
           </div>
 
@@ -425,11 +425,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">Answer (English)</label>
-              <textarea rows="2" class="faq-input-a-en w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="Provide detailed answer in English...">${aEn}</textarea>
+              <textarea rows="2" class="faq-input-a-en w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-inner" placeholder="Provide detailed answer in English...">${aEn}</textarea>
             </div>
             <div>
               <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600 mb-1">Answer (Arabic)</label>
-              <textarea rows="2" dir="rtl" class="faq-input-a-ar w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" placeholder="الإجابة التفصيلية بالعربية...">${aAr}</textarea>
+              <textarea rows="2" dir="rtl" class="faq-input-a-ar w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-inner" placeholder="الإجابة التفصيلية بالعربية...">${aAr}</textarea>
             </div>
           </div>
         </div>
@@ -590,12 +590,12 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="px-2 py-0.5 rounded bg-slate-100">${escapeHtml(c.slug)}</span>
           </td>
           <td class="py-3 px-4 text-center">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-700">
               ${c.blogs_count || 0}
             </span>
           </td>
           <td class="py-3 px-4 text-right space-x-1 whitespace-nowrap">
-            <button type="button" onclick="window.editCategory(${c.id})" class="p-1.5 rounded-lg text-slate-500 hover:text-[#35760F] hover:bg-[#EAF7E2] transition cursor-pointer" title="Edit Category">
+            <button type="button" onclick="window.editCategory(${c.id})" class="p-1.5 rounded-lg text-slate-500 hover:text-[#1D4ED8] hover:bg-[#EFF6FF] transition cursor-pointer" title="Edit Category">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
             <button type="button" onclick="window.deleteCategory(${c.id}, '${escapeHtml(c.name_en)}')" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer" title="Delete Category">

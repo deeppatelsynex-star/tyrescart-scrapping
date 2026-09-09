@@ -1,9 +1,9 @@
 /* visionadmin.css - VisionAdmin Executive Content Studio Design System */
 :root {
-  --green:        #58B31B;
-  --green-bright: #68C927;
-  --green-deep:   #35760F;
-  --green-tint:   #EFF9E6;
+  --green:        #2563FF;
+  --green-bright: #38BDF8;
+  --green-deep:   #1D4ED8;
+  --green-tint:   #EFF6FF;
   --ink:          #0E1108;
   --slate:        #4C5548;
   --line:         #E3E7DE;
@@ -11,11 +11,11 @@
   --bg-soft:      #F6F8F3;
   --radius:       14px;
 
-  --brand-green: #58B31B;
-  --brand-green-bright: #68C927;
-  --brand-green-deep: #35760F;
-  --brand-green-tint: #EFF9E6;
-  --brand-green-subtle: #F2FAF0;
+  --brand-green: #2563FF;
+  --brand-green-bright: #38BDF8;
+  --brand-green-deep: #1D4ED8;
+  --brand-green-tint: #EFF6FF;
+  --brand-green-subtle: #F0F7FF;
   --brand-ink: #0E1108;
   --brand-ink-light: #1E293B;
   --brand-slate: #64748B;
@@ -29,7 +29,7 @@
   --brand-radius-lg: 24px;
   --brand-shadow-sm: 0 1px 3px rgba(14, 17, 8, 0.04);
   --brand-shadow: 0 10px 30px -10px rgba(14, 17, 8, 0.05), 0 0 0 1px rgba(232, 237, 228, 0.8);
-  --brand-shadow-hover: 0 18px 40px -12px rgba(88, 179, 27, 0.12), 0 0 0 1px rgba(88, 179, 27, 0.3);
+  --brand-shadow-hover: 0 18px 40px -12px rgba(37, 99, 255, 0.12), 0 0 0 1px rgba(37, 99, 255, 0.3);
 }
 
 body {
@@ -51,9 +51,9 @@ body {
 
 /* Status Badges */
 .va-badge-published {
-  background-color: #EAF7E2;
+  background-color: #EFF6FF;
   color: var(--brand-green-deep);
-  border: 1px solid #C8E8B8;
+  border: 1px solid #BFDBFE;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -90,6 +90,7 @@ body {
 }
 
 /* Buttons */
+.btn-brand-blue,
 .btn-brand-green {
   background-color: var(--brand-green);
   color: #FFFFFF;
@@ -97,10 +98,11 @@ body {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.btn-brand-blue:hover,
 .btn-brand-green:hover {
   background-color: var(--brand-green-deep);
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px -4px rgba(88, 179, 27, 0.35);
+  box-shadow: 0 8px 20px -4px rgba(37, 99, 255, 0.35);
 }
 
 .btn-brand-white {
@@ -138,12 +140,14 @@ body {
   transform: translateY(-1px);
 }
 
+.va-btn-pill-blue,
 .va-btn-pill-green {
   color: var(--brand-green-deep);
-  border-color: #D1E7C4;
+  border-color: #BFDBFE;
   background: #FFFFFF;
 }
 
+.va-btn-pill-blue:hover,
 .va-btn-pill-green:hover {
   background: var(--brand-green-tint);
   border-color: var(--brand-green);
@@ -215,7 +219,7 @@ body {
 .va-search-input:focus {
   outline: none;
   border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(88, 179, 27, 0.12), 0 4px 14px rgba(88, 179, 27, 0.08);
+  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.12), 0 4px 14px rgba(37, 99, 255, 0.08);
   background-color: #FFFFFF;
 }
 
@@ -342,8 +346,8 @@ body {
 
 .dataTables_wrapper .dataTables_filter input:focus,
 .dataTables_wrapper .dataTables_length select:focus {
-  border-color: #58B31B;
-  box-shadow: 0 0 0 3px rgba(88, 179, 27, 0.15);
+  border-color: #2563FF;
+  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.15);
 }
 
 table.dataTable {
@@ -383,16 +387,16 @@ table.dataTable tbody td {
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-  background: #EFF9E6 !important;
-  color: #35760F !important;
-  border-color: #C8E8B8 !important;
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  border-color: #BFDBFE !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-  background: #58B31B !important;
+  background: #2563FF !important;
   color: #FFFFFF !important;
-  border-color: #58B31B !important;
-  box-shadow: 0 2px 6px rgba(88, 179, 27, 0.25);
+  border-color: #2563FF !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 255, 0.25);
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
@@ -412,7 +416,7 @@ select:not(.no-va-select):not(.hidden) {
   -webkit-appearance: none;
   -moz-appearance: none;
   background-color: #FFFFFF !important;
-  border: 1.5px solid #58B31B !important;
+  border: 1.5px solid #2563FF !important;
   border-radius: 9999px !important;
   padding: 0.5rem 2.5rem 0.5rem 2.25rem !important;
   font-family: inherit !important;
@@ -424,26 +428,26 @@ select:not(.no-va-select):not(.hidden) {
   outline: none !important;
   transition: all 0.2s ease !important;
   background-image: 
-    radial-gradient(circle 3.5px, #58B31B 100%, transparent 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2335760F' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+    radial-gradient(circle 3.5px, #2563FF 100%, transparent 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231D4ED8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat, no-repeat !important;
   background-position: left 0.85rem center, right 0.85rem center !important;
   background-size: 7px 7px, 15px 15px !important;
 }
 
 select:not(.no-va-select):not(.hidden):hover {
-  border-color: #35760F !important;
+  border-color: #1D4ED8 !important;
   background-color: #F8FAF7 !important;
 }
 
 select:not(.no-va-select):not(.hidden):focus {
-  border-color: #35760F !important;
-  box-shadow: 0 0 0 3px rgba(88, 179, 27, 0.2) !important;
+  border-color: #1D4ED8 !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.2) !important;
 }
 
 /* Custom Dropdown Trigger */
 .va-custom-dropdown-trigger {
-  border: 1.5px solid #58B31B !important;
+  border: 1.5px solid #2563FF !important;
   border-radius: 9999px !important;
   padding: 0.55rem 0.875rem 0.55rem 1rem !important;
   background-color: #FFFFFF;
@@ -454,13 +458,13 @@ select:not(.no-va-select):not(.hidden):focus {
 }
 
 .va-custom-dropdown-trigger:hover {
-  border-color: #35760F !important;
+  border-color: #1D4ED8 !important;
   background-color: #F8FAF7;
 }
 
 .va-custom-dropdown-trigger[aria-expanded="true"] {
-  border-color: #35760F !important;
-  box-shadow: 0 0 0 3px rgba(88, 179, 27, 0.2);
+  border-color: #1D4ED8 !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.2);
 }
 
 /* Custom Dropdown Floating Menu */

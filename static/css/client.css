@@ -1235,11 +1235,11 @@ header {
 .price-btn-wa {
   padding: 14px 28px;
   font-size: 0.98rem;
-  box-shadow: 0 4px 16px rgba(88, 179, 27, 0.28);
+  box-shadow: 0 4px 16px rgba(37, 99, 255, 0.28);
 }
 
 .price-btn-wa:hover {
-  box-shadow: 0 8px 24px rgba(88, 179, 27, 0.38);
+  box-shadow: 0 8px 24px rgba(37, 99, 255, 0.38);
 }
 
 .btn-call-outline {

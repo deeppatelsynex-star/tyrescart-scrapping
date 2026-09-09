@@ -66,7 +66,7 @@
       case 1:
         return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black uppercase"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>In Progress</span>`;
       case 2:
-        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Resolved</span>`;
+        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black uppercase"><span class="w-1.5 h-1.5 rounded-full bg-[#2563FF]"></span>Resolved</span>`;
       case 3:
         return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase">Closed</span>`;
       default:
@@ -77,7 +77,7 @@
   function getSourceBadge(formType, enquiryFor) {
     formType = (formType || '').toLowerCase();
     if (formType.includes('banner')) {
-      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#EAF7E2] text-[#35760F] text-[10px] font-extrabold"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>Home Banner</span>`;
+      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#1D4ED8] text-[10px] font-extrabold"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>Home Banner</span>`;
     } else if (formType.includes('float')) {
       return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F3E8FF] text-purple-700 text-[10px] font-extrabold">Floating Widget</span>`;
     } else if (formType.includes('nav')) {
@@ -95,7 +95,7 @@
           <tr>
             <td colspan="7" class="py-12 text-center text-slate-400 font-bold">
               <div class="inline-flex items-center gap-2">
-                <svg class="w-5 h-5 animate-spin text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+                <svg class="w-5 h-5 animate-spin text-[#2563FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
                 Loading customer enquiries...
               </div>
             </td>
@@ -248,7 +248,7 @@
             <div class="font-extrabold text-[#0E1108] flex items-center gap-1.5">
               <span>${escapeHtml(name)}</span>
               ${phone ? `
-                <a href="${waLink}" target="_blank" title="Chat on WhatsApp" class="text-[#58B31B] hover:text-[#35760F] transition-colors inline-flex items-center">
+                <a href="${waLink}" target="_blank" title="Chat on WhatsApp" class="text-[#2563FF] hover:text-[#1D4ED8] transition-colors inline-flex items-center">
                   <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
                 </a>
               ` : ''}
@@ -261,7 +261,7 @@
 
           <!-- Vehicle & Tyre Size -->
           <td class="py-4 px-4">
-            <div class="inline-flex items-center px-2 py-0.5 rounded-md bg-[#EAF7E2] text-[#35760F] font-black text-xs">
+            <div class="inline-flex items-center px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#1D4ED8] font-black text-xs">
               ${escapeHtml(tyreSize)}
             </div>
             <div class="text-[11px] font-bold text-[#0E1108] truncate max-w-[160px] mt-1">
@@ -288,7 +288,7 @@
           <!-- Actions -->
           <td class="py-4 px-4 text-right sm:pr-6">
             <div class="inline-flex items-center gap-1.5">
-              <button type="button" class="btn-view-lead px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#EAF7E2] text-slate-700 hover:text-[#35760F] font-bold text-xs transition-colors cursor-pointer" data-id="${id}">
+              <button type="button" class="btn-view-lead px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#EFF6FF] text-slate-700 hover:text-[#1D4ED8] font-bold text-xs transition-colors cursor-pointer" data-id="${id}">
                 View Details
               </button>
               <button type="button" class="btn-delete-lead w-8 h-8 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer" data-id="${id}" title="Delete enquiry">

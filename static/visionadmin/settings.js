@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     toast.className = `fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-0 opacity-100 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-sm font-semibold ${
       isError 
         ? 'bg-rose-50 border-rose-200 text-rose-800' 
-        : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+        : 'bg-blue-50 border-blue-200 text-blue-800'
     }`;
     setTimeout(() => {
       toast.className = 'fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-sm font-semibold';
