@@ -46,6 +46,31 @@
     </div>
   </div>
 
+  <!-- Tab Switcher: Hierarchy Grid vs Trash -->
+  <div class="flex items-center gap-2">
+    <button 
+      type="button" 
+      @click="activeTab = 'hierarchy'" 
+      :class="activeTab === 'hierarchy' ? 'bg-[#58B31B] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
+      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-1.5"
+    >
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Active Hierarchy</span>
+    </button>
+    <button 
+      type="button" 
+      @click="activeTab = 'trash'; loadTrashData()" 
+      :class="activeTab === 'trash' ? 'bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3] shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-[#E8EDE4]'"
+      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-1.5"
+    >
+      <span>🗑️ Trash</span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'trash' ? 'bg-[#FFE4E6] text-[#E11D48]' : 'bg-slate-100 text-slate-600'" x-text="trashCount"></span>
+    </button>
+  </div>
+
+  <!-- HIERARCHY TAB VIEW -->
+  <div x-show="activeTab === 'hierarchy'" class="space-y-6">
+
   <!-- Metric Badges Matrix -->
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
     <div class="p-4 rounded-2xl bg-white border border-[#E8EDE4] shadow-xs flex items-center justify-between">
@@ -304,6 +329,225 @@
           </template>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  </div> <!-- End of activeTab === 'hierarchy' -->
+
+  <!-- ===================================================================== -->
+  <!-- TAB: TRASH VIEW (STORE VIEWS, STORES, WEB SITES)                       -->
+  <!-- ===================================================================== -->
+  <div x-show="activeTab === 'trash'" class="space-y-6" style="display: none;">
+    <!-- Trash View Header Card -->
+    <div class="p-4 rounded-2xl bg-rose-50/60 border border-rose-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-black text-rose-900">Stores Trash &amp; Archive</h3>
+          <p class="text-xs text-rose-700">Soft-deleted items can be restored back to the active hierarchy or permanently purged.</p>
+        </div>
+      </div>
+      <button 
+        type="button" 
+        @click="loadTrashData()" 
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-rose-200 text-xs font-bold text-rose-700 hover:bg-rose-50 transition cursor-pointer self-start sm:self-center"
+      >
+        <svg class="w-3.5 h-3.5 text-rose-600" :class="trashLoading ? 'animate-spin' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        <span>Refresh Trash</span>
+      </button>
+    </div>
+
+    <!-- 1. TRASHED STORE VIEWS -->
+    <div class="bg-white border border-[#E8EDE4] rounded-3xl shadow-xs overflow-hidden">
+      <div class="p-4 border-b border-[#F1F5F0] bg-[#FCFDFC] flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          <span class="text-xs font-black text-[#0E1108]">Trashed Store Views</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700" x-text="`${trashData.store_views ? trashData.store_views.length : 0} records`"></span>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-[#F8FAF7] border-b border-[#E8EDE4] text-slate-500 font-black uppercase text-[10px] tracking-wider">
+            <tr>
+              <th class="py-3 px-5">Store View Name</th>
+              <th class="py-3 px-5">Code</th>
+              <th class="py-3 px-5">Store</th>
+              <th class="py-3 px-5">Web Site</th>
+              <th class="py-3 px-5">Deleted At</th>
+              <th class="py-3 px-5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#F1F5F0]">
+            <template x-if="!trashData.store_views || trashData.store_views.length === 0">
+              <tr>
+                <td colspan="6" class="py-6 text-center text-slate-400 font-medium italic">
+                  No trashed store views.
+                </td>
+              </tr>
+            </template>
+            <template x-for="v in (trashData.store_views || [])" :key="v.id">
+              <tr class="hover:bg-rose-50/20 transition">
+                <td class="py-3.5 px-5 font-bold text-slate-900" x-text="v.name"></td>
+                <td class="py-3.5 px-5 font-mono text-slate-600 font-bold" x-text="v.display_code || v.code"></td>
+                <td class="py-3.5 px-5 text-slate-600" x-text="formatStoreName(v.store_name) || '—'"></td>
+                <td class="py-3.5 px-5 text-slate-600" x-text="v.website_name || '—'"></td>
+                <td class="py-3.5 px-5 text-[11px] text-slate-400" x-text="v.deleted_at ? new Date(v.deleted_at).toLocaleString() : '—'"></td>
+                <td class="py-3.5 px-5 text-right">
+                  <div class="inline-flex items-center justify-end gap-1.5">
+                    <button 
+                      type="button" 
+                      @click="restoreStoreView(v)" 
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EAF7E2] hover:bg-[#D1E7C4] text-[#35760F] text-xs font-bold transition cursor-pointer"
+                      title="Restore Store View"
+                    >
+                      <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                      <span>Restore</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      @click="purgeStoreView(v)" 
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition cursor-pointer"
+                      title="Delete Permanently"
+                    >
+                      <svg class="w-3.5 h-3.5 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      <span>Delete Permanently</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2. TRASHED STORES -->
+    <div class="bg-white border border-[#E8EDE4] rounded-3xl shadow-xs overflow-hidden">
+      <div class="p-4 border-b border-[#F1F5F0] bg-[#FCFDFC] flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          <span class="text-xs font-black text-[#0E1108]">Trashed Stores</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700" x-text="`${trashData.stores ? trashData.stores.length : 0} records`"></span>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-[#F8FAF7] border-b border-[#E8EDE4] text-slate-500 font-black uppercase text-[10px] tracking-wider">
+            <tr>
+              <th class="py-3 px-5">Store Name</th>
+              <th class="py-3 px-5">Code</th>
+              <th class="py-3 px-5">Web Site</th>
+              <th class="py-3 px-5">Deleted At</th>
+              <th class="py-3 px-5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#F1F5F0]">
+            <template x-if="!trashData.stores || trashData.stores.length === 0">
+              <tr>
+                <td colspan="5" class="py-6 text-center text-slate-400 font-medium italic">
+                  No trashed stores.
+                </td>
+              </tr>
+            </template>
+            <template x-for="s in (trashData.stores || [])" :key="s.id">
+              <tr class="hover:bg-rose-50/20 transition">
+                <td class="py-3.5 px-5 font-bold text-slate-900" x-text="s.display_name || formatStoreName(s.name)"></td>
+                <td class="py-3.5 px-5 font-mono text-slate-600 font-bold" x-text="s.code"></td>
+                <td class="py-3.5 px-5 text-slate-600" x-text="s.website_name || '—'"></td>
+                <td class="py-3.5 px-5 text-[11px] text-slate-400" x-text="s.deleted_at ? new Date(s.deleted_at).toLocaleString() : '—'"></td>
+                <td class="py-3.5 px-5 text-right">
+                  <div class="inline-flex items-center justify-end gap-1.5">
+                    <button 
+                      type="button" 
+                      @click="restoreStore(s)" 
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EAF7E2] hover:bg-[#D1E7C4] text-[#35760F] text-xs font-bold transition cursor-pointer"
+                      title="Restore Store"
+                    >
+                      <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                      <span>Restore</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      @click="purgeStore(s)" 
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition cursor-pointer"
+                      title="Delete Permanently"
+                    >
+                      <svg class="w-3.5 h-3.5 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      <span>Delete Permanently</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3. TRASHED WEB SITES -->
+    <div class="bg-white border border-[#E8EDE4] rounded-3xl shadow-xs overflow-hidden">
+      <div class="p-4 border-b border-[#F1F5F0] bg-[#FCFDFC] flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          <span class="text-xs font-black text-[#0E1108]">Trashed Web Sites</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700" x-text="`${trashData.websites ? trashData.websites.length : 0} records`"></span>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-[#F8FAF7] border-b border-[#E8EDE4] text-slate-500 font-black uppercase text-[10px] tracking-wider">
+            <tr>
+              <th class="py-3 px-5">Web Site Name</th>
+              <th class="py-3 px-5">Code</th>
+              <th class="py-3 px-5">Domain</th>
+              <th class="py-3 px-5">Deleted At</th>
+              <th class="py-3 px-5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#F1F5F0]">
+            <template x-if="!trashData.websites || trashData.websites.length === 0">
+              <tr>
+                <td colspan="5" class="py-6 text-center text-slate-400 font-medium italic">
+                  No trashed web sites.
+                </td>
+              </tr>
+            </template>
+            <template x-for="w in (trashData.websites || [])" :key="w.id">
+              <tr class="hover:bg-rose-50/20 transition">
+                <td class="py-3.5 px-5 font-bold text-slate-900" x-text="w.name"></td>
+                <td class="py-3.5 px-5 font-mono text-slate-600 font-bold" x-text="w.code"></td>
+                <td class="py-3.5 px-5 text-slate-600" x-text="w.domain || '—'"></td>
+                <td class="py-3.5 px-5 text-[11px] text-slate-400" x-text="w.deleted_at ? new Date(w.deleted_at).toLocaleString() : '—'"></td>
+                <td class="py-3.5 px-5 text-right">
+                  <div class="inline-flex items-center justify-end gap-1.5">
+                    <button 
+                      type="button" 
+                      @click="restoreWebsite(w)" 
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EAF7E2] hover:bg-[#D1E7C4] text-[#35760F] text-xs font-bold transition cursor-pointer"
+                      title="Restore Web Site"
+                    >
+                      <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                      <span>Restore</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      @click="purgeWebsite(w)" 
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition cursor-pointer"
+                      title="Delete Permanently"
+                    >
+                      <svg class="w-3.5 h-3.5 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      <span>Delete Permanently</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -665,6 +909,14 @@
 function storesStudio() {
   return {
     loading: false,
+    activeTab: 'hierarchy',
+    trashLoading: false,
+    trashData: { websites: [], stores: [], store_views: [], total_count: 0 },
+    get trashCount() {
+      return (this.trashData.store_views ? this.trashData.store_views.length : 0) +
+             (this.trashData.stores ? this.trashData.stores.length : 0) +
+             (this.trashData.websites ? this.trashData.websites.length : 0);
+    },
     websites: [],
     stores: [],
     storeViews: [],
@@ -689,7 +941,7 @@ function storesStudio() {
     viewForm: { id: null, store_id: 1, name: '', code: '', status: '1', sort_order: 10 },
 
     async init() {
-      await this.loadData();
+      await Promise.all([this.loadData(), this.loadTrashData()]);
     },
 
     async loadData() {
@@ -905,7 +1157,7 @@ function storesStudio() {
         const data = await res.json();
         if (data.success) {
           this.closeStoreViewModal();
-          await this.loadData();
+          await Promise.all([this.loadData(), this.loadTrashData()]);
           if (typeof loadVisionScopeTree === 'function') loadVisionScopeTree();
           if (window.showToast) window.showToast(data.message || 'Store view deleted.', 'success');
         } else {
@@ -1010,7 +1262,7 @@ function storesStudio() {
         const data = await res.json();
         if (data.success) {
           this.closeStoreModal();
-          await this.loadData();
+          await Promise.all([this.loadData(), this.loadTrashData()]);
           if (typeof loadVisionScopeTree === 'function') loadVisionScopeTree();
           if (window.showToast) window.showToast(data.message || 'Store deleted.', 'success');
         } else {
@@ -1114,7 +1366,7 @@ function storesStudio() {
         const data = await res.json();
         if (data.success) {
           this.closeWebsiteModal();
-          await this.loadData();
+          await Promise.all([this.loadData(), this.loadTrashData()]);
           if (typeof loadVisionScopeTree === 'function') loadVisionScopeTree();
           if (window.showToast) window.showToast(data.message || 'Web Site deleted.', 'success');
         } else {
@@ -1122,6 +1374,125 @@ function storesStudio() {
         }
       } catch (e) {
         console.error('Error deleting website:', e);
+      }
+    },
+
+    // -------------------------------------------------------------
+    // TRASH & PURGE ACTIONS
+    // -------------------------------------------------------------
+    async loadTrashData() {
+      this.trashLoading = true;
+      try {
+        const res = await fetch('/visionadmin/api/stores/trash');
+        const data = await res.json();
+        if (data.success) {
+          this.trashData = {
+            websites: data.websites || [],
+            stores: data.stores || [],
+            store_views: data.store_views || [],
+            total_count: data.total_count || 0
+          };
+        }
+      } catch (e) {
+        console.error('Error fetching trash data:', e);
+      } finally {
+        this.trashLoading = false;
+      }
+    },
+
+    async restoreStoreView(v) {
+      try {
+        const res = await fetch(`/visionadmin/api/store-views/${v.id}/restore`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          await Promise.all([this.loadData(), this.loadTrashData()]);
+          if (typeof loadVisionScopeTree === 'function') loadVisionScopeTree();
+          if (window.showToast) window.showToast(data.message || 'Store view restored!', 'success');
+        } else {
+          alert(data.error || 'Failed to restore store view.');
+        }
+      } catch (e) {
+        console.error('Error restoring store view:', e);
+      }
+    },
+
+    async purgeStoreView(v) {
+      if (!confirm(`Are you sure you want to PERMANENTLY delete store view "${v.name}"? This action cannot be undone.`)) return;
+      try {
+        const res = await fetch(`/visionadmin/api/store-views/${v.id}/purge`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          await this.loadTrashData();
+          if (window.showToast) window.showToast(data.message || 'Store view permanently deleted.', 'success');
+        } else {
+          alert(data.error || 'Failed to purge store view.');
+        }
+      } catch (e) {
+        console.error('Error purging store view:', e);
+      }
+    },
+
+    async restoreStore(s) {
+      try {
+        const res = await fetch(`/visionadmin/api/stores/${s.id}/restore`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          await Promise.all([this.loadData(), this.loadTrashData()]);
+          if (typeof loadVisionScopeTree === 'function') loadVisionScopeTree();
+          if (window.showToast) window.showToast(data.message || 'Store restored!', 'success');
+        } else {
+          alert(data.error || 'Failed to restore store.');
+        }
+      } catch (e) {
+        console.error('Error restoring store:', e);
+      }
+    },
+
+    async purgeStore(s) {
+      if (!confirm(`Are you sure you want to PERMANENTLY delete store "${s.name || s.code}"? This action cannot be undone.`)) return;
+      try {
+        const res = await fetch(`/visionadmin/api/stores/${s.id}/purge`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          await this.loadTrashData();
+          if (window.showToast) window.showToast(data.message || 'Store permanently deleted.', 'success');
+        } else {
+          alert(data.error || 'Failed to purge store.');
+        }
+      } catch (e) {
+        console.error('Error purging store:', e);
+      }
+    },
+
+    async restoreWebsite(w) {
+      try {
+        const res = await fetch(`/visionadmin/api/websites/${w.id}/restore`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          await Promise.all([this.loadData(), this.loadTrashData()]);
+          if (typeof loadVisionScopeTree === 'function') loadVisionScopeTree();
+          if (window.showToast) window.showToast(data.message || 'Website restored!', 'success');
+        } else {
+          alert(data.error || 'Failed to restore website.');
+        }
+      } catch (e) {
+        console.error('Error restoring website:', e);
+      }
+    },
+
+    async purgeWebsite(w) {
+      if (!confirm(`Are you sure you want to PERMANENTLY delete website "${w.name}"? This action cannot be undone.`)) return;
+      try {
+        const res = await fetch(`/visionadmin/api/websites/${w.id}/purge`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          await this.loadTrashData();
+          if (window.showToast) window.showToast(data.message || 'Website permanently deleted.', 'success');
+        } else {
+          alert(data.error || 'Failed to purge website.');
+        }
+      } catch (e) {
+        console.error('Error purging website:', e);
       }
     }
 

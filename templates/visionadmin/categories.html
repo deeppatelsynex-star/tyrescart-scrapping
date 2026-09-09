@@ -32,6 +32,43 @@
     </div>
   </div>
 
+  <!-- Status Filter Tabs -->
+  <div class="flex flex-wrap items-center gap-2">
+    <button 
+      type="button" 
+      @click="statusFilter = 'all'; loadCategories(1)" 
+      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
+      :class="statusFilter === 'all' ? 'bg-[#58B31B] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
+    >
+      All Categories
+    </button>
+    <button 
+      type="button" 
+      @click="statusFilter = 'active'; loadCategories(1)" 
+      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
+      :class="statusFilter === 'active' ? 'bg-[#58B31B] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
+    >
+      Active
+    </button>
+    <button 
+      type="button" 
+      @click="statusFilter = 'inactive'; loadCategories(1)" 
+      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
+      :class="statusFilter === 'inactive' ? 'bg-[#58B31B] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
+    >
+      Inactive
+    </button>
+    <button 
+      type="button" 
+      @click="statusFilter = 'trash'; loadCategories(1)" 
+      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-1.5"
+      :class="statusFilter === 'trash' ? 'bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3] shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
+    >
+      <span>🗑️ Trash</span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="statusFilter === 'trash' ? 'bg-[#FFE4E6] text-[#E11D48]' : 'bg-slate-100 text-slate-600'" x-text="trashCount"></span>
+    </button>
+  </div>
+
   <!-- Search & Filter Bar -->
   <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-3">
     <div class="relative flex-1 w-full">
@@ -61,16 +98,6 @@
         <template x-for="p in parentOptions" :key="p.id">
           <option :value="p.id" x-text="p.name_en"></option>
         </template>
-      </select>
-
-      <select 
-        x-model="statusFilter" 
-        @change="loadCategories(1)" 
-        class="py-2.5 px-3.5 text-xs font-semibold border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-[#58B31B]"
-      >
-        <option value="all">All Status</option>
-        <option value="active">Active</option>
-        <option value="inactive">Inactive</option>
       </select>
 
       <button 
@@ -177,20 +204,46 @@
               <td class="py-3 px-4 text-slate-600 font-semibold" x-text="c.sort_order || 0"></td>
 
               <!-- Actions -->
-              <td class="py-3 px-4 text-right space-x-3">
-                <a 
-                  :href="'/visionadmin/categories/' + c.id + '/edit'" 
-                  class="text-[#58B31B] hover:text-[#35760F] font-bold text-xs hover:underline cursor-pointer"
-                >
-                  Edit
-                </a>
-                <button 
-                  type="button" 
-                  @click="confirmDelete(c)" 
-                  class="text-rose-500 hover:text-rose-700 font-bold text-xs hover:underline cursor-pointer"
-                >
-                  Delete
-                </button>
+              <td class="py-3 px-4 text-right">
+                <template x-if="statusFilter === 'trash' || c.deleted_at">
+                  <div class="inline-flex items-center justify-end gap-1.5">
+                    <button 
+                      type="button" 
+                      @click="restoreCategory(c)" 
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EAF7E2] hover:bg-[#D1E7C4] text-[#35760F] text-xs font-bold transition cursor-pointer"
+                      title="Restore Category"
+                    >
+                      <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                      <span>Restore</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      @click="purgeCategory(c)" 
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition cursor-pointer"
+                      title="Delete Permanently"
+                    >
+                      <svg class="w-3.5 h-3.5 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      <span>Delete Permanently</span>
+                    </button>
+                  </div>
+                </template>
+                <template x-if="statusFilter !== 'trash' && !c.deleted_at">
+                  <div class="inline-flex items-center justify-end gap-3">
+                    <a 
+                      :href="'/visionadmin/categories/' + c.id + '/edit'" 
+                      class="text-[#58B31B] hover:text-[#35760F] font-bold text-xs hover:underline cursor-pointer"
+                    >
+                      Edit
+                    </a>
+                    <button 
+                      type="button" 
+                      @click="confirmDelete(c)" 
+                      class="text-rose-500 hover:text-rose-700 font-bold text-xs hover:underline cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </template>
               </td>
             </tr>
           </template>

@@ -55,11 +55,15 @@ class Category:
             conn.close()
 
     @classmethod
-    def search_and_paginate(cls, query: str = None, status: str = None, parent_id: int = None, page: int = 1, per_page: int = 15, locale: str = None):
+    def search_and_paginate(cls, query: str = None, status: str = None, parent_id: int = None, page: int = 1, per_page: int = 15, locale: str = None, trash: bool = False):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                where_clauses = ["c.deleted_at IS NULL"]
+                is_trash = bool(trash) or (status and str(status).strip().lower() == 'trash')
+                if is_trash:
+                    where_clauses = ["c.deleted_at IS NOT NULL"]
+                else:
+                    where_clauses = ["c.deleted_at IS NULL"]
                 params = []
 
                 if query and query.strip():
@@ -67,7 +71,7 @@ class Category:
                     where_clauses.append("(c.name LIKE %s OR c.slug LIKE %s)")
                     params.extend([term, term])
 
-                if status and status.strip() and status != 'all':
+                if status and status.strip() and status not in ('all', 'trash'):
                     where_clauses.append("c.status = %s")
                     params.append(status.strip())
 
@@ -79,6 +83,9 @@ class Category:
 
                 cursor.execute(f"SELECT COUNT(*) AS total FROM categories c WHERE {where_sql}", params)
                 total = cursor.fetchone()['total']
+
+                cursor.execute("SELECT COUNT(*) AS trash_count FROM categories WHERE deleted_at IS NOT NULL")
+                trash_count = cursor.fetchone().get('trash_count', 0)
 
                 offset = (page - 1) * per_page
                 query_params = list(params) + [per_page, offset]
@@ -108,7 +115,8 @@ class Category:
                     'total': total,
                     'page': page,
                     'per_page': per_page,
-                    'total_pages': total_pages
+                    'total_pages': total_pages,
+                    'trash_count': trash_count
                 }
         finally:
             conn.close()
@@ -274,6 +282,41 @@ class Category:
                         deleted_by = %s
                     WHERE id = %s AND deleted_at IS NULL
                 """, (now, user_id, cat_id))
+                conn.commit()
+                return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    @classmethod
+    def restore(cls, cat_id: int, user_id: int = None):
+        """Restores a soft-deleted category back to active."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                now = datetime.now(timezone.utc)
+                cursor.execute("""
+                    UPDATE categories SET
+                        deleted_at = NULL,
+                        deleted_by = NULL,
+                        updated_by = %s,
+                        updated_at = %s
+                    WHERE id = %s AND deleted_at IS NOT NULL
+                """, (user_id, now, cat_id))
+                conn.commit()
+                return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    @classmethod
+    def purge(cls, cat_id: int):
+        """Hard deletes a category permanently from the database."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Disconnect child categories and products before permanent delete
+                cursor.execute("UPDATE categories SET parent_id = NULL WHERE parent_id = %s", (cat_id,))
+                cursor.execute("UPDATE products SET category_id = NULL WHERE category_id = %s", (cat_id,))
+                cursor.execute("DELETE FROM categories WHERE id = %s", (cat_id,))
                 conn.commit()
                 return cursor.rowcount > 0
         finally:

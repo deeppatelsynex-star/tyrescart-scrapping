@@ -188,6 +188,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         self.content = self._parse_json(data.get('content'))
         self.short_description = self._parse_json(data.get('short_description'))
         self.image = data.get('image')
+        self.category_id = data.get('category_id')
         cat_raw = data.get('category_name')
         if isinstance(cat_raw, (dict, list)):
             self.category_name = cat_raw
