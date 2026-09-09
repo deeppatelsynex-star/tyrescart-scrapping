@@ -4662,7 +4662,11 @@ def register_visionadmin_api_routes(app):
             return jsonify({'error': 'Invalid price value.'}), 400
 
         user_id = session.get('admin_user_id') or session.get('user_id')
-        new_id = Product.create(data, user_id=user_id)
+        try:
+            new_id = Product.create(data, user_id=user_id)
+        except Exception as e:
+            app.logger.exception(f"Error creating product: {e}")
+            return jsonify({'error': f'Failed to create product: {str(e)}'}), 500
 
         log_activity(
             entity_type='product',
@@ -4672,7 +4676,7 @@ def register_visionadmin_api_routes(app):
             user_id=user_id
         )
 
-        return jsonify({'success': True, 'id': new_id, 'message': 'Product created successfully.'}), 201
+        return jsonify({'success': True, 'id': new_id, 'product_id': new_id, 'message': 'Product created successfully.'}), 201
 
     @app.route('/visionadmin/api/products/<int:prod_id>', methods=['PUT', 'POST'])
     @app.route('/visionadmin/api/v1/products/<int:prod_id>', methods=['PUT', 'POST'])
@@ -4692,7 +4696,11 @@ def register_visionadmin_api_routes(app):
                 return jsonify({'error': f'Product with SKU \"{new_sku}\" already exists.'}), 409
 
         user_id = session.get('admin_user_id') or session.get('user_id')
-        Product.update(prod_id, data, user_id=user_id)
+        try:
+            Product.update(prod_id, data, user_id=user_id)
+        except Exception as e:
+            app.logger.exception(f"Error updating product {prod_id}: {e}")
+            return jsonify({'error': f'Failed to update product: {str(e)}'}), 500
 
         log_activity(
             entity_type='product',

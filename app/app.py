@@ -16,7 +16,7 @@ for _p in reversed([_app_dir, _root_dir, _scraperapp_dir, _visionadmin_dir, _sit
 
 from datetime import timedelta
 
-from flask import Flask, jsonify, render_template, request, session
+from flask import Flask, jsonify, render_template, request, session, send_from_directory
 
 from scraperapp.tcsadmin import register_tcsadmin_routes
 from visionadmin import register_visionadmin_routes
@@ -112,13 +112,39 @@ register_version_endpoints(app)
 
 
 # ============================================================================
+# MEDIA & IMAGE ASSETS ROUTING (FALLBACK PLACEHOLDER SUPPORT)
+# ============================================================================
+
+@app.route('/tyrescart/<path:filename>')
+def serve_tyrescart_image(filename):
+    """Serves tyrescart product images if available locally, else falls back to tyre placeholder."""
+    for folder in [
+        os.path.join(app.static_folder, 'tyrescart'),
+        os.path.join(app.static_folder, 'uploads', 'products'),
+        os.path.join(app.static_folder, 'uploads'),
+        os.path.join(BASE_DIR, 'tmp', 'tyrescart'),
+    ]:
+        target = os.path.join(folder, filename)
+        if os.path.isfile(target):
+            return send_from_directory(folder, filename)
+
+    placeholder_dir = os.path.join(app.static_folder, 'assets', 'images')
+    return send_from_directory(placeholder_dir, 'online-tyres-shop-dubai.png')
+
+
+# ============================================================================
 # ERROR HANDLERS
 # ============================================================================
 
 @app.errorhandler(404)
 def handle_404_error(e):
-    """Gracefully handles unwanted page or API requests by serving custom 404."""
-    if request.path.startswith('/tcsadmin/api/') or request.headers.get('Accept') == 'application/json':
+    """Gracefully handles unwanted page or API requests by serving custom 404 or image fallback."""
+    clean_path = request.path.lower().split('?')[0]
+    if any(clean_path.endswith(ext) for ext in ('.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.ico')):
+        placeholder_dir = os.path.join(app.static_folder, 'assets', 'images')
+        return send_from_directory(placeholder_dir, 'online-tyres-shop-dubai.png')
+
+    if request.path.startswith(('/tcsadmin/api/', '/visionadmin/api/', '/api/')) or request.headers.get('Accept') == 'application/json':
         return jsonify({
             'error': 'The requested API resource was not found.',
             'status': 404,

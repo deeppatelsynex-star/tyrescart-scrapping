@@ -38,6 +38,161 @@ class Product:
                     pass
         return val
 
+    @staticmethod
+    def _safe_int(v, default=None):
+        if v is None:
+            return default
+        if isinstance(v, int) and not isinstance(v, bool):
+            return v
+        s = str(v).strip()
+        if not s or s.lower() in ('none', 'null', 'undefined'):
+            return default
+        try:
+            return int(float(s))
+        except (ValueError, TypeError):
+            m = re.search(r'^-?\d+', s)
+            if m:
+                try:
+                    return int(m.group(0))
+                except (ValueError, TypeError):
+                    pass
+            return default
+
+    @staticmethod
+    def _safe_decimal(v, default=None):
+        if v is None:
+            return default
+        if isinstance(v, Decimal):
+            return v
+        if isinstance(v, (int, float)):
+            return Decimal(str(v))
+        s = str(v).strip()
+        if not s or s.lower() in ('none', 'null', 'undefined'):
+            return default
+        try:
+            return Decimal(s)
+        except Exception:
+            m = re.search(r'[-+]?\d*\.?\d+', s.replace(',', ''))
+            if m:
+                try:
+                    return Decimal(m.group(0))
+                except Exception:
+                    pass
+            return default
+
+    @staticmethod
+    def _safe_warranty_months(v, default=None):
+        if v is None:
+            return default
+        if isinstance(v, int) and not isinstance(v, bool):
+            return max(0, min(v, 120))
+        s = str(v).strip()
+        if not s or s.lower() in ('none', 'null', 'undefined', 'n/a', '-'):
+            return default
+        try:
+            return max(0, min(int(s), 120))
+        except ValueError:
+            pass
+        m_year = re.search(r'(\d+(?:\.\d+)?)\s*(?:year|yr)', s, re.IGNORECASE)
+        if m_year:
+            try:
+                val = int(round(float(m_year.group(1)) * 12))
+                return max(0, min(val, 120))
+            except (ValueError, TypeError):
+                pass
+        m_month = re.search(r'(\d+)\s*(?:month|mo)', s, re.IGNORECASE)
+        if m_month:
+            try:
+                val = int(m_month.group(1))
+                return max(0, min(val, 120))
+            except (ValueError, TypeError):
+                pass
+        m_digit = re.search(r'\d+', s)
+        if m_digit:
+            try:
+                val = int(m_digit.group(0))
+                return max(0, min(val, 120))
+            except (ValueError, TypeError):
+                pass
+        return default
+
+    @staticmethod
+    def _safe_visibility(v, default='visible'):
+        if not v:
+            return default
+        v_clean = str(v).strip().lower().replace(' ', '_')
+        if 'catalog' in v_clean and 'search' in v_clean:
+            return 'visible'
+        if v_clean in ('visible', 'active'):
+            return 'visible'
+        if v_clean in ('not_visible', 'notvisible', 'hidden', 'disabled'):
+            return 'not_visible'
+        if v_clean == 'catalog':
+            return 'catalog'
+        if v_clean == 'search':
+            return 'search'
+        return default
+
+    @staticmethod
+    def _safe_tire_type(v, default='summer'):
+        if not v:
+            return default
+        v_clean = str(v).strip().lower().replace('-', '_').replace(' ', '_')
+        valid = ('summer', 'winter', 'all_season', 'all_terrain', 'mud_terrain')
+        if v_clean in valid:
+            return v_clean
+        if 'winter' in v_clean:
+            return 'winter'
+        if 'all' in v_clean and 'terrain' in v_clean:
+            return 'all_terrain'
+        if 'mud' in v_clean:
+            return 'mud_terrain'
+        if 'all' in v_clean:
+            return 'all_season'
+        return default
+
+    @staticmethod
+    def _safe_vehicle_type(v, default='car'):
+        if not v:
+            return default
+        v_clean = str(v).strip().lower().replace(' ', '_')
+        valid = ('car', 'bike', 'suv', 'van', 'ev', '4x4')
+        if v_clean in valid:
+            return v_clean
+        if 'suv' in v_clean or '4x4' in v_clean or '4wd' in v_clean:
+            return 'suv'
+        if 'bike' in v_clean or 'motorcycle' in v_clean:
+            return 'bike'
+        if 'van' in v_clean or 'truck' in v_clean or 'commercial' in v_clean:
+            return 'van'
+        if 'ev' in v_clean or 'electric' in v_clean:
+            return 'ev'
+        return default
+
+    @staticmethod
+    def _safe_stock_status(v, default='in_stock'):
+        if not v:
+            return default
+        v_clean = str(v).strip().lower().replace(' ', '_').replace('-', '_')
+        if v_clean in ('in_stock', 'instock', 'available', '1'):
+            return 'in_stock'
+        if v_clean in ('out_of_stock', 'outofstock', 'unavailable', '0'):
+            return 'out_of_stock'
+        if v_clean in ('backorder', 'back_order', 'on_backorder'):
+            return 'backorder'
+        return default
+
+    @staticmethod
+    def _safe_status(v, default='active'):
+        if not v:
+            return default
+        v_clean = str(v).strip().lower()
+        if v_clean in ('active', 'enabled', '1', 'true'):
+            return 'active'
+        if v_clean in ('inactive', 'disabled', '0', 'false'):
+            return 'inactive'
+        return default
+
     @classmethod
     def to_dict(cls, row):
         if not row:
@@ -307,17 +462,17 @@ class Product:
                     counter += 1
 
                 # Pricing
-                price = Decimal(str(data.get('price') or 0))
-                list_price = Decimal(str(data['list_price'])) if data.get('list_price') else None
-                sale_price = Decimal(str(data['sale_price'])) if data.get('sale_price') else None
-                cost_price = Decimal(str(data['cost_price'])) if data.get('cost_price') else None
+                price = cls._safe_decimal(data.get('price'), Decimal('0'))
+                list_price = cls._safe_decimal(data.get('list_price'))
+                sale_price = cls._safe_decimal(data.get('sale_price'))
+                cost_price = cls._safe_decimal(data.get('cost_price'))
 
                 # Inventory
-                stock_qty = int(data.get('stock_qty') or 0)
-                stock_status = data.get('stock_status') or ('in_stock' if stock_qty > 0 else 'out_of_stock')
+                stock_qty = cls._safe_int(data.get('stock_qty'), 0)
+                stock_status = cls._safe_stock_status(data.get('stock_status'), ('in_stock' if stock_qty > 0 else 'out_of_stock'))
                 manage_stock = 1 if data.get('manage_stock', True) else 0
-                min_order_qty = int(data.get('min_order_qty') or 1)
-                max_order_qty = int(data.get('max_order_qty') or 99)
+                min_order_qty = cls._safe_int(data.get('min_order_qty'), 1)
+                max_order_qty = cls._safe_int(data.get('max_order_qty'), 99)
 
                 # Tyre size label auto-formatting if width/aspect/rim given
                 tire_size_label = (data.get('tire_size_label') or '').strip()
@@ -326,16 +481,16 @@ class Product:
 
                 tire_speed_rating = (data.get('tire_speed_rating') or '').strip() or None
                 tire_load_index = (data.get('tire_load_index') or '').strip() or None
-                tire_type = data.get('tire_type') or 'summer'
+                tire_type = cls._safe_tire_type(data.get('tire_type'), 'summer')
                 tire_pattern = (data.get('tire_pattern') or '').strip() or None
                 run_flat = 1 if data.get('run_flat') else 0
                 ev_rated = 1 if data.get('ev_rated') else 0
                 oem_approved = 1 if data.get('oem_approved') else 0
                 oem_brand = (data.get('oem_brand') or '').strip() or None
-                vehicle_type = data.get('vehicle_type') or 'car'
+                vehicle_type = cls._safe_vehicle_type(data.get('vehicle_type'), 'car')
 
-                brand_id = int(data['brand_id']) if data.get('brand_id') else None
-                category_id = int(data['category_id']) if data.get('category_id') else None
+                brand_id = cls._safe_int(data.get('brand_id'))
+                category_id = cls._safe_int(data.get('category_id'))
 
                 image_path = (data.get('image_path') or '').strip() or None
                 image_alt = (data.get('image_alt') or display_name).strip() or None
@@ -344,21 +499,21 @@ class Product:
                 description = json.dumps(data.get('description') or {'en': data.get('description_en', ''), 'ar': ''})
                 short_desc = json.dumps(data.get('short_desc') or {'en': data.get('short_desc_en', ''), 'ar': ''})
 
-                weight = Decimal(str(data['weight'])) if data.get('weight') else None
+                weight = cls._safe_decimal(data.get('weight'))
                 country_of_origin = (data.get('country_of_origin') or '').strip() or None
-                warranty_months = int(data['warranty_months']) if data.get('warranty_months') else None
+                warranty_months = cls._safe_warranty_months(data.get('warranty_months'))
                 is_featured = 1 if data.get('is_featured') else 0
                 is_new = 1 if data.get('is_new') else 0
-                sort_order = int(data.get('sort_order') or 0)
-                status = data.get('status') or 'active'
-                visibility = data.get('visibility') or 'visible'
+                sort_order = cls._safe_int(data.get('sort_order'), 0)
+                status = cls._safe_status(data.get('status'), 'active')
+                visibility = cls._safe_visibility(data.get('visibility'), 'visible')
                 pay_later_eligible = 1 if data.get('pay_later_eligible', True) else 0
 
                 meta_title = json.dumps(data.get('meta_title') or {'en': data.get('meta_title_en', display_name), 'ar': ''})
                 meta_desc = json.dumps(data.get('meta_desc') or {'en': data.get('meta_desc_en', ''), 'ar': ''})
                 canonical_url = (data.get('canonical_url') or '').strip() or None
 
-                attribute_set_id = int(data['attribute_set_id']) if data.get('attribute_set_id') else 1
+                attribute_set_id = cls._safe_int(data.get('attribute_set_id'), 1)
                 dyn_attrs = data.get('dynamic_attributes') or data.get('attributes_json') or {}
                 if isinstance(dyn_attrs, str):
                     try:
@@ -441,15 +596,19 @@ class Product:
                     website_ids = [1]
                 for wid in website_ids:
                     try:
-                        cursor.execute("""
-                            INSERT INTO product_websites (product_id, website_id, created_by, updated_by, created_at, updated_at)
-                            VALUES (%s, %s, %s, %s, NOW(), NOW())
-                        """, (new_id, int(wid), user_id, user_id))
+                        wid_int = cls._safe_int(wid)
+                        if wid_int is not None:
+                            cursor.execute("""
+                                INSERT INTO product_websites (product_id, website_id, created_by, updated_by, created_at, updated_at)
+                                VALUES (%s, %s, %s, %s, NOW(), NOW())
+                            """, (new_id, wid_int, user_id, user_id))
                     except Exception:
                         pass
                 if website_ids:
                     try:
-                        cursor.execute("UPDATE products SET website_id = %s WHERE id = %s", (int(website_ids[0]), new_id))
+                        first_wid = cls._safe_int(website_ids[0])
+                        if first_wid is not None:
+                            cursor.execute("UPDATE products SET website_id = %s WHERE id = %s", (first_wid, new_id))
                     except Exception:
                         pass
                 conn.commit()
@@ -494,12 +653,12 @@ class Product:
 
                 for price_col in ['price', 'list_price', 'sale_price', 'cost_price']:
                     if price_col in data:
-                        val = Decimal(str(data[price_col])) if data[price_col] is not None and str(data[price_col]).strip() != '' else None
+                        val = cls._safe_decimal(data[price_col])
                         fields.append(f"{price_col} = %s")
                         params.append(val)
 
                 if 'stock_qty' in data:
-                    sq = int(data['stock_qty'] or 0)
+                    sq = cls._safe_int(data['stock_qty'], 0)
                     fields.append("stock_qty = %s")
                     params.append(sq)
                     if 'stock_status' not in data:
@@ -508,14 +667,30 @@ class Product:
 
                 if 'stock_status' in data:
                     fields.append("stock_status = %s")
-                    params.append(data['stock_status'])
+                    params.append(cls._safe_stock_status(data['stock_status']))
+
+                if 'status' in data:
+                    fields.append("status = %s")
+                    params.append(cls._safe_status(data['status']))
+
+                if 'visibility' in data:
+                    fields.append("visibility = %s")
+                    params.append(cls._safe_visibility(data['visibility']))
+
+                if 'tire_type' in data:
+                    fields.append("tire_type = %s")
+                    params.append(cls._safe_tire_type(data['tire_type']))
+
+                if 'vehicle_type' in data:
+                    fields.append("vehicle_type = %s")
+                    params.append(cls._safe_vehicle_type(data['vehicle_type']))
 
                 if 'tire_size_label' in data:
                     fields.append("tire_size_label = %s")
                     params.append(data['tire_size_label'])
 
-                for spec_col in ['tire_speed_rating', 'tire_load_index', 'tire_type', 'tire_pattern',
-                                 'vehicle_type', 'oem_brand', 'country_of_origin']:
+                for spec_col in ['tire_speed_rating', 'tire_load_index', 'tire_pattern',
+                                 'oem_brand', 'country_of_origin']:
                     if spec_col in data:
                         fields.append(f"{spec_col} = %s")
                         params.append(data[spec_col] or None)
@@ -525,13 +700,20 @@ class Product:
                         fields.append(f"{bool_col} = %s")
                         params.append(1 if data[bool_col] else 0)
 
+                if 'weight' in data:
+                    fields.append("weight = %s")
+                    params.append(cls._safe_decimal(data['weight']))
+
                 for fk_col in ['brand_id', 'category_id', 'warranty_months', 'sort_order', 'min_order_qty', 'max_order_qty']:
                     if fk_col in data:
-                        val = int(data[fk_col]) if data[fk_col] is not None and str(data[fk_col]).strip() != '' else None
+                        if fk_col == 'warranty_months':
+                            val = cls._safe_warranty_months(data[fk_col])
+                        else:
+                            val = cls._safe_int(data[fk_col])
                         fields.append(f"{fk_col} = %s")
                         params.append(val)
 
-                for str_col in ['image_path', 'image_alt', 'status', 'visibility', 'canonical_url']:
+                for str_col in ['image_path', 'image_alt', 'canonical_url']:
                     if str_col in data:
                         fields.append(f"{str_col} = %s")
                         params.append(data[str_col] or None)
@@ -554,7 +736,7 @@ class Product:
 
                 if 'attribute_set_id' in data and data['attribute_set_id']:
                     fields.append("attribute_set_id = %s")
-                    params.append(int(data['attribute_set_id']))
+                    params.append(cls._safe_int(data['attribute_set_id'], 1))
 
                 dyn_attrs = None
                 if 'dynamic_attributes' in data or 'attributes_json' in data:
@@ -609,15 +791,19 @@ class Product:
                         cursor.execute("DELETE FROM product_websites WHERE product_id = %s", (product_id,))
                         for wid in website_ids:
                             try:
-                                cursor.execute("""
-                                    INSERT INTO product_websites (product_id, website_id, created_by, updated_by, created_at, updated_at)
-                                    VALUES (%s, %s, %s, %s, NOW(), NOW())
-                                """, (product_id, int(wid), user_id, user_id))
+                                wid_int = cls._safe_int(wid)
+                                if wid_int is not None:
+                                    cursor.execute("""
+                                        INSERT INTO product_websites (product_id, website_id, created_by, updated_by, created_at, updated_at)
+                                        VALUES (%s, %s, %s, %s, NOW(), NOW())
+                                    """, (product_id, wid_int, user_id, user_id))
                             except Exception:
                                 pass
                         if website_ids:
                             try:
-                                cursor.execute("UPDATE products SET website_id = %s WHERE id = %s", (int(website_ids[0]), product_id))
+                                first_wid = cls._safe_int(website_ids[0])
+                                if first_wid is not None:
+                                    cursor.execute("UPDATE products SET website_id = %s WHERE id = %s", (first_wid, product_id))
                             except Exception:
                                 pass
                 conn.commit()
