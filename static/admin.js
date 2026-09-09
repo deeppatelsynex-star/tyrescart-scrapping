@@ -97,7 +97,7 @@ window.AdminShared = (function () {
     let bg = '#ecfdf5';
     let border = '#a7f3d0';
     let text = '#047857';
-    let iconSvg = '<svg class="w-4 h-4 shrink-0 text-emerald-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>';
+    let iconSvg = '<svg class="w-4 h-4 shrink-0 text-[#2563FF]" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>';
 
     if (type === 'error') {
       bg = '#fff1f2';
@@ -164,12 +164,12 @@ window.AdminShared = (function () {
       // Initials sit behind the <img>; if the image 404s, onerror hides it and
       // the initials underneath show through -- no broken-image icon.
       return `
-        <span class="relative inline-flex w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 items-center justify-center text-xs font-semibold overflow-hidden align-middle">
+        <span class="relative inline-flex w-8 h-8 rounded-full bg-blue-100 text-blue-700 items-center justify-center text-xs font-semibold overflow-hidden align-middle">
           <span class="absolute inset-0 flex items-center justify-center">${safeInitial}</span>
           <img src="${safeUrl}" alt="" class="relative w-8 h-8 rounded-full object-cover" onerror="this.style.display='none'" />
         </span>`;
     }
-    return `<span class="inline-flex w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 items-center justify-center text-xs font-semibold align-middle">${safeInitial}</span>`;
+    return `<span class="inline-flex w-8 h-8 rounded-full bg-blue-100 text-blue-700 items-center justify-center text-xs font-semibold align-middle">${safeInitial}</span>`;
   }
 
   // Fills the leftmost "#" column with a sequential row number based on
@@ -205,7 +205,7 @@ window.AdminShared = (function () {
 
   function statusBadgeHtml(row) {
     if (row.isDeleted) return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">Deleted</span>';
-    if (row.status) return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Active</span>';
+    if (row.status) return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Active</span>';
     return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-500">Inactive</span>';
   }
 
@@ -236,7 +236,7 @@ window.AdminShared = (function () {
   function dateTimeHtml(isoString) {
     const parts = formatLocalDateTime(isoString);
     if (!parts) return '<span class="text-slate-400">—</span>';
-    return `<span class="text-slate-700 font-medium">${escapeHtml(parts.datePart)}</span> <span class="text-emerald-600">${escapeHtml(parts.timePart)}</span>`;
+    return `<span class="text-slate-700 font-medium">${escapeHtml(parts.datePart)}</span> <span class="text-[#2563FF]">${escapeHtml(parts.timePart)}</span>`;
   }
 
   function openViewModal(row) {
@@ -369,7 +369,7 @@ window.AdminShared = (function () {
     return `
       <div class="flex items-center justify-end gap-3">
         <button type="button" data-action="view" data-id="${row.userId}" class="text-xs font-semibold text-slate-500 hover:underline cursor-pointer">View</button>
-        <button type="button" data-action="edit" data-id="${row.userId}" class="text-xs font-semibold text-emerald-600 hover:underline cursor-pointer">Edit</button>
+        <button type="button" data-action="edit" data-id="${row.userId}" class="text-xs font-semibold text-[#2563FF] hover:underline cursor-pointer">Edit</button>
         <button type="button" data-action="delete" data-id="${row.userId}" ${canDelete ? '' : `disabled title="${deleteDisabledReason}"`}
           class="text-xs font-semibold ${canDelete ? 'text-rose-600 hover:underline cursor-pointer' : 'text-slate-300 cursor-not-allowed'}">Delete</button>
       </div>`;

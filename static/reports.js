@@ -48,7 +48,7 @@
     const st = (row.status || '').toUpperCase();
     switch (st) {
       case 'RUNNING':
-        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>RUNNING</span>`;
+        return `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200/60"><span class="w-1.5 h-1.5 rounded-full bg-[#2563FF] animate-pulse"></span>RUNNING</span>`;
       case 'SUCCESS':
       case 'FINISHED':
         return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-700 border border-sky-200/60">SUCCESS</span>`;
@@ -126,7 +126,7 @@
             if (type === 'display') {
               return row.endTimeRaw
                 ? Shared.dateTimeHtml(row.endTimeRaw)
-                : '<span class="inline-flex items-center gap-1.5 text-xs text-emerald-600 font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Running</span>';
+                : '<span class="inline-flex items-center gap-1.5 text-xs text-[#2563FF] font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-[#2563FF] animate-pulse"></span>Running</span>';
             }
             return row.endTimeRaw || '';
           },

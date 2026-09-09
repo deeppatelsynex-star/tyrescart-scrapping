@@ -29,7 +29,7 @@
       <div class="flex items-center justify-end gap-3">
         <button type="button" data-action="view" data-id="${row.userId}" class="text-xs font-semibold text-slate-500 hover:underline cursor-pointer">View</button>
         <button type="button" data-action="restore" data-id="${row.userId}" ${disabledAttr}
-          class="text-xs font-semibold ${canAct ? `text-emerald-600 ${enabledClass}` : disabledClass}">Restore</button>
+          class="text-xs font-semibold ${canAct ? `text-[#2563FF] ${enabledClass}` : disabledClass}">Restore</button>
       </div>`;
   }
 

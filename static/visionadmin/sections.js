@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
       label: 'Hero Banner', 
       shortLabel: 'Hero', 
       emoji: '🦸', 
-      badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
-      tagColor: 'bg-emerald-500',
+      badgeBg: 'bg-blue-50 text-blue-800 border-blue-200/80',
+      tagColor: 'bg-[#2563FF]',
       desc: 'Hero Banner with Quote Card & Trust Badges' 
     },
     stats: { 
@@ -40,8 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
       label: 'Tyre Price Table', 
       shortLabel: 'Prices', 
       emoji: '💰', 
-      badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
-      tagColor: 'bg-emerald-500',
+      badgeBg: 'bg-blue-50 text-blue-800 border-blue-200/80',
+      tagColor: 'bg-[#2563FF]',
       desc: 'Vehicle & Tyre Size Price Matrix with Value Cards' 
     },
     services: { 
@@ -64,8 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
       label: 'Shop by Size, Car & Brand', 
       shortLabel: 'Shop By', 
       emoji: '🔍', 
-      badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
-      tagColor: 'bg-emerald-500',
+      badgeBg: 'bg-blue-50 text-blue-800 border-blue-200/80',
+      tagColor: 'bg-[#2563FF]',
       desc: 'Browse Tyres by Sizes, Vehicles, and Brand Tiers' 
     },
     coverage: { 
@@ -306,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (targetPageDropdownMenu) targetPageDropdownMenu.classList.add('hidden');
     if (targetPageChevron) {
       targetPageChevron.classList.remove('rotate-180');
-      targetPageChevron.classList.remove('text-[#35760F]');
+      targetPageChevron.classList.remove('text-[#1D4ED8]');
     }
     if (btnTargetPageDropdown) btnTargetPageDropdown.setAttribute('aria-expanded', 'false');
 
@@ -370,17 +370,17 @@ document.addEventListener('DOMContentLoaded', () => {
               type="button" 
               class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 isSelected 
-                  ? 'bg-[#EAF7E2] text-[#0E1108] font-extrabold' 
+                  ? 'bg-[#EFF6FF] text-[#0E1108] font-extrabold' 
                   : 'text-slate-700 hover:bg-slate-50 hover:text-[#0E1108]'
               }"
               data-slug="${p.slug}"
               data-title="${p.title}"
             >
               <div class="flex items-center gap-2 min-w-0">
-                <span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-[#58B31B]' : 'bg-slate-300'} shrink-0"></span>
+                <span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-[#2563FF]' : 'bg-slate-300'} shrink-0"></span>
                 <span class="truncate">${p.title} <span class="text-[11px] text-slate-400 font-semibold">(${p.slug})</span></span>
               </div>
-              ${isSelected ? '<svg class="w-4 h-4 text-[#35760F] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+              ${isSelected ? '<svg class="w-4 h-4 text-[#1D4ED8] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
             </button>
           `;
         }).join('');
@@ -413,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnTargetPageDropdown.setAttribute('aria-expanded', !isHidden);
       if (targetPageChevron) {
         targetPageChevron.classList.toggle('rotate-180', !isHidden);
-        targetPageChevron.classList.toggle('text-[#35760F]', !isHidden);
+        targetPageChevron.classList.toggle('text-[#1D4ED8]', !isHidden);
       }
     });
 
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
         targetPageDropdownMenu.classList.add('hidden');
         btnTargetPageDropdown.setAttribute('aria-expanded', 'false');
         if (targetPageChevron) {
-          targetPageChevron.classList.remove('rotate-180', 'text-[#35760F]');
+          targetPageChevron.classList.remove('rotate-180', 'text-[#1D4ED8]');
         }
       }
     });
@@ -589,25 +589,25 @@ document.addEventListener('DOMContentLoaded', () => {
           chipList = sec.section_data.badges.map(b => {
             const raw = b?.title || b?.text || b?.name || b?.label || b || '';
             const txt = typeof raw === 'object' ? (raw.en || raw.ar || Object.values(raw)[0] || '') : String(raw || '');
-            return `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-semibold border border-emerald-200/80">✓ ${txt}</span>`;
+            return `<span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 text-[10px] font-semibold border border-blue-200/80">✓ ${txt}</span>`;
           });
         } else if (Array.isArray(sec.section_data.features) && sec.section_data.features.length > 0) {
           itemsCount = sec.section_data.features.length;
           chipList = sec.section_data.features.map(f => {
             const raw = f?.title || f?.name || f?.text || f || '';
             const txt = typeof raw === 'object' ? (raw.en || raw.ar || Object.values(raw)[0] || '') : String(raw || '');
-            return `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-semibold border border-emerald-200/80">✓ ${txt}</span>`;
+            return `<span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 text-[10px] font-semibold border border-blue-200/80">✓ ${txt}</span>`;
           });
         } else if (Array.isArray(sec.section_data.rows) && sec.section_data.rows.length > 0) {
           itemsCount = sec.section_data.rows.length;
           chipList = sec.section_data.rows.map(r => {
-            return `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200/80 font-mono">🛞 ${r.size || ''}</span>`;
+            return `<span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 text-[10px] font-bold border border-blue-200/80 font-mono">🛞 ${r.size || ''}</span>`;
           });
         } else if (Array.isArray(sec.section_data.groups) && sec.section_data.groups.length > 0) {
           itemsCount = sec.section_data.groups.length;
           chipList = sec.section_data.groups.map(g => {
             const count = Array.isArray(g.chips) ? g.chips.length : 0;
-            return `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200/80">📂 ${g.heading || 'Group'} (${count})</span>`;
+            return `<span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 text-[10px] font-bold border border-blue-200/80">📂 ${g.heading || 'Group'} (${count})</span>`;
           });
         } else if (sec.section_type === 'coverage' && Array.isArray(sec.section_data.areas) && sec.section_data.areas.length > 0) {
           itemsCount = sec.section_data.areas.length;
@@ -914,7 +914,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const card = radio.closest('.type-card');
       if (card) {
-        card.className = 'type-card flex items-center gap-2.5 p-3 rounded-2xl border-2 border-[#58B31B] bg-[#EAF7E2]/50 cursor-pointer transition';
+        card.className = 'type-card flex items-center gap-2.5 p-3 rounded-2xl border-2 border-[#2563FF] bg-[#EFF6FF]/50 cursor-pointer transition';
       }
       applyTypeFormRules(type);
     }
@@ -1020,14 +1020,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const BLOCK_META = {
       metrics_strip: { label: 'Statistic Metrics Strip', icon: '📊', color: 'text-indigo-600' },
-      cards_grid: { label: 'Cards Grid', icon: '🃏', color: 'text-emerald-600' },
+      cards_grid: { label: 'Cards Grid', icon: '🃏', color: 'text-[#2563FF]' },
       chips_cloud: { label: 'Interactive Chips / Sizes', icon: '🏷️', color: 'text-amber-600' },
       comparison_split: { label: 'Comparison Split Cards', icon: '⚖️', color: 'text-blue-600' },
       process_steps: { label: 'Step Timeline Flow', icon: '🔢', color: 'text-purple-600' },
       accordion_faq: { label: 'Accordion FAQ List', icon: '❓', color: 'text-rose-600' },
       reviews_slider: { label: 'Customer Reviews Grid', icon: '⭐', color: 'text-amber-500' },
       media_story: { label: 'Media & Narrative Story', icon: '🖼️', color: 'text-cyan-600' },
-      pricing_matrix: { label: 'Tyre Pricing Matrix Table', icon: '💰', color: 'text-emerald-700' },
+      pricing_matrix: { label: 'Tyre Pricing Matrix Table', icon: '💰', color: 'text-blue-700' },
       cta_actions: { label: 'Action Buttons Group', icon: '🔘', color: 'text-slate-800' }
     };
 
@@ -1041,7 +1041,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <label class="text-[10px] font-black uppercase tracking-wider text-slate-600">Metric Counters (${mList.length})</label>
-              <button type="button" class="btn-add-comp-subitem text-[11px] font-bold text-[#58B31B] hover:underline cursor-pointer" data-bidx="${bIdx}" data-subtype="metric">+ Add Metric</button>
+              <button type="button" class="btn-add-comp-subitem text-[11px] font-bold text-[#2563FF] hover:underline cursor-pointer" data-bidx="${bIdx}" data-subtype="metric">+ Add Metric</button>
             </div>
             <div class="space-y-2">
               ${mList.map((m, mIdx) => `
@@ -1075,7 +1075,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="flex items-center justify-between pt-1">
               <label class="text-[10px] font-black uppercase text-slate-600">Cards (${cList.length})</label>
-              <button type="button" class="btn-add-comp-subitem text-[11px] font-bold text-[#58B31B] hover:underline cursor-pointer" data-bidx="${bIdx}" data-subtype="card">+ Add Card</button>
+              <button type="button" class="btn-add-comp-subitem text-[11px] font-bold text-[#2563FF] hover:underline cursor-pointer" data-bidx="${bIdx}" data-subtype="card">+ Add Card</button>
             </div>
             <div class="space-y-2">
               ${cList.map((c, cIdx) => `
@@ -1118,7 +1118,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <label class="text-[10px] font-black uppercase text-slate-600">Action Buttons</label>
-              <button type="button" class="btn-add-comp-subitem text-[11px] font-bold text-[#58B31B] hover:underline cursor-pointer" data-bidx="${bIdx}" data-subtype="button">+ Add Button</button>
+              <button type="button" class="btn-add-comp-subitem text-[11px] font-bold text-[#2563FF] hover:underline cursor-pointer" data-bidx="${bIdx}" data-subtype="button">+ Add Button</button>
             </div>
             <div class="space-y-2">
               ${bButtons.map((b, btnIdx) => `
@@ -1435,7 +1435,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
             <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
               <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
                 <span>Statistic Metric #${i + 1}</span>
               </span>
               <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
@@ -1443,15 +1443,15 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Metric Number *</label>
-                <input type="text" placeholder="e.g. 60+ or 7,000+" class="rep-num w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 outline-none" value="${item.number || ''}" />
+                <input type="text" placeholder="e.g. 60+ or 7,000+" class="rep-num w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#2563FF]/15 outline-none" value="${item.number || ''}" />
               </div>
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Label (English) *</label>
-                <input type="text" placeholder="e.g. Tyre brands" class="rep-head-en w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 outline-none" value="${typeof item.label === 'object' ? (item.label.en || '') : (item.heading?.en || item.label || item.heading || '')}" />
+                <input type="text" placeholder="e.g. Tyre brands" class="rep-head-en w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#2563FF]/15 outline-none" value="${typeof item.label === 'object' ? (item.label.en || '') : (item.heading?.en || item.label || item.heading || '')}" />
               </div>
               <div>
                 <label class="block text-[10px] font-black uppercase tracking-wider text-slate-600 mb-1">Label (Arabic) *</label>
-                <input type="text" dir="rtl" placeholder="مثال: علامة تجارية" class="rep-head-ar w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-right bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#58B31B]/15 outline-none" value="${typeof item.label === 'object' ? (item.label.ar || '') : (item.heading?.ar || '')}" />
+                <input type="text" dir="rtl" placeholder="مثال: علامة تجارية" class="rep-head-ar w-full px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-right bg-[#F8FAF7] focus:bg-white focus:ring-2 focus:ring-[#2563FF]/15 outline-none" value="${typeof item.label === 'object' ? (item.label.ar || '') : (item.heading?.ar || '')}" />
               </div>
             </div>
           </div>
@@ -1463,7 +1463,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
             <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
               <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
                 <span>Tyre Size Row #${i + 1}</span>
               </span>
               <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
@@ -1503,7 +1503,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (type === 'services') {
         return `
           <div class="p-3 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs flex items-center gap-3">
-            <span class="w-2 h-2 rounded-full bg-[#58B31B] shrink-0"></span>
+            <span class="w-2 h-2 rounded-full bg-[#2563FF] shrink-0"></span>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
               <input type="text" placeholder="Service Name (English)" class="rep-svc-en px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold bg-[#F8FAF7] focus:bg-white outline-none" value="${typeof item.name === 'object' ? (item.name.en || '') : (item.name || item || '')}" />
               <input type="text" dir="rtl" placeholder="اسم الخدمة (عربي)" class="rep-svc-ar px-3 py-2 rounded-xl border border-[#E8EDE4] text-xs font-bold text-right bg-[#F8FAF7] focus:bg-white outline-none" value="${typeof item.name === 'object' ? (item.name.ar || '') : ''}" />
@@ -1517,7 +1517,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
             <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
               <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
                 <span>Group #${i + 1}: ${item.heading || 'New Group'}</span>
               </span>
               <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
@@ -1548,7 +1548,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
             <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
               <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
                 <span>Area Group #${i + 1}: ${item.heading || 'New Area'}</span>
               </span>
               <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
@@ -1582,7 +1582,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
             <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
               <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
                 <span>FAQ Question #${i + 1}</span>
               </span>
               <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
@@ -1614,7 +1614,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
             <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
               <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
                 <span>Customer Review #${i + 1}</span>
               </span>
               <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
@@ -1646,7 +1646,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
             <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
               <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
                 <span>Step #${i + 1}</span>
               </span>
               <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>
@@ -1685,7 +1685,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-4 bg-white rounded-2xl border border-[#E8EDE4] shadow-2xs space-y-3">
             <div class="flex items-center justify-between pb-2 border-b border-[#E8EDE4]">
               <span class="text-[11px] font-black uppercase tracking-wider text-[#0E1108] flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-[#58B31B]"></span>
+                <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
                 <span>Item / Card #${i + 1}</span>
               </span>
               <button type="button" class="btn-remove-repeater text-rose-600 hover:text-rose-800 text-xs font-bold transition cursor-pointer" data-index="${i}">Remove</button>

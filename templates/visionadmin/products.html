@@ -19,7 +19,7 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs">
     <div>
       <div class="flex items-center gap-2">
-        <span class="px-2.5 py-1 text-[11px] font-black uppercase tracking-wider rounded-lg bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]">Catalog Engine</span>
+        <span class="px-2.5 py-1 text-[11px] font-black uppercase tracking-wider rounded-lg bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]">Catalog Engine</span>
         <span class="text-xs text-slate-400 font-semibold">• Tyre &amp; Automotive Inventory</span>
       </div>
       <h1 class="text-2xl font-black text-[#0E1108] tracking-tight mt-1">Products Catalog</h1>
@@ -38,7 +38,7 @@
 
       <a 
         href="/visionadmin/products/create" 
-        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95"
       >
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span>Add New Product</span>
@@ -60,10 +60,10 @@
 
     <div class="bg-white p-5 rounded-2xl border border-[#E8EDE4] shadow-xs flex items-center justify-between">
       <div>
-        <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">In Stock</span>
-        <h3 class="text-2xl font-black text-emerald-700 mt-1" x-text="counts.in_stock || 0">0</h3>
+        <span class="text-[11px] font-bold text-[#2563FF] uppercase tracking-wider">In Stock</span>
+        <h3 class="text-2xl font-black text-blue-700 mt-1" x-text="counts.in_stock || 0">0</h3>
       </div>
-      <div class="w-11 h-11 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
+      <div class="w-11 h-11 rounded-2xl bg-blue-50 flex items-center justify-center text-[#2563FF] border border-blue-100">
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
     </div>
@@ -97,7 +97,7 @@
         <button 
           type="button" 
           @click="setTab('active')" 
-          :class="currentTab === 'active' ? 'bg-[#58B31B] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+          :class="currentTab === 'active' ? 'bg-[#2563FF] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
           class="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer"
         >
           Active Catalog (<span x-text="counts.total || 0"></span>)
@@ -105,7 +105,7 @@
         <button 
           type="button" 
           @click="setTab('out_of_stock')" 
-          :class="currentTab === 'out_of_stock' ? 'bg-[#58B31B] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+          :class="currentTab === 'out_of_stock' ? 'bg-[#2563FF] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
           class="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer"
         >
           Out of Stock (<span x-text="counts.out_of_stock || 0"></span>)
@@ -133,7 +133,7 @@
           type="text" 
           x-model.debounce.350ms="filters.search" 
           placeholder="Search SKU, name, specs..." 
-          class="w-full pl-9 pr-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#58B31B] focus:ring-2 focus:ring-[#58B31B]/20 outline-hidden transition"
+          class="w-full pl-9 pr-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563FF] focus:ring-2 focus:ring-[#2563FF]/20 outline-hidden transition"
         />
         <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </div>
@@ -142,7 +142,7 @@
       <select 
         x-model="filters.attribute_set_id" 
         @change="fetchProducts()"
-        class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#58B31B] focus:ring-2 focus:ring-[#58B31B]/20 outline-hidden transition"
+        class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563FF] focus:ring-2 focus:ring-[#2563FF]/20 outline-hidden transition"
       >
         <option value="">All Attribute Sets</option>
         <template x-for="s in attributeSets" :key="s.id">
@@ -154,7 +154,7 @@
       <select 
         x-model="filters.brand_id" 
         @change="fetchProducts()"
-        class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#58B31B] focus:ring-2 focus:ring-[#58B31B]/20 outline-hidden transition"
+        class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563FF] focus:ring-2 focus:ring-[#2563FF]/20 outline-hidden transition"
       >
         <option value="">All Brands</option>
         <template x-for="b in brands" :key="b.id">
@@ -166,7 +166,7 @@
       <select 
         x-model="filters.category_id" 
         @change="fetchProducts()"
-        class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#58B31B] focus:ring-2 focus:ring-[#58B31B]/20 outline-hidden transition"
+        class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563FF] focus:ring-2 focus:ring-[#2563FF]/20 outline-hidden transition"
       >
         <option value="">All Categories</option>
         <template x-for="c in categories" :key="c.id">
@@ -178,7 +178,7 @@
       <select 
         x-model="filters.vehicle_type" 
         @change="fetchProducts()"
-        class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#58B31B] focus:ring-2 focus:ring-[#58B31B]/20 outline-hidden transition"
+        class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563FF] focus:ring-2 focus:ring-[#2563FF]/20 outline-hidden transition"
       >
         <option value="">All Vehicle Types</option>
         <option value="car">Passenger Car</option>
@@ -246,7 +246,7 @@
   <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
     <!-- Loading State -->
     <div x-show="loading" class="p-12 text-center text-slate-400 space-y-3">
-      <div class="inline-block w-8 h-8 border-3 border-[#58B31B] border-t-transparent rounded-full animate-spin"></div>
+      <div class="inline-block w-8 h-8 border-3 border-[#2563FF] border-t-transparent rounded-full animate-spin"></div>
       <p class="text-xs font-bold text-slate-500">Loading catalog products...</p>
     </div>
 
@@ -257,7 +257,7 @@
       </div>
       <h3 class="text-base font-black text-slate-800">No products found</h3>
       <p class="text-xs text-slate-500 max-w-sm mx-auto">No products match your current search or filter criteria. Try clearing filters or add a new product.</p>
-      <button type="button" @click="openCreateModal()" class="px-4 py-2 rounded-xl bg-[#58B31B] text-white text-xs font-bold hover:bg-[#489915] transition cursor-pointer">
+      <button type="button" @click="openCreateModal()" class="px-4 py-2 rounded-xl bg-[#2563FF] text-white text-xs font-bold hover:bg-[#1D4ED8] transition cursor-pointer">
         Add Product Now
       </button>
     </div>
@@ -268,7 +268,7 @@
         <thead>
           <tr class="bg-slate-50/75 border-b border-[#E8EDE4] text-[11px] font-black uppercase tracking-wider text-slate-500">
             <th class="p-4 w-10 text-center">
-              <input type="checkbox" @change="toggleSelectAll($event)" :checked="isAllSelected()" class="w-4 h-4 rounded-sm border-slate-300 text-[#58B31B] focus:ring-[#58B31B]" />
+              <input type="checkbox" @change="toggleSelectAll($event)" :checked="isAllSelected()" class="w-4 h-4 rounded-sm border-slate-300 text-[#2563FF] focus:ring-[#2563FF]" />
             </th>
             <th class="py-4 px-3">Product</th>
             <th class="py-4 px-3">SKU</th>
@@ -285,7 +285,7 @@
             <tr class="hover:bg-slate-50/60 transition group">
               <!-- Row Checkbox -->
               <td class="p-4 text-center">
-                <input type="checkbox" :value="p.id" x-model="selectedIds" class="w-4 h-4 rounded-sm border-slate-300 text-[#58B31B] focus:ring-[#58B31B]" />
+                <input type="checkbox" :value="p.id" x-model="selectedIds" class="w-4 h-4 rounded-sm border-slate-300 text-[#2563FF] focus:ring-[#2563FF]" />
               </td>
 
               <!-- Product (Image + Title) -->
@@ -295,7 +295,7 @@
                     <img :src="p.image_path || '/static/assets/images/online-tyres-shop-dubai.png'" :alt="p.display_name" class="w-full h-full object-contain" onerror="this.src='/static/assets/images/online-tyres-shop-dubai.png'" />
                   </div>
                   <div class="min-w-0 max-w-xs">
-                    <a href="javascript:void(0)" @click="openViewModal(p)" class="font-extrabold text-slate-900 hover:text-[#58B31B] truncate block leading-tight" x-text="p.display_name || p.name_en"></a>
+                    <a href="javascript:void(0)" @click="openViewModal(p)" class="font-extrabold text-slate-900 hover:text-[#2563FF] truncate block leading-tight" x-text="p.display_name || p.name_en"></a>
                     <span class="text-[10px] text-slate-400 truncate block mt-0.5" x-text="p.slug"></span>
                   </div>
                 </div>
@@ -311,7 +311,7 @@
                 <div class="space-y-1">
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="inline-block px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-extrabold" x-text="p.brand_name || 'Generic'"></span>
-                    <span class="inline-block px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider" :class="(p.attribute_set_slug === 'battery' || (p.attribute_set_name && p.attribute_set_name.toLowerCase().includes('battery'))) ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]'" x-text="p.attribute_set_name || 'Tyres'"></span>
+                    <span class="inline-block px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider" :class="(p.attribute_set_slug === 'battery' || (p.attribute_set_name && p.attribute_set_name.toLowerCase().includes('battery'))) ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]'" x-text="p.attribute_set_name || 'Tyres'"></span>
                   </div>
                   <span class="text-[10px] text-slate-400 block truncate" x-text="p.category_name || 'General Catalog'"></span>
                 </div>
@@ -335,7 +335,7 @@
                       <div class="flex items-center gap-1 flex-wrap text-[10px] text-slate-400 font-medium">
                         <span x-text="p.tire_speed_rating ? 'Speed ' + p.tire_speed_rating : ''"></span>
                         <span x-show="p.run_flat" class="px-1.5 py-0.2 rounded-xs bg-amber-100 text-amber-800 font-bold text-[9px]">RFT</span>
-                        <span x-show="p.ev_rated" class="px-1.5 py-0.2 rounded-xs bg-emerald-100 text-emerald-800 font-bold text-[9px]">EV</span>
+                        <span x-show="p.ev_rated" class="px-1.5 py-0.2 rounded-xs bg-blue-100 text-blue-800 font-bold text-[9px]">EV</span>
                       </div>
                     </div>
                   </template>
@@ -356,7 +356,7 @@
               <td class="py-3 px-3">
                 <div class="space-y-1">
                   <template x-if="p.stock_status === 'in_stock'">
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800">
                       <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                       <span x-text="p.stock_qty + ' in stock'"></span>
                     </span>
@@ -386,7 +386,7 @@
                     type="button" 
                     @click="toggleStatus(p)" 
                     class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold transition cursor-pointer"
-                    :class="p.status === 'active' ? 'bg-[#EAF7E2] text-[#35760F] hover:bg-[#d5edd0]' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'"
+                    :class="p.status === 'active' ? 'bg-[#EFF6FF] text-[#1D4ED8] hover:bg-[#d5edd0]' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'"
                     x-text="p.status === 'active' ? 'Active' : 'Inactive'"
                   ></button>
                 </template>
@@ -429,7 +429,7 @@
                         type="button" 
                         @click="restoreProduct(p)" 
                         title="Restore Product"
-                        class="px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition cursor-pointer"
+                        class="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 transition cursor-pointer"
                       >
                         Restore
                       </button>
@@ -489,7 +489,7 @@
         <div>
           <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div>
-              <span class="text-[10px] font-black uppercase text-[#58B31B] tracking-wider">Product Overview</span>
+              <span class="text-[10px] font-black uppercase text-[#2563FF] tracking-wider">Product Overview</span>
               <h3 class="text-xl font-black text-slate-900 mt-0.5" x-text="activeProduct.display_name"></h3>
               <p class="text-xs text-slate-400 font-mono" x-text="'SKU: ' + activeProduct.sku"></p>
             </div>
@@ -507,12 +507,12 @@
                 <div class="flex items-center gap-2">
                   <span class="px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 font-black" x-text="activeProduct.brand_name || 'Generic Brand'"></span>
                   <span class="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-black" x-text="activeProduct.category_name || 'General'"></span>
-                  <span class="px-2.5 py-0.5 rounded-lg font-black text-[10px] uppercase tracking-wider" :class="(activeProduct.attribute_set_slug === 'battery' || (activeProduct.attribute_set_name && activeProduct.attribute_set_name.toLowerCase().includes('battery'))) ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-[#EAF7E2] text-[#35760F] border border-[#C8E8B8]'" x-text="activeProduct.attribute_set_name || 'Tyres'"></span>
+                  <span class="px-2.5 py-0.5 rounded-lg font-black text-[10px] uppercase tracking-wider" :class="(activeProduct.attribute_set_slug === 'battery' || (activeProduct.attribute_set_name && activeProduct.attribute_set_name.toLowerCase().includes('battery'))) ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]'" x-text="activeProduct.attribute_set_name || 'Tyres'"></span>
                 </div>
                 <div class="text-base font-black text-slate-900">
                   AED <span x-text="(activeProduct.sale_price || activeProduct.price).toFixed(2)"></span>
                 </div>
-                <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold" :class="activeProduct.stock_status === 'in_stock' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'" x-text="activeProduct.stock_status === 'in_stock' ? activeProduct.stock_qty + ' in stock' : 'Out of stock'"></span>
+                <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold" :class="activeProduct.stock_status === 'in_stock' ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800'" x-text="activeProduct.stock_status === 'in_stock' ? activeProduct.stock_qty + ' in stock' : 'Out of stock'"></span>
               </div>
             </div>
 
@@ -584,7 +584,7 @@
                   <template x-for="grp in viewProductSchema.groups" :key="grp.id">
                     <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                       <div class="text-[11px] font-black text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-[#58B31B]"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#2563FF]"></span>
                         <span x-text="formatGroupName(grp)"></span>
                       </div>
                       <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
@@ -631,7 +631,7 @@
     >
       <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-[#58B31B]">
+          <div class="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-[#2563FF]">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           </div>
           <div>
@@ -643,14 +643,14 @@
       </div>
 
       <div class="p-6 space-y-5">
-        <div class="flex items-center justify-between p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-100">
+        <div class="flex items-center justify-between p-3.5 rounded-xl bg-blue-50/60 border border-blue-100">
           <div>
-            <span class="text-xs font-bold text-emerald-800 block">Need a template?</span>
+            <span class="text-xs font-bold text-blue-800 block">Need a template?</span>
             <span class="text-[11px] text-slate-600">Download the pre-formatted CSV template with sample tyres.</span>
           </div>
           <a 
             href="/visionadmin/api/products/sample-csv" 
-            class="px-3 py-1.5 rounded-lg bg-[#58B31B] text-white text-xs font-bold hover:bg-[#489915] transition inline-flex items-center gap-1.5"
+            class="px-3 py-1.5 rounded-lg bg-[#2563FF] text-white text-xs font-bold hover:bg-[#1D4ED8] transition inline-flex items-center gap-1.5"
           >
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <span>Download</span>
@@ -669,7 +669,7 @@
         </div>
 
         <template x-if="csvResult">
-          <div class="p-3.5 rounded-xl text-xs font-semibold" :class="csvResult.success ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'" x-text="csvResult.message"></div>
+          <div class="p-3.5 rounded-xl text-xs font-semibold" :class="csvResult.success ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-rose-50 text-rose-700 border border-rose-200'" x-text="csvResult.message"></div>
         </template>
       </div>
 
@@ -685,7 +685,7 @@
           type="button" 
           :disabled="!selectedCsvFile || csvUploading" 
           @click="submitCsvUpload()" 
-          class="px-6 py-2.5 rounded-xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+          class="px-6 py-2.5 rounded-xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
         >
           <svg x-show="csvUploading" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
           <span x-text="csvUploading ? 'Importing...' : 'Upload & Import'"></span>

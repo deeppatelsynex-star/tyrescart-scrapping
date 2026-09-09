@@ -24,7 +24,7 @@
 
       <a 
         href="/visionadmin/categories/create" 
-        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer active:scale-95"
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer active:scale-95"
       >
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span>Add Category</span>
@@ -38,7 +38,7 @@
       type="button" 
       @click="statusFilter = 'all'; loadCategories(1)" 
       class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
-      :class="statusFilter === 'all' ? 'bg-[#58B31B] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
+      :class="statusFilter === 'all' ? 'bg-[#2563FF] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
     >
       All Categories
     </button>
@@ -46,7 +46,7 @@
       type="button" 
       @click="statusFilter = 'active'; loadCategories(1)" 
       class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
-      :class="statusFilter === 'active' ? 'bg-[#58B31B] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
+      :class="statusFilter === 'active' ? 'bg-[#2563FF] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
     >
       Active
     </button>
@@ -54,7 +54,7 @@
       type="button" 
       @click="statusFilter = 'inactive'; loadCategories(1)" 
       class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
-      :class="statusFilter === 'inactive' ? 'bg-[#58B31B] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
+      :class="statusFilter === 'inactive' ? 'bg-[#2563FF] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
     >
       Inactive
     </button>
@@ -78,7 +78,7 @@
         @input.debounce.300ms="loadCategories(1)"
         @keydown.enter="loadCategories(1)"
         placeholder="Search categories..." 
-        class="w-full pl-4 pr-10 py-2.5 text-xs sm:text-sm font-medium border border-slate-200 rounded-xl focus:outline-none focus:border-[#58B31B] focus:ring-2 focus:ring-[#58B31B]/15 transition"
+        class="w-full pl-4 pr-10 py-2.5 text-xs sm:text-sm font-medium border border-slate-200 rounded-xl focus:outline-none focus:border-[#2563FF] focus:ring-2 focus:ring-[#2563FF]/15 transition"
       />
       <button 
         type="button" 
@@ -92,7 +92,7 @@
       <select 
         x-model="parentFilter" 
         @change="loadCategories(1)" 
-        class="py-2.5 px-3.5 text-xs font-semibold border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-[#58B31B]"
+        class="py-2.5 px-3.5 text-xs font-semibold border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-[#2563FF]"
       >
         <option value="">All Parents</option>
         <template x-for="p in parentOptions" :key="p.id">
@@ -103,7 +103,7 @@
       <button 
         type="button" 
         @click="loadCategories(1)" 
-        class="px-5 py-2.5 rounded-xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer"
+        class="px-5 py-2.5 rounded-xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold shadow-xs transition cursor-pointer"
       >
         Search
       </button>
@@ -131,7 +131,7 @@
             <tr>
               <td colspan="8" class="py-12 text-center text-slate-400 font-semibold">
                 <div class="inline-flex items-center gap-2">
-                  <svg class="animate-spin h-5 w-5 text-[#35760F]" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                  <svg class="animate-spin h-5 w-5 text-[#1D4ED8]" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
                   <span>Loading categories...</span>
                 </div>
               </td>
@@ -174,7 +174,7 @@
               <!-- Parent Category -->
               <td class="py-3 px-4 text-slate-600">
                 <template x-if="c.parent_name">
-                  <span class="inline-flex px-2 py-0.5 rounded-lg bg-[#EAF7E2] text-[#35760F] font-semibold text-[11px]" x-text="c.parent_name"></span>
+                  <span class="inline-flex px-2 py-0.5 rounded-lg bg-[#EFF6FF] text-[#1D4ED8] font-semibold text-[11px]" x-text="c.parent_name"></span>
                 </template>
                 <template x-if="!c.parent_name">
                   <span class="text-slate-400 font-medium">—</span>
@@ -189,7 +189,7 @@
               <!-- Status Badge -->
               <td class="py-3 px-4">
                 <template x-if="c.status === 'active'">
-                  <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-[#2563FF] border border-blue-100">
                     Active
                   </span>
                 </template>
@@ -210,10 +210,10 @@
                     <button 
                       type="button" 
                       @click="restoreCategory(c)" 
-                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EAF7E2] hover:bg-[#D1E7C4] text-[#35760F] text-xs font-bold transition cursor-pointer"
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EFF6FF] hover:bg-[#DBEAFE] text-[#1D4ED8] text-xs font-bold transition cursor-pointer"
                       title="Restore Category"
                     >
-                      <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                      <svg class="w-3.5 h-3.5 text-[#2563FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                       <span>Restore</span>
                     </button>
                     <button 
@@ -231,7 +231,7 @@
                   <div class="inline-flex items-center justify-end gap-3">
                     <a 
                       :href="'/visionadmin/categories/' + c.id + '/edit'" 
-                      class="text-[#58B31B] hover:text-[#35760F] font-bold text-xs hover:underline cursor-pointer"
+                      class="text-[#2563FF] hover:text-[#1D4ED8] font-bold text-xs hover:underline cursor-pointer"
                     >
                       Edit
                     </a>
@@ -295,7 +295,7 @@
     >
       <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-[#EAF7E2] flex items-center justify-center text-[#35760F]">
+          <div class="w-10 h-10 rounded-2xl bg-[#EFF6FF] flex items-center justify-center text-[#1D4ED8]">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           </div>
           <div>
@@ -307,14 +307,14 @@
       </div>
 
       <div class="p-6 space-y-5">
-        <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#EAF7E2]/60 border border-[#C8E8B8]">
+        <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#EFF6FF]/60 border border-[#BFDBFE]">
           <div>
-            <span class="text-xs font-bold text-[#35760F] block">Need a template?</span>
+            <span class="text-xs font-bold text-[#1D4ED8] block">Need a template?</span>
             <span class="text-[11px] text-slate-600">Download the pre-formatted CSV template with example rows.</span>
           </div>
           <a 
             href="/visionadmin/api/categories/sample-csv" 
-            class="px-3 py-1.5 rounded-lg bg-[#58B31B] text-white text-xs font-bold hover:bg-[#489915] transition inline-flex items-center gap-1.5"
+            class="px-3 py-1.5 rounded-lg bg-[#2563FF] text-white text-xs font-bold hover:bg-[#1D4ED8] transition inline-flex items-center gap-1.5"
           >
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <span>Download</span>
@@ -333,7 +333,7 @@
         </div>
 
         <template x-if="csvResult">
-          <div class="p-3.5 rounded-xl text-xs font-semibold" :class="csvResult.success ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'" x-text="csvResult.message"></div>
+          <div class="p-3.5 rounded-xl text-xs font-semibold" :class="csvResult.success ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-rose-50 text-rose-700 border border-rose-200'" x-text="csvResult.message"></div>
         </template>
       </div>
 
@@ -349,7 +349,7 @@
           type="button" 
           :disabled="!selectedCsvFile || csvUploading" 
           @click="submitCsvUpload()" 
-          class="px-6 py-2.5 rounded-xl bg-[#58B31B] hover:bg-[#489915] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+          class="px-6 py-2.5 rounded-xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
         >
           <svg x-show="csvUploading" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
           <span x-text="csvUploading ? 'Importing...' : 'Upload & Import'"></span>

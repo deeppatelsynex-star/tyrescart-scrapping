@@ -36,7 +36,9 @@ class Category:
         r['description_en'] = localize_value(r['description'], 'en')
         r['description_ar'] = localize_value(r['description'], 'ar')
         r['meta_title_en'] = localize_value(r['meta_title'], 'en')
+        r['meta_title_ar'] = localize_value(r['meta_title'], 'ar')
         r['meta_desc_en'] = localize_value(r['meta_desc'], 'en')
+        r['meta_desc_ar'] = localize_value(r['meta_desc'], 'ar')
         return r
 
     @classmethod
@@ -191,10 +193,26 @@ class Category:
                 desc_json = dump_json_dict(desc_dict) if desc_dict else None
 
                 meta_t_input = data.get('meta_title') or data.get('meta_title_en')
-                meta_t_json = dump_json_dict(meta_t_input) if meta_t_input else None
+                meta_t_dict = meta_t_input if isinstance(meta_t_input, dict) else parse_json_dict(meta_t_input)
+                if not isinstance(meta_t_dict, dict) or not meta_t_dict:
+                    meta_t_dict = {DEFAULT_LOCALE: str(meta_t_input).strip()} if meta_t_input else {}
+                if data.get('meta_title_en'):
+                    meta_t_dict['en'] = str(data['meta_title_en']).strip()
+                if data.get('meta_title_ar'):
+                    meta_t_dict['ar'] = str(data['meta_title_ar']).strip()
+                meta_t_dict = {k: v for k, v in meta_t_dict.items() if v}
+                meta_t_json = dump_json_dict(meta_t_dict) if meta_t_dict else None
 
                 meta_d_input = data.get('meta_desc') or data.get('meta_desc_en')
-                meta_d_json = dump_json_dict(meta_d_input) if meta_d_input else None
+                meta_d_dict = meta_d_input if isinstance(meta_d_input, dict) else parse_json_dict(meta_d_input)
+                if not isinstance(meta_d_dict, dict) or not meta_d_dict:
+                    meta_d_dict = {DEFAULT_LOCALE: str(meta_d_input).strip()} if meta_d_input else {}
+                if data.get('meta_desc_en'):
+                    meta_d_dict['en'] = str(data['meta_desc_en']).strip()
+                if data.get('meta_desc_ar'):
+                    meta_d_dict['ar'] = str(data['meta_desc_ar']).strip()
+                meta_d_dict = {k: v for k, v in meta_d_dict.items() if v}
+                meta_d_json = dump_json_dict(meta_d_dict) if meta_d_dict else None
 
                 sort_order = int(data.get('sort_order') or 0)
                 status = data.get('status') or 'active'
@@ -272,10 +290,60 @@ class Category:
                     desc_json = existing.get('description')
 
                 meta_t_input = data.get('meta_title') or data.get('meta_title_en')
-                meta_t_json = dump_json_dict(meta_t_input) if meta_t_input else existing.get('meta_title')
+                if meta_t_input is not None or 'meta_title' in data or 'meta_title_en' in data or 'meta_title_ar' in data:
+                    base_mt = parse_json_dict(existing.get('meta_title')) if existing.get('meta_title') else {}
+                    if not isinstance(base_mt, dict):
+                        base_mt = {}
+                    if meta_t_input is not None:
+                        new_mt = meta_t_input if isinstance(meta_t_input, dict) else parse_json_dict(meta_t_input)
+                        if isinstance(new_mt, dict):
+                            base_mt.update(new_mt)
+                        elif str(meta_t_input).strip():
+                            base_mt[DEFAULT_LOCALE] = str(meta_t_input).strip()
+                    if data.get('meta_title_en') is not None:
+                        val = str(data['meta_title_en']).strip()
+                        if val:
+                            base_mt['en'] = val
+                        else:
+                            base_mt.pop('en', None)
+                    if data.get('meta_title_ar') is not None:
+                        val = str(data['meta_title_ar']).strip()
+                        if val:
+                            base_mt['ar'] = val
+                        else:
+                            base_mt.pop('ar', None)
+                    clean_mt = {k: v for k, v in base_mt.items() if v}
+                    meta_t_json = dump_json_dict(clean_mt) if clean_mt else None
+                else:
+                    meta_t_json = existing.get('meta_title')
 
                 meta_d_input = data.get('meta_desc') or data.get('meta_desc_en')
-                meta_d_json = dump_json_dict(meta_d_input) if meta_d_input else existing.get('meta_desc')
+                if meta_d_input is not None or 'meta_desc' in data or 'meta_desc_en' in data or 'meta_desc_ar' in data:
+                    base_md = parse_json_dict(existing.get('meta_desc')) if existing.get('meta_desc') else {}
+                    if not isinstance(base_md, dict):
+                        base_md = {}
+                    if meta_d_input is not None:
+                        new_md = meta_d_input if isinstance(meta_d_input, dict) else parse_json_dict(meta_d_input)
+                        if isinstance(new_md, dict):
+                            base_md.update(new_md)
+                        elif str(meta_d_input).strip():
+                            base_md[DEFAULT_LOCALE] = str(meta_d_input).strip()
+                    if data.get('meta_desc_en') is not None:
+                        val = str(data['meta_desc_en']).strip()
+                        if val:
+                            base_md['en'] = val
+                        else:
+                            base_md.pop('en', None)
+                    if data.get('meta_desc_ar') is not None:
+                        val = str(data['meta_desc_ar']).strip()
+                        if val:
+                            base_md['ar'] = val
+                        else:
+                            base_md.pop('ar', None)
+                    clean_md = {k: v for k, v in base_md.items() if v}
+                    meta_d_json = dump_json_dict(clean_md) if clean_md else None
+                else:
+                    meta_d_json = existing.get('meta_desc')
 
                 sort_order = int(data.get('sort_order', existing.get('sort_order') or 0))
                 status = data.get('status') or existing.get('status') or 'active'
