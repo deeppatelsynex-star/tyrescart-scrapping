@@ -288,7 +288,15 @@ def register_visionadmin_routes(app):
     @app.route('/admin/blogs', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_blogs():
-        return render_template('visionadmin/blogs.html', page='blogs')
+        page_val = 'blog_categories' if request.args.get('open') == 'categories' else 'blogs'
+        return render_template('visionadmin/blogs.html', page=page_val)
+
+    @app.route('/visionadmin/blog-categories', methods=['GET'])
+    @app.route('/visonadmin/blog-categories', methods=['GET'])
+    @app.route('/admin/blog-categories', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_blog_categories():
+        return redirect('/visionadmin/blogs?open=categories')
 
     @app.route('/visionadmin/sections', methods=['GET'])
     @app.route('/visionadmin/about-sections', methods=['GET'])
