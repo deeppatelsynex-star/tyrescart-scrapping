@@ -2709,37 +2709,44 @@ def register_visionadmin_api_routes(app):
         tree = StoreContext.get_scope_tree()
         active_scope = {
             'website_id': session.get('admin_active_website_id'),
-            'store_id': session.get('admin_active_store_id')
+            'store_id': session.get('admin_active_store_id'),
+            'store_view_id': session.get('admin_active_store_view_id')
         }
         return jsonify({
             'success': True,
             'tree': tree,
-            'active_scope': active_scope
+            'active_scope': active_scope,
+            'active_scope_name': session.get('admin_active_scope_name', 'All Store Views')
         })
 
     @app.route('/visionadmin/api/scopes/switch', methods=['POST'])
     def visionadmin_api_scope_switch():
-        """Switches active Website and Store in admin session."""
+        """Switches active Website, Store, and Store View in admin session."""
         data = request.get_json() or {}
         website_id = data.get('website_id')
         store_id = data.get('store_id')
+        store_view_id = data.get('store_view_id')
         scope_name = data.get('scope_name')
 
-        if website_id in (None, '', 'global') and store_id in (None, '', 'global'):
+        if (website_id in (None, '', 'global') and 
+            store_id in (None, '', 'global') and 
+            store_view_id in (None, '', 'global')):
             session.pop('admin_active_website_id', None)
             session.pop('admin_active_store_id', None)
-            session['admin_active_scope_name'] = 'Global (All Websites)'
+            session.pop('admin_active_store_view_id', None)
+            session['admin_active_scope_name'] = 'All Store Views'
         else:
             session['admin_active_website_id'] = int(website_id) if website_id and str(website_id).isdigit() else None
             session['admin_active_store_id'] = int(store_id) if store_id and str(store_id).isdigit() else None
-            if scope_name:
-                session['admin_active_scope_name'] = scope_name
+            session['admin_active_store_view_id'] = int(store_view_id) if store_view_id and str(store_view_id).isdigit() else None
+            session['admin_active_scope_name'] = scope_name or 'All Store Views'
 
         return jsonify({
             'success': True,
             'website_id': session.get('admin_active_website_id'),
             'store_id': session.get('admin_active_store_id'),
-            'scope_name': session.get('admin_active_scope_name', 'Global Scope'),
+            'store_view_id': session.get('admin_active_store_view_id'),
+            'scope_name': session.get('admin_active_scope_name', 'All Store Views'),
             'message': 'Admin scope updated successfully.'
         })
 
@@ -3046,7 +3053,7 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/store-views', methods=['POST'])
     def visionadmin_api_create_store_view():
         data = request.get_json() or {}
-        store_id = data.get('store_id')
+        store_id = int(data.get('store_id')) if data.get('store_id') else None
         name = (data.get('name') or '').strip()
         code = (data.get('code') or '').strip().lower()
         is_active = 1 if (data.get('status') == '1' or data.get('is_active') in (1, '1', True)) else 0
@@ -3065,21 +3072,20 @@ def register_visionadmin_api_routes(app):
 
                 locale = code.split('_')[0].lower()
 
-                cursor.execute("SELECT id, deleted_at FROM store_views WHERE store_id = %s AND code = %s", (store_id, code))
-                existing = cursor.fetchone()
-                if existing:
-                    if existing.get('deleted_at') is None:
-                        return jsonify({'success': False, 'error': f"Store view code '{code}' already exists for this store."}), 400
-                    cursor.execute("""
-                        UPDATE store_views
-                        SET website_id = %s, name = %s, locale = %s, currency_code = 'AED',
-                            is_active = %s, sort_order = %s, deleted_at = NULL, deleted_by = NULL, updated_by = %s
-                        WHERE id = %s
-                    """, (website_id, name, locale, is_active, sort_order, user_id, existing['id']))
-                    conn.commit()
-                    log_activity('create', 'store_view', existing['id'], {'code': code, 'name': name}, actor_user_id=user_id)
-                    return jsonify({'success': True, 'id': existing['id'], 'message': 'Store view created successfully.'}), 201
+                # 1. Check if an ACTIVE store view already uses this code in this store
+                cursor.execute("SELECT id FROM store_views WHERE store_id = %s AND code = %s AND deleted_at IS NULL", (store_id, code))
+                active_existing = cursor.fetchone()
+                if active_existing:
+                    return jsonify({'success': False, 'error': f"Store view code '{code}' already exists for this store."}), 400
 
+                # 2. Rename any soft-deleted store views with (store_id, code) so unique constraint does not collide
+                cursor.execute("""
+                    UPDATE store_views
+                    SET code = CONCAT(code, '__deleted_', id, '_', UNIX_TIMESTAMP())
+                    WHERE store_id = %s AND code = %s AND deleted_at IS NOT NULL
+                """, (store_id, code))
+
+                # 3. Always insert a new store view record
                 cursor.execute("""
                     INSERT INTO store_views (store_id, website_id, code, name, locale, currency_code, is_active, sort_order, created_by)
                     VALUES (%s, %s, %s, %s, %s, 'AED', %s, %s, %s)
