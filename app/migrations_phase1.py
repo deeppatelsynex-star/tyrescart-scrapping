@@ -256,6 +256,21 @@ PHASE1_TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     """,
 
+    # 11b. Product Categories Pivot
+    """
+    CREATE TABLE IF NOT EXISTS `product_categories` (
+        `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        `product_id` BIGINT UNSIGNED NOT NULL,
+        `category_id` BIGINT UNSIGNED NOT NULL,
+        `position` INT NOT NULL DEFAULT 0,
+        `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY `uq_prod_category` (`product_id`, `category_id`),
+        INDEX `idx_pc_product` (`product_id`),
+        INDEX `idx_pc_category` (`category_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    """,
+
     # 12. Product Stores Pivot
     """
     CREATE TABLE IF NOT EXISTS `product_stores` (
