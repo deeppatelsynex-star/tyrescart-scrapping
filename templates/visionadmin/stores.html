@@ -840,7 +840,12 @@ function storesStudio() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(this.viewForm)
         });
-        const data = await res.json();
+        let data;
+        try {
+          data = await res.json();
+        } catch(je) {
+          throw new Error(`Server returned HTTP ${res.status}`);
+        }
         if (data.success) {
           this.showStoreViewModal = false;
           await this.loadData();
@@ -850,6 +855,7 @@ function storesStudio() {
         }
       } catch (err) {
         console.error('Error saving store view:', err);
+        alert(err.message || 'Error saving store view.');
       }
     },
 
