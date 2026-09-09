@@ -78,7 +78,7 @@
       class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-1.5"
     >
       <span>🗑️ Trash</span>
-      <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'trash' ? 'bg-[#FFE4E6] text-[#E11D48]' : 'bg-slate-100 text-slate-600'" x-text="trashAttributes.length"></span>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="activeTab === 'trash' ? 'bg-[#FFE4E6] text-[#E11D48]' : 'bg-slate-100 text-slate-600'" x-text="trashAttributes.length + trashAttributeSets.length"></span>
     </button>
   </div>
 
@@ -306,23 +306,91 @@
                   <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold uppercase" x-text="attr.scope"></span>
                 </td>
                 <td class="px-5 py-3.5 text-right">
-                  <button 
-                    type="button" 
-                    @click="restoreAttribute(attr)" 
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#EAF7E2] hover:bg-[#D1E7C4] text-[#35760F] text-xs font-bold transition cursor-pointer"
-                    title="Restore Attribute"
-                  >
-                    <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                    <span>Restore</span>
-                  </button>
+                  <div class="inline-flex items-center gap-1.5">
+                    <button 
+                      type="button" 
+                      @click="restoreAttribute(attr)" 
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#EAF7E2] hover:bg-[#D1E7C4] text-[#35760F] text-xs font-bold transition cursor-pointer"
+                      title="Restore Attribute"
+                    >
+                      <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                      <span>Restore</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      @click="purgeAttribute(attr)" 
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition cursor-pointer"
+                      title="Delete Permanently"
+                    >
+                      <svg class="w-3.5 h-3.5 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      <span>Delete Permanently</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </template>
           </tbody>
         </table>
       </div>
-      <div x-show="trashAttributes.length === 0" class="p-12 text-center text-slate-400">
-        Trash is empty. No soft-deleted attributes.
+      <div x-show="trashAttributes.length === 0" class="p-8 text-center text-slate-400">
+        No soft-deleted attributes in trash.
+      </div>
+    </div>
+
+    <!-- TRASHED ATTRIBUTE SETS -->
+    <div class="bg-white rounded-3xl border border-[#FECDD3] overflow-hidden shadow-xs mt-6">
+      <div class="p-4 bg-rose-50/60 border-b border-rose-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          <span class="font-black text-rose-900 text-xs sm:text-sm">Archived &amp; Soft-Deleted Attribute Sets</span>
+        </div>
+        <span class="text-xs text-rose-700 font-bold" x-text="`${trashAttributeSets.length} sets in trash`"></span>
+      </div>
+      <div x-show="trashAttributeSets.length > 0" class="overflow-x-auto">
+        <table id="trashSetsTable" class="w-full text-left text-xs">
+          <thead class="bg-[#F9FCF8] text-slate-400 font-bold uppercase text-[10px] border-b border-[#F1F5F0]">
+            <tr>
+              <th class="px-5 py-3.5">Name</th>
+              <th class="px-5 py-3.5">Slug</th>
+              <th class="px-5 py-3.5">Groups</th>
+              <th class="px-5 py-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#F1F5F0]">
+            <template x-for="set in trashAttributeSets" :key="set.id">
+              <tr class="hover:bg-rose-50/30 transition-colors">
+                <td class="px-5 py-3.5 font-bold text-[#0E1108]" x-text="set.name"></td>
+                <td class="px-5 py-3.5 font-mono text-slate-600" x-text="set.slug"></td>
+                <td class="px-5 py-3.5 text-slate-500" x-text="`${set.groups_count || 0} groups`"></td>
+                <td class="px-5 py-3.5 text-right">
+                  <div class="inline-flex items-center gap-1.5">
+                    <button 
+                      type="button" 
+                      @click="restoreAttributeSet(set)" 
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#EAF7E2] hover:bg-[#D1E7C4] text-[#35760F] text-xs font-bold transition cursor-pointer"
+                      title="Restore Attribute Set"
+                    >
+                      <svg class="w-3.5 h-3.5 text-[#58B31B]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                      <span>Restore</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      @click="purgeAttributeSet(set)" 
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition cursor-pointer"
+                      title="Delete Permanently"
+                    >
+                      <svg class="w-3.5 h-3.5 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      <span>Delete Permanently</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+      <div x-show="trashAttributeSets.length === 0" class="p-8 text-center text-slate-400">
+        No soft-deleted attribute sets.
       </div>
     </div>
   </div>
@@ -550,6 +618,7 @@ function visionAttributesApp() {
     attributes: [],
     trashAttributes: [],
     attributeSets: [],
+    trashAttributeSets: [],
     showCreateModal: false,
     showSetModal: false,
     showDetailModal: false,
@@ -605,6 +674,7 @@ function visionAttributesApp() {
         if (attrData.attributes) this.attributes = attrData.attributes || [];
         if (attrData.trash) this.trashAttributes = attrData.trash || [];
         if (setData.attribute_sets) this.attributeSets = setData.attribute_sets || [];
+        if (setData.trash) this.trashAttributeSets = setData.trash || [];
 
         // Check if query params or URL specify attribute to open
         const path = window.location.pathname;
@@ -892,6 +962,53 @@ function visionAttributesApp() {
         }
       } catch (e) {
         console.error('Restore attribute error:', e);
+      }
+    },
+
+    async purgeAttribute(attr) {
+      if (!confirm(`Are you sure you want to PERMANENTLY delete attribute '${attr.code}'? This action cannot be undone and will delete all stored values across all products.`)) return;
+      try {
+        const res = await fetch(`/visionadmin/api/attributes/${attr.id}/purge`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          await this.initData();
+          if (window.showToast) window.showToast(`Attribute '${attr.code}' permanently deleted.`, 'success');
+        } else {
+          alert(data.error || 'Failed to permanently delete attribute.');
+        }
+      } catch (e) {
+        console.error('Purge attribute error:', e);
+      }
+    },
+
+    async restoreAttributeSet(set) {
+      try {
+        const res = await fetch(`/visionadmin/api/attribute-sets/${set.id}/restore`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          await this.initData();
+          if (window.showToast) window.showToast(`Attribute set '${set.name}' restored.`, 'success');
+        } else {
+          alert(data.error || 'Failed to restore attribute set.');
+        }
+      } catch (e) {
+        console.error('Restore attribute set error:', e);
+      }
+    },
+
+    async purgeAttributeSet(set) {
+      if (!confirm(`Are you sure you want to PERMANENTLY delete attribute set '${set.name}'? This action cannot be undone.`)) return;
+      try {
+        const res = await fetch(`/visionadmin/api/attribute-sets/${set.id}/purge`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          await this.initData();
+          if (window.showToast) window.showToast(`Attribute set '${set.name}' permanently deleted.`, 'success');
+        } else {
+          alert(data.error || 'Failed to permanently delete attribute set.');
+        }
+      } catch (e) {
+        console.error('Purge attribute set error:', e);
       }
     },
 

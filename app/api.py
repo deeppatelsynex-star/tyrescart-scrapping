@@ -3199,6 +3199,183 @@ def register_visionadmin_api_routes(app):
         finally:
             conn.close()
 
+    @app.route('/visionadmin/api/stores/trash', methods=['GET'])
+    def visionadmin_api_stores_trash():
+        """Returns all soft-deleted websites, stores, and store_views."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT id, code, name, domain, is_default, status, sort_order, deleted_at, deleted_by
+                    FROM websites
+                    WHERE deleted_at IS NOT NULL
+                    ORDER BY deleted_at DESC
+                """)
+                trashed_websites = cursor.fetchall() or []
+
+                cursor.execute("""
+                    SELECT s.id, s.website_id, s.code, s.name, s.sort_order, s.deleted_at, s.deleted_by,
+                           w.name AS website_name, w.code AS website_code
+                    FROM stores s
+                    LEFT JOIN websites w ON w.id = s.website_id
+                    WHERE s.deleted_at IS NOT NULL
+                    ORDER BY s.deleted_at DESC
+                """)
+                trashed_stores = cursor.fetchall() or []
+
+                cursor.execute("""
+                    SELECT sv.id, sv.store_id, sv.website_id, sv.code, sv.name, sv.locale, sv.is_active, sv.sort_order, sv.deleted_at, sv.deleted_by,
+                           s.name AS store_name, s.code AS store_code,
+                           w.name AS website_name, w.code AS website_code
+                    FROM store_views sv
+                    LEFT JOIN stores s ON s.id = sv.store_id
+                    LEFT JOIN websites w ON w.id = sv.website_id OR w.id = s.website_id
+                    WHERE sv.deleted_at IS NOT NULL
+                    ORDER BY sv.deleted_at DESC
+                """)
+                trashed_views = cursor.fetchall() or []
+
+                for v in trashed_views:
+                    raw_c = v.get('code') or ''
+                    v['display_code'] = re.sub(r'__deleted_\d+_\d+$', '', raw_c)
+
+                total_count = len(trashed_websites) + len(trashed_stores) + len(trashed_views)
+                return jsonify({
+                    'success': True,
+                    'websites': trashed_websites,
+                    'stores': trashed_stores,
+                    'store_views': trashed_views,
+                    'total_count': total_count
+                })
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/websites/<int:web_id>/restore', methods=['POST'])
+    def visionadmin_api_restore_website(web_id):
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM websites WHERE id = %s AND deleted_at IS NOT NULL", (web_id,))
+                web = cursor.fetchone()
+                if not web:
+                    return jsonify({'success': False, 'error': 'Website not found in trash.'}), 404
+
+                cursor.execute("UPDATE websites SET deleted_at = NULL, deleted_by = NULL, updated_by = %s WHERE id = %s", (user_id, web_id))
+                conn.commit()
+                log_activity('restore', 'website', web_id, {'deleted': True}, {'deleted': False}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': f"Website '{web['name']}' restored successfully."})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/websites/<int:web_id>/purge', methods=['DELETE', 'POST'])
+    def visionadmin_api_purge_website(web_id):
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM websites WHERE id = %s", (web_id,))
+                web = cursor.fetchone()
+                if not web:
+                    return jsonify({'success': False, 'error': 'Website not found.'}), 404
+                if web.get('is_default') == 1:
+                    return jsonify({'success': False, 'error': 'Cannot permanently delete the default primary website.'}), 400
+
+                cursor.execute("SELECT id FROM stores WHERE website_id = %s AND deleted_at IS NULL", (web_id,))
+                if cursor.fetchone():
+                    return jsonify({'success': False, 'error': 'Cannot permanently delete website because it contains active stores. Delete or move them first.'}), 400
+
+                cursor.execute("DELETE FROM store_views WHERE website_id = %s", (web_id,))
+                cursor.execute("DELETE FROM stores WHERE website_id = %s", (web_id,))
+                cursor.execute("DELETE FROM websites WHERE id = %s", (web_id,))
+                conn.commit()
+                log_activity('purge', 'website', web_id, web, {'purged': True}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': f"Website '{web['name']}' permanently deleted."})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/stores/<int:store_id>/restore', methods=['POST'])
+    def visionadmin_api_restore_store(store_id):
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM stores WHERE id = %s AND deleted_at IS NOT NULL", (store_id,))
+                store = cursor.fetchone()
+                if not store:
+                    return jsonify({'success': False, 'error': 'Store not found in trash.'}), 404
+
+                cursor.execute("UPDATE stores SET deleted_at = NULL, deleted_by = NULL, updated_by = %s WHERE id = %s", (user_id, store_id))
+                conn.commit()
+                log_activity('restore', 'store', store_id, {'deleted': True}, {'deleted': False}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': f"Store '{store['code']}' restored successfully."})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/stores/<int:store_id>/purge', methods=['DELETE', 'POST'])
+    def visionadmin_api_purge_store(store_id):
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM stores WHERE id = %s", (store_id,))
+                store = cursor.fetchone()
+                if not store:
+                    return jsonify({'success': False, 'error': 'Store not found.'}), 404
+
+                cursor.execute("SELECT id FROM store_views WHERE store_id = %s AND deleted_at IS NULL", (store_id,))
+                if cursor.fetchone():
+                    return jsonify({'success': False, 'error': 'Cannot permanently delete store because it contains active store views. Delete them first.'}), 400
+
+                cursor.execute("DELETE FROM store_views WHERE store_id = %s", (store_id,))
+                cursor.execute("DELETE FROM stores WHERE id = %s", (store_id,))
+                conn.commit()
+                log_activity('purge', 'store', store_id, store, {'purged': True}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': f"Store '{store['code']}' permanently deleted."})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/store-views/<int:view_id>/restore', methods=['POST'])
+    def visionadmin_api_restore_store_view(view_id):
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NOT NULL", (view_id,))
+                view = cursor.fetchone()
+                if not view:
+                    return jsonify({'success': False, 'error': 'Store view not found in trash.'}), 404
+
+                clean_code = re.sub(r'__deleted_\d+_\d+$', '', view.get('code') or '')
+                cursor.execute("SELECT id FROM store_views WHERE store_id = %s AND code = %s AND deleted_at IS NULL", (view['store_id'], clean_code))
+                if cursor.fetchone():
+                    clean_code = f"{clean_code}_restored_{int(time.time())}"
+
+                cursor.execute("UPDATE store_views SET deleted_at = NULL, deleted_by = NULL, code = %s, updated_by = %s WHERE id = %s", (clean_code, user_id, view_id))
+                conn.commit()
+                log_activity('restore', 'store_view', view_id, {'deleted': True}, {'deleted': False}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': f"Store view '{view['name']}' restored successfully."})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/store-views/<int:view_id>/purge', methods=['DELETE', 'POST'])
+    def visionadmin_api_purge_store_view(view_id):
+        user_id = session.get('admin_user_id') or session.get('user_id')
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM store_views WHERE id = %s", (view_id,))
+                view = cursor.fetchone()
+                if not view:
+                    return jsonify({'success': False, 'error': 'Store view not found.'}), 404
+
+                cursor.execute("DELETE FROM store_views WHERE id = %s", (view_id,))
+                conn.commit()
+                log_activity('purge', 'store_view', view_id, view, {'purged': True}, actor_user_id=user_id)
+                return jsonify({'success': True, 'message': f"Store view '{view['name']}' permanently deleted."})
+        finally:
+            conn.close()
+
     # =========================================================================
     # 8. DYNAMIC ATTRIBUTES & ATTRIBUTE SETS API
     # =========================================================================
@@ -3484,6 +3661,16 @@ def register_visionadmin_api_routes(app):
         log_activity('restore', 'attribute', attr_id, {'deleted': True}, {'deleted': False}, user_id=user_id)
         return jsonify({'success': True, 'message': f"Attribute #{attr_id} restored successfully."})
 
+    @app.route('/visionadmin/api/attributes/<int:attr_id>/purge', methods=['DELETE', 'POST'])
+    def visionadmin_api_purge_attribute(attr_id):
+        """Permanently deletes an attribute and its options from the database."""
+        user_id = get_current_admin_user_id()
+        success = AttributeService.purge_attribute(attr_id)
+        if not success:
+            return jsonify({'error': 'Attribute not found.'}), 404
+        log_activity('purge', 'attribute', attr_id, None, {'purged': True}, user_id=user_id)
+        return jsonify({'success': True, 'message': f"Attribute #{attr_id} permanently deleted from database."})
+
     @app.route('/visionadmin/api/attributes/import-csv', methods=['POST'])
     def visionadmin_api_import_attributes_csv():
         """Imports or synchronizes attributes from an ElasticSuite / Magento product attribute CSV file."""
@@ -3601,7 +3788,8 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/attribute-sets', methods=['GET'])
     def visionadmin_api_list_attribute_sets():
         sets = AttributeService.get_attribute_sets()
-        return jsonify({'attribute_sets': sets, 'count': len(sets)})
+        trash = AttributeService.get_trash_attribute_sets()
+        return jsonify({'attribute_sets': sets, 'count': len(sets), 'trash': trash, 'trash_count': len(trash)})
 
     @app.route('/visionadmin/api/attribute-sets/<int:set_id>', methods=['GET'])
     def visionadmin_api_get_attribute_set_detail(set_id):
@@ -3734,6 +3922,38 @@ def register_visionadmin_api_routes(app):
 
                 log_activity('delete', 'attribute_set', set_id, attr_set, {'deleted': True}, user_id=user_id)
                 return jsonify({'success': True, 'message': f"Attribute set '{attr_set['name']}' moved to trash."})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/attribute-sets/<int:set_id>/restore', methods=['POST'])
+    def visionadmin_api_restore_attribute_set(set_id):
+        user_id = get_current_admin_user_id()
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("UPDATE attribute_sets SET deleted_at = NULL, deleted_by = NULL, updated_by = %s WHERE id = %s", (user_id, set_id))
+                conn.commit()
+                if cursor.rowcount == 0:
+                    return jsonify({'error': 'Attribute set not found in trash.'}), 404
+                log_activity('restore', 'attribute_set', set_id, {'deleted': True}, {'deleted': False}, user_id=user_id)
+                return jsonify({'success': True, 'message': f"Attribute set #{set_id} restored successfully."})
+        finally:
+            conn.close()
+
+    @app.route('/visionadmin/api/attribute-sets/<int:set_id>/purge', methods=['DELETE', 'POST'])
+    def visionadmin_api_purge_attribute_set(set_id):
+        user_id = get_current_admin_user_id()
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM attribute_group_attributes WHERE attribute_group_id IN (SELECT id FROM attribute_groups WHERE attribute_set_id = %s)", (set_id,))
+                cursor.execute("DELETE FROM attribute_groups WHERE attribute_set_id = %s", (set_id,))
+                cursor.execute("DELETE FROM attribute_sets WHERE id = %s", (set_id,))
+                conn.commit()
+                if cursor.rowcount == 0:
+                    return jsonify({'error': 'Attribute set not found.'}), 404
+                log_activity('purge', 'attribute_set', set_id, None, {'purged': True}, user_id=user_id)
+                return jsonify({'success': True, 'message': f"Attribute set #{set_id} permanently deleted."})
         finally:
             conn.close()
 
@@ -4027,7 +4247,8 @@ def register_visionadmin_api_routes(app):
             status = request.args.get('status', '').strip() or None
             parent_id = int(request.args.get('parent_id')) if request.args.get('parent_id') else None
 
-            res = Category.search_and_paginate(query=query, status=status, parent_id=parent_id, page=page, per_page=per_page)
+            trash = request.args.get('trash') in ('1', 'true') or request.args.get('status') == 'trash'
+            res = Category.search_and_paginate(query=query, status=status, parent_id=parent_id, page=page, per_page=per_page, trash=trash)
             return jsonify({'success': True, **res})
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
@@ -4079,13 +4300,42 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/categories/<int:cat_id>', methods=['DELETE'])
     @app.route('/visionadmin/api/catalog/categories/<int:cat_id>', methods=['DELETE'])
     def visionadmin_api_delete_category(cat_id):
-        """Soft delete category."""
+        """Soft delete or permanently purge category."""
         try:
+            permanent = request.args.get('permanent') in ('1', 'true') or request.args.get('hard') in ('1', 'true')
             user_id = session.get('user_id')
-            success = Category.delete(cat_id, user_id=user_id)
+            if permanent:
+                success = Category.purge(cat_id)
+                msg = 'Category permanently deleted!'
+            else:
+                success = Category.delete(cat_id, user_id=user_id)
+                msg = 'Category moved to trash successfully!'
             if not success:
                 return jsonify({'success': False, 'error': 'Category not found'}), 404
-            return jsonify({'success': True, 'message': 'Category deleted successfully!'})
+            return jsonify({'success': True, 'message': msg})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/categories/<int:cat_id>/restore', methods=['POST'])
+    def visionadmin_api_restore_category(cat_id):
+        """Restore soft-deleted category."""
+        try:
+            user_id = session.get('user_id')
+            success = Category.restore(cat_id, user_id=user_id)
+            if not success:
+                return jsonify({'success': False, 'error': 'Category not found or already active'}), 404
+            return jsonify({'success': True, 'message': 'Category restored successfully!'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/categories/<int:cat_id>/purge', methods=['DELETE'])
+    def visionadmin_api_purge_category(cat_id):
+        """Permanently delete category."""
+        try:
+            success = Category.purge(cat_id)
+            if not success:
+                return jsonify({'success': False, 'error': 'Category not found'}), 404
+            return jsonify({'success': True, 'message': 'Category permanently deleted!'})
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
 

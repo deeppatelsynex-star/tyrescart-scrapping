@@ -79,6 +79,21 @@ class AttributeService:
             conn.close()
 
     @staticmethod
+    def purge_attribute(attr_id):
+        """Hard deletes an attribute and its associated options and group mappings from the database."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM attribute_options WHERE attribute_id = %s", (attr_id,))
+                cursor.execute("DELETE FROM attribute_group_attributes WHERE attribute_id = %s", (attr_id,))
+                cursor.execute("DELETE FROM product_attribute_values WHERE attribute_id = %s", (attr_id,))
+                cursor.execute("DELETE FROM attributes WHERE id = %s", (attr_id,))
+                conn.commit()
+                return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    @staticmethod
     def get_attribute_options(attribute_id):
         conn = get_connection()
         try:
@@ -113,6 +128,24 @@ class AttributeService:
                     WHERE s.deleted_at IS NULL
                     GROUP BY s.id, s.name, s.slug, s.description, s.is_system, s.sort_order, s.created_at, s.updated_at
                     ORDER BY s.sort_order ASC, s.id ASC
+                """)
+                return cursor.fetchall()
+        finally:
+            conn.close()
+
+    @staticmethod
+    def get_trash_attribute_sets():
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT s.id, s.name, s.slug, s.description, s.is_system, s.sort_order, s.created_at, s.updated_at, s.deleted_at,
+                           COUNT(DISTINCT g.id) AS groups_count
+                    FROM attribute_sets s
+                    LEFT JOIN attribute_groups g ON s.id = g.attribute_set_id
+                    WHERE s.deleted_at IS NOT NULL
+                    GROUP BY s.id, s.name, s.slug, s.description, s.is_system, s.sort_order, s.created_at, s.updated_at, s.deleted_at
+                    ORDER BY s.deleted_at DESC
                 """)
                 return cursor.fetchall()
         finally:

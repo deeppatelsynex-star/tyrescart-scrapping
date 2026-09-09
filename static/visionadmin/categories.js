@@ -11,6 +11,7 @@ function visionCategoriesApp() {
     saving: false,
     searchQuery: '',
     statusFilter: 'all',
+    trashCount: 0,
     parentFilter: '',
     currentPage: 1,
     perPage: 15,
@@ -73,6 +74,9 @@ function visionCategoriesApp() {
           q: this.searchQuery || '',
           status: this.statusFilter || 'all'
         });
+        if (this.statusFilter === 'trash') {
+          params.set('trash', '1');
+        }
         if (this.parentFilter) {
           params.append('parent_id', this.parentFilter);
         }
@@ -84,6 +88,7 @@ function visionCategoriesApp() {
           this.categories = data.items || [];
           this.totalItems = data.total || 0;
           this.totalPages = data.total_pages || 1;
+          this.trashCount = data.trash_count || 0;
         } else {
           this.showToast(data.error || 'Failed to load categories.', 'error');
         }
@@ -224,6 +229,48 @@ function visionCategoriesApp() {
       } catch (err) {
         console.error('Delete error:', err);
         this.showToast('Network error deleting category.', 'error');
+      }
+    },
+
+    async restoreCategory(c) {
+      try {
+        const res = await fetch(`/visionadmin/api/categories/${c.id}/restore`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.showToast(data.message || 'Category restored successfully!', 'success');
+          this.loadCategories(this.currentPage);
+          this.loadParentOptions();
+        } else {
+          this.showToast(data.error || 'Failed to restore category.', 'error');
+        }
+      } catch (err) {
+        console.error('Restore error:', err);
+        this.showToast('Network error restoring category.', 'error');
+      }
+    },
+
+    async purgeCategory(c) {
+      if (!confirm(`Are you sure you want to PERMANENTLY delete category "${c.name_en}"? This action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/visionadmin/api/categories/${c.id}/purge`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.showToast(data.message || 'Category permanently deleted!', 'success');
+          this.loadCategories(this.currentPage);
+          this.loadParentOptions();
+        } else {
+          this.showToast(data.error || 'Failed to permanently delete category.', 'error');
+        }
+      } catch (err) {
+        console.error('Purge error:', err);
+        this.showToast('Network error permanently deleting category.', 'error');
       }
     },
 
