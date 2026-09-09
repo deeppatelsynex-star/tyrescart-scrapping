@@ -89,6 +89,21 @@ def home_locale(lang_code):
 
 
 # --- BLOG LISTING ROUTES ---
+@site_bp.route('/blog')
+@site_bp.route('/blog/')
+@site_bp.route('/blogs')
+@site_bp.route('/blogs/')
+def blog_default():
+    """Directly render blog listing using active site locale."""
+    code = _get_locale()
+    session['site_locale'] = code
+    categories = Blog.distinct_categories(locale=code)
+    selected_category = (request.args.get('category') or '').strip()
+    resp = make_response(render_template('Client/Blog.html', locale=code, categories=categories, selected_category=selected_category))
+    resp.set_cookie('site_locale', code, max_age=31536000, path='/')
+    return resp
+
+
 @site_bp.route('/<string(length=2):lang_code>/blog')
 @site_bp.route('/<string(length=2):lang_code>/blog/')
 @site_bp.route('/<string(length=2):lang_code>/blogs')
