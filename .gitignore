@@ -44,6 +44,7 @@ env/
 # Scratch, logs, outputs & temp files
 scratch/
 tmp/
+backups/
 *.log
 *.xlsx
 
