@@ -121,7 +121,20 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       } else if (code === 'ev_rated' || code === 'ev_tyre') {
         this.form.ev_rated = Boolean(val);
       } else if (code === 'warranty_period' || code === 'warranty_months') {
-        if (val || !this.form.warranty_months) this.form.warranty_months = val;
+        let months = val;
+        if (typeof val === 'string') {
+          const yMatch = val.match(/(\d+(?:\.\d+)?)\s*(?:year|yr)/i);
+          const mMatch = val.match(/(\d+)\s*(?:month|mo)/i);
+          const dMatch = val.match(/\d+/);
+          if (yMatch) {
+            months = Math.round(parseFloat(yMatch[1]) * 12);
+          } else if (mMatch) {
+            months = parseInt(mMatch[1], 10);
+          } else if (dMatch) {
+            months = parseInt(dMatch[0], 10);
+          }
+        }
+        this.form.warranty_months = months !== undefined && months !== null ? months : (val || null);
       }
     },
 
@@ -763,30 +776,51 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         payload.website_ids = this.form.website_ids || [1];
         payload.website_id = (this.form.website_ids && this.form.website_ids.length ? this.form.website_ids[0] : 1);
 
+        if (payload.warranty_months !== undefined && payload.warranty_months !== null) {
+          if (typeof payload.warranty_months === 'string') {
+            const yMatch = payload.warranty_months.match(/(\d+(?:\.\d+)?)\s*(?:year|yr)/i);
+            const mMatch = payload.warranty_months.match(/(\d+)\s*(?:month|mo)/i);
+            const dMatch = payload.warranty_months.match(/\d+/);
+            if (yMatch) {
+              payload.warranty_months = Math.round(parseFloat(yMatch[1]) * 12);
+            } else if (mMatch) {
+              payload.warranty_months = parseInt(mMatch[1], 10);
+            } else if (dMatch) {
+              payload.warranty_months = parseInt(dMatch[0], 10);
+            }
+          }
+        }
+
         const res = await fetch(url, {
           method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
-        const data = await res.json();
-        if (res.ok && data.success) {
+        let data = null;
+        try {
+          data = await res.json();
+        } catch (jsonErr) {
+          data = { error: `Server error (${res.status}): ${res.statusText || 'Unexpected server response'}` };
+        }
+
+        if (res.ok && data && data.success) {
           this.showToast(data.message || 'Product saved successfully!', 'success');
           if (newAfter) {
             window.location.href = '/visionadmin/products/create';
           } else if (closeAfter) {
             window.location.href = '/visionadmin/products';
-          } else if (!this.isEditMode && data.product_id) {
-            window.location.href = `/visionadmin/products/${data.product_id}/edit`;
+          } else if (!this.isEditMode && (data.product_id || data.id)) {
+            window.location.href = `/visionadmin/products/${data.product_id || data.id}/edit`;
           } else {
             await this.fetchProducts();
           }
         } else {
-          this.showToast(data.error || 'Failed to save product.', 'error');
+          this.showToast((data && data.error) || 'Failed to save product.', 'error');
         }
       } catch (err) {
         console.error('Save product error:', err);
-        this.showToast('Network error saving product.', 'error');
+        this.showToast((err && err.message) || 'Network error saving product.', 'error');
       } finally {
         this.isSubmitting = false;
       }
