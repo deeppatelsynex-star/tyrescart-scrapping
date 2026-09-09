@@ -422,15 +422,17 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         name_json = dump_json_dict(name_dict)
         slug_seed = name_dict.get('en') or next(iter(name_dict.values()), '')
         slug = SlugMixin.slugify(slug) if slug else SlugMixin.slugify(slug_seed or '')
+        name_en_val = name_dict.get('en') or (next(iter(name_dict.values()), '') if name_dict else None)
+        name_ar_val = name_dict.get('ar')
 
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
                     UPDATE blog_categories
-                    SET name = %s, slug = %s, updated_at = NOW(), updated_by = %s
+                    SET name = %s, name_en = %s, name_ar = %s, slug = %s, updated_at = NOW(), updated_by = %s
                     WHERE id = %s AND deleted_at IS NULL
-                """, (name_json, slug, user_id, cat_id))
+                """, (name_json, name_en_val, name_ar_val, slug, user_id, cat_id))
                 conn.commit()
                 cursor.execute("SELECT * FROM blog_categories WHERE id = %s", (cat_id,))
                 row = cursor.fetchone()
@@ -482,6 +484,8 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         slug_seed = name_dict.get('en') or next(iter(name_dict.values()), '')
         slug = SlugMixin.slugify(slug_seed)
         name_json = dump_json_dict(name_dict)
+        name_en_val = name_dict.get('en') or (next(iter(name_dict.values()), '') if name_dict else None)
+        name_ar_val = name_dict.get('ar')
 
         conn = get_connection()
         try:
@@ -497,7 +501,9 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     row['name'] = cls._parse_json(row.get('name'))
                     if isinstance(row['name'], dict) and any(k not in row['name'] for k in name_dict):
                         row['name'].update(name_dict)
-                        cursor.execute("UPDATE blog_categories SET name = %s, updated_at = NOW() WHERE id = %s", (dump_json_dict(row['name']), row['id']))
+                        row_en = row['name'].get('en') or (next(iter(row['name'].values()), '') if row['name'] else None)
+                        row_ar = row['name'].get('ar')
+                        cursor.execute("UPDATE blog_categories SET name = %s, name_en = %s, name_ar = %s, updated_at = NOW() WHERE id = %s", (dump_json_dict(row['name']), row_en, row_ar, row['id']))
                         conn.commit()
                     row['display_name'] = localize_value(row['name'])
                     row['name_en'] = localize_value(row['name'], 'en')
@@ -505,9 +511,9 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     return row
 
                 cursor.execute("""
-                    INSERT INTO blog_categories (name, slug, sort_order, created_at, updated_at, created_by, updated_by)
-                    VALUES (%s, %s, 0, NOW(), NOW(), %s, %s)
-                """, (name_json, slug, user_id, user_id))
+                    INSERT INTO blog_categories (name, name_en, name_ar, slug, sort_order, created_at, updated_at, created_by, updated_by)
+                    VALUES (%s, %s, %s, %s, 0, NOW(), NOW(), %s, %s)
+                """, (name_json, name_en_val, name_ar_val, slug, user_id, user_id))
                 conn.commit()
                 cat_id = cursor.lastrowid
                 return {

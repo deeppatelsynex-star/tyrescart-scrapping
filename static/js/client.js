@@ -543,6 +543,7 @@
     initNavActiveState();
     renderFaqSections();
     initFaqAccordion();
+    sliderInit();
   }
 
   if (document.readyState === 'loading') {
@@ -551,3 +552,60 @@
     initAll();
   }
 })();
+
+
+sliderInit = function() {
+
+    const slides = document.querySelector(".slides");
+    const slideItems = document.querySelectorAll(".slide");
+    const dots = document.querySelectorAll(".dot");
+
+    // Slider does not exist on this page
+    if (!slides || slideItems.length === 0) {
+        return;
+    }
+
+    let currentSlide = 0;
+    const totalSlides = slideItems.length;
+
+    function showSlide(index) {
+
+        if (index >= totalSlides) {
+            currentSlide = 0;
+        } 
+        else if (index < 0) {
+            currentSlide = totalSlides - 1;
+        } 
+        else {
+            currentSlide = index;
+        }
+
+        slides.style.transform =
+            `translateX(-${currentSlide * 100}%)`;
+
+        dots.forEach((dot, index) => {
+            dot.classList.toggle(
+                "active",
+                index === currentSlide
+            );
+        });
+    }
+
+    window.nextSlide = function () {
+        showSlide(currentSlide + 1);
+    };
+
+    window.prevSlide = function () {
+        showSlide(currentSlide - 1);
+    };
+
+    window.goToSlide = function (index) {
+        showSlide(index);
+    };
+
+    // Auto slide
+    setInterval(function () {
+        nextSlide();
+    }, 3000);
+
+};

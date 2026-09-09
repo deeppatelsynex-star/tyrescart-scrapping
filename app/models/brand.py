@@ -171,18 +171,24 @@ class Brand:
                     meta_d_dict['ar'] = str(data['meta_desc_ar']).strip()
                 meta_d_dict = {k: v for k, v in meta_d_dict.items() if v}
                 meta_d_json = dump_json_dict(meta_d_dict) if meta_d_dict else None
+                desc_en_val = desc_dict.get('en') if desc_dict else None
+                desc_ar_val = desc_dict.get('ar') if desc_dict else None
+                mt_en_val = meta_t_dict.get('en') if meta_t_dict else None
+                md_en_val = meta_d_dict.get('en') if meta_d_dict else None
 
                 now = datetime.now(timezone.utc)
 
                 cursor.execute("""
                     INSERT INTO brands (
-                        name, slug, logo, description, country, sort_order,
-                        is_featured, status, meta_title, meta_desc,
+                        name, slug, logo, description, description_en, description_ar,
+                        country, sort_order, is_featured, status,
+                        meta_title, meta_desc, meta_title_en, meta_desc_en,
                         created_by, created_at, updated_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    name, slug, logo, desc_json, country, sort_order,
-                    is_featured, status, meta_t_json, meta_d_json,
+                    name, slug, logo, desc_json, desc_en_val, desc_ar_val,
+                    country, sort_order, is_featured, status,
+                    meta_t_json, meta_d_json, mt_en_val, md_en_val,
                     user_id, now, now
                 ))
                 conn.commit()
@@ -233,8 +239,12 @@ class Brand:
                             base_dict.pop('ar', None)
                     clean_dict = {k: v for k, v in base_dict.items() if v}
                     desc_json = dump_json_dict(clean_dict) if clean_dict else None
+                    desc_en_val = clean_dict.get('en') if clean_dict else None
+                    desc_ar_val = clean_dict.get('ar') if clean_dict else None
                 else:
                     desc_json = existing.get('description')
+                    desc_en_val = existing.get('description_en')
+                    desc_ar_val = existing.get('description_ar')
 
                 meta_t_input = data.get('meta_title') or data.get('meta_title_en')
                 if meta_t_input is not None or 'meta_title' in data or 'meta_title_en' in data or 'meta_title_ar' in data:
@@ -261,8 +271,10 @@ class Brand:
                             base_mt.pop('ar', None)
                     clean_mt = {k: v for k, v in base_mt.items() if v}
                     meta_t_json = dump_json_dict(clean_mt) if clean_mt else None
+                    mt_en_val = clean_mt.get('en') if clean_mt else None
                 else:
                     meta_t_json = existing.get('meta_title')
+                    mt_en_val = existing.get('meta_title_en')
 
                 meta_d_input = data.get('meta_desc') or data.get('meta_desc_en')
                 if meta_d_input is not None or 'meta_desc' in data or 'meta_desc_en' in data or 'meta_desc_ar' in data:
@@ -289,8 +301,10 @@ class Brand:
                             base_md.pop('ar', None)
                     clean_md = {k: v for k, v in base_md.items() if v}
                     meta_d_json = dump_json_dict(clean_md) if clean_md else None
+                    md_en_val = clean_md.get('en') if clean_md else None
                 else:
                     meta_d_json = existing.get('meta_desc')
+                    md_en_val = existing.get('meta_desc_en')
 
                 now = datetime.now(timezone.utc)
 
@@ -300,18 +314,23 @@ class Brand:
                         slug = %s,
                         logo = %s,
                         description = %s,
+                        description_en = %s,
+                        description_ar = %s,
                         country = %s,
                         sort_order = %s,
                         is_featured = %s,
                         status = %s,
                         meta_title = %s,
                         meta_desc = %s,
+                        meta_title_en = %s,
+                        meta_desc_en = %s,
                         updated_by = %s,
                         updated_at = %s
                     WHERE id = %s AND deleted_at IS NULL
                 """, (
-                    name, slug, logo, desc_json, country, sort_order,
-                    is_featured, status, meta_t_json, meta_d_json,
+                    name, slug, logo, desc_json, desc_en_val, desc_ar_val,
+                    country, sort_order, is_featured, status,
+                    meta_t_json, meta_d_json, mt_en_val, md_en_val,
                     user_id, now, brand_id
                 ))
                 conn.commit()

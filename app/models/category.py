@@ -218,14 +218,27 @@ class Category:
                 status = data.get('status') or 'active'
                 now = datetime.now(timezone.utc)
 
+                name_en_val = name_dict.get('en') or (next(iter(name_dict.values()), '') if name_dict else None)
+                name_ar_val = name_dict.get('ar') if name_dict else None
+                desc_en_val = desc_dict.get('en') if desc_dict else None
+                desc_ar_val = desc_dict.get('ar') if desc_dict else None
+                mt_en_val = meta_t_dict.get('en') if meta_t_dict else None
+                mt_ar_val = meta_t_dict.get('ar') if meta_t_dict else None
+                md_en_val = meta_d_dict.get('en') if meta_d_dict else None
+                md_ar_val = meta_d_dict.get('ar') if meta_d_dict else None
+
                 cursor.execute("""
                     INSERT INTO categories (
-                        name, slug, parent_id, image, description, sort_order,
-                        status, meta_title, meta_desc, created_by, created_at, updated_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        name, name_en, name_ar, slug, parent_id, image, description,
+                        description_en, description_ar, sort_order, status,
+                        meta_title, meta_desc, meta_title_en, meta_title_ar,
+                        meta_desc_en, meta_desc_ar, created_by, created_at, updated_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    name_json, slug, parent_id, image, desc_json, sort_order,
-                    status, meta_t_json, meta_d_json, user_id, now, now
+                    name_json, name_en_val, name_ar_val, slug, parent_id, image, desc_json,
+                    desc_en_val, desc_ar_val, sort_order, status,
+                    meta_t_json, meta_d_json, mt_en_val, mt_ar_val,
+                    md_en_val, md_ar_val, user_id, now, now
                 ))
                 conn.commit()
                 return cursor.lastrowid
@@ -254,9 +267,13 @@ class Category:
                     name_json = dump_json_dict(name_dict)
                     slug_seed = name_dict.get('en') or next(iter(name_dict.values()), '')
                     slug = cls.slugify(data.get('slug') or slug_seed)
+                    name_en_val = name_dict.get('en') or (next(iter(name_dict.values()), '') if name_dict else None)
+                    name_ar_val = name_dict.get('ar')
                 else:
                     name_json = existing.get('name')
                     slug = data.get('slug') or existing.get('slug')
+                    name_en_val = existing.get('name_en')
+                    name_ar_val = existing.get('name_ar')
 
                 parent_id = int(data.get('parent_id')) if data.get('parent_id') else None
                 image = data.get('image') if 'image' in data else existing.get('image')
@@ -286,8 +303,12 @@ class Category:
                             base_dict.pop('ar', None)
                     clean_dict = {k: v for k, v in base_dict.items() if v}
                     desc_json = dump_json_dict(clean_dict) if clean_dict else None
+                    desc_en_val = clean_dict.get('en') if clean_dict else None
+                    desc_ar_val = clean_dict.get('ar') if clean_dict else None
                 else:
                     desc_json = existing.get('description')
+                    desc_en_val = existing.get('description_en')
+                    desc_ar_val = existing.get('description_ar')
 
                 meta_t_input = data.get('meta_title') or data.get('meta_title_en')
                 if meta_t_input is not None or 'meta_title' in data or 'meta_title_en' in data or 'meta_title_ar' in data:
@@ -314,8 +335,12 @@ class Category:
                             base_mt.pop('ar', None)
                     clean_mt = {k: v for k, v in base_mt.items() if v}
                     meta_t_json = dump_json_dict(clean_mt) if clean_mt else None
+                    mt_en_val = clean_mt.get('en') if clean_mt else None
+                    mt_ar_val = clean_mt.get('ar') if clean_mt else None
                 else:
                     meta_t_json = existing.get('meta_title')
+                    mt_en_val = existing.get('meta_title_en')
+                    mt_ar_val = existing.get('meta_title_ar')
 
                 meta_d_input = data.get('meta_desc') or data.get('meta_desc_en')
                 if meta_d_input is not None or 'meta_desc' in data or 'meta_desc_en' in data or 'meta_desc_ar' in data:
@@ -342,8 +367,12 @@ class Category:
                             base_md.pop('ar', None)
                     clean_md = {k: v for k, v in base_md.items() if v}
                     meta_d_json = dump_json_dict(clean_md) if clean_md else None
+                    md_en_val = clean_md.get('en') if clean_md else None
+                    md_ar_val = clean_md.get('ar') if clean_md else None
                 else:
                     meta_d_json = existing.get('meta_desc')
+                    md_en_val = existing.get('meta_desc_en')
+                    md_ar_val = existing.get('meta_desc_ar')
 
                 sort_order = int(data.get('sort_order', existing.get('sort_order') or 0))
                 status = data.get('status') or existing.get('status') or 'active'
@@ -352,20 +381,30 @@ class Category:
                 cursor.execute("""
                     UPDATE categories SET
                         name = %s,
+                        name_en = %s,
+                        name_ar = %s,
                         slug = %s,
                         parent_id = %s,
                         image = %s,
                         description = %s,
+                        description_en = %s,
+                        description_ar = %s,
                         sort_order = %s,
                         status = %s,
                         meta_title = %s,
                         meta_desc = %s,
+                        meta_title_en = %s,
+                        meta_title_ar = %s,
+                        meta_desc_en = %s,
+                        meta_desc_ar = %s,
                         updated_by = %s,
                         updated_at = %s
                     WHERE id = %s AND deleted_at IS NULL
                 """, (
-                    name_json, slug, parent_id, image, desc_json, sort_order,
-                    status, meta_t_json, meta_d_json, user_id, now, cat_id
+                    name_json, name_en_val, name_ar_val, slug, parent_id, image,
+                    desc_json, desc_en_val, desc_ar_val, sort_order, status,
+                    meta_t_json, meta_d_json, mt_en_val, mt_ar_val,
+                    md_en_val, md_ar_val, user_id, now, cat_id
                 ))
                 conn.commit()
                 return cursor.rowcount > 0
