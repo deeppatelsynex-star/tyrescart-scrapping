@@ -291,8 +291,8 @@ class Product:
                     params.append(brand_id)
 
                 if category_id:
-                    where_clauses.append("p.category_id = %s")
-                    params.append(category_id)
+                    where_clauses.append("(p.category_id = %s OR EXISTS (SELECT 1 FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id = %s))")
+                    params.extend([category_id, category_id])
 
                 if attribute_set_id:
                     where_clauses.append("p.attribute_set_id = %s")
@@ -402,6 +402,14 @@ class Product:
                             res['website_ids'] = [res['website_id']]
                     except Exception:
                         res['website_ids'] = [res.get('website_id')] if res.get('website_id') else [1]
+                    try:
+                        cursor.execute("SELECT category_id FROM product_categories WHERE product_id = %s ORDER BY position ASC, id ASC", (product_id,))
+                        c_rows = cursor.fetchall() or []
+                        res['category_ids'] = [r['category_id'] for r in c_rows]
+                        if not res['category_ids'] and res.get('category_id'):
+                            res['category_ids'] = [res['category_id']]
+                    except Exception:
+                        res['category_ids'] = [res.get('category_id')] if res.get('category_id') else []
                 return res
         finally:
             conn.close()
@@ -611,6 +619,22 @@ class Product:
                             cursor.execute("UPDATE products SET website_id = %s WHERE id = %s", (first_wid, new_id))
                     except Exception:
                         pass
+
+                # Sync product categories
+                category_ids = data.get('category_ids')
+                if not category_ids and category_id:
+                    category_ids = [category_id]
+                if category_ids:
+                    for idx, cid in enumerate(category_ids):
+                        cid_int = cls._safe_int(cid)
+                        if cid_int:
+                            try:
+                                cursor.execute("""
+                                    INSERT IGNORE INTO product_categories (product_id, category_id, position)
+                                    VALUES (%s, %s, %s)
+                                """, (new_id, cid_int, idx))
+                            except Exception:
+                                pass
                 conn.commit()
 
                 return new_id
@@ -806,6 +830,30 @@ class Product:
                                     cursor.execute("UPDATE products SET website_id = %s WHERE id = %s", (first_wid, product_id))
                             except Exception:
                                 pass
+
+                # Sync product categories
+                if 'category_ids' in data or 'category_id' in data:
+                    category_ids = data.get('category_ids')
+                    if category_ids is None and data.get('category_id'):
+                        category_ids = [data.get('category_id')]
+                    if category_ids is not None:
+                        try:
+                            cursor.execute("DELETE FROM product_categories WHERE product_id = %s", (product_id,))
+                            for idx, cid in enumerate(category_ids):
+                                cid_int = cls._safe_int(cid)
+                                if cid_int:
+                                    cursor.execute("""
+                                        INSERT IGNORE INTO product_categories (product_id, category_id, position)
+                                        VALUES (%s, %s, %s)
+                                    """, (product_id, cid_int, idx))
+                            if category_ids:
+                                first_cid = cls._safe_int(category_ids[0])
+                                if first_cid:
+                                    cursor.execute("UPDATE products SET category_id = %s WHERE id = %s", (first_cid, product_id))
+                            else:
+                                cursor.execute("UPDATE products SET category_id = NULL WHERE id = %s", (product_id,))
+                        except Exception:
+                            pass
                 conn.commit()
 
                 return True

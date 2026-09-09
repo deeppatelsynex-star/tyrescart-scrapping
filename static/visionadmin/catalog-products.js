@@ -10,6 +10,8 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
     products: [],
     brands: [],
     categories: [],
+    categoryDropdownOpen: false,
+    categorySearch: '',
     counts: { total: 0, in_stock: 0, out_of_stock: 0, inactive: 0, trash: 0 },
     loading: false,
     isSubmitting: false,
@@ -70,6 +72,59 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
 
     openAddAttributeModal() {
       window.open('/visionadmin/attributes', '_blank');
+    },
+
+    getFilteredCategories() {
+      if (!this.categorySearch || !this.categorySearch.trim()) {
+        return this.categories || [];
+      }
+      const q = this.categorySearch.toLowerCase().trim();
+      return (this.categories || []).filter(c => {
+        const name = (c.name_en || (typeof c.name === 'object' ? (c.name.en || '') : String(c.name || ''))).toLowerCase();
+        return name.includes(q);
+      });
+    },
+
+    getCategoryName(id) {
+      const c = (this.categories || []).find(cat => cat.id == id);
+      if (!c) return `Category #${id}`;
+      return c.name_en || (typeof c.name === 'object' ? (c.name.en || c.name.ar || '') : c.name);
+    },
+
+    isCategorySelected(id) {
+      if (!this.form.category_ids) return false;
+      return this.form.category_ids.some(cid => cid == id);
+    },
+
+    toggleCategory(id) {
+      if (!Array.isArray(this.form.category_ids)) {
+        this.form.category_ids = [];
+      }
+      const numId = parseInt(id, 10);
+      const idx = this.form.category_ids.findIndex(cid => cid == numId);
+      if (idx > -1) {
+        this.form.category_ids.splice(idx, 1);
+      } else {
+        this.form.category_ids.push(numId);
+      }
+      this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
+    },
+
+    removeCategory(id) {
+      if (!Array.isArray(this.form.category_ids)) return;
+      const numId = parseInt(id, 10);
+      this.form.category_ids = this.form.category_ids.filter(cid => cid != numId);
+      this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
+    },
+
+    selectAllCategories() {
+      this.form.category_ids = (this.categories || []).map(c => parseInt(c.id, 10));
+      this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
+    },
+
+    clearCategories() {
+      this.form.category_ids = [];
+      this.form.category_id = '';
     },
 
     syncDynamicField(code, val) {
@@ -157,6 +212,7 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       display_name: '',
       brand_id: '',
       category_id: '',
+      category_ids: [],
       vehicle_type: 'car',
       short_desc_en: '',
       description_en: '',
@@ -520,6 +576,7 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         display_name: '',
         brand_id: '',
         category_id: '',
+        category_ids: [],
         vehicle_type: 'car',
         short_desc_en: '',
         description_en: '',
@@ -625,6 +682,9 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         display_name: p.display_name || p.name_en || '',
         brand_id: p.brand_id || '',
         category_id: p.category_id || '',
+        category_ids: Array.isArray(p.category_ids) && p.category_ids.length 
+          ? p.category_ids.map(Number) 
+          : (p.category_id ? [Number(p.category_id)] : []),
         vehicle_type: p.vehicle_type || 'car',
         short_desc_en: shortDescEn,
         description_en: descEn,
@@ -775,6 +835,8 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
 
         payload.website_ids = this.form.website_ids || [1];
         payload.website_id = (this.form.website_ids && this.form.website_ids.length ? this.form.website_ids[0] : 1);
+        payload.category_ids = Array.isArray(this.form.category_ids) ? this.form.category_ids.map(Number) : [];
+        payload.category_id = payload.category_ids.length ? payload.category_ids[0] : (this.form.category_id ? Number(this.form.category_id) : null);
 
         if (payload.warranty_months !== undefined && payload.warranty_months !== null) {
           if (typeof payload.warranty_months === 'string') {
