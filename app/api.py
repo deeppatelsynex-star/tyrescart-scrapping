@@ -4563,9 +4563,7 @@ def register_visionadmin_api_routes(app):
 
     @app.route('/visionadmin/api/products/import-csv', methods=['POST'])
     def visionadmin_api_import_products_csv():
-        """Import multiple products from CSV file."""
-        import csv
-        import io
+        """Import multiple products and hierarchical categories from CSV file."""
         try:
             if 'file' not in request.files:
                 return jsonify({'success': False, 'error': 'No file uploaded'}), 400
@@ -4573,102 +4571,23 @@ def register_visionadmin_api_routes(app):
             if not file or not file.filename:
                 return jsonify({'success': False, 'error': 'No file selected'}), 400
 
-            stream = io.StringIO(file.stream.read().decode('utf-8', errors='ignore'))
-            reader = csv.DictReader(stream)
+            from services.product_importer import ProductImporter
+            user_id = session.get('admin_user_id') or session.get('user_id') or 1
+            res = ProductImporter.import_csv(file.stream.read(), user_id=user_id)
 
-            user_id = session.get('user_id')
-            imported = 0
-
-            for row in reader:
-                clean_row = {k.strip().lower(): v.strip() for k, v in row.items() if k}
-                name = clean_row.get('name') or clean_row.get('display_name') or clean_row.get('product_name') or ''
-                sku = (clean_row.get('sku') or '').strip().upper()
-                if not name and not sku:
-                    continue
-
-                if not sku:
-                    sku = f"SKU-{secrets.token_hex(4).upper()}"
-                if not name:
-                    name = sku
-
-                # Brand lookup or creation
-                brand_name = clean_row.get('brand') or clean_row.get('brand_name') or ''
-                brand_id = None
-                if brand_name:
-                    b_slug = Brand.slugify(brand_name)
-                    existing_b = Brand.find_by_slug(b_slug)
-                    if existing_b:
-                        brand_id = existing_b['id']
-                    else:
-                        brand_id = Brand.create({'name': brand_name, 'slug': b_slug, 'status': 'active'}, user_id=user_id)
-
-                # Category lookup or creation
-                cat_name = clean_row.get('category') or clean_row.get('category_name') or ''
-                category_id = None
-                if cat_name:
-                    c_slug = Category.slugify(cat_name)
-                    existing_c = Category.find_by_slug(c_slug)
-                    if existing_c:
-                        category_id = existing_c['id']
-                    else:
-                        category_id = Category.create({'name_en': cat_name, 'slug': c_slug, 'status': 'active'}, user_id=user_id)
-
-                price = clean_row.get('price') or '0'
-                sale_price = clean_row.get('sale_price') or None
-                stock_qty = int(clean_row.get('stock_qty') or 10)
-                tire_size = clean_row.get('tire_size_label') or clean_row.get('tire_size') or ''
-                tire_speed = clean_row.get('tire_speed_rating') or None
-                tire_load = clean_row.get('tire_load_index') or None
-                tire_pattern = clean_row.get('tire_pattern') or None
-                vehicle_type = clean_row.get('vehicle_type') or 'car'
-                origin = clean_row.get('country_of_origin') or None
-
-                existing_p = Product.find_by_sku(sku)
-                if existing_p:
-                    Product.update(existing_p['id'], {
-                        'sku': sku,
-                        'display_name': name,
-                        'name_en': name,
-                        'brand_id': brand_id or existing_p.get('brand_id'),
-                        'category_id': category_id or existing_p.get('category_id'),
-                        'price': price,
-                        'sale_price': sale_price,
-                        'stock_qty': stock_qty,
-                        'stock_status': 'in_stock' if stock_qty > 0 else 'out_of_stock',
-                        'tire_size_label': tire_size or existing_p.get('tire_size_label'),
-                        'tire_speed_rating': tire_speed or existing_p.get('tire_speed_rating'),
-                        'tire_load_index': tire_load or existing_p.get('tire_load_index'),
-                        'tire_pattern': tire_pattern or existing_p.get('tire_pattern'),
-                        'vehicle_type': vehicle_type or existing_p.get('vehicle_type'),
-                        'country_of_origin': origin or existing_p.get('country_of_origin')
-                    }, user_id=user_id)
-                else:
-                    Product.create({
-                        'sku': sku,
-                        'display_name': name,
-                        'name_en': name,
-                        'brand_id': brand_id,
-                        'category_id': category_id,
-                        'price': price,
-                        'sale_price': sale_price,
-                        'stock_qty': stock_qty,
-                        'stock_status': 'in_stock' if stock_qty > 0 else 'out_of_stock',
-                        'tire_size_label': tire_size,
-                        'tire_speed_rating': tire_speed,
-                        'tire_load_index': tire_load,
-                        'tire_pattern': tire_pattern,
-                        'vehicle_type': vehicle_type,
-                        'country_of_origin': origin,
-                        'status': 'active'
-                    }, user_id=user_id)
-                imported += 1
+            if not res.get('success'):
+                return jsonify({'success': False, 'error': res.get('error', 'Import failed')}), 400
 
             return jsonify({
                 'success': True,
-                'imported': imported,
-                'message': f'Successfully imported {imported} products from CSV!'
+                'imported': res.get('imported', 0),
+                'updated': res.get('updated', 0),
+                'total_rows': res.get('total_rows', 0),
+                'errors': res.get('errors', []),
+                'message': f"Successfully imported {res.get('imported', 0)} products (updated {res.get('updated', 0)})!"
             })
         except Exception as e:
+            app.logger.exception(f"Error importing CSV: {e}")
             return jsonify({'success': False, 'error': f'Failed to process CSV: {str(e)}'}), 500
 
     @app.route('/visionadmin/api/products', methods=['GET'])

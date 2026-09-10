@@ -12,6 +12,11 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
     categories: [],
     categoryDropdownOpen: false,
     categorySearch: '',
+    newCategoryModalOpen: false,
+    newCategoryForm: {
+      name: '',
+      parent_id: 3
+    },
     counts: { total: 0, in_stock: 0, out_of_stock: 0, inactive: 0, trash: 0 },
     loading: false,
     isSubmitting: false,
@@ -74,59 +79,6 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       window.open('/visionadmin/attributes', '_blank');
     },
 
-    getFilteredCategories() {
-      if (!this.categorySearch || !this.categorySearch.trim()) {
-        return this.categories || [];
-      }
-      const q = this.categorySearch.toLowerCase().trim();
-      return (this.categories || []).filter(c => {
-        const name = (c.name_en || (typeof c.name === 'object' ? (c.name.en || '') : String(c.name || ''))).toLowerCase();
-        return name.includes(q);
-      });
-    },
-
-    getCategoryName(id) {
-      const c = (this.categories || []).find(cat => cat.id == id);
-      if (!c) return `Category #${id}`;
-      return c.name_en || (typeof c.name === 'object' ? (c.name.en || c.name.ar || '') : c.name);
-    },
-
-    isCategorySelected(id) {
-      if (!this.form.category_ids) return false;
-      return this.form.category_ids.some(cid => cid == id);
-    },
-
-    toggleCategory(id) {
-      if (!Array.isArray(this.form.category_ids)) {
-        this.form.category_ids = [];
-      }
-      const numId = parseInt(id, 10);
-      const idx = this.form.category_ids.findIndex(cid => cid == numId);
-      if (idx > -1) {
-        this.form.category_ids.splice(idx, 1);
-      } else {
-        this.form.category_ids.push(numId);
-      }
-      this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
-    },
-
-    removeCategory(id) {
-      if (!Array.isArray(this.form.category_ids)) return;
-      const numId = parseInt(id, 10);
-      this.form.category_ids = this.form.category_ids.filter(cid => cid != numId);
-      this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
-    },
-
-    selectAllCategories() {
-      this.form.category_ids = (this.categories || []).map(c => parseInt(c.id, 10));
-      this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
-    },
-
-    clearCategories() {
-      this.form.category_ids = [];
-      this.form.category_id = '';
-    },
-
     syncDynamicField(code, val) {
       if (!this.form.dynamic_attributes) this.form.dynamic_attributes = {};
       this.form.dynamic_attributes[code] = val;
@@ -176,20 +128,7 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       } else if (code === 'ev_rated' || code === 'ev_tyre') {
         this.form.ev_rated = Boolean(val);
       } else if (code === 'warranty_period' || code === 'warranty_months') {
-        let months = val;
-        if (typeof val === 'string') {
-          const yMatch = val.match(/(\d+(?:\.\d+)?)\s*(?:year|yr)/i);
-          const mMatch = val.match(/(\d+)\s*(?:month|mo)/i);
-          const dMatch = val.match(/\d+/);
-          if (yMatch) {
-            months = Math.round(parseFloat(yMatch[1]) * 12);
-          } else if (mMatch) {
-            months = parseInt(mMatch[1], 10);
-          } else if (dMatch) {
-            months = parseInt(dMatch[0], 10);
-          }
-        }
-        this.form.warranty_months = months !== undefined && months !== null ? months : (val || null);
+        if (val || !this.form.warranty_months) this.form.warranty_months = val;
       }
     },
 
@@ -402,6 +341,120 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         }
       } else {
         this.form.website_ids = this.form.website_ids.filter(id => Number(id) !== numId);
+      }
+    },
+
+    getCategoryName(id) {
+      if (!id) return '';
+      const numId = Number(id);
+      const found = (this.categories || []).find(c => Number(c.id) === numId);
+      if (!found) return 'Category #' + id;
+      if (found.name_en) return found.name_en;
+      if (typeof found.name === 'object' && found.name !== null) {
+        return found.name.en || found.name.ar || Object.values(found.name)[0] || ('Category #' + id);
+      }
+      return String(found.name || ('Category #' + id));
+    },
+
+    isCategorySelected(id) {
+      if (!this.form || !this.form.category_ids) return false;
+      return this.form.category_ids.map(Number).includes(Number(id));
+    },
+
+    toggleCategory(id) {
+      const numId = Number(id);
+      if (!this.form.category_ids) this.form.category_ids = [];
+      const idx = this.form.category_ids.map(Number).indexOf(numId);
+      if (idx > -1) {
+        this.form.category_ids.splice(idx, 1);
+      } else {
+        this.form.category_ids.push(numId);
+      }
+      this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
+    },
+
+    removeCategory(id) {
+      const numId = Number(id);
+      if (!this.form || !this.form.category_ids) return;
+      const idx = this.form.category_ids.map(Number).indexOf(numId);
+      if (idx > -1) {
+        this.form.category_ids.splice(idx, 1);
+      }
+      this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
+    },
+
+    selectAllCategories() {
+      const filtered = this.getFilteredCategories();
+      if (!this.form.category_ids) this.form.category_ids = [];
+      const current = new Set(this.form.category_ids.map(Number));
+      filtered.forEach(c => current.add(Number(c.id)));
+      this.form.category_ids = Array.from(current);
+      this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
+    },
+
+    clearCategories() {
+      this.form.category_ids = [];
+      this.form.category_id = '';
+    },
+
+    getFilteredCategories() {
+      if (!this.categories) return [];
+      const q = (this.categorySearch || '').toLowerCase().trim();
+      if (!q) return this.categories;
+      return this.categories.filter(c => {
+        const name = this.getCategoryName(c.id).toLowerCase();
+        const slug = (c.slug || '').toLowerCase();
+        return name.includes(q) || slug.includes(q) || String(c.id) === q;
+      });
+    },
+
+    openNewCategoryModal() {
+      this.newCategoryForm = {
+        name: '',
+        parent_id: 3 // Default parent Tyres
+      };
+      this.newCategoryModalOpen = true;
+    },
+
+    async quickCreateCategory() {
+      const name = (this.newCategoryForm.name || '').trim();
+      if (!name) {
+        this.showToast('Please enter category name.', 'error');
+        return;
+      }
+      try {
+        const res = await fetch('/visionadmin/api/categories', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          },
+          body: JSON.stringify({
+            name_en: name,
+            parent_id: this.newCategoryForm.parent_id || 2,
+            status: 'active',
+            include_in_menu: 1,
+            is_anchor: 1
+          })
+        });
+        const data = await res.json();
+        if (data && (data.success || data.id || data.category_id)) {
+          const newCatId = Number(data.id || data.category_id);
+          this.showToast('Category created successfully!', 'success');
+          await this.fetchCategories();
+          if (!this.form.category_ids) this.form.category_ids = [];
+          if (!this.form.category_ids.map(Number).includes(newCatId)) {
+            this.form.category_ids.push(newCatId);
+          }
+          this.form.category_id = this.form.category_ids[0];
+          this.newCategoryModalOpen = false;
+          this.newCategoryForm.name = '';
+        } else {
+          this.showToast(data.error || 'Failed to create category.', 'error');
+        }
+      } catch (err) {
+        console.error('Error creating category:', err);
+        this.showToast('Error creating category.', 'error');
       }
     },
 
@@ -682,9 +735,6 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         display_name: p.display_name || p.name_en || '',
         brand_id: p.brand_id || '',
         category_id: p.category_id || '',
-        category_ids: Array.isArray(p.category_ids) && p.category_ids.length 
-          ? p.category_ids.map(Number) 
-          : (p.category_id ? [Number(p.category_id)] : []),
         vehicle_type: p.vehicle_type || 'car',
         short_desc_en: shortDescEn,
         description_en: descEn,
@@ -718,6 +768,7 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         meta_title_en: metaTitleEn,
         meta_desc_en: metaDescEn,
         canonical_url: p.canonical_url || '',
+        category_ids: (p.category_ids && p.category_ids.length) ? p.category_ids.map(Number) : (p.category_id ? [Number(p.category_id)] : []),
         website_ids: p.website_ids && p.website_ids.length ? p.website_ids.map(Number) : (p.website_id ? [Number(p.website_id)] : [1])
       };
       this.modalOpen = true;
@@ -836,22 +887,7 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         payload.website_ids = this.form.website_ids || [1];
         payload.website_id = (this.form.website_ids && this.form.website_ids.length ? this.form.website_ids[0] : 1);
         payload.category_ids = Array.isArray(this.form.category_ids) ? this.form.category_ids.map(Number) : [];
-        payload.category_id = payload.category_ids.length ? payload.category_ids[0] : (this.form.category_id ? Number(this.form.category_id) : null);
-
-        if (payload.warranty_months !== undefined && payload.warranty_months !== null) {
-          if (typeof payload.warranty_months === 'string') {
-            const yMatch = payload.warranty_months.match(/(\d+(?:\.\d+)?)\s*(?:year|yr)/i);
-            const mMatch = payload.warranty_months.match(/(\d+)\s*(?:month|mo)/i);
-            const dMatch = payload.warranty_months.match(/\d+/);
-            if (yMatch) {
-              payload.warranty_months = Math.round(parseFloat(yMatch[1]) * 12);
-            } else if (mMatch) {
-              payload.warranty_months = parseInt(mMatch[1], 10);
-            } else if (dMatch) {
-              payload.warranty_months = parseInt(dMatch[0], 10);
-            }
-          }
-        }
+        payload.category_id = (payload.category_ids.length ? payload.category_ids[0] : (this.form.category_id || null));
 
         const res = await fetch(url, {
           method: method,
@@ -859,30 +895,24 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
           body: JSON.stringify(payload)
         });
 
-        let data = null;
-        try {
-          data = await res.json();
-        } catch (jsonErr) {
-          data = { error: `Server error (${res.status}): ${res.statusText || 'Unexpected server response'}` };
-        }
-
-        if (res.ok && data && data.success) {
+        const data = await res.json();
+        if (res.ok && data.success) {
           this.showToast(data.message || 'Product saved successfully!', 'success');
           if (newAfter) {
             window.location.href = '/visionadmin/products/create';
           } else if (closeAfter) {
             window.location.href = '/visionadmin/products';
-          } else if (!this.isEditMode && (data.product_id || data.id)) {
-            window.location.href = `/visionadmin/products/${data.product_id || data.id}/edit`;
+          } else if (!this.isEditMode && data.product_id) {
+            window.location.href = `/visionadmin/products/${data.product_id}/edit`;
           } else {
             await this.fetchProducts();
           }
         } else {
-          this.showToast((data && data.error) || 'Failed to save product.', 'error');
+          this.showToast(data.error || 'Failed to save product.', 'error');
         }
       } catch (err) {
         console.error('Save product error:', err);
-        this.showToast((err && err.message) || 'Network error saving product.', 'error');
+        this.showToast('Network error saving product.', 'error');
       } finally {
         this.isSubmitting = false;
       }

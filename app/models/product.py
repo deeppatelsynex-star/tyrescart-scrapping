@@ -246,6 +246,16 @@ class Product:
             if k in d and d[k] is not None:
                 d[k] = float(d[k])
 
+        # Resolve category_ids
+        if 'category_ids_str' in d:
+            raw_cids = d.pop('category_ids_str')
+            if raw_cids:
+                d['category_ids'] = [int(x) for x in str(raw_cids).split(',') if x.strip().isdigit()]
+            else:
+                d['category_ids'] = [d['category_id']] if d.get('category_id') else []
+        elif 'category_ids' not in d and d.get('category_id'):
+            d['category_ids'] = [d['category_id']]
+
         # Date / Timestamp formatting
         for k in ['created_at', 'updated_at', 'deleted_at', 'sale_start_date', 'sale_end_date']:
             if k in d and d[k] is not None:
@@ -354,7 +364,8 @@ class Product:
                            b.logo as brand_logo,
                            c.name as category_name,
                            s.name as attribute_set_name,
-                           s.slug as attribute_set_slug
+                           s.slug as attribute_set_slug,
+                           (SELECT GROUP_CONCAT(pc.category_id ORDER BY pc.position ASC, pc.id ASC) FROM product_categories pc WHERE pc.product_id = p.id) as category_ids_str
                     FROM products p
                     LEFT JOIN brands b ON b.id = p.brand_id
                     LEFT JOIN categories c ON c.id = p.category_id
