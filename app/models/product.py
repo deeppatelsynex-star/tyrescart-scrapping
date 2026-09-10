@@ -197,6 +197,10 @@ class Product:
     def to_dict(cls, row):
         if not row:
             return None
+        from services.store_context import StoreContext
+        from i18n import get_translated_value
+        loc = StoreContext.get_current_language()
+
         d = dict(row)
         # Parse JSON fields safely
         for k in ['name', 'description', 'short_desc', 'meta_title', 'meta_desc', 'gallery_json', 'make_ids', 'price_included', 'attributes_json']:
@@ -205,14 +209,24 @@ class Product:
 
         # Resolve display name string
         if isinstance(d.get('name'), dict):
-            d['display_name'] = localize_value(d['name'])
-            d['name_en'] = localize_value(d['name'], 'en') or d['display_name']
+            d['display_name'] = get_translated_value(d['name'], loc)
+            d['name_en'] = get_translated_value(d['name'], 'en') or d['display_name']
         elif isinstance(d.get('name'), str):
             d['display_name'] = d['name']
             d['name_en'] = d['name']
         else:
             d['display_name'] = d.get('display_name') or ''
             d['name_en'] = d.get('display_name') or ''
+
+        # Localized description / short_desc / meta
+        if isinstance(d.get('description'), dict):
+            d['description_display'] = get_translated_value(d['description'], loc)
+        if isinstance(d.get('short_desc'), dict):
+            d['short_desc_display'] = get_translated_value(d['short_desc'], loc)
+        if isinstance(d.get('meta_title'), dict):
+            d['meta_title_display'] = get_translated_value(d['meta_title'], loc)
+        if isinstance(d.get('meta_desc'), dict):
+            d['meta_desc_display'] = get_translated_value(d['meta_desc'], loc)
 
         # Resolve category name if JSON
         if d.get('category_name'):
@@ -223,7 +237,7 @@ class Product:
                 except Exception:
                     pass
             if isinstance(d['category_name'], dict):
-                d['category_name_display'] = localize_value(d['category_name'])
+                d['category_name_display'] = get_translated_value(d['category_name'], loc)
             else:
                 d['category_name_display'] = str(d['category_name'])
 
@@ -449,15 +463,23 @@ class Product:
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                from services.store_context import StoreContext
+                from i18n import parse_json_dict, get_translated_value
+                curr_lang = StoreContext.get_current_language()
+
                 sku = str(data.get('sku') or '').strip().upper()
                 name_val = data.get('name') or data.get('name_en') or data.get('display_name') or ''
                 if isinstance(name_val, dict):
-                    name_json = name_val
-                    display_name = name_val.get('en') or ''
+                    name_json = dict(name_val)
+                elif isinstance(name_val, str) and name_val.strip().startswith('{'):
+                    parsed = parse_json_dict(name_val)
+                    name_json = dict(parsed) if isinstance(parsed, dict) else {curr_lang: name_val.strip()}
                 else:
                     name_str = str(name_val).strip()
-                    name_json = {'en': name_str, 'ar': name_str}
-                    display_name = name_str
+                    name_json = {curr_lang: name_str}
+                if 'en' not in name_json and name_json:
+                    name_json['en'] = next(iter(name_json.values()), '')
+                display_name = get_translated_value(name_json, 'en') or get_translated_value(name_json)
 
                 slug_candidate = data.get('slug') or display_name or sku
                 slug = cls.slugify(slug_candidate)
@@ -504,8 +526,22 @@ class Product:
                 image_alt = (data.get('image_alt') or display_name).strip() or None
                 gallery_json = json.dumps(data.get('gallery_json') or [])
 
-                description = json.dumps(data.get('description') or {'en': data.get('description_en', ''), 'ar': ''})
-                short_desc = json.dumps(data.get('short_desc') or {'en': data.get('short_desc_en', ''), 'ar': ''})
+                def _prepare_multilingual_field(val, def_en=""):
+                    if isinstance(val, dict):
+                        d = dict(val)
+                    elif isinstance(val, str) and val.strip().startswith('{'):
+                        parsed = parse_json_dict(val)
+                        d = dict(parsed) if isinstance(parsed, dict) else {curr_lang: val.strip()}
+                    elif val is not None and str(val).strip():
+                        d = {curr_lang: str(val).strip()}
+                    else:
+                        d = {}
+                    if def_en and 'en' not in d:
+                        d['en'] = def_en
+                    return d
+
+                description = json.dumps(_prepare_multilingual_field(data.get('description'), data.get('description_en', '')), ensure_ascii=False)
+                short_desc = json.dumps(_prepare_multilingual_field(data.get('short_desc'), data.get('short_desc_en', '')), ensure_ascii=False)
 
                 weight = cls._safe_decimal(data.get('weight'))
                 country_of_origin = (data.get('country_of_origin') or '').strip() or None
@@ -517,8 +553,8 @@ class Product:
                 visibility = cls._safe_visibility(data.get('visibility'), 'visible')
                 pay_later_eligible = 1 if data.get('pay_later_eligible', True) else 0
 
-                meta_title = json.dumps(data.get('meta_title') or {'en': data.get('meta_title_en', display_name), 'ar': ''})
-                meta_desc = json.dumps(data.get('meta_desc') or {'en': data.get('meta_desc_en', ''), 'ar': ''})
+                meta_title = json.dumps(_prepare_multilingual_field(data.get('meta_title'), data.get('meta_title_en', display_name)), ensure_ascii=False)
+                meta_desc = json.dumps(_prepare_multilingual_field(data.get('meta_desc'), data.get('meta_desc_en', '')), ensure_ascii=False)
                 canonical_url = (data.get('canonical_url') or '').strip() or None
 
                 attribute_set_id = cls._safe_int(data.get('attribute_set_id'), 1)
@@ -659,16 +695,35 @@ class Product:
                     fields.append("sku = %s")
                     params.append(str(data['sku']).strip().upper())
 
+                from services.store_context import StoreContext
+                from i18n import parse_json_dict, get_translated_value
+                curr_lang = StoreContext.get_current_language()
+
                 if 'display_name' in data or 'name_en' in data or 'name' in data:
                     name_val = data.get('name') or data.get('name_en') or data.get('display_name')
+                    existing_name = parse_json_dict(existing.get('name')) if existing.get('name') else {}
+                    if not isinstance(existing_name, dict):
+                        existing_name = {}
                     if isinstance(name_val, dict):
-                        display_name = name_val.get('en') or ''
-                        name_json = name_val
-                    else:
-                        display_name = str(name_val).strip()
-                        name_json = {'en': display_name, 'ar': display_name}
+                        existing_name.update(name_val)
+                    elif isinstance(name_val, str):
+                        s = name_val.strip()
+                        if s.startswith('{'):
+                            try:
+                                p = json.loads(s)
+                                if isinstance(p, dict):
+                                    existing_name.update(p)
+                                else:
+                                    existing_name[curr_lang] = s
+                            except Exception:
+                                existing_name[curr_lang] = s
+                        else:
+                            existing_name[curr_lang] = s
+                    if data.get('name_en'):
+                        existing_name['en'] = str(data['name_en']).strip()
+                    display_name = get_translated_value(existing_name, 'en') or get_translated_value(existing_name)
                     fields.extend(["display_name = %s", "name = %s"])
-                    params.extend([display_name, json.dumps(name_json)])
+                    params.extend([display_name, json.dumps(existing_name, ensure_ascii=False)])
 
                 if 'slug' in data and data['slug']:
                     clean_slug = cls.slugify(data['slug'])
@@ -746,17 +801,31 @@ class Product:
                     fields.append("gallery_json = %s")
                     params.append(json.dumps(data['gallery_json'] or []))
 
-                if 'description' in data:
-                    fields.append("description = %s")
-                    params.append(json.dumps(data['description'] or {}))
-
-                if 'short_desc' in data:
-                    fields.append("short_desc = %s")
-                    params.append(json.dumps(data['short_desc'] or {}))
-
-                if 'meta_title' in data:
-                    fields.append("meta_title = %s")
-                    params.append(json.dumps(data['meta_title'] or {}))
+                for fld, col in [('description', 'description'), ('short_desc', 'short_desc'), ('meta_title', 'meta_title'), ('meta_desc', 'meta_desc')]:
+                    if fld in data:
+                        val = data[fld]
+                        exist_d = parse_json_dict(existing.get(col)) if existing.get(col) else {}
+                        if not isinstance(exist_d, dict):
+                            exist_d = {}
+                        if isinstance(val, dict):
+                            exist_d.update(val)
+                        elif isinstance(val, str):
+                            s = val.strip()
+                            if s.startswith('{'):
+                                try:
+                                    p = json.loads(s)
+                                    if isinstance(p, dict):
+                                        exist_d.update(p)
+                                    else:
+                                        exist_d[curr_lang] = s
+                                except Exception:
+                                    exist_d[curr_lang] = s
+                            else:
+                                exist_d[curr_lang] = s
+                        elif val is None:
+                            exist_d = {}
+                        fields.append(f"{col} = %s")
+                        params.append(json.dumps(exist_d, ensure_ascii=False))
 
                 if 'attribute_set_id' in data and data['attribute_set_id']:
                     fields.append("attribute_set_id = %s")

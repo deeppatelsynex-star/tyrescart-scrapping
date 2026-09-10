@@ -57,10 +57,10 @@ from models.page_section import PageSection
 from models.product import Product
 from models.brand import Brand
 from models.category import Category
-from i18n import get_locale, localize_value, translate, is_rtl
+from services.store_context import StoreContext
+from i18n import get_locale, localize_value, translate, is_rtl, get_translated_value
 from services.audit_service import log_activity, get_activity_logs, get_current_admin_user_id
 from services.attribute_service import AttributeService
-from services.store_context import StoreContext
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 # This file is app/api.py, so the project root (where scrapers/ and tmp/
@@ -1493,7 +1493,7 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/pages', methods=['GET'])
     @app.route('/visionadmin/api/v1/pages', methods=['GET'])
     def visionadmin_get_pages():
-        locale = request.args.get('locale')
+        locale = request.args.get('locale') or request.args.get('lang') or StoreContext.get_current_language()
         include_deleted = request.args.get('trash') == '1'
         status_filter = request.args.get('status')
         query = (request.args.get('q') or '').strip()
@@ -1514,8 +1514,8 @@ def register_visionadmin_api_routes(app):
             q_lower = query.lower()
             pages = [
                 p for p in pages
-                if q_lower in p.get_title('en').lower()
-                or q_lower in p.get_title('ar').lower()
+                if q_lower in p.get_title(locale).lower()
+                or q_lower in p.get_title('en').lower()
                 or q_lower in (p.slug or '').lower()
             ]
 
@@ -1546,27 +1546,37 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/v1/pages', methods=['POST'])
     def visionadmin_create_page():
         data = request.get_json(silent=True) or {}
+        curr_lang = StoreContext.get_current_language()
 
         # Validation
         title = data.get('title') or {}
-        en_title = (title.get('en') if isinstance(title, dict) else str(title)).strip()
-        if not en_title:
-            return jsonify({'error': 'English Page Title is required.'}), 400
+        if isinstance(title, dict):
+            page_title = (title.get(curr_lang) or title.get('en') or next((v for v in title.values() if v), '')).strip()
+        else:
+            page_title = str(title).strip()
+            title = {curr_lang: page_title}
+
+        if not page_title:
+            return jsonify({'error': 'Page Title is required.'}), 400
 
         slug = (data.get('slug') or '').strip()
         if not slug:
-            slug = Page.slugify(en_title)
+            slug = Page.slugify(page_title)
         else:
             slug = Page.slugify(slug)
 
         if not Page.is_slug_available(slug):
             return jsonify({'error': f'The slug "{slug}" is already in use. Please choose a different slug.'}), 409
 
+        content = data.get('content') or {}
+        if not isinstance(content, dict):
+            content = {curr_lang: str(content)}
+
         try:
             page = Page.create(
-                title=title if isinstance(title, dict) else {"en": en_title, "ar": ""},
+                title=title,
                 slug=slug,
-                content=data.get('content') or {"en": "", "ar": ""},
+                content=content,
                 banner_image=data.get('banner_image'),
                 seo_title=data.get('seo_title'),
                 meta_description=data.get('meta_description'),
@@ -1664,7 +1674,7 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/blogs', methods=['GET'])
     @app.route('/visionadmin/api/v1/blogs', methods=['GET'])
     def visionadmin_get_blogs():
-        locale = request.args.get('locale')
+        locale = request.args.get('locale') or request.args.get('lang') or StoreContext.get_current_language()
         include_deleted = request.args.get('trash') == '1'
         status_filter = request.args.get('status')
         query = (request.args.get('q') or '').strip()
@@ -1683,10 +1693,10 @@ def register_visionadmin_api_routes(app):
             q_lower = query.lower()
             blogs = [
                 b for b in blogs
-                if q_lower in b.get_title('en').lower()
-                or q_lower in b.get_title('ar').lower()
+                if q_lower in b.get_title(locale).lower()
+                or q_lower in b.get_title('en').lower()
                 or q_lower in (b.slug or '').lower()
-                or q_lower in b.get_short_desc('en').lower()
+                or q_lower in b.get_short_desc(locale).lower()
                 or q_lower in (b.category_name or '').lower()
             ]
 
@@ -1718,27 +1728,41 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/v1/blogs', methods=['POST'])
     def visionadmin_create_blog():
         data = request.get_json(silent=True) or {}
+        curr_lang = StoreContext.get_current_language()
 
         title = data.get('title') or {}
-        en_title = (title.get('en') if isinstance(title, dict) else str(title)).strip()
-        if not en_title:
-            return jsonify({'error': 'English Blog Title is required.'}), 400
+        if isinstance(title, dict):
+            blog_title = (title.get(curr_lang) or title.get('en') or next((v for v in title.values() if v), '')).strip()
+        else:
+            blog_title = str(title).strip()
+            title = {curr_lang: blog_title}
+
+        if not blog_title:
+            return jsonify({'error': 'Blog Title is required.'}), 400
 
         slug = (data.get('slug') or '').strip()
         if not slug:
-            slug = Blog.slugify(en_title)
+            slug = Blog.slugify(blog_title)
         else:
             slug = Blog.slugify(slug)
 
         if not Blog.is_slug_available(slug):
             return jsonify({'error': f'The slug "{slug}" is already in use. Please choose a unique slug.'}), 409
 
+        content = data.get('content') or {}
+        if not isinstance(content, dict):
+            content = {curr_lang: str(content)}
+
+        short_desc = data.get('short_description') or {}
+        if not isinstance(short_desc, dict):
+            short_desc = {curr_lang: str(short_desc)}
+
         try:
             blog = Blog.create(
-                title=title if isinstance(title, dict) else {"en": en_title, "ar": ""},
+                title=title,
                 slug=slug,
-                content=data.get('content') or {"en": "", "ar": ""},
-                short_description=data.get('short_description') or {"en": "", "ar": ""},
+                content=content,
+                short_description=short_desc,
                 image=data.get('image'),
                 category_id=data.get('category_id') or data.get('blog_category_id'),
                 category_name=(data.get('category_name') or data.get('category') or '').strip() or None,

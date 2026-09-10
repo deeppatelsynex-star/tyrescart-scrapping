@@ -402,18 +402,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modalTitle) modalTitle.textContent = isEdit ? 'Edit Static Page' : 'Create New Static Page';
     if (saveBtnText) saveBtnText.textContent = isEdit ? 'Save Changes' : 'Create Page';
 
+    const currLang = (window.VISION_STORE && window.VISION_STORE.language_code) || 'en';
+
     if (isEdit && page) {
-      setVal('title_en', (typeof page.title === 'object' ? page.title?.en : page.title) || '');
+      const pageTitle = (typeof page.title === 'object' ? (page.title?.[currLang] || page.display_title || page.title?.en) : page.title) || '';
+      setVal('title_en', pageTitle);
       setVal('slug', page.slug || '');
       if (document.getElementById('is_active')) {
         document.getElementById('is_active').checked = Boolean(page.is_active);
       }
-      setVal('seo_title_en', (typeof page.seo_title === 'object' ? page.seo_title?.en : '') || '');
-      setVal('meta_description_en', (typeof page.meta_description === 'object' ? page.meta_description?.en : '') || '');
+      const seoTitle = (typeof page.seo_title === 'object' ? (page.seo_title?.[currLang] || page.seo_title?.en) : page.seo_title) || '';
+      const metaDesc = (typeof page.meta_description === 'object' ? (page.meta_description?.[currLang] || page.meta_description?.en) : page.meta_description) || '';
+      setVal('seo_title_en', seoTitle);
+      setVal('meta_description_en', metaDesc);
 
       setBannerPreview(page.banner_image || '');
 
-      const contentEnVal = (typeof page.content === 'object' ? page.content?.en : page.content) || '';
+      const contentEnVal = (typeof page.content === 'object' ? (page.content?.[currLang] || page.display_content || page.content?.en) : page.content) || '';
       setEditorContent('content_en', contentEnVal);
 
     } else {
@@ -485,21 +490,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const content_en = getEditorContent('content_en');
     const seo_title = getVal('seo_title_en');
     const meta_desc = getVal('meta_description_en');
+    const currLang = (window.VISION_STORE && window.VISION_STORE.language_code) || 'en';
 
     const payload = {
-      title: { en: title_en, ar: title_en },
-      content: { en: content_en, ar: content_en },
+      title: { [currLang]: title_en },
+      content: { [currLang]: content_en },
       slug: slug,
       banner_image: bannerImageInput ? bannerImageInput.value.trim() || null : null,
       is_active: document.getElementById('is_active') ? document.getElementById('is_active').checked : true,
-      seo_title: {
-        en: seo_title,
-        ar: seo_title
-      },
-      meta_description: {
-        en: meta_desc,
-        ar: meta_desc
-      }
+      seo_title: { [currLang]: seo_title },
+      meta_description: { [currLang]: meta_desc }
     };
 
     if (saveBtn) saveBtn.disabled = true;

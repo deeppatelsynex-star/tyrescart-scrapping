@@ -25,13 +25,17 @@ class Brand:
     def _normalize_brand_row(cls, r: dict, locale: str = None) -> dict:
         if not r:
             return r
+        from services.store_context import StoreContext
+        from i18n import get_translated_value
+        loc = locale or StoreContext.get_current_language()
         r['description'] = parse_json_dict(r.get('description'))
         r['meta_title'] = parse_json_dict(r.get('meta_title'))
         r['meta_desc'] = parse_json_dict(r.get('meta_desc'))
-        r['description_en'] = localize_value(r['description'], 'en') or localize_value(r['description'], locale)
-        r['description_ar'] = localize_value(r['description'], 'ar')
-        r['meta_title_en'] = localize_value(r['meta_title'], 'en') or localize_value(r['meta_title'], locale)
-        r['meta_desc_en'] = localize_value(r['meta_desc'], 'en') or localize_value(r['meta_desc'], locale)
+        r['description_display'] = get_translated_value(r['description'], loc)
+        r['description_en'] = get_translated_value(r['description'], 'en') or r.get('description_display')
+        r['description_ar'] = get_translated_value(r['description'], 'ar')
+        r['meta_title_en'] = get_translated_value(r['meta_title'], 'en') or get_translated_value(r['meta_title'], loc)
+        r['meta_desc_en'] = get_translated_value(r['meta_desc'], 'en') or get_translated_value(r['meta_desc'], loc)
         return r
 
     @classmethod
@@ -207,6 +211,9 @@ class Brand:
                 is_featured = 1 if data.get('is_featured') else (0 if 'is_featured' in data else existing.get('is_featured', 0))
                 status = data.get('status') or existing.get('status') or 'active'
 
+                from services.store_context import StoreContext
+                curr_lang = StoreContext.get_current_language()
+
                 desc_input = data.get('description') or data.get('description_en')
                 if desc_input is not None or 'description' in data or 'description_en' in data or 'description_ar' in data:
                     base_dict = parse_json_dict(existing.get('description')) if existing.get('description') else {}
@@ -217,7 +224,7 @@ class Brand:
                         if isinstance(new_dict, dict):
                             base_dict.update(new_dict)
                         elif str(desc_input).strip():
-                            base_dict[DEFAULT_LOCALE] = str(desc_input).strip()
+                            base_dict[curr_lang] = str(desc_input).strip()
                     if data.get('description_en') is not None:
                         val_en = str(data['description_en']).strip()
                         if val_en:
@@ -245,7 +252,7 @@ class Brand:
                         if isinstance(new_mt, dict):
                             base_mt.update(new_mt)
                         elif str(meta_t_input).strip():
-                            base_mt[DEFAULT_LOCALE] = str(meta_t_input).strip()
+                            base_mt[curr_lang] = str(meta_t_input).strip()
                     if data.get('meta_title_en') is not None:
                         val = str(data['meta_title_en']).strip()
                         if val:
@@ -273,7 +280,7 @@ class Brand:
                         if isinstance(new_md, dict):
                             base_md.update(new_md)
                         elif str(meta_d_input).strip():
-                            base_md[DEFAULT_LOCALE] = str(meta_d_input).strip()
+                            base_md[curr_lang] = str(meta_d_input).strip()
                     if data.get('meta_desc_en') is not None:
                         val = str(data['meta_desc_en']).strip()
                         if val:

@@ -1,5 +1,5 @@
 import logging
-from flask import g, request, session
+from flask import g, request, session, has_app_context, has_request_context
 from db import get_connection
 
 logger = logging.getLogger(__name__)
@@ -161,22 +161,41 @@ class StoreContext:
     def resolve_current_context():
         """
         Resolves active Website, Store, and Store View for current request.
-        Binds to Flask `g.current_website`, `g.current_store`, `g.current_store_view`.
+        Binds to Flask `g.current_website`, `g.current_store`, `g.current_store_view`,
+        `g.current_language`, `g.current_direction`.
         """
         # 1. Check Headers / Query params
-        req_web_id = request.headers.get('X-Website-Id') or request.args.get('website_id')
-        req_store_id = request.headers.get('X-Store-Id') or request.args.get('store_id')
-        req_view_id = request.headers.get('X-Store-View-Id') or request.args.get('store_view_id')
+        req_web_id = None
+        req_store_id = None
+        req_view_id = None
 
-        # 2. Check Session (Admin switcher selection)
-        if not req_web_id and 'admin_active_website_id' in session:
-            req_web_id = session['admin_active_website_id']
-        if not req_store_id and 'admin_active_store_id' in session:
-            req_store_id = session['admin_active_store_id']
+        if has_request_context():
+            req_web_id = request.headers.get('X-Website-Id') or request.args.get('website_id')
+            req_store_id = request.headers.get('X-Store-Id') or request.args.get('store_id')
+            req_view_id = request.headers.get('X-Store-View-Id') or request.args.get('store_view_id')
+
+            # 2. Check Session (Admin switcher selection)
+            if not req_web_id and 'admin_active_website_id' in session:
+                req_web_id = session['admin_active_website_id']
+            if not req_store_id and 'admin_active_store_id' in session:
+                req_store_id = session['admin_active_store_id']
+            if not req_view_id and 'admin_active_store_view_id' in session:
+                req_view_id = session['admin_active_store_view_id']
 
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                # If store_view_id is specified, fetch the view first to infer store/website if needed
+                current_view = None
+                if req_view_id and str(req_view_id).isdigit():
+                    cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NULL", (int(req_view_id),))
+                    current_view = cursor.fetchone()
+                    if current_view:
+                        if not req_store_id:
+                            req_store_id = current_view.get('store_id')
+                        if not req_web_id:
+                            req_web_id = current_view.get('website_id')
+
                 # Resolve Website
                 if req_web_id and str(req_web_id).isdigit():
                     cursor.execute("SELECT * FROM websites WHERE id = %s AND deleted_at IS NULL", (int(req_web_id),))
@@ -194,23 +213,112 @@ class StoreContext:
                     cursor.execute("SELECT * FROM stores WHERE website_id = %s AND deleted_at IS NULL ORDER BY sort_order ASC LIMIT 1", (web_id,))
                     current_store = cursor.fetchone()
 
-                # Resolve Store View / Locale
-                current_view = None
-                if req_view_id and str(req_view_id).isdigit():
-                    cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NULL", (int(req_view_id),))
-                    current_view = cursor.fetchone()
-                elif current_store:
-                    cursor.execute("SELECT * FROM store_views WHERE store_id = %s AND deleted_at IS NULL ORDER BY sort_order ASC LIMIT 1", (current_store['id'],))
-                    current_view = cursor.fetchone()
+                # Resolve Store View / Locale if not already resolved
+                if not current_view:
+                    if req_view_id and str(req_view_id).isdigit():
+                        cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NULL", (int(req_view_id),))
+                        current_view = cursor.fetchone()
+                    elif current_store and current_store.get('default_store_view_id'):
+                        cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NULL", (int(current_store['default_store_view_id']),))
+                        current_view = cursor.fetchone()
+                    if not current_view and current_store:
+                        cursor.execute("SELECT * FROM store_views WHERE store_id = %s AND deleted_at IS NULL ORDER BY sort_order ASC LIMIT 1", (current_store['id'],))
+                        current_view = cursor.fetchone()
 
-                g.current_website = current_web
-                g.current_store = current_store
-                g.current_store_view = current_view
+                if has_app_context():
+                    g.current_website = current_web
+                    g.current_store = current_store
+                    g.current_store_view = current_view
+                    g.current_language = StoreContext.get_current_language()
+                    g.current_direction = StoreContext.get_current_direction()
+                    res_lang = g.current_language
+                    res_dir = g.current_direction
+                else:
+                    res_lang = (current_view.get('locale') or current_view.get('code') or 'en') if current_view else 'en'
+                    res_dir = 'rtl' if res_lang.split('-')[0].lower() in {'ar', 'fa', 'ur', 'he', 'ps', 'sd'} else 'ltr'
 
                 return {
                     'website': current_web,
                     'store': current_store,
-                    'store_view': current_view
+                    'store_view': current_view,
+                    'language': res_lang,
+                    'direction': res_dir
                 }
         finally:
             conn.close()
+
+    @classmethod
+    def get_current_store(cls):
+        """Returns the active Store record for the current request."""
+        if has_app_context() and hasattr(g, 'current_store') and g.current_store is not None:
+            return g.current_store
+        ctx = cls.resolve_current_context()
+        return ctx.get('store')
+
+    @classmethod
+    def get_current_store_view(cls):
+        """Returns the active Store View record for the current request."""
+        if has_app_context() and hasattr(g, 'current_store_view') and g.current_store_view is not None:
+            return g.current_store_view
+        ctx = cls.resolve_current_context()
+        return ctx.get('store_view')
+
+    @classmethod
+    def get_current_website(cls):
+        """Returns the active Website record for the current request."""
+        if has_app_context() and hasattr(g, 'current_website') and g.current_website is not None:
+            return g.current_website
+        ctx = cls.resolve_current_context()
+        return ctx.get('website')
+
+    @classmethod
+    def get_current_language(cls, fallback: str = "en") -> str:
+        """
+        Returns the active language code determined by the Store Context.
+        1. Explicit g.current_language override if set
+        2. Store View locale / code from active scope
+        3. Query param ?locale=... / ?lang=...
+        4. Session site_locale or cookie
+        5. Fallback default ('en')
+        """
+        if has_app_context():
+            # 0. Explicit g override
+            g_lang = getattr(g, 'current_language', None)
+            if g_lang and str(g_lang).strip():
+                return str(g_lang).strip().lower()
+
+            # 1. Active Store View
+            view = getattr(g, 'current_store_view', None)
+            if isinstance(view, dict):
+                lang = view.get('locale') or view.get('code')
+                if lang and str(lang).strip():
+                    return str(lang).strip().lower()
+
+        # 2. Session / Query / Cookie fallback
+        if has_request_context():
+            try:
+                req_lang = (request.args.get('locale') or request.args.get('lang') or '').strip().lower()
+                if req_lang:
+                    return req_lang
+                if 'site_locale' in session:
+                    sess_lang = str(session['site_locale']).strip().lower()
+                    if sess_lang:
+                        return sess_lang
+                cookie_lang = (request.cookies.get('site_locale') or '').strip().lower()
+                if cookie_lang:
+                    return cookie_lang
+            except Exception:
+                pass
+
+        return (fallback or "en").strip().lower()
+
+    @classmethod
+    def get_current_direction(cls) -> str:
+        """Returns 'rtl' if current language is Right-to-Left, otherwise 'ltr'."""
+        if has_app_context() and hasattr(g, 'current_direction') and g.current_direction:
+            return g.current_direction
+        lang = cls.get_current_language()
+        rtl_langs = {'ar', 'fa', 'ur', 'he', 'ps', 'sd'}
+        base_lang = lang.split('-')[0].lower()
+        return 'rtl' if base_lang in rtl_langs else 'ltr'
+

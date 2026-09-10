@@ -25,20 +25,23 @@ class Category:
     def _normalize_category_row(cls, r: dict, locale: str = None) -> dict:
         if not r:
             return r
+        from services.store_context import StoreContext
+        from i18n import get_translated_value
+        loc = locale or StoreContext.get_current_language()
         r['name'] = parse_json_dict(r.get('name'))
         r['description'] = parse_json_dict(r.get('description'))
         r['meta_title'] = parse_json_dict(r.get('meta_title'))
         r['meta_desc'] = parse_json_dict(r.get('meta_desc'))
-        r['display_name'] = localize_value(r['name'], locale)
+        r['display_name'] = get_translated_value(r['name'], loc)
         # Compatibility aliases for templates / legacy UI
-        r['name_en'] = localize_value(r['name'], 'en') or r.get('display_name')
-        r['name_ar'] = localize_value(r['name'], 'ar')
-        r['description_en'] = localize_value(r['description'], 'en')
-        r['description_ar'] = localize_value(r['description'], 'ar')
-        r['meta_title_en'] = localize_value(r['meta_title'], 'en')
-        r['meta_title_ar'] = localize_value(r['meta_title'], 'ar')
-        r['meta_desc_en'] = localize_value(r['meta_desc'], 'en')
-        r['meta_desc_ar'] = localize_value(r['meta_desc'], 'ar')
+        r['name_en'] = get_translated_value(r['name'], 'en') or r.get('display_name')
+        r['name_ar'] = get_translated_value(r['name'], 'ar')
+        r['description_en'] = get_translated_value(r['description'], 'en')
+        r['description_ar'] = get_translated_value(r['description'], 'ar')
+        r['meta_title_en'] = get_translated_value(r['meta_title'], 'en')
+        r['meta_title_ar'] = get_translated_value(r['meta_title'], 'ar')
+        r['meta_desc_en'] = get_translated_value(r['meta_desc'], 'en')
+        r['meta_desc_ar'] = get_translated_value(r['meta_desc'], 'ar')
         return r
 
     @classmethod
@@ -242,15 +245,33 @@ class Category:
                 if not existing:
                     return False
 
+                from services.store_context import StoreContext
+                curr_lang = StoreContext.get_current_language()
+
                 name_input = data.get('name') or data.get('name_en')
-                if name_input:
-                    name_dict = name_input if isinstance(name_input, dict) else parse_json_dict(name_input)
-                    if not isinstance(name_dict, dict) or not name_dict:
-                        name_dict = {DEFAULT_LOCALE: str(name_input).strip()}
+                if name_input is not None:
+                    name_dict = parse_json_dict(existing.get('name')) if existing.get('name') else {}
+                    if not isinstance(name_dict, dict):
+                        name_dict = {}
+                    if isinstance(name_input, dict):
+                        name_dict.update(name_input)
+                    elif isinstance(name_input, str):
+                        s = name_input.strip()
+                        if s.startswith('{'):
+                            try:
+                                p = json.loads(s)
+                                if isinstance(p, dict):
+                                    name_dict.update(p)
+                                else:
+                                    name_dict[curr_lang] = s
+                            except Exception:
+                                name_dict[curr_lang] = s
+                        else:
+                            name_dict[curr_lang] = s
                     if data.get('name_en'):
-                        name_dict['en'] = data['name_en'].strip()
+                        name_dict['en'] = str(data['name_en']).strip()
                     if data.get('name_ar'):
-                        name_dict['ar'] = data['name_ar'].strip()
+                        name_dict['ar'] = str(data['name_ar']).strip()
                     name_json = dump_json_dict(name_dict)
                     slug_seed = name_dict.get('en') or next(iter(name_dict.values()), '')
                     slug = cls.slugify(data.get('slug') or slug_seed)
@@ -271,7 +292,7 @@ class Category:
                         if isinstance(new_dict, dict):
                             base_dict.update(new_dict)
                         elif str(desc_input).strip():
-                            base_dict[DEFAULT_LOCALE] = str(desc_input).strip()
+                            base_dict[curr_lang] = str(desc_input).strip()
                     if data.get('description_en') is not None:
                         val_en = str(data['description_en']).strip()
                         if val_en:
@@ -299,7 +320,7 @@ class Category:
                         if isinstance(new_mt, dict):
                             base_mt.update(new_mt)
                         elif str(meta_t_input).strip():
-                            base_mt[DEFAULT_LOCALE] = str(meta_t_input).strip()
+                            base_mt[curr_lang] = str(meta_t_input).strip()
                     if data.get('meta_title_en') is not None:
                         val = str(data['meta_title_en']).strip()
                         if val:
@@ -327,7 +348,7 @@ class Category:
                         if isinstance(new_md, dict):
                             base_md.update(new_md)
                         elif str(meta_d_input).strip():
-                            base_md[DEFAULT_LOCALE] = str(meta_d_input).strip()
+                            base_md[curr_lang] = str(meta_d_input).strip()
                     if data.get('meta_desc_en') is not None:
                         val = str(data['meta_desc_en']).strip()
                         if val:

@@ -1,9 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ current_language or 'en' }}" dir="{{ current_direction or 'ltr' }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="{{ session.get('csrf_token', '') }}" />
+  <script>
+    window.VISION_STORE = {
+      id: {{ (current_store.id if current_store else None) | tojson }},
+      code: {{ (current_store.code if current_store else '') | tojson }},
+      name: {{ (current_store.name if current_store else '') | tojson }},
+      website_id: {{ (current_website.id if current_website else None) | tojson }},
+      store_view_id: {{ (current_store_view.id if current_store_view else None) | tojson }},
+      store_view_name: {{ (current_store_view.name if current_store_view else '') | tojson }},
+      language_code: {{ (current_language or 'en') | tojson }},
+      direction: {{ (current_direction or 'ltr') | tojson }},
+      is_rtl: {{ 'true' if is_rtl(current_language) else 'false' }}
+    };
+  </script>
   <title>{% block title %}VisionAdmin CMS{% endblock %}</title>
 
   <!-- Favicon direct icons -->

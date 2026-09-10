@@ -16,7 +16,7 @@ for _p in reversed([_app_dir, _root_dir, _scraperapp_dir, _visionadmin_dir, _sit
 
 from datetime import timedelta
 
-from flask import Flask, jsonify, render_template, request, session, send_from_directory
+from flask import Flask, jsonify, render_template, request, session, send_from_directory, g
 
 from scraperapp.tcsadmin import register_tcsadmin_routes
 from visionadmin import register_visionadmin_routes
@@ -60,16 +60,48 @@ app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'f
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7 days browser cache for static files
 
 
-from i18n import get_locale as get_current_locale, translate as i18n_translate, is_rtl
+from i18n import (
+    get_locale as get_current_locale,
+    translate as i18n_translate,
+    is_rtl,
+    get_translated_value,
+    localize_value
+)
+from services.store_context import StoreContext
+
+
+@app.before_request
+def resolve_request_store_context():
+    """Resolves active Website, Store, and Store View (Locale) context per HTTP request."""
+    if request.path.startswith('/static/'):
+        return
+    try:
+        StoreContext.resolve_current_context()
+    except Exception:
+        pass
 
 
 @app.context_processor
 def inject_i18n():
-    """Provides dynamic multi-language translation helper _() and locale utilities."""
-    current_locale = get_current_locale()
+    """Provides dynamic multi-language translation helper, Store Context, and locale utilities."""
+    current_lang = StoreContext.get_current_language()
+    current_dir = StoreContext.get_current_direction()
+
     def _(text):
-        return i18n_translate(text, current_locale)
-    return dict(_=_, locale=current_locale, is_rtl=is_rtl)
+        return i18n_translate(text, current_lang)
+
+    return dict(
+        _=_,
+        locale=current_lang,
+        current_language=current_lang,
+        current_direction=current_dir,
+        current_store=getattr(g, 'current_store', None),
+        current_store_view=getattr(g, 'current_store_view', None),
+        current_website=getattr(g, 'current_website', None),
+        is_rtl=is_rtl,
+        get_translated_value=get_translated_value,
+        localize_value=localize_value
+    )
 
 
 @app.after_request
