@@ -86,6 +86,8 @@ def inject_i18n():
     """Provides dynamic multi-language translation helper, Store Context, and locale utilities."""
     current_lang = StoreContext.get_current_language()
     current_dir = StoreContext.get_current_direction()
+    if request.path.startswith('/visionadmin') or request.path.startswith('/admin') or request.path.startswith('/visonadmin'):
+        current_dir = 'ltr'
 
     def _(text):
         return i18n_translate(text, current_lang)

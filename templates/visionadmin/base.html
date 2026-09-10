@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ current_language or 'en' }}" dir="{{ current_direction or 'ltr' }}">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,8 +13,8 @@
       store_view_id: {{ (current_store_view.id if current_store_view else None) | tojson }},
       store_view_name: {{ (current_store_view.name if current_store_view else '') | tojson }},
       language_code: {{ (current_language or 'en') | tojson }},
-      direction: {{ (current_direction or 'ltr') | tojson }},
-      is_rtl: {{ 'true' if is_rtl(current_language) else 'false' }}
+      direction: 'ltr',
+      is_rtl: false
     };
   </script>
   <title>{% block title %}VisionAdmin CMS{% endblock %}</title>

@@ -148,9 +148,9 @@
                   type="text" 
                   x-model="form.name[currentScope]" 
                   @input="onTitleInput()"
-                  :placeholder="currentScope === 'ar' ? 'أدخل عنوان القسم بالعربية...' : 'e.g. Battery, Tyre Tips...'" 
-                  :dir="currentScope === 'ar' ? 'rtl' : 'ltr'"
-                  class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
+                  placeholder="Enter category title..." 
+                  dir="ltr"
+                  class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white text-left focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
                 />
                 <span class="text-[10px] font-mono text-slate-400 select-none whitespace-nowrap">[STORE VIEW]</span>
               </div>
@@ -237,8 +237,8 @@
                   type="text" 
                   x-model="form.meta_title[currentScope]" 
                   placeholder="Page title for search engines..." 
-                  :dir="currentScope === 'ar' ? 'rtl' : 'ltr'"
-                  class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
+                  dir="ltr"
+                  class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white text-left focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
                 />
                 <span class="text-[10px] font-mono text-slate-400 select-none whitespace-nowrap">[STORE VIEW]</span>
               </div>
@@ -254,8 +254,8 @@
                   rows="3" 
                   x-model="form.meta_keywords[currentScope]" 
                   placeholder="e.g. tyres, battery maintenance, Dubai car parts..." 
-                  :dir="currentScope === 'ar' ? 'rtl' : 'ltr'"
-                  class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
+                  dir="ltr"
+                  class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white text-left focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
                 ></textarea>
                 <span class="text-[10px] font-mono text-slate-400 select-none pt-2 whitespace-nowrap">[STORE VIEW]</span>
               </div>
@@ -271,8 +271,8 @@
                   rows="4" 
                   x-model="form.meta_description[currentScope]" 
                   placeholder="Search engine summary text..." 
-                  :dir="currentScope === 'ar' ? 'rtl' : 'ltr'"
-                  class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
+                  dir="ltr"
+                  class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white text-left focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
                 ></textarea>
                 <span class="text-[10px] font-mono text-slate-400 select-none pt-2 whitespace-nowrap">[STORE VIEW]</span>
               </div>
@@ -318,15 +318,24 @@ function visionBlogCategoryFormApp(mode, catId) {
           const svData = await svRes.json();
           const activeViews = (svData.store_views || []).filter(v => v.is_active == 1);
           if (activeViews.length > 0) {
-            this.storeViews = activeViews;
-            // Ensure form localized objects have keys for each store view
-            this.storeViews.forEach(v => {
-              if (v.code) {
-                if (this.form.name[v.code] === undefined) this.form.name[v.code] = '';
-                if (this.form.meta_title[v.code] === undefined) this.form.meta_title[v.code] = '';
-                if (this.form.meta_keywords[v.code] === undefined) this.form.meta_keywords[v.code] = '';
-                if (this.form.meta_description[v.code] === undefined) this.form.meta_description[v.code] = '';
+            const seen = new Set(['en']);
+            const deduped = [];
+            activeViews.forEach(v => {
+              const code = (v.code || '').toLowerCase();
+              if (code && !seen.has(code)) {
+                seen.add(code);
+                const display = (code === 'ar') ? 'Arabic Store View' : (v.name || code.toUpperCase());
+                deduped.push({ code: code, name: display });
               }
+            });
+            if (deduped.length > 0) {
+              this.storeViews = deduped;
+            }
+            ['en', 'ar'].concat(this.storeViews.map(v => v.code)).forEach(code => {
+              if (this.form.name[code] === undefined) this.form.name[code] = '';
+              if (this.form.meta_title[code] === undefined) this.form.meta_title[code] = '';
+              if (this.form.meta_keywords[code] === undefined) this.form.meta_keywords[code] = '';
+              if (this.form.meta_description[code] === undefined) this.form.meta_description[code] = '';
             });
           }
         }
