@@ -296,7 +296,21 @@ def register_visionadmin_routes(app):
     @app.route('/admin/blog-categories', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_blog_categories():
-        return redirect('/visionadmin/blogs?open=categories')
+        return render_template('visionadmin/blog_categories.html', page='blog_categories')
+
+    @app.route('/visionadmin/blog-categories/new', methods=['GET'])
+    @app.route('/visionadmin/blog-categories/create', methods=['GET'])
+    @app.route('/visonadmin/blog-categories/new', methods=['GET'])
+    @app.route('/visonadmin/blog-categories/create', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_blog_category_create():
+        return render_template('visionadmin/blog_category_form.html', page='blog_categories', initial_mode='create', initial_cat_id=None)
+
+    @app.route('/visionadmin/blog-categories/<int:cat_id>/edit', methods=['GET'])
+    @app.route('/visonadmin/blog-categories/<int:cat_id>/edit', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_blog_category_edit(cat_id):
+        return render_template('visionadmin/blog_category_form.html', page='blog_categories', initial_mode='edit', initial_cat_id=cat_id)
 
     @app.route('/visionadmin/sections', methods=['GET'])
     @app.route('/visionadmin/about-sections', methods=['GET'])

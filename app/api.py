@@ -1843,33 +1843,47 @@ def register_visionadmin_api_routes(app):
             'message': 'Blog article restored successfully.'
         })
 
+    @app.route('/visionadmin/api/blog-categories/<int:cat_id>', methods=['GET'])
+    @app.route('/visionadmin/api/v1/blog-categories/<int:cat_id>', methods=['GET'])
+    def visionadmin_get_blog_category(cat_id):
+        """Returns details for a single blog category."""
+        category = Blog.get_category_by_id(cat_id)
+        if not category:
+            return jsonify({'error': 'Blog category not found.'}), 404
+        return jsonify({
+            'success': True,
+            'category': category
+        })
+
     @app.route('/visionadmin/api/blog-categories', methods=['POST'])
+    @app.route('/visionadmin/api/v1/blog-categories', methods=['POST'])
     def visionadmin_create_blog_category():
-        """Creates or retrieves a blog category in blog_categories table."""
+        """Creates a blog category in blog_categories table."""
         data = request.get_json(silent=True) or {}
-        name_val = data.get('name') or data.get('name_en')
+        name_val = data.get('name') or data.get('title') or data.get('name_en')
         if isinstance(name_val, dict):
             display_name = localize_value(name_val)
         else:
             display_name = str(name_val or '').strip()
 
         if not display_name:
-            return jsonify({'error': 'Category name is required.'}), 400
+            return jsonify({'error': 'Category title is required.'}), 400
 
         user_id = session.get('user_id')
-        cat = Blog.get_or_create_category(name_val, user_id=user_id, **data)
+        cat = Blog.create_category(data, user_id=user_id)
         log_activity('create', 'blog_category', cat['id'], None, {'name': cat.get('name'), 'slug': cat.get('slug')}, user_id=user_id)
         return jsonify({
             'success': True,
             'category': cat,
-            'message': f"Category '{display_name}' saved successfully."
+            'message': f"Category '{display_name}' created successfully."
         }), 201
 
     @app.route('/visionadmin/api/blog-categories/<int:cat_id>', methods=['PUT'])
+    @app.route('/visionadmin/api/v1/blog-categories/<int:cat_id>', methods=['PUT'])
     def visionadmin_update_blog_category(cat_id):
         """Updates an existing category in blog_categories table."""
         data = request.get_json(silent=True) or {}
-        name_val = data.get('name') or data.get('name_en')
+        name_val = data.get('name') or data.get('title') or data.get('name_en')
         if isinstance(name_val, dict):
             display_name = localize_value(name_val)
         else:
@@ -1878,9 +1892,10 @@ def register_visionadmin_api_routes(app):
         user_id = session.get('user_id')
 
         if not display_name:
-            return jsonify({'error': 'Category name is required.'}), 400
+            return jsonify({'error': 'Category title is required.'}), 400
 
-        cat = Blog.update_category(cat_id, name_val, slug=slug, user_id=user_id, **data)
+        update_kwargs = {k: v for k, v in data.items() if k not in ('name', 'slug')}
+        cat = Blog.update_category(cat_id, name_val, slug=slug, user_id=user_id, **update_kwargs)
         if not cat:
             return jsonify({'error': 'Category not found.'}), 404
 

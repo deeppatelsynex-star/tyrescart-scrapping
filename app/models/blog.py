@@ -381,12 +381,13 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    SELECT c.id, c.name, c.slug, c.sort_order, c.created_at, c.updated_at,
+                    SELECT c.id, c.name, c.slug, c.sort_order, c.status, c.meta_title, c.meta_keywords, c.meta_description,
+                           c.created_at, c.updated_at,
                            COUNT(b.id) AS blogs_count
                     FROM blog_categories c
                     LEFT JOIN blogs b ON b.category_id = c.id AND b.deleted_at IS NULL
                     WHERE c.deleted_at IS NULL
-                    GROUP BY c.id, c.name, c.slug, c.sort_order,
+                    GROUP BY c.id, c.name, c.slug, c.sort_order, c.status, c.meta_title, c.meta_keywords, c.meta_description,
                              c.created_at, c.updated_at
                     ORDER BY c.sort_order ASC, c.id ASC
                 """)
@@ -397,6 +398,12 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                 for r in rows:
                     name_parsed = cls._parse_json(r.get('name'))
                     r['name'] = name_parsed
+                    r['title'] = name_parsed
+                    r['meta_title'] = cls._parse_json(r.get('meta_title'))
+                    r['meta_keywords'] = cls._parse_json(r.get('meta_keywords'))
+                    r['meta_description'] = cls._parse_json(r.get('meta_description'))
+                    r['status'] = r.get('status') or 'enabled'
+                    r['sort_order'] = r.get('sort_order') if r.get('sort_order') is not None else 0
                     r['display_name'] = get_translated_value(name_parsed, loc)
                     r['name_en'] = get_translated_value(name_parsed, 'en')
                     r['name_ar'] = get_translated_value(name_parsed, 'ar')
@@ -405,7 +412,139 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
             conn.close()
 
     @classmethod
-    def update_category(cls, cat_id: int, name, slug: str = None, user_id: int = None, **kwargs) -> dict:
+    def get_category_by_id(cls, cat_id: int, locale: str = None) -> dict:
+        """Returns a single category by id with localized fields and blog counts."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT c.id, c.name, c.slug, c.sort_order, c.status, c.meta_title, c.meta_keywords, c.meta_description,
+                           c.created_at, c.updated_at,
+                           COUNT(b.id) AS blogs_count
+                    FROM blog_categories c
+                    LEFT JOIN blogs b ON b.category_id = c.id AND b.deleted_at IS NULL
+                    WHERE c.id = %s AND c.deleted_at IS NULL
+                    GROUP BY c.id, c.name, c.slug, c.sort_order, c.status, c.meta_title, c.meta_keywords, c.meta_description,
+                             c.created_at, c.updated_at
+                """, (cat_id,))
+                r = cursor.fetchone()
+                if not r:
+                    return None
+                from services.store_context import StoreContext
+                from i18n import get_translated_value
+                loc = locale or StoreContext.get_current_language()
+
+                name_parsed = cls._parse_json(r.get('name'))
+                meta_title_parsed = cls._parse_json(r.get('meta_title'))
+                meta_keywords_parsed = cls._parse_json(r.get('meta_keywords'))
+                meta_description_parsed = cls._parse_json(r.get('meta_description'))
+
+                r['name'] = name_parsed
+                r['title'] = name_parsed
+                r['meta_title'] = meta_title_parsed
+                r['meta_keywords'] = meta_keywords_parsed
+                r['meta_description'] = meta_description_parsed
+                r['status'] = r.get('status') or 'enabled'
+                r['sort_order'] = r.get('sort_order') if r.get('sort_order') is not None else 0
+
+                r['display_name'] = get_translated_value(name_parsed, loc)
+                r['name_en'] = get_translated_value(name_parsed, 'en')
+                r['name_ar'] = get_translated_value(name_parsed, 'ar')
+
+                return r
+        finally:
+            conn.close()
+
+    @classmethod
+    def create_category(cls, data: dict, user_id: int = None) -> dict:
+        """Creates a new category in blog_categories table with full Magento-style fields."""
+        data = data or {}
+        raw_name = data.get('name') or data.get('title') or data.get('name_en')
+        name_dict = raw_name if isinstance(raw_name, dict) else cls._parse_json(raw_name)
+        if not isinstance(name_dict, dict) or not name_dict:
+            name_dict = {DEFAULT_LOCALE: str(raw_name or '').strip()}
+
+        if data.get('name_en'):
+            name_dict['en'] = str(data['name_en']).strip()
+        if data.get('name_ar'):
+            name_dict['ar'] = str(data['name_ar']).strip()
+
+        slug_seed = name_dict.get('en') or next(iter(name_dict.values()), '')
+        custom_slug = (data.get('slug') or '').strip()
+        slug = SlugMixin.slugify(custom_slug) if custom_slug else SlugMixin.slugify(slug_seed)
+        if not slug:
+            slug = f"category-{int(datetime.now(timezone.utc).timestamp())}"
+
+        status = data.get('status') or 'enabled'
+        if status not in ('enabled', 'disabled'):
+            status = 'enabled'
+
+        try:
+            sort_order = int(data.get('sort_order', 0))
+        except (ValueError, TypeError):
+            sort_order = 0
+
+        # Parse meta fields
+        def _normalize_meta(val, fallback_key='meta_en'):
+            if isinstance(val, dict):
+                return val
+            parsed = cls._parse_json(val)
+            if isinstance(parsed, dict) and parsed:
+                return parsed
+            if val is not None and str(val).strip():
+                return {'en': str(val).strip()}
+            return {}
+
+        meta_title_dict = _normalize_meta(data.get('meta_title'))
+        if data.get('meta_title_en'):
+            meta_title_dict['en'] = str(data['meta_title_en']).strip()
+        if data.get('meta_title_ar'):
+            meta_title_dict['ar'] = str(data['meta_title_ar']).strip()
+
+        meta_keywords_dict = _normalize_meta(data.get('meta_keywords'))
+        if data.get('meta_keywords_en'):
+            meta_keywords_dict['en'] = str(data['meta_keywords_en']).strip()
+        if data.get('meta_keywords_ar'):
+            meta_keywords_dict['ar'] = str(data['meta_keywords_ar']).strip()
+
+        meta_description_dict = _normalize_meta(data.get('meta_description'))
+        if data.get('meta_description_en'):
+            meta_description_dict['en'] = str(data['meta_description_en']).strip()
+        if data.get('meta_description_ar'):
+            meta_description_dict['ar'] = str(data['meta_description_ar']).strip()
+
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Check slug uniqueness among active categories
+                cursor.execute("SELECT id FROM blog_categories WHERE slug = %s AND deleted_at IS NULL", (slug,))
+                if cursor.fetchone() is not None:
+                    slug = f"{slug}-{int(datetime.now(timezone.utc).timestamp()) % 10000}"
+
+                cursor.execute("""
+                    INSERT INTO blog_categories (
+                        name, slug, sort_order, status, meta_title, meta_keywords, meta_description,
+                        created_at, updated_at, created_by, updated_by
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), %s, %s)
+                """, (
+                    dump_json_dict(name_dict),
+                    slug,
+                    sort_order,
+                    status,
+                    dump_json_dict(meta_title_dict) if meta_title_dict else None,
+                    dump_json_dict(meta_keywords_dict) if meta_keywords_dict else None,
+                    dump_json_dict(meta_description_dict) if meta_description_dict else None,
+                    user_id,
+                    user_id
+                ))
+                conn.commit()
+                cat_id = cursor.lastrowid
+                return cls.get_category_by_id(cat_id)
+        finally:
+            conn.close()
+
+    @classmethod
+    def update_category(cls, cat_id: int, name=None, slug: str = None, user_id: int = None, **kwargs) -> dict:
         """Updates an existing category in blog_categories storing name as JSON, preserving other languages."""
         conn = get_connection()
         try:
@@ -416,23 +555,24 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     return None
 
                 from services.store_context import StoreContext
-                from i18n import get_translated_value
                 curr_lang = StoreContext.get_current_language()
 
                 name_dict = cls._parse_json(existing.get('name')) if existing.get('name') else {}
                 if not isinstance(name_dict, dict):
                     name_dict = {}
 
-                if isinstance(name, dict):
-                    name_dict.update(name)
-                elif isinstance(name, str) and name.strip().startswith('{'):
-                    parsed = cls._parse_json(name)
+                # Name / Title handling
+                raw_name = name if name is not None else kwargs.get('title')
+                if isinstance(raw_name, dict):
+                    name_dict.update(raw_name)
+                elif isinstance(raw_name, str) and raw_name.strip().startswith('{'):
+                    parsed = cls._parse_json(raw_name)
                     if isinstance(parsed, dict):
                         name_dict.update(parsed)
                     else:
-                        name_dict[curr_lang] = name.strip()
-                elif name is not None and str(name).strip():
-                    name_dict[curr_lang] = str(name).strip()
+                        name_dict[curr_lang] = raw_name.strip()
+                elif raw_name is not None and str(raw_name).strip():
+                    name_dict[curr_lang] = str(raw_name).strip()
 
                 if kwargs.get('name_en'):
                     name_dict['en'] = str(kwargs['name_en']).strip()
@@ -440,23 +580,71 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     name_dict['ar'] = str(kwargs['name_ar']).strip()
 
                 name_json = dump_json_dict(name_dict)
-                slug_seed = name_dict.get('en') or next(iter(name_dict.values()), '')
-                slug = SlugMixin.slugify(slug) if slug else SlugMixin.slugify(slug_seed or '')
+
+                # Slug handling
+                slug_val = slug if slug is not None else kwargs.get('slug')
+                if slug_val:
+                    clean_slug = SlugMixin.slugify(slug_val)
+                else:
+                    slug_seed = name_dict.get('en') or next(iter(name_dict.values()), '')
+                    clean_slug = SlugMixin.slugify(slug_seed) or existing.get('slug')
+
+                # Status handling
+                status = kwargs.get('status', existing.get('status', 'enabled'))
+                if status not in ('enabled', 'disabled'):
+                    status = 'enabled'
+
+                # Sort order handling
+                try:
+                    sort_order = int(kwargs.get('sort_order', existing.get('sort_order', 0)))
+                except (ValueError, TypeError):
+                    sort_order = existing.get('sort_order', 0)
+
+                # Meta fields handling
+                def _update_meta_dict(field_name, direct_val, en_key, ar_key):
+                    existing_val = cls._parse_json(existing.get(field_name)) if existing.get(field_name) else {}
+                    if not isinstance(existing_val, dict):
+                        existing_val = {}
+                    if isinstance(direct_val, dict):
+                        existing_val.update(direct_val)
+                    elif isinstance(direct_val, str) and direct_val.strip().startswith('{'):
+                        p = cls._parse_json(direct_val)
+                        if isinstance(p, dict):
+                            existing_val.update(p)
+                        else:
+                            existing_val[curr_lang] = direct_val.strip()
+                    elif direct_val is not None:
+                        existing_val[curr_lang] = str(direct_val).strip()
+
+                    if kwargs.get(en_key) is not None:
+                        existing_val['en'] = str(kwargs[en_key]).strip()
+                    if kwargs.get(ar_key) is not None:
+                        existing_val['ar'] = str(kwargs[ar_key]).strip()
+                    return existing_val
+
+                meta_title_dict = _update_meta_dict('meta_title', kwargs.get('meta_title'), 'meta_title_en', 'meta_title_ar')
+                meta_keywords_dict = _update_meta_dict('meta_keywords', kwargs.get('meta_keywords'), 'meta_keywords_en', 'meta_keywords_ar')
+                meta_description_dict = _update_meta_dict('meta_description', kwargs.get('meta_description'), 'meta_description_en', 'meta_description_ar')
 
                 cursor.execute("""
                     UPDATE blog_categories
-                    SET name = %s, slug = %s, updated_at = NOW(), updated_by = %s
+                    SET name = %s, slug = %s, status = %s, sort_order = %s,
+                        meta_title = %s, meta_keywords = %s, meta_description = %s,
+                        updated_at = NOW(), updated_by = %s
                     WHERE id = %s AND deleted_at IS NULL
-                """, (name_json, slug, user_id, cat_id))
+                """, (
+                    name_json,
+                    clean_slug,
+                    status,
+                    sort_order,
+                    dump_json_dict(meta_title_dict) if meta_title_dict else None,
+                    dump_json_dict(meta_keywords_dict) if meta_keywords_dict else None,
+                    dump_json_dict(meta_description_dict) if meta_description_dict else None,
+                    user_id,
+                    cat_id
+                ))
                 conn.commit()
-                cursor.execute("SELECT * FROM blog_categories WHERE id = %s", (cat_id,))
-                row = cursor.fetchone()
-                if row:
-                    row['name'] = cls._parse_json(row.get('name'))
-                    row['display_name'] = get_translated_value(row['name'], curr_lang)
-                    row['name_en'] = get_translated_value(row['name'], 'en')
-                    row['name_ar'] = get_translated_value(row['name'], 'ar')
-                return row
+                return cls.get_category_by_id(cat_id)
         finally:
             conn.close()
 
@@ -504,7 +692,7 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    SELECT id, name, slug, sort_order
+                    SELECT id, name, slug, sort_order, status
                     FROM blog_categories
                     WHERE slug = %s AND deleted_at IS NULL
                     LIMIT 1
@@ -521,20 +709,14 @@ class Blog(SlugMixin, SoftDeleteMixin, SearchableMixin):
                     row['name_ar'] = localize_value(row['name'], 'ar')
                     return row
 
+                status = kwargs.get('status', 'enabled')
                 cursor.execute("""
-                    INSERT INTO blog_categories (name, slug, sort_order, created_at, updated_at, created_by, updated_by)
-                    VALUES (%s, %s, 0, NOW(), NOW(), %s, %s)
-                """, (name_json, slug, user_id, user_id))
+                    INSERT INTO blog_categories (name, slug, sort_order, status, created_at, updated_at, created_by, updated_by)
+                    VALUES (%s, %s, 0, %s, NOW(), NOW(), %s, %s)
+                """, (name_json, slug, status, user_id, user_id))
                 conn.commit()
                 cat_id = cursor.lastrowid
-                return {
-                    'id': cat_id,
-                    'name': name_dict,
-                    'display_name': localize_value(name_dict),
-                    'name_en': localize_value(name_dict, 'en'),
-                    'name_ar': localize_value(name_dict, 'ar'),
-                    'slug': slug
-                }
+                return cls.get_category_by_id(cat_id)
         finally:
             conn.close()
 

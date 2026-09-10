@@ -1,0 +1,497 @@
+{% extends "visionadmin/base.html" %}
+
+{% block title %}{% if initial_cat_id %}Edit Category - VisionAdmin CMS{% else %}New Category - VisionAdmin CMS{% endif %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-7xl mx-auto pb-16" x-data="visionBlogCategoryFormApp('{{ initial_mode | default('create', true) }}', {{ initial_cat_id | default('null', true) }})" x-init="initData()">
+
+  <!-- Top Action Header (Magento 2 Style) -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white px-6 py-4 rounded-xl border border-[#D1D5DB] shadow-xs">
+    
+    <!-- Left: Store View Scope Selector -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <label for="scope-selector" class="text-xs font-bold text-[#303030] whitespace-nowrap">Scope:</label>
+        <div class="relative">
+          <select 
+            id="scope-selector"
+            x-model="currentScope" 
+            class="text-xs font-semibold text-[#303030] bg-[#F9FAFB] hover:bg-white border border-[#ADADAD] rounded px-3 py-1.5 pr-7 focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition cursor-pointer"
+          >
+            <option value="en">All Store Views (English)</option>
+            <template x-for="sv in storeViews" :key="sv.code">
+              <option :value="sv.code" x-text="sv.name + ' (' + sv.code + ')'"></option>
+            </template>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center px-1.5 pointer-events-none text-slate-500">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scope Help Tooltip -->
+      <div class="relative group cursor-pointer" title="Store view scope controls localized textboxes for titles and meta data.">
+        <svg class="w-4 h-4 text-slate-400 group-hover:text-[#2563FF] transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+
+      <!-- Active Scope Badge -->
+      <span class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-[#2563FF] border border-blue-200">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#2563FF]"></span>
+        <span>Scope: <span x-text="currentScope.toUpperCase()"></span></span>
+      </span>
+    </div>
+
+    <!-- Right: Back & Save Action Buttons -->
+    <div class="flex items-center gap-2.5 justify-end">
+      <a 
+        href="/visionadmin/blog-categories" 
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded border border-[#ADADAD] bg-white hover:bg-slate-50 text-[#303030] font-bold text-xs tracking-wide transition cursor-pointer shadow-2xs active:scale-95"
+      >
+        <svg class="w-3.5 h-3.5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        <span>Back</span>
+      </a>
+
+      <template x-if="form.id">
+        <button 
+          type="button" 
+          @click="deleteCategory()" 
+          class="px-4 py-2 rounded border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs tracking-wide transition cursor-pointer active:scale-95"
+        >
+          Delete
+        </button>
+      </template>
+
+      <button 
+        type="button" 
+        @click="saveCategory(false)" 
+        :disabled="isSaving"
+        class="px-4 py-2 rounded border border-[#ADADAD] bg-white hover:bg-slate-50 text-[#303030] font-bold text-xs tracking-wide transition cursor-pointer shadow-2xs disabled:opacity-50 active:scale-95"
+      >
+        <span x-text="isSaving ? 'Saving...' : 'Save & Continue Edit'"></span>
+      </button>
+
+      <!-- Magento Save Button in Brand Blue (#2563FF) -->
+      <button 
+        type="button" 
+        @click="saveCategory(true)" 
+        :disabled="isSaving"
+        class="px-6 py-2 rounded bg-[#2563FF] hover:bg-[#1D4ED8] text-white font-bold text-xs tracking-wide transition cursor-pointer shadow-sm disabled:opacity-50 active:scale-95 flex items-center gap-1.5"
+      >
+        <svg x-show="isSaving" class="w-3.5 h-3.5 animate-spin text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+        <span x-text="isSaving ? 'Saving...' : 'Save'"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main 2-Column Grid (Left Nav Sidebar + Right Content Form) -->
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+    
+    <!-- LEFT SIDEBAR: CATEGORY TABS -->
+    <div class="lg:col-span-1 bg-white rounded border border-[#D1D5DB] overflow-hidden shadow-2xs sticky top-4">
+      <div class="bg-[#F5F5F5] px-4 py-3 border-b border-[#D1D5DB]">
+        <h3 class="text-xs font-bold text-[#303030] uppercase tracking-wider">CATEGORY</h3>
+      </div>
+      <nav class="divide-y divide-[#E5E7EB]">
+        <!-- Tab 1: General -->
+        <button 
+          type="button" 
+          @click="activeTab = 'general'" 
+          :class="activeTab === 'general' ? 'border-l-4 border-[#2563FF] bg-white font-bold text-[#303030]' : 'border-l-4 border-transparent text-[#555555] hover:bg-[#F9FAFB] font-medium'"
+          class="w-full text-left px-4 py-3.5 text-xs transition flex items-center justify-between cursor-pointer"
+        >
+          <span>General</span>
+          <svg class="w-3.5 h-3.5" :class="activeTab === 'general' ? 'text-[#2563FF]' : 'text-slate-400'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+
+        <!-- Tab 2: Meta Information -->
+        <button 
+          type="button" 
+          @click="activeTab = 'meta'" 
+          :class="activeTab === 'meta' ? 'border-l-4 border-[#2563FF] bg-white font-bold text-[#303030]' : 'border-l-4 border-transparent text-[#555555] hover:bg-[#F9FAFB] font-medium'"
+          class="w-full text-left px-4 py-3.5 text-xs transition flex items-center justify-between cursor-pointer"
+        >
+          <span>Meta Information</span>
+          <svg class="w-3.5 h-3.5" :class="activeTab === 'meta' ? 'text-[#2563FF]' : 'text-slate-400'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </nav>
+    </div>
+
+    <!-- RIGHT CONTENT AREA -->
+    <div class="lg:col-span-3">
+
+      <!-- ========================================== -->
+      <!-- TAB 1: GENERAL                             -->
+      <!-- ========================================== -->
+      <div x-show="activeTab === 'general'" class="bg-white p-6 sm:p-8 rounded border border-[#D1D5DB] shadow-2xs space-y-6">
+        
+        <!-- Section Heading -->
+        <div class="border-b border-[#E5E7EB] pb-3 flex items-center justify-between">
+          <h2 class="text-sm font-bold text-[#303030] tracking-wide">General</h2>
+          <div class="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+            <span>Store View Scope:</span>
+            <span class="font-bold text-[#2563FF] uppercase" x-text="currentScope"></span>
+          </div>
+        </div>
+
+        <!-- Form Fields Grid (Magento Horizontal Label/Input Alignment) -->
+        <div class="space-y-5 text-xs text-[#303030]">
+
+          <!-- Title * -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-4 items-center">
+            <label class="font-bold sm:text-right flex items-center sm:justify-end gap-1.5">
+              <span>Title</span>
+              <span class="text-rose-500 font-bold">*</span>
+            </label>
+            <div class="sm:col-span-3 space-y-1">
+              <div class="flex items-center gap-2">
+                <input 
+                  type="text" 
+                  x-model="form.name[currentScope]" 
+                  @input="onTitleInput()"
+                  :placeholder="currentScope === 'ar' ? 'أدخل عنوان القسم بالعربية...' : 'e.g. Battery, Tyre Tips...'" 
+                  :dir="currentScope === 'ar' ? 'rtl' : 'ltr'"
+                  class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
+                />
+                <span class="text-[10px] font-mono text-slate-400 select-none whitespace-nowrap">[STORE VIEW]</span>
+              </div>
+              <p class="text-[11px] text-slate-400 font-medium" x-show="currentScope !== 'en' && form.name['en']">
+                Default (English): <span class="font-bold text-slate-600" x-text="form.name['en']"></span>
+              </p>
+            </div>
+          </div>
+
+          <!-- URL * (Slug) -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-4 items-center">
+            <label class="font-bold sm:text-right flex items-center sm:justify-end gap-1.5">
+              <span>URL</span>
+              <span class="text-rose-500 font-bold">*</span>
+            </label>
+            <div class="sm:col-span-3 space-y-1">
+              <div class="flex items-center gap-2">
+                <input 
+                  type="text" 
+                  x-model="form.slug" 
+                  placeholder="e.g. battery" 
+                  class="w-full max-w-xl px-3 py-2 text-xs font-mono font-medium border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
+                />
+                <span class="text-[10px] font-mono text-slate-400 select-none whitespace-nowrap">[GLOBAL]</span>
+              </div>
+              <p class="text-[11px] text-slate-400">URL path key for storefront navigation: <code class="font-mono text-slate-600">/blog/category/<span x-text="form.slug || 'slug'"></span></code></p>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-4 items-center">
+            <label class="font-bold sm:text-right">Status</label>
+            <div class="sm:col-span-3 flex items-center gap-2">
+              <select 
+                x-model="form.status" 
+                class="w-36 px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition cursor-pointer"
+              >
+                <option value="enabled">Enable</option>
+                <option value="disabled">Disable</option>
+              </select>
+              <span class="text-[10px] font-mono text-slate-400 select-none whitespace-nowrap">[GLOBAL]</span>
+            </div>
+          </div>
+
+          <!-- Sort Order -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-4 items-center">
+            <label class="font-bold sm:text-right">Sort Order</label>
+            <div class="sm:col-span-3 flex items-center gap-2">
+              <input 
+                type="number" 
+                x-model.number="form.sort_order" 
+                class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
+              />
+              <span class="text-[10px] font-mono text-slate-400 select-none whitespace-nowrap">[GLOBAL]</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB 2: META INFORMATION                    -->
+      <!-- ========================================== -->
+      <div x-show="activeTab === 'meta'" class="bg-white p-6 sm:p-8 rounded border border-[#D1D5DB] shadow-2xs space-y-6">
+        
+        <!-- Section Heading -->
+        <div class="border-b border-[#E5E7EB] pb-3 flex items-center justify-between">
+          <h2 class="text-sm font-bold text-[#303030] tracking-wide">Meta Information</h2>
+          <div class="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+            <span>Store View Scope:</span>
+            <span class="font-bold text-[#2563FF] uppercase" x-text="currentScope"></span>
+          </div>
+        </div>
+
+        <!-- Meta Form Fields Grid -->
+        <div class="space-y-5 text-xs text-[#303030]">
+
+          <!-- Meta Title -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-4 items-center">
+            <label class="font-bold sm:text-right">Meta Title</label>
+            <div class="sm:col-span-3 space-y-1">
+              <div class="flex items-center gap-2">
+                <input 
+                  type="text" 
+                  x-model="form.meta_title[currentScope]" 
+                  placeholder="Page title for search engines..." 
+                  :dir="currentScope === 'ar' ? 'rtl' : 'ltr'"
+                  class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
+                />
+                <span class="text-[10px] font-mono text-slate-400 select-none whitespace-nowrap">[STORE VIEW]</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Meta Keywords -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-4 items-start">
+            <label class="font-bold sm:text-right pt-2">Meta Keywords</label>
+            <div class="sm:col-span-3 space-y-1">
+              <div class="flex items-start gap-2">
+                <textarea 
+                  rows="3" 
+                  x-model="form.meta_keywords[currentScope]" 
+                  placeholder="e.g. tyres, battery maintenance, Dubai car parts..." 
+                  :dir="currentScope === 'ar' ? 'rtl' : 'ltr'"
+                  class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
+                ></textarea>
+                <span class="text-[10px] font-mono text-slate-400 select-none pt-2 whitespace-nowrap">[STORE VIEW]</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Meta Description -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-4 items-start">
+            <label class="font-bold sm:text-right pt-2">Meta Description</label>
+            <div class="sm:col-span-3 space-y-1">
+              <div class="flex items-start gap-2">
+                <textarea 
+                  rows="4" 
+                  x-model="form.meta_description[currentScope]" 
+                  placeholder="Search engine summary text..." 
+                  :dir="currentScope === 'ar' ? 'rtl' : 'ltr'"
+                  class="w-full max-w-xl px-3 py-2 text-xs font-medium border border-[#D1D5DB] rounded bg-white focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition"
+                ></textarea>
+                <span class="text-[10px] font-mono text-slate-400 select-none pt-2 whitespace-nowrap">[STORE VIEW]</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+function visionBlogCategoryFormApp(mode, catId) {
+  return {
+    mode: mode || 'create',
+    catId: catId || null,
+    activeTab: 'general',
+    currentScope: 'en',
+    storeViews: [
+      { code: 'ar', name: 'Arabic Store View' }
+    ],
+    isSaving: false,
+
+    form: {
+      id: catId || null,
+      name: { en: '', ar: '' },
+      slug: '',
+      status: 'enabled',
+      sort_order: 0,
+      meta_title: { en: '', ar: '' },
+      meta_keywords: { en: '', ar: '' },
+      meta_description: { en: '', ar: '' }
+    },
+
+    async initData() {
+      // 1. Fetch available store views
+      try {
+        const svRes = await fetch('/visionadmin/api/store-views');
+        if (svRes.ok) {
+          const svData = await svRes.json();
+          const activeViews = (svData.store_views || []).filter(v => v.is_active == 1);
+          if (activeViews.length > 0) {
+            this.storeViews = activeViews;
+            // Ensure form localized objects have keys for each store view
+            this.storeViews.forEach(v => {
+              if (v.code) {
+                if (this.form.name[v.code] === undefined) this.form.name[v.code] = '';
+                if (this.form.meta_title[v.code] === undefined) this.form.meta_title[v.code] = '';
+                if (this.form.meta_keywords[v.code] === undefined) this.form.meta_keywords[v.code] = '';
+                if (this.form.meta_description[v.code] === undefined) this.form.meta_description[v.code] = '';
+              }
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load dynamic store views, using default locales:', err);
+      }
+
+      // 2. If in edit mode, fetch category details
+      if (this.catId) {
+        await this.loadCategory(this.catId);
+      }
+    },
+
+    async loadCategory(id) {
+      try {
+        const res = await fetch(`/visionadmin/api/blog-categories/${id}`);
+        const data = await res.json();
+        if (data.success && data.category) {
+          const c = data.category;
+          this.form.id = c.id;
+          
+          // Parse localized name
+          if (typeof c.name === 'object' && c.name !== null) {
+            this.form.name = Object.assign({ en: '', ar: '' }, c.name);
+          } else {
+            this.form.name = { en: c.name_en || c.name || '', ar: c.name_ar || '' };
+          }
+
+          this.form.slug = c.slug || '';
+          this.form.status = c.status || 'enabled';
+          this.form.sort_order = c.sort_order ?? 0;
+
+          // Parse localized meta fields
+          if (typeof c.meta_title === 'object' && c.meta_title !== null) {
+            this.form.meta_title = Object.assign({ en: '', ar: '' }, c.meta_title);
+          } else if (c.meta_title) {
+            this.form.meta_title = { en: c.meta_title, ar: '' };
+          }
+
+          if (typeof c.meta_keywords === 'object' && c.meta_keywords !== null) {
+            this.form.meta_keywords = Object.assign({ en: '', ar: '' }, c.meta_keywords);
+          } else if (c.meta_keywords) {
+            this.form.meta_keywords = { en: c.meta_keywords, ar: '' };
+          }
+
+          if (typeof c.meta_description === 'object' && c.meta_description !== null) {
+            this.form.meta_description = Object.assign({ en: '', ar: '' }, c.meta_description);
+          } else if (c.meta_description) {
+            this.form.meta_description = { en: c.meta_description, ar: '' };
+          }
+        } else {
+          alert(data.error || 'Failed to load category.');
+        }
+      } catch (e) {
+        console.error('Error loading category:', e);
+        alert('Network error loading category.');
+      }
+    },
+
+    slugify(text) {
+      return (text || '')
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    },
+
+    onTitleInput() {
+      // Auto-slugify English title if creating or slug is empty
+      if (this.currentScope === 'en' && (!this.form.id || !this.form.slug)) {
+        this.form.slug = this.slugify(this.form.name.en);
+      }
+    },
+
+    async saveCategory(redirectAfterSave = true) {
+      const primaryTitle = this.form.name.en || this.form.name[this.currentScope] || Object.values(this.form.name)[0] || '';
+      if (!primaryTitle.trim()) {
+        alert('Please enter a Category Title.');
+        this.activeTab = 'general';
+        return;
+      }
+
+      if (!this.form.slug.trim()) {
+        this.form.slug = this.slugify(primaryTitle);
+      }
+
+      this.isSaving = true;
+      try {
+        const isEdit = Boolean(this.form.id);
+        const url = isEdit ? `/visionadmin/api/blog-categories/${this.form.id}` : '/visionadmin/api/blog-categories';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const payload = {
+          name: this.form.name,
+          title: this.form.name,
+          slug: this.form.slug,
+          status: this.form.status,
+          sort_order: parseInt(this.form.sort_order || 0, 10),
+          meta_title: this.form.meta_title,
+          meta_keywords: this.form.meta_keywords,
+          meta_description: this.form.meta_description
+        };
+
+        const res = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const savedCat = data.category;
+          this.form.id = savedCat.id;
+
+          if (window.showToast) {
+            window.showToast(data.message || 'Category saved successfully.', 'success');
+          }
+
+          if (redirectAfterSave) {
+            window.location.href = '/visionadmin/blog-categories';
+          } else if (!isEdit) {
+            // Update URL to edit mode without full reload
+            window.history.replaceState({}, '', `/visionadmin/blog-categories/${savedCat.id}/edit`);
+          }
+        } else {
+          alert(data.error || 'Failed to save category.');
+        }
+      } catch (err) {
+        console.error('Save category error:', err);
+        alert('Network error while saving category.');
+      } finally {
+        this.isSaving = false;
+      }
+    },
+
+    async deleteCategory() {
+      if (!this.form.id) return;
+      const title = this.form.name.en || this.form.slug;
+      if (!confirm(`Are you sure you want to delete the category "${title}"?`)) return;
+
+      try {
+        const res = await fetch(`/visionadmin/api/blog-categories/${this.form.id}`, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          if (window.showToast) window.showToast('Category deleted successfully.', 'success');
+          window.location.href = '/visionadmin/blog-categories';
+        } else {
+          alert(data.error || 'Failed to delete category.');
+        }
+      } catch (err) {
+        console.error('Delete error:', err);
+        alert('Network error deleting category.');
+      }
+    }
+  };
+}
+</script>
+{% endblock %}
