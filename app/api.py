@@ -3663,6 +3663,10 @@ def register_visionadmin_api_routes(app):
                 if not attr:
                     return jsonify({'error': 'Attribute not found.'}), 404
 
+                # CRITICAL RULE: Required and system attributes CANNOT be deleted by anyone!
+                if attr.get('is_required') or attr.get('is_system') or attr.get('code') in ('sku', 'price', 'name', 'product_name', 'status', 'display_name', 'tire_size_label', 'load_index', 'speed_rating'):
+                    return jsonify({'error': f"Required attribute '{attr['code']}' cannot be deleted by anyone."}), 403
+
                 cursor.execute("""
                     UPDATE attributes 
                     SET deleted_at = NOW(), deleted_by = %s
@@ -3689,6 +3693,20 @@ def register_visionadmin_api_routes(app):
     def visionadmin_api_purge_attribute(attr_id):
         """Permanently deletes an attribute and its options from the database."""
         user_id = get_current_admin_user_id()
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM attributes WHERE id = %s", (attr_id,))
+                attr = cursor.fetchone()
+                if not attr:
+                    return jsonify({'error': 'Attribute not found.'}), 404
+
+                # CRITICAL RULE: Required and system attributes CANNOT be purged or deleted!
+                if attr.get('is_required') or attr.get('is_system') or attr.get('code') in ('sku', 'price', 'name', 'product_name', 'status', 'display_name', 'tire_size_label', 'load_index', 'speed_rating'):
+                    return jsonify({'error': f"Required attribute '{attr['code']}' cannot be deleted or purged by anyone."}), 403
+        finally:
+            conn.close()
+
         success = AttributeService.purge_attribute(attr_id)
         if not success:
             return jsonify({'error': 'Attribute not found.'}), 404

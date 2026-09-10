@@ -84,6 +84,13 @@ class AttributeService:
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                cursor.execute("SELECT id, code, is_required, is_system FROM attributes WHERE id = %s", (attr_id,))
+                attr = cursor.fetchone()
+                if not attr:
+                    return False
+                if attr.get('is_required') or attr.get('is_system') or attr.get('code') in ('sku', 'price', 'name', 'product_name', 'status', 'display_name', 'tire_size_label', 'load_index', 'speed_rating'):
+                    raise ValueError(f"Required attribute '{attr['code']}' cannot be deleted or purged.")
+
                 cursor.execute("DELETE FROM attribute_options WHERE attribute_id = %s", (attr_id,))
                 cursor.execute("DELETE FROM attribute_group_attributes WHERE attribute_id = %s", (attr_id,))
                 cursor.execute("DELETE FROM product_attribute_values WHERE attribute_id = %s", (attr_id,))
