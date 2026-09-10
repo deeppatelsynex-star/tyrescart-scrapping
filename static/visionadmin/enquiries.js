@@ -14,6 +14,7 @@
 
   // DOM Elements
   const tableBody = document.getElementById('enquiries-table-body');
+  const mobileCardsContainer = document.getElementById('enquiries-mobile-cards');
   const emptyState = document.getElementById('enquiries-empty-state');
   const showingCount = document.getElementById('enquiries-showing-count');
   const searchInput = document.getElementById('enquiry-search-input');
@@ -103,6 +104,17 @@
         `;
       }
 
+      if (mobileCardsContainer) {
+        mobileCardsContainer.innerHTML = `
+          <div class="py-12 text-center text-slate-400 font-bold">
+            <div class="inline-flex items-center gap-2">
+              <svg class="w-5 h-5 animate-spin text-[#2563FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+              Loading customer enquiries...
+            </div>
+          </div>
+        `;
+      }
+
       const resp = await fetch('/visionadmin/api/v1/enquiries', {
         headers: { 'Accept': 'application/json' }
       });
@@ -153,6 +165,16 @@
               </div>
             </td>
           </tr>
+        `;
+      }
+      if (mobileCardsContainer) {
+        mobileCardsContainer.innerHTML = `
+          <div class="py-8 text-center text-rose-500 font-bold p-4 space-y-2">
+            <div>Failed to load enquiries: ${escapeHtml(err.message)}</div>
+            <button type="button" onclick="window.location.reload()" class="px-3 py-1 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-lg text-xs font-bold transition-colors">
+              Retry Loading
+            </button>
+          </div>
         `;
       }
     }
@@ -212,6 +234,7 @@
 
     if (!list.length) {
       if (tableBody) tableBody.innerHTML = '';
+      if (mobileCardsContainer) mobileCardsContainer.innerHTML = '';
       if (emptyState) emptyState.classList.remove('hidden');
       return;
     }
@@ -301,39 +324,104 @@
       })
       .join('');
 
+    const cardsHtml = list
+      .map((item) => {
+        const id = item.enquiry_id;
+        const name = item.name || 'Storefront Visitor';
+        const phone = item.number || '';
+        const email = item.email || '';
+        const tyreSize = item.tyre_size || '--';
+        const vehicle = item.vehicle || (item.make ? `${item.make} ${item.model || ''} ${item.year || ''}`.trim() : '--');
+        const city = item.city || '--';
+        const spec = item.spec || '--';
+        const dateStr = item.created_at || '--';
+
+        const phoneClean = phone ? phone.replace(/[^\d+]/g, '') : '';
+        const waLink = phoneClean
+          ? `https://wa.me/${phoneClean.replace('+', '')}?text=${encodeURIComponent(`Hi ${name}, thank you for contacting TyresVision.`)}`
+          : `https://wa.me/971505069575`;
+
+        return `
+        <div class="p-3.5 sm:p-4 space-y-2.5 bg-white hover:bg-[#F8FAF7]/60 transition-colors">
+          <!-- Card Top: ID, Date, Badges -->
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="font-black text-sm text-[#0E1108]">#${id}</span>
+              <span class="text-[11px] text-slate-400 font-medium whitespace-nowrap truncate">${escapeHtml(dateStr)}</span>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap justify-end shrink-0">
+              ${getStatusBadge(item.status)}
+              ${getSourceBadge(item.form_type, item.enquiry_for)}
+            </div>
+          </div>
+
+          <!-- Customer Info -->
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="font-extrabold text-sm text-[#0E1108] truncate">${escapeHtml(name)}</div>
+              <div class="flex items-center gap-3 mt-1 text-xs text-slate-600 flex-wrap">
+                ${phone ? `
+                  <a href="tel:${escapeHtml(phone)}" class="inline-flex items-center gap-1 text-slate-700 hover:text-[#2563FF] font-mono font-bold">
+                    <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    ${escapeHtml(phone)}
+                  </a>
+                ` : ''}
+                ${email ? `
+                  <span class="text-slate-400 truncate max-w-[180px] text-[11px]">${escapeHtml(email)}</span>
+                ` : ''}
+              </div>
+            </div>
+            ${phone ? `
+              <a href="${waLink}" target="_blank" title="Chat on WhatsApp" class="shrink-0 w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center transition-colors shadow-2xs">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.9 9.9 0 004.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.31-1.96 1.36-.54.05-1.04.24-3.52-.73-2.99-1.18-4.86-4.29-5.01-4.49-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.29.59-.37.78-.37s.39 0 .56.01c.18.01.42-.07.66.5.24.59.83 2.03.9 2.18.07.15.12.32.02.51-.1.2-.15.32-.29.5s-.3.4-.43.53c-.15.15-.3.31-.13.6.17.29.76 1.25 1.62 2.02 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.15.27.1 1.71.81 2 .96.29.15.49.22.56.34.07.13.07.75-.17 1.43z"/></svg>
+              </a>
+            ` : ''}
+          </div>
+
+          <!-- Specs Box -->
+          <div class="p-2.5 sm:p-3 rounded-xl bg-[#F6F8F3] border border-[#E3E7DE]/80 text-xs space-y-1.5">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tyre Size:</span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-md bg-[#EFF6FF] text-[#1D4ED8] font-black text-xs">
+                ${escapeHtml(tyreSize)}
+              </span>
+            </div>
+            ${vehicle && vehicle !== '--' ? `
+              <div class="flex items-center justify-between gap-2 text-[11px]">
+                <span class="text-slate-400 font-medium">Vehicle:</span>
+                <span class="font-bold text-[#0E1108] text-right truncate max-w-[200px]">${escapeHtml(vehicle)}</span>
+              </div>
+            ` : ''}
+            ${(city && city !== '--') || (spec && spec !== '--') ? `
+              <div class="flex items-center justify-between gap-2 text-[11px]">
+                <span class="text-slate-400 font-medium">Location / Fitting:</span>
+                <span class="font-semibold text-slate-700 text-right truncate max-w-[200px]">${escapeHtml(city)}${spec && spec !== '--' ? ' • ' + escapeHtml(spec) : ''}</span>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center justify-between gap-2 pt-1">
+            <button type="button" class="btn-view-lead flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#EFF6FF] hover:bg-blue-100 text-[#1D4ED8] font-extrabold text-xs transition-colors cursor-pointer shadow-2xs active:scale-95" data-id="${id}">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span>View Details</span>
+            </button>
+            <button type="button" class="btn-delete-lead w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95" data-id="${id}" title="Delete enquiry">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+        `;
+      })
+      .join('');
+
     if (tableBody) {
       tableBody.innerHTML = html;
-      attachRowEvents();
-
-      if (window.jQuery && $.fn.DataTable) {
-        if ($.fn.DataTable.isDataTable('#enquiries-table')) {
-          $('#enquiries-table').DataTable().destroy();
-        }
-        $('#enquiries-table').DataTable({
-          responsive: true,
-          pageLength: 10,
-          lengthMenu: [10, 25, 50, 100],
-          pagingType: 'full_numbers',
-          autoWidth: false,
-          columnDefs: [
-            { orderable: false, targets: [6] }
-          ],
-          order: [[0, 'desc']],
-          language: {
-            search: '',
-            searchPlaceholder: 'Search leads...',
-            lengthMenu: 'Show _MENU_ per page',
-            info: 'Showing _START_ to _END_ of _TOTAL_ leads',
-            infoEmpty: 'No leads found',
-            infoFiltered: '(filtered from _MAX_ total)',
-            paginate: { first: 'First', last: 'Last', next: 'Next', previous: 'Previous' }
-          },
-          drawCallback: function() {
-            attachRowEvents();
-          }
-        });
-      }
     }
+    if (mobileCardsContainer) {
+      mobileCardsContainer.innerHTML = cardsHtml;
+    }
+    attachRowEvents();
   }
 
   function attachRowEvents() {
