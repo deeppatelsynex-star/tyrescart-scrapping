@@ -4503,17 +4503,16 @@ def register_visionadmin_api_routes(app):
     def visionadmin_api_sample_categories_csv():
         """Return downloadable sample CSV template for categories."""
         import io
-        csv_text = "name_en,slug,sort_order,status,description_en,meta_title_en,meta_desc_en\n" \
-                   "Passenger Car Tyres,passenger-car-tyres,1,active,\"High-durability tyres designed for sedans, coupes, and city hatchbacks.\",Buy Car Tyres Online UAE,Wide range of passenger car tyres in Dubai\n" \
-                   "SUV & 4x4 Tyres,suv-4x4-tyres,2,active,\"All-terrain and highway tyres for crossovers and heavy-duty 4x4 SUVs.\",Buy SUV Tyres UAE,Best SUV 4x4 tyres for sand and highway\n"
+        csv_text = "sku,name,categories,price,stock_qty\n" \
+                   "TYRE-BR-1856515,Bridgestone Ecopia 185/65 R15,\"Default Category/Tyres,Default Category/Tyres/Brand/Bridgestone,Default Category/Tyres/Tyre Size/185\\/65 R15,Default Category/Tyres/Cars\",320.00,24\n" \
+                   "TYRE-MI-2056515,Michelin Pilot 205/65 R15,\"Default Category/Tyres,Default Category/Tyres/Brand/Michelin,Default Category/Tyres/Tyre Size/205\\/65 R15,Default Category/Tyres/Cars\",450.00,16\n" \
+                   "TYRE-GY-2156016,Goodyear Eagle 215/60 R16,\"Default Category/Tyres,Default Category/Tyres/Brand/Goodyear,Default Category/Tyres/Tyre Size/215\\/60 R16\",380.00,12\n"
         output = io.BytesIO(csv_text.encode('utf-8'))
         return send_file(output, mimetype='text/csv', as_attachment=True, download_name='categories_sample.csv')
 
     @app.route('/visionadmin/api/categories/import-csv', methods=['POST'])
     def visionadmin_api_import_categories_csv():
-        """Import multiple categories from CSV file."""
-        import csv
-        import io
+        """Import hierarchical categories from CSV file supporting Magento category paths."""
         try:
             if 'file' not in request.files:
                 return jsonify({'success': False, 'error': 'No file uploaded'}), 400
@@ -4521,58 +4520,11 @@ def register_visionadmin_api_routes(app):
             if not file or not file.filename:
                 return jsonify({'success': False, 'error': 'No file selected'}), 400
 
-            stream = io.StringIO(file.stream.read().decode('utf-8', errors='ignore'))
-            reader = csv.DictReader(stream)
-
-            user_id = session.get('user_id')
-            imported = 0
-
-            for row in reader:
-                clean_row = {k.strip().lower(): v.strip() for k, v in row.items() if k}
-                name_en = clean_row.get('name_en') or clean_row.get('name') or clean_row.get('category_name') or ''
-                if not name_en:
-                    continue
-
-                slug = clean_row.get('slug') or Category.slugify(name_en)
-                image = clean_row.get('image') or None
-                sort_order = int(clean_row.get('sort_order') or imported + 1)
-                status = clean_row.get('status') or 'active'
-                desc = clean_row.get('description_en') or clean_row.get('description') or None
-                meta_title = clean_row.get('meta_title_en') or clean_row.get('meta_title') or None
-                meta_desc = clean_row.get('meta_desc_en') or clean_row.get('meta_desc') or None
-
-                existing = Category.find_by_slug(slug)
-                if existing:
-                    Category.update(existing['id'], {
-                        'name_en': name_en,
-                        'slug': slug,
-                        'parent_id': existing.get('parent_id'),
-                        'image': image or existing.get('image'),
-                        'sort_order': sort_order,
-                        'status': status,
-                        'description_en': desc or existing.get('description_en'),
-                        'meta_title_en': meta_title or existing.get('meta_title_en'),
-                        'meta_desc_en': meta_desc or existing.get('meta_desc_en')
-                    }, user_id=user_id)
-                else:
-                    Category.create({
-                        'name_en': name_en,
-                        'slug': slug,
-                        'parent_id': None,
-                        'image': image,
-                        'sort_order': sort_order,
-                        'status': status,
-                        'description_en': desc,
-                        'meta_title_en': meta_title,
-                        'meta_desc_en': meta_desc
-                    }, user_id=user_id)
-                imported += 1
-
-            return jsonify({
-                'success': True,
-                'imported': imported,
-                'message': f'Successfully imported {imported} categories from CSV!'
-            })
+            from services.category_importer import CategoryImporter
+            user_id = session.get('user_id') or session.get('admin_user_id')
+            result = CategoryImporter.import_csv(file.stream, user_id=user_id)
+            status_code = 200 if result.get('success') else 400
+            return jsonify(result), status_code
         except Exception as e:
             return jsonify({'success': False, 'error': f'Failed to process CSV: {str(e)}'}), 500
 

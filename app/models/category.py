@@ -458,23 +458,36 @@ class Category:
 
     @classmethod
     def get_category_tree(cls, locale: str = None):
-        """Returns the full hierarchical category tree with product counts."""
+        """Returns the full hierarchical category tree with accurate rolled-up product counts."""
+        from collections import defaultdict
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    SELECT c.*,
-                           (SELECT COUNT(*) FROM products p 
-                            WHERE (p.category_id = c.id OR EXISTS (
-                                SELECT 1 FROM product_categories pc 
-                                WHERE pc.product_id = p.id AND pc.category_id = c.id
-                            )) AND p.deleted_at IS NULL) AS product_count
+                    SELECT c.*
                     FROM categories c
                     WHERE c.deleted_at IS NULL
                     ORDER BY c.sort_order ASC, c.id ASC
                 """)
                 rows = cursor.fetchall() or []
                 items = [cls._normalize_category_row(r, locale) for r in rows]
+
+                # Fetch all active product-to-category associations in a single query
+                cursor.execute("""
+                    SELECT DISTINCT product_id, category_id 
+                    FROM (
+                        SELECT id AS product_id, category_id FROM products WHERE category_id IS NOT NULL AND deleted_at IS NULL
+                        UNION ALL
+                        SELECT pc.product_id, pc.category_id 
+                        FROM product_categories pc
+                        JOIN products p ON p.id = pc.product_id AND p.deleted_at IS NULL
+                    ) AS all_pc
+                """)
+                pc_rows = cursor.fetchall() or []
+                direct_prods_by_cat = defaultdict(set)
+                for pr in pc_rows:
+                    direct_prods_by_cat[pr['category_id']].add(pr['product_id'])
+
                 by_id = {item['id']: {**item, 'children': []} for item in items}
                 tree = []
                 for item in items:
@@ -484,7 +497,54 @@ class Category:
                         by_id[pid]['children'].append(node)
                     else:
                         tree.append(node)
-                return {'tree': tree, 'flat': items}
+
+                # Recursively calculate rolled-up subtree product counts and assign depths
+                def calc_subtree(node, depth=0, path=None):
+                    if path is None:
+                        path = []
+                    curr_path = path + [node['id']]
+                    node['depth'] = depth
+                    node['path'] = curr_path
+
+                    all_prods = set(direct_prods_by_cat.get(node['id'], set()))
+                    node['direct_product_count'] = len(all_prods)
+
+                    for child in node['children']:
+                        child_prods = calc_subtree(child, depth + 1, curr_path)
+                        all_prods.update(child_prods)
+
+                    node['product_count'] = len(all_prods)
+                    node['has_children'] = len(node['children']) > 0
+                    return all_prods
+
+                for root_node in tree:
+                    calc_subtree(root_node, 0)
+
+                # Pre-order flattened list for recursive arbitrary depth display in UI
+                flat_ordered = []
+                def flatten_node(node):
+                    flat_ordered.append({
+                        'id': node['id'],
+                        'name': node.get('name_en') or node.get('display_name') or node.get('name') or '',
+                        'name_en': node.get('name_en') or node.get('display_name') or '',
+                        'slug': node.get('slug'),
+                        'parent_id': node.get('parent_id'),
+                        'depth': node.get('depth', 0),
+                        'product_count': node.get('product_count', 0),
+                        'direct_product_count': node.get('direct_product_count', 0),
+                        'has_children': node.get('has_children', False),
+                        'status': node.get('status', 'active'),
+                        'sort_order': node.get('sort_order', 0),
+                        'path': node.get('path', []),
+                        '_expanded': True
+                    })
+                    for child in node['children']:
+                        flatten_node(child)
+
+                for root_node in tree:
+                    flatten_node(root_node)
+
+                return {'tree': tree, 'flat': flat_ordered, 'raw_flat': items}
         finally:
             conn.close()
 

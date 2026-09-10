@@ -158,86 +158,51 @@
           />
         </div>
 
-        <!-- Tree Nodes List -->
-        <div class="space-y-1 max-h-[600px] overflow-y-auto pr-1">
-          <template x-if="treeNodes.length === 0">
+        <!-- Tree Nodes List (Arbitrary Depth Magento Style) -->
+        <div class="space-y-0.5 max-h-[600px] overflow-y-auto pr-1">
+          <template x-if="!flatTreeNodes || flatTreeNodes.length === 0">
             <div class="py-6 text-center text-xs text-slate-400 font-medium">No categories found.</div>
           </template>
 
-          <template x-for="node in filteredTreeNodes" :key="node.id">
-            <div class="space-y-1">
-              <!-- Level 0 Node -->
-              <div 
-                @click="selectCategory(node.id)"
-                class="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer group select-none"
-                :class="form.id === node.id ? 'bg-[#EFF6FF] text-[#1D4ED8] border border-blue-200 shadow-2xs' : 'text-slate-700 hover:bg-slate-50 border border-transparent'"
-              >
-                <div class="flex items-center gap-2 min-w-0">
-                  <span 
-                    x-show="node.children && node.children.length > 0"
-                    @click.stop="node._expanded = !node._expanded"
-                    class="w-4 h-4 flex items-center justify-center text-slate-400 hover:text-slate-700"
-                  >
-                    <svg class="w-3 h-3 transition-transform" :class="node._expanded ? 'rotate-90' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
-                  </span>
-                  <span x-show="!node.children || node.children.length === 0" class="w-4 h-4 flex items-center justify-center text-slate-300">&bull;</span>
-                  
-                  <span class="truncate" x-text="node.name_en || node.display_name"></span>
-                </div>
-                <span 
-                  class="ml-2 px-1.5 py-0.5 rounded-md text-[10px] font-black"
-                  :class="form.id === node.id ? 'bg-blue-100 text-[#1D4ED8]' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'"
-                  x-text="'(' + (node.product_count || 0) + ')'"
-                ></span>
+          <template x-for="node in visibleFlatTreeNodes" :key="node.id">
+            <div 
+              @click="selectCategory(node.id)"
+              class="group flex items-center justify-between py-1.5 px-2 rounded-xl text-xs transition cursor-pointer select-none border relative"
+              :class="form.id === node.id ? 'bg-[#D6EEFB] text-[#004F8A] font-bold border-[#BFDBFE] shadow-2xs' : 'text-slate-700 hover:bg-slate-50 border-transparent'"
+              :style="'padding-left: ' + (node.depth * 18 + 8) + 'px'"
+            >
+              <div class="flex items-center gap-1.5 min-w-0">
+                <!-- Expand/Collapse Triangle Toggle -->
+                <button 
+                  type="button" 
+                  x-show="node.has_children"
+                  @click.stop="toggleNode(node)"
+                  class="w-4 h-4 flex items-center justify-center text-slate-400 hover:text-slate-800 transition cursor-pointer shrink-0"
+                >
+                  <svg class="w-2.5 h-2.5 transition-transform" :class="node._expanded ? 'rotate-90 text-slate-700' : 'text-slate-400'" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </button>
+                <span x-show="!node.has_children" class="w-4 h-4 flex items-center justify-center text-slate-300 text-xs shrink-0">&bull;</span>
+
+                <!-- Manila Dual Folder Icon -->
+                <span class="shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="#E4B854" stroke="#B88A24" stroke-width="1.2">
+                    <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                  </svg>
+                </span>
+
+                <!-- Category Name & ID -->
+                <span class="truncate font-semibold" :class="form.id === node.id ? 'text-[#004F8A]' : 'text-slate-800'" x-text="node.name_en || node.name"></span>
+                <span class="text-[10px] text-slate-400" x-text="'(ID: ' + node.id + ')'"></span>
               </div>
 
-              <!-- Level 1 Children -->
-              <template x-if="node.children && node.children.length > 0 && node._expanded">
-                <div class="pl-4 space-y-1 border-l-2 border-slate-100 ml-2">
-                  <template x-for="child in node.children" :key="child.id">
-                    <div class="space-y-1">
-                      <div 
-                        @click="selectCategory(child.id)"
-                        class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer group select-none"
-                        :class="form.id === child.id ? 'bg-[#EFF6FF] text-[#1D4ED8] font-bold border border-blue-200 shadow-2xs' : 'text-slate-600 hover:bg-slate-50 border border-transparent'"
-                      >
-                        <div class="flex items-center gap-2 min-w-0">
-                          <span 
-                            x-show="child.children && child.children.length > 0"
-                            @click.stop="child._expanded = !child._expanded"
-                            class="w-3.5 h-3.5 flex items-center justify-center text-slate-400 hover:text-slate-700"
-                          >
-                            <svg class="w-2.5 h-2.5 transition-transform" :class="child._expanded ? 'rotate-90' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
-                          </span>
-                          <span x-show="!child.children || child.children.length === 0" class="w-3.5 h-3.5 text-slate-300 text-center">&bull;</span>
-                          <span class="truncate" x-text="child.name_en || child.display_name"></span>
-                        </div>
-                        <span 
-                          class="ml-2 px-1.5 py-0.2 rounded text-[10px] font-black"
-                          :class="form.id === child.id ? 'bg-blue-100 text-[#1D4ED8]' : 'bg-slate-100 text-slate-500'"
-                          x-text="'(' + (child.product_count || 0) + ')'"
-                        ></span>
-                      </div>
-
-                      <!-- Level 2 Subchildren -->
-                      <template x-if="child.children && child.children.length > 0 && child._expanded">
-                        <div class="pl-4 space-y-1 border-l-2 border-slate-100 ml-2">
-                          <template x-for="sub in child.children" :key="sub.id">
-                            <div 
-                              @click="selectCategory(sub.id)"
-                              class="flex items-center justify-between px-2 py-1 rounded-md text-[11px] font-medium transition cursor-pointer group select-none"
-                              :class="form.id === sub.id ? 'bg-[#EFF6FF] text-[#1D4ED8] font-bold border border-blue-200' : 'text-slate-500 hover:bg-slate-50 border border-transparent'"
-                            >
-                              <span class="truncate" x-text="sub.name_en || sub.display_name"></span>
-                              <span class="ml-2 text-[10px] text-slate-400" x-text="'(' + (sub.product_count || 0) + ')'"></span>
-                            </div>
-                          </template>
-                        </div>
-                      </template>
-                    </div>
-                  </template>
-                </div>
-              </template>
+              <!-- Product count -->
+              <span 
+                class="ml-2 px-1.5 py-0.5 rounded-md text-[10px] font-black shrink-0"
+                :class="form.id === node.id ? 'bg-blue-100 text-[#1D4ED8]' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'"
+                x-text="'(' + (node.product_count || 0) + ')'"
+              ></span>
             </div>
           </template>
         </div>
@@ -841,8 +806,10 @@ function visionCategoryFormApp(initialMode, initialCatId) {
     // Category tree & hierarchy
     treeNodes: [],
     flatCategories: [],
+    flatTreeNodes: [],
     parentOptions: [],
     treeSearch: '',
+    treeLoading: false,
 
     // Form data
     form: {
@@ -897,27 +864,45 @@ function visionCategoryFormApp(initialMode, initialCatId) {
         .replace(/^-+|-+$/g, '');
     },
 
-    get filteredTreeNodes() {
-      if (!this.treeSearch.trim()) {
-        return this.treeNodes;
+    toggleNode(node) {
+      node._expanded = !node._expanded;
+    },
+
+    expandAllTree(expanded) {
+      this.flatTreeNodes.forEach(n => {
+        n._expanded = expanded;
+      });
+    },
+
+    get visibleFlatTreeNodes() {
+      const q = (this.treeSearch || '').toLowerCase().trim();
+      const expandedMap = {};
+      this.flatTreeNodes.forEach(n => {
+        expandedMap[n.id] = n._expanded;
+      });
+
+      if (q) {
+        const matchIds = new Set();
+        this.flatTreeNodes.forEach(n => {
+          const name = (n.name_en || n.name || '').toLowerCase();
+          if (name.includes(q) || String(n.id) === q || (n.slug || '').toLowerCase().includes(q)) {
+            matchIds.add(n.id);
+            (n.path || []).forEach(ancestorId => matchIds.add(ancestorId));
+          }
+        });
+        return this.flatTreeNodes.filter(n => matchIds.has(n.id));
       }
-      const q = this.treeSearch.toLowerCase().trim();
-      const filterNode = (node) => {
-        const matchesSelf = (node.name_en || node.display_name || '').toLowerCase().includes(q);
-        let matchingChildren = [];
-        if (node.children && node.children.length > 0) {
-          matchingChildren = node.children.map(filterNode).filter(Boolean);
+
+      return this.flatTreeNodes.filter(node => {
+        if (!node.path || node.path.length <= 1) return true;
+        for (let i = 0; i < node.path.length - 1; i++) {
+          const ancestorId = node.path[i];
+          if (expandedMap[ancestorId] === false) {
+            return false;
+          }
         }
-        if (matchesSelf || matchingChildren.length > 0) {
-          return {
-            ...node,
-            _expanded: true,
-            children: matchingChildren
-          };
-        }
-        return null;
-      };
-      return this.treeNodes.map(filterNode).filter(Boolean);
+        return true;
+      });
     },
 
     get assignedPreviewProducts() {
@@ -943,33 +928,23 @@ function visionCategoryFormApp(initialMode, initialCatId) {
     },
 
     async loadTree() {
+      this.treeLoading = true;
       try {
         const res = await fetch('/visionadmin/api/categories/tree');
         const data = await res.json();
         if (data.success) {
-          const markExpanded = (nodes) => {
-            return (nodes || []).map(n => ({
-              ...n,
-              _expanded: true,
-              children: markExpanded(n.children)
-            }));
-          };
-          this.treeNodes = markExpanded(data.tree || []);
+          this.treeNodes = data.tree || [];
+          this.flatTreeNodes = (data.flat || []).map(n => ({
+            ...n,
+            _expanded: true
+          }));
           this.flatCategories = data.flat || [];
         }
       } catch (err) {
         console.error('Error loading category tree:', err);
+      } finally {
+        this.treeLoading = false;
       }
-    },
-
-    expandAllTree(expanded) {
-      const toggle = (nodes) => {
-        (nodes || []).forEach(n => {
-          n._expanded = expanded;
-          if (n.children) toggle(n.children);
-        });
-      };
-      toggle(this.treeNodes);
     },
 
     async loadParentOptions() {

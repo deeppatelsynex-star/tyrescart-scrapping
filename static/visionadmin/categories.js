@@ -19,6 +19,10 @@ function visionCategoriesApp() {
     totalPages: 1,
     modalOpen: false,
     isEdit: false,
+    viewMode: 'tree', // 'tree' or 'table'
+    treeLoading: false,
+    flatTreeNodes: [],
+    treeSearch: '',
     csvModalOpen: false,
     selectedCsvFile: null,
     csvUploading: false,
@@ -39,6 +43,66 @@ function visionCategoriesApp() {
     initData() {
       this.loadCategories(1);
       this.loadParentOptions();
+      this.loadTree();
+    },
+
+    async loadTree() {
+      this.treeLoading = true;
+      try {
+        const res = await fetch('/visionadmin/api/categories/tree');
+        const data = await res.json();
+        if (data.success) {
+          this.flatTreeNodes = (data.flat || []).map(n => ({
+            ...n,
+            _expanded: true
+          }));
+        }
+      } catch (err) {
+        console.error('Error loading category tree:', err);
+      } finally {
+        this.treeLoading = false;
+      }
+    },
+
+    toggleNode(node) {
+      node._expanded = !node._expanded;
+    },
+
+    expandAllTree(expanded) {
+      this.flatTreeNodes.forEach(n => {
+        n._expanded = expanded;
+      });
+    },
+
+    get visibleFlatTreeNodes() {
+      const q = (this.treeSearch || '').toLowerCase().trim();
+      const expandedMap = {};
+      this.flatTreeNodes.forEach(n => {
+        expandedMap[n.id] = n._expanded;
+      });
+
+      if (q) {
+        const matchIds = new Set();
+        this.flatTreeNodes.forEach(n => {
+          const name = (n.name_en || n.name || '').toLowerCase();
+          if (name.includes(q) || String(n.id) === q || (n.slug || '').toLowerCase().includes(q)) {
+            matchIds.add(n.id);
+            (n.path || []).forEach(ancestorId => matchIds.add(ancestorId));
+          }
+        });
+        return this.flatTreeNodes.filter(n => matchIds.has(n.id));
+      }
+
+      return this.flatTreeNodes.filter(node => {
+        if (!node.path || node.path.length <= 1) return true;
+        for (let i = 0; i < node.path.length - 1; i++) {
+          const ancestorId = node.path[i];
+          if (expandedMap[ancestorId] === false) {
+            return false;
+          }
+        }
+        return true;
+      });
     },
 
     slugify(text) {
@@ -301,12 +365,13 @@ function visionCategoriesApp() {
         const data = await res.json();
         this.csvResult = data;
         if (data.success) {
-          this.showToast(data.message || `Successfully imported ${data.imported} categories!`, 'success');
-          this.loadCategories(1);
-          this.loadParentOptions();
-          setTimeout(() => {
-            this.csvModalOpen = false;
-          }, 1800);
+          const msg = data.message || 'Categories imported successfully!';
+          this.showToast(msg, 'success');
+          await Promise.all([
+            this.loadCategories(1),
+            this.loadParentOptions(),
+            this.loadTree()
+          ]);
         } else {
           this.showToast(data.error || 'Failed to import CSV.', 'error');
         }
