@@ -626,12 +626,35 @@ class AttributeService:
 
                 # Fallback to direct columns in products table
                 if (c_val is None or c_val == '') and prod_data:
-                    if code in ('product_name', 'name'):
+                    if code == 'url_key':
+                        c_val = prod_data.get('slug')
+                    elif code == 'attribute_set_id':
+                        c_val = prod_data.get('attribute_set_id') or attribute_set_id
+                    elif code == 'status':
+                        c_val = prod_data.get('status', 'active')
+                    elif code == 'brand' and prod_data.get('brand_id'):
+                        c_val = prod_data.get('brand_id')
+                    elif code == 'price_per_item':
+                        c_val = prod_data.get('price')
+                    elif code == 'tabby_payment':
+                        c_val = bool(prod_data.get('pay_later_eligible', True))
+                    elif code in ('product_name', 'name'):
                         c_val = prod_data.get('display_name') or prod_data.get('name')
                     elif code == 'display_name':
                         c_val = prod_data.get('display_name')
                     elif code in prod_data and prod_data.get(code) is not None:
                         c_val = prod_data.get(code)
+
+                # Format numeric strings for select options like width/height/rim (e.g. 185.0 -> 185)
+                if code in ('width', 'height', 'rim') and c_val is not None:
+                    try:
+                        f_val = float(c_val)
+                        if f_val.is_integer():
+                            c_val = str(int(f_val))
+                        else:
+                            c_val = str(f_val)
+                    except Exception:
+                        c_val = str(c_val)
 
                 if c_val is None:
                     c_val = attr.get('default_value')

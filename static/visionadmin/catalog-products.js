@@ -75,6 +75,42 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       this.syncDynamicField(code, this.form.dynamic_attributes[code]);
     },
 
+    isSelectOptionSelected(code, val) {
+      const cur = this.form.dynamic_attributes ? this.form.dynamic_attributes[code] : undefined;
+      if (cur === undefined || cur === null || cur === '') return false;
+      if (String(cur) === String(val)) return true;
+      if (typeof cur === 'number' || (!isNaN(parseFloat(cur)) && !isNaN(parseFloat(val)))) {
+        return parseFloat(cur) === parseFloat(val);
+      }
+      return false;
+    },
+
+    isMultiselectSelected(code, val) {
+      const cur = this.form.dynamic_attributes ? this.form.dynamic_attributes[code] : undefined;
+      if (cur === undefined || cur === null || cur === '') return false;
+      if (Array.isArray(cur)) {
+        return cur.some(item => String(item) === String(val));
+      }
+      const parts = String(cur).split(',').map(s => s.trim());
+      return parts.includes(String(val));
+    },
+
+    onProductNameInput(val) {
+      if (!this.form.dynamic_attributes) this.form.dynamic_attributes = {};
+      this.form.dynamic_attributes['product_name'] = val;
+      this.form.display_name = val;
+      if (!this.isEditMode || !this.form.slug_manually_edited) {
+        const slug = String(val || '')
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/[\s_-]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        this.form.slug = slug;
+        this.form.dynamic_attributes['url_key'] = slug;
+      }
+    },
+
     openAddAttributeModal() {
       window.open('/visionadmin/attributes', '_blank');
     },
@@ -87,8 +123,17 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         if (val || !this.form.display_name) this.form.display_name = val || '';
       } else if (code === 'sku') {
         if (val || !this.form.sku) this.form.sku = val || '';
+      } else if (code === 'url_key') {
+        this.form.slug = val;
+        this.form.slug_manually_edited = true;
+      } else if (code === 'status') {
+        this.form.status = (val === 'active' || val === true || val === 1) ? 'active' : 'inactive';
+      } else if (code === 'attribute_set_id') {
+        this.form.attribute_set_id = Number(val);
       } else if (code === 'price') {
         if ((val !== undefined && val !== null && val !== '') || !this.form.price) this.form.price = val;
+      } else if (code === 'price_per_item') {
+        this.form.dynamic_attributes['price_per_item'] = val;
       } else if (code === 'sale_price' || code === 'promotion') {
         if ((val !== undefined && val !== null && val !== '') || !this.form.sale_price) this.form.sale_price = val;
       } else if (code === 'weight') {
@@ -617,15 +662,19 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
 
     openCreateModal(push = true) {
       this.isEditMode = false;
-      const defaultSet = (this.attributeSets || []).find(s => s.slug === 'default' || (s.name && s.name.toLowerCase() === 'default'));
-      const defaultSetId = defaultSet ? defaultSet.id : 2;
+      const defaultSet = (this.attributeSets || []).find(s => s.slug === 'tyres' || (s.name && s.name.toLowerCase() === 'tyres')) || (this.attributeSets || [])[0];
+      const defaultSetId = defaultSet ? defaultSet.id : 1;
       this.form = {
         id: null,
         attribute_set_id: defaultSetId,
-        dynamic_attributes: {},
+        dynamic_attributes: { status: 'active', attribute_set_id: defaultSetId },
         attribute_groups: [],
         loadingSchema: false,
         sku: '',
+        slug: '',
+        url_key: '',
+        slug_manually_edited: false,
+        create_redirect: true,
         display_name: '',
         brand_id: '',
         category_id: '',
@@ -716,7 +765,10 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       if (p.sku && !dynAttrs.sku) dynAttrs.sku = p.sku;
       if ((p.display_name || p.name_en) && !dynAttrs.product_name) dynAttrs.product_name = p.display_name || p.name_en;
       if ((p.display_name || p.name_en) && !dynAttrs.display_name) dynAttrs.display_name = p.display_name || p.name_en;
+      if (p.slug && !dynAttrs.url_key) dynAttrs.url_key = p.slug;
+      if (p.status && !dynAttrs.status) dynAttrs.status = p.status;
       if (p.price != null && dynAttrs.price === undefined) dynAttrs.price = p.price;
+      if (p.price != null && dynAttrs.price_per_item === undefined) dynAttrs.price_per_item = p.price;
       if (p.sale_price != null && dynAttrs.sale_price === undefined) dynAttrs.sale_price = p.sale_price;
       if (p.tire_size_label && !dynAttrs.tire_size_label) dynAttrs.tire_size_label = p.tire_size_label;
       if (p.tire_pattern && !dynAttrs.tire_pattern) dynAttrs.tire_pattern = p.tire_pattern;
@@ -724,6 +776,8 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       if (p.country_of_origin && !dynAttrs.country_of_origin) dynAttrs.country_of_origin = p.country_of_origin;
       if (p.run_flat !== undefined && dynAttrs.run_flat === undefined) dynAttrs.run_flat = Boolean(p.run_flat);
       if (p.ev_rated !== undefined && dynAttrs.ev_rated === undefined) dynAttrs.ev_rated = Boolean(p.ev_rated);
+      if (p.width && !dynAttrs.width) dynAttrs.width = String(parseInt(p.width, 10));
+      if (p.attribute_set_id && !dynAttrs.attribute_set_id) dynAttrs.attribute_set_id = p.attribute_set_id;
 
       this.form = {
         id: p.id,
@@ -732,6 +786,10 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         attribute_groups: [],
         loadingSchema: false,
         sku: p.sku || '',
+        slug: p.slug || '',
+        url_key: p.slug || '',
+        slug_manually_edited: true,
+        create_redirect: true,
         display_name: p.display_name || p.name_en || '',
         brand_id: p.brand_id || '',
         category_id: p.category_id || '',
@@ -882,6 +940,19 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
 
         if (this.form.dynamic_attributes && this.form.dynamic_attributes.tire_size_label) {
           payload.tire_size_label = this.form.dynamic_attributes.tire_size_label;
+        }
+        if (this.form.dynamic_attributes && this.form.dynamic_attributes.url_key) {
+          payload.url_key = this.form.dynamic_attributes.url_key;
+          payload.slug = this.form.dynamic_attributes.url_key;
+        } else if (this.form.slug) {
+          payload.url_key = this.form.slug;
+          payload.slug = this.form.slug;
+        }
+        if (this.form.dynamic_attributes && this.form.dynamic_attributes.status) {
+          payload.status = this.form.dynamic_attributes.status;
+        }
+        if (this.form.dynamic_attributes && this.form.dynamic_attributes.price) {
+          payload.price = this.form.dynamic_attributes.price;
         }
 
         payload.website_ids = this.form.website_ids || [1];

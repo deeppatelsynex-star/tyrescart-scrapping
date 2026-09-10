@@ -415,6 +415,7 @@ class Product:
                 row = cursor.fetchone()
                 res = cls.to_dict(row) if row else None
                 if res:
+                    res['url_key'] = res.get('slug')
                     try:
                         res['scoped_attributes'] = AttributeService.get_product_scoped_attributes(product_id)
                     except Exception:
@@ -492,7 +493,7 @@ class Product:
                     name_json['en'] = next(iter(name_json.values()), '')
                 display_name = get_translated_value(name_json, 'en') or get_translated_value(name_json)
 
-                slug_candidate = data.get('slug') or display_name or sku
+                slug_candidate = data.get('url_key') or data.get('slug') or display_name or sku
                 slug = cls.slugify(slug_candidate)
 
                 # Ensure slug uniqueness
@@ -736,8 +737,18 @@ class Product:
                     fields.extend(["display_name = %s", "name = %s"])
                     params.extend([display_name, json.dumps(existing_name, ensure_ascii=False)])
 
-                if 'slug' in data and data['slug']:
-                    clean_slug = cls.slugify(data['slug'])
+                dyn_attrs = data.get('dynamic_attributes') or data.get('attributes_json') or {}
+                if isinstance(dyn_attrs, str):
+                    try:
+                        dyn_attrs = json.loads(dyn_attrs)
+                    except Exception:
+                        dyn_attrs = {}
+
+                slug_candidate = data.get('slug') or data.get('url_key')
+                if not slug_candidate and dyn_attrs:
+                    slug_candidate = dyn_attrs.get('url_key')
+                if slug_candidate:
+                    clean_slug = cls.slugify(slug_candidate)
                     fields.append("slug = %s")
                     params.append(clean_slug)
 
