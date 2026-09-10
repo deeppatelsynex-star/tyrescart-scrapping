@@ -3,41 +3,24 @@
 {% block title %}{% if initial_cat_id %}Edit Category - VisionAdmin CMS{% else %}New Category - VisionAdmin CMS{% endif %}{% endblock %}
 
 {% block content %}
-<div class="space-y-6 max-w-7xl mx-auto pb-16" x-data="visionBlogCategoryFormApp('{{ initial_mode | default('create', true) }}', {{ initial_cat_id | default('null', true) }})" x-init="initData()">
+{% set active_scope_name = session.get('admin_active_scope_name') or 'All Store Views' %}
+{% set init_scope = 'ar' if ('ar' in active_scope_name|lower or 'arab' in active_scope_name|lower) else 'en' %}
+<div class="space-y-6 max-w-7xl mx-auto pb-16" x-data="visionBlogCategoryFormApp('{{ initial_mode | default('create', true) }}', {{ initial_cat_id | default('null', true) }}, '{{ init_scope }}', '{{ active_scope_name }}')" x-init="initData()">
 
   <!-- Top Action Header (Magento 2 Style) -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white px-6 py-4 rounded-xl border border-[#D1D5DB] shadow-xs">
     
-    <!-- Left: Store View Scope Selector -->
-    <div class="flex items-center gap-3">
-      <div class="flex items-center gap-2">
-        <label for="scope-selector" class="text-xs font-bold text-[#303030] whitespace-nowrap">Scope:</label>
-        <div class="relative">
-          <select 
-            id="scope-selector"
-            x-model="currentScope" 
-            class="text-xs font-semibold text-[#303030] bg-[#F9FAFB] hover:bg-white border border-[#ADADAD] rounded px-3 py-1.5 pr-7 focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] transition cursor-pointer"
-          >
-            <option value="en">All Store Views (English)</option>
-            <template x-for="sv in storeViews" :key="sv.code">
-              <option :value="sv.code" x-text="sv.name + ' (' + sv.code + ')'"></option>
-            </template>
-          </select>
-          <div class="absolute inset-y-0 right-0 flex items-center px-1.5 pointer-events-none text-slate-500">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-          </div>
-        </div>
-      </div>
-
-      <!-- Scope Help Tooltip -->
-      <div class="relative group cursor-pointer" title="Store view scope controls localized textboxes for titles and meta data.">
-        <svg class="w-4 h-4 text-slate-400 group-hover:text-[#2563FF] transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      </div>
-
-      <!-- Active Scope Badge -->
-      <span class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-blue-50 text-[#2563FF] border border-blue-200">
+    <!-- Left: Page Title / Breadcrumbs -->
+    <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
+      <a href="/visionadmin/blogs" class="hover:text-[#2563FF] transition">Blogs</a>
+      <span>/</span>
+      <a href="/visionadmin/blog-categories" class="hover:text-[#2563FF] transition">Categories</a>
+      <span>/</span>
+      <span class="text-[#303030] font-bold" x-text="form.id ? ('Edit: ' + (form.name[currentScope] || form.name['en'] || form.slug || 'Category')) : 'New Category'"></span>
+      <span class="ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-[#2563FF] border border-blue-200" title="Scope controlled by top header switcher">
         <span class="w-1.5 h-1.5 rounded-full bg-[#2563FF]"></span>
-        <span>Scope: <span x-text="currentScope.toUpperCase()"></span></span>
+        <span>Scope:</span>
+        <span x-text="scopeDisplayName || currentScope.toUpperCase()"></span>
       </span>
     </div>
 
@@ -129,7 +112,7 @@
           <h2 class="text-sm font-bold text-[#303030] tracking-wide">General</h2>
           <div class="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
             <span>Store View Scope:</span>
-            <span class="font-bold text-[#2563FF] uppercase" x-text="currentScope"></span>
+            <span class="font-bold text-[#2563FF] uppercase" x-text="scopeDisplayName || currentScope.toUpperCase()"></span>
           </div>
         </div>
 
@@ -221,7 +204,7 @@
           <h2 class="text-sm font-bold text-[#303030] tracking-wide">Meta Information</h2>
           <div class="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
             <span>Store View Scope:</span>
-            <span class="font-bold text-[#2563FF] uppercase" x-text="currentScope"></span>
+            <span class="font-bold text-[#2563FF] uppercase" x-text="scopeDisplayName || currentScope.toUpperCase()"></span>
           </div>
         </div>
 
@@ -288,15 +271,13 @@
 </div>
 
 <script>
-function visionBlogCategoryFormApp(mode, catId) {
+function visionBlogCategoryFormApp(mode, catId, initialScope, initialScopeName) {
   return {
     mode: mode || 'create',
     catId: catId || null,
     activeTab: 'general',
-    currentScope: 'en',
-    storeViews: [
-      { code: 'ar', name: 'Arabic Store View' }
-    ],
+    currentScope: (initialScope || 'en').toLowerCase(),
+    scopeDisplayName: initialScopeName || ((initialScope === 'ar') ? 'Arebic' : 'English'),
     isSaving: false,
 
     form: {
@@ -311,39 +292,40 @@ function visionBlogCategoryFormApp(mode, catId) {
     },
 
     async initData() {
-      // 1. Fetch available store views
-      try {
-        const svRes = await fetch('/visionadmin/api/store-views');
-        if (svRes.ok) {
-          const svData = await svRes.json();
-          const activeViews = (svData.store_views || []).filter(v => v.is_active == 1);
-          if (activeViews.length > 0) {
-            const seen = new Set(['en']);
-            const deduped = [];
-            activeViews.forEach(v => {
-              const code = (v.code || '').toLowerCase();
-              if (code && !seen.has(code)) {
-                seen.add(code);
-                const display = (code === 'ar') ? 'Arabic Store View' : (v.name || code.toUpperCase());
-                deduped.push({ code: code, name: display });
-              }
-            });
-            if (deduped.length > 0) {
-              this.storeViews = deduped;
-            }
-            ['en', 'ar'].concat(this.storeViews.map(v => v.code)).forEach(code => {
-              if (this.form.name[code] === undefined) this.form.name[code] = '';
-              if (this.form.meta_title[code] === undefined) this.form.meta_title[code] = '';
-              if (this.form.meta_keywords[code] === undefined) this.form.meta_keywords[code] = '';
-              if (this.form.meta_description[code] === undefined) this.form.meta_description[code] = '';
-            });
+      // 1. Sync scope from header if available
+      const headerLabel = document.getElementById('va-current-scope-label');
+      if (headerLabel && headerLabel.textContent) {
+        const txt = headerLabel.textContent.trim();
+        if (txt) {
+          this.scopeDisplayName = txt;
+          if (txt.toLowerCase().includes('ar') || txt.toLowerCase().includes('arab')) {
+            this.currentScope = 'ar';
+          } else {
+            this.currentScope = 'en';
           }
         }
-      } catch (err) {
-        console.warn('Could not load dynamic store views, using default locales:', err);
       }
 
-      // 2. If in edit mode, fetch category details
+      // 2. Register global scope change listener from top header dropdown
+      window.onVisionScopeChange = (localeCode, scopeName) => {
+        const target = (localeCode || '').toLowerCase();
+        if (target === 'ar' || target.includes('ar') || (scopeName && (scopeName.toLowerCase().includes('ar') || scopeName.toLowerCase().includes('arab')))) {
+          this.currentScope = 'ar';
+        } else {
+          this.currentScope = 'en';
+        }
+        this.scopeDisplayName = scopeName || (this.currentScope === 'ar' ? 'Arebic' : 'English');
+
+        // Ensure keys exist in reactive data
+        ['en', 'ar'].forEach(code => {
+          if (this.form.name[code] === undefined) this.form.name[code] = '';
+          if (this.form.meta_title[code] === undefined) this.form.meta_title[code] = '';
+          if (this.form.meta_keywords[code] === undefined) this.form.meta_keywords[code] = '';
+          if (this.form.meta_description[code] === undefined) this.form.meta_description[code] = '';
+        });
+      };
+
+      // 3. If in edit mode, fetch category details
       if (this.catId) {
         await this.loadCategory(this.catId);
       }

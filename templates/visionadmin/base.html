@@ -1200,7 +1200,7 @@
         // Row 1: All Store Views (Matching Screenshot 0)
         html += `
           <div 
-            onclick="window.switchVisionScope('global', 'global', 'global', 'All Store Views')"
+            onclick="window.switchVisionScope('global', 'global', 'global', 'All Store Views', 'en')"
             class="px-3.5 py-1 hover:bg-slate-100 cursor-pointer text-xs ${isAllViews ? 'font-bold text-black' : 'text-slate-500'}"
           >
             All Store Views
@@ -1243,10 +1243,13 @@
                   st.views.forEach(v => {
                     const isViewActive = activeViewId == v.id;
                     const vName = v.name || v.code;
+                    const vCode = (v.code || v.locale || '').toLowerCase();
+                    const safeName = String(vName || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    const safeCode = String(vCode || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                     html += `
                       <div 
-                        onclick="window.switchVisionScope(${web.id}, ${st.id}, ${v.id}, '${escapeHtml(vName)}')"
-                        class="pl-10 pr-3.5 py-1 hover:bg-slate-100 cursor-pointer text-xs ${isViewActive ? 'font-bold text-[#EB520D]' : 'text-slate-800'}"
+                        onclick="window.switchVisionScope(${web.id}, ${st.id}, ${v.id}, '${safeName}', '${safeCode}')"
+                        class="pl-10 pr-3.5 py-1 hover:bg-slate-100 cursor-pointer text-xs ${isViewActive ? 'font-bold text-[#2563FF]' : 'text-slate-800'}"
                       >
                         ${escapeHtml(vName)}
                       </div>
@@ -1297,7 +1300,7 @@
     }
 
     // Global Scope Switch Function (Supports Store View)
-    window.switchVisionScope = async function(websiteId, storeId, viewId, scopeName) {
+    window.switchVisionScope = async function(websiteId, storeId, viewId, scopeName, viewCode) {
       try {
         const payload = {
           website_id: websiteId === 'global' ? null : websiteId,
@@ -1306,28 +1309,46 @@
           scope_name: scopeName
         };
 
-        const res = await fetch('/visionadmin/api/scopes/switch', {
+        let targetLocale = (viewCode || '').toLowerCase();
+        if (!targetLocale || targetLocale === 'global') {
+          targetLocale = (scopeName && (scopeName.toLowerCase().includes('ar') || scopeName.toLowerCase().includes('arab'))) ? 'ar' : 'en';
+        }
+
+        const label = document.getElementById('va-current-scope-label');
+        if (label) label.textContent = scopeName;
+
+        // Close dropdown
+        const sDropdown = document.getElementById('va-scope-dropdown');
+        const sChevron = document.getElementById('va-scope-chevron');
+        const sBtn = document.getElementById('va-scope-btn');
+        if (sDropdown) sDropdown.classList.add('hidden');
+        if (sChevron) sChevron.classList.remove('rotate-180');
+        if (sBtn) sBtn.setAttribute('aria-expanded', 'false');
+
+        // Persist scope in backend session
+        fetch('/visionadmin/api/scopes/switch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
-        });
+        }).catch(e => console.warn('Scope switch background error:', e));
 
-        const data = await res.json();
-        if (data.success) {
-          if (window.vaShowToast) {
-            window.vaShowToast(`Active scope: ${scopeName}`, 'success');
-          }
-          const label = document.getElementById('va-current-scope-label');
-          if (label) label.textContent = scopeName;
+        if (window.vaShowToast) {
+          window.vaShowToast(`Scope: ${scopeName}`, 'success');
+        }
+
+        // If in-page handler is registered (like in blog_category_form), switch textboxes directly without page reload
+        if (typeof window.onVisionScopeChange === 'function') {
+          window.onVisionScopeChange(targetLocale, scopeName);
+        } else {
           setTimeout(() => {
             window.location.reload();
-          }, 300);
-        } else {
-          alert(data.error || 'Failed to switch scope.');
+          }, 200);
         }
       } catch (err) {
         console.error('Scope switch error:', err);
-        window.location.reload();
+        if (typeof window.onVisionScopeChange !== 'function') {
+          window.location.reload();
+        }
       }
     };
 
