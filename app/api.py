@@ -4277,6 +4277,16 @@ def register_visionadmin_api_routes(app):
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
 
+    @app.route('/visionadmin/api/categories/tree', methods=['GET'])
+    @app.route('/visionadmin/api/catalog/categories/tree', methods=['GET'])
+    def visionadmin_api_categories_tree():
+        """Returns the category tree hierarchy with product counts."""
+        try:
+            tree_data = Category.get_category_tree()
+            return jsonify({'success': True, **tree_data})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     @app.route('/visionadmin/api/categories/<int:cat_id>', methods=['GET'])
     @app.route('/visionadmin/api/catalog/categories/<int:cat_id>', methods=['GET'])
     def visionadmin_api_get_category(cat_id):
@@ -4285,6 +4295,52 @@ def register_visionadmin_api_routes(app):
         if not category:
             return jsonify({'success': False, 'error': 'Category not found'}), 404
         return jsonify({'success': True, 'category': category})
+
+    @app.route('/visionadmin/api/categories/<int:cat_id>/products', methods=['GET'])
+    @app.route('/visionadmin/api/catalog/categories/<int:cat_id>/products', methods=['GET'])
+    def visionadmin_api_get_category_products(cat_id):
+        """Fetch products for category with assignment status and position."""
+        try:
+            search = request.args.get('search') or request.args.get('q') or None
+            assigned = request.args.get('assigned', 'all')
+            stock_status = request.args.get('stock_status') or None
+            page = max(1, int(request.args.get('page', 1)))
+            per_page = max(1, min(200, int(request.args.get('per_page', 20))))
+            res = Category.get_category_products(
+                cat_id=cat_id,
+                search=search,
+                assigned=assigned,
+                page=page,
+                per_page=per_page,
+                stock_status=stock_status
+            )
+            return jsonify({'success': True, **res})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/categories/<int:cat_id>/products', methods=['POST'])
+    @app.route('/visionadmin/api/catalog/categories/<int:cat_id>/products', methods=['POST'])
+    def visionadmin_api_save_category_products(cat_id):
+        """Save product category assignments and positions."""
+        try:
+            data = request.get_json(force=True) or {}
+            assignments = data.get('assignments') or []
+            if not assignments and 'assigned_ids' in data:
+                assigned_ids = set(data.get('assigned_ids', []))
+                positions = data.get('positions', {})
+                all_ids = set(assigned_ids) | set(int(k) for k in positions.keys())
+                assignments = []
+                for pid in all_ids:
+                    assignments.append({
+                        'product_id': pid,
+                        'assigned': pid in assigned_ids,
+                        'position': int(positions.get(str(pid), positions.get(pid, 0)))
+                    })
+
+            success = Category.save_category_products(cat_id, assignments)
+            return jsonify({'success': bool(success), 'message': 'Category products updated successfully!'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
 
     @app.route('/visionadmin/api/categories', methods=['POST'])
     def visionadmin_api_create_category():

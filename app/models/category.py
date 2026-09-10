@@ -42,6 +42,7 @@ class Category:
         r['meta_title_ar'] = get_translated_value(r['meta_title'], 'ar')
         r['meta_desc_en'] = get_translated_value(r['meta_desc'], 'en')
         r['meta_desc_ar'] = get_translated_value(r['meta_desc'], 'ar')
+        r['default_attribute_set_id'] = r.get('default_attribute_set_id')
         return r
 
     @classmethod
@@ -50,7 +51,7 @@ class Category:
         try:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    SELECT id, name, slug, parent_id, image, sort_order, status
+                    SELECT id, name, slug, parent_id, image, sort_order, status, default_attribute_set_id
                     FROM categories
                     WHERE deleted_at IS NULL AND status = 'active'
                     ORDER BY sort_order ASC, id ASC
@@ -219,16 +220,19 @@ class Category:
 
                 sort_order = int(data.get('sort_order') or 0)
                 status = data.get('status') or 'active'
+                default_attr_set_id = int(data.get('default_attribute_set_id')) if data.get('default_attribute_set_id') else None
                 now = datetime.now(timezone.utc)
 
                 cursor.execute("""
                     INSERT INTO categories (
                         name, slug, parent_id, image, description, sort_order,
-                        status, meta_title, meta_desc, created_by, created_at, updated_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        status, meta_title, meta_desc, default_attribute_set_id,
+                        created_by, created_at, updated_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     name_json, slug, parent_id, image, desc_json, sort_order,
-                    status, meta_t_json, meta_d_json, user_id, now, now
+                    status, meta_t_json, meta_d_json, default_attr_set_id,
+                    user_id, now, now
                 ))
                 conn.commit()
                 return cursor.lastrowid
@@ -368,6 +372,11 @@ class Category:
 
                 sort_order = int(data.get('sort_order', existing.get('sort_order') or 0))
                 status = data.get('status') or existing.get('status') or 'active'
+                if 'default_attribute_set_id' in data:
+                    val_as = data.get('default_attribute_set_id')
+                    default_attr_set_id = int(val_as) if val_as else None
+                else:
+                    default_attr_set_id = existing.get('default_attribute_set_id')
                 now = datetime.now(timezone.utc)
 
                 cursor.execute("""
@@ -381,12 +390,14 @@ class Category:
                         status = %s,
                         meta_title = %s,
                         meta_desc = %s,
+                        default_attribute_set_id = %s,
                         updated_by = %s,
                         updated_at = %s
                     WHERE id = %s AND deleted_at IS NULL
                 """, (
                     name_json, slug, parent_id, image, desc_json, sort_order,
-                    status, meta_t_json, meta_d_json, user_id, now, cat_id
+                    status, meta_t_json, meta_d_json, default_attr_set_id,
+                    user_id, now, cat_id
                 ))
                 conn.commit()
                 return cursor.rowcount > 0
@@ -444,3 +455,161 @@ class Category:
                 return cursor.rowcount > 0
         finally:
             conn.close()
+
+    @classmethod
+    def get_category_tree(cls, locale: str = None):
+        """Returns the full hierarchical category tree with product counts."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT c.*,
+                           (SELECT COUNT(*) FROM products p 
+                            WHERE (p.category_id = c.id OR EXISTS (
+                                SELECT 1 FROM product_categories pc 
+                                WHERE pc.product_id = p.id AND pc.category_id = c.id
+                            )) AND p.deleted_at IS NULL) AS product_count
+                    FROM categories c
+                    WHERE c.deleted_at IS NULL
+                    ORDER BY c.sort_order ASC, c.id ASC
+                """)
+                rows = cursor.fetchall() or []
+                items = [cls._normalize_category_row(r, locale) for r in rows]
+                by_id = {item['id']: {**item, 'children': []} for item in items}
+                tree = []
+                for item in items:
+                    pid = item.get('parent_id')
+                    node = by_id[item['id']]
+                    if pid and pid in by_id:
+                        by_id[pid]['children'].append(node)
+                    else:
+                        tree.append(node)
+                return {'tree': tree, 'flat': items}
+        finally:
+            conn.close()
+
+    @classmethod
+    def get_category_products(cls, cat_id: int, search: str = None, assigned: str = 'all', page: int = 1, per_page: int = 20, stock_status: str = None, locale: str = None):
+        """Returns products with assignment status and position for a category."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Total assigned count for category
+                cursor.execute("""
+                    SELECT COUNT(*) AS assigned_count
+                    FROM products p
+                    WHERE p.deleted_at IS NULL AND (
+                        p.category_id = %s OR EXISTS (
+                            SELECT 1 FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id = %s
+                        )
+                    )
+                """, (cat_id, cat_id))
+                assigned_count = cursor.fetchone().get('assigned_count', 0)
+
+                where_clauses = ["p.deleted_at IS NULL"]
+                params = {
+                    'cat_id': cat_id,
+                    'limit': per_page,
+                    'offset': (page - 1) * per_page
+                }
+
+                if assigned in ('1', 'assigned', 'true'):
+                    where_clauses.append("(p.category_id = %(cat_id)s OR EXISTS (SELECT 1 FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id = %(cat_id)s))")
+                elif assigned in ('0', 'unassigned', 'false'):
+                    where_clauses.append("NOT (p.category_id = %(cat_id)s OR EXISTS (SELECT 1 FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id = %(cat_id)s))")
+
+                if search and search.strip():
+                    term = f"%{search.strip()}%"
+                    params['search_term'] = term
+                    where_clauses.append("(p.sku LIKE %(search_term)s OR p.display_name LIKE %(search_term)s OR p.tire_size_label LIKE %(search_term)s OR b.name LIKE %(search_term)s)")
+
+                if stock_status and stock_status in ('in_stock', 'out_of_stock', 'backorder'):
+                    params['stock_status'] = stock_status
+                    where_clauses.append("p.stock_status = %(stock_status)s")
+
+                where_sql = " AND ".join(where_clauses)
+
+                cursor.execute(f"""
+                    SELECT COUNT(*) AS total
+                    FROM products p
+                    LEFT JOIN brands b ON p.brand_id = b.id
+                    WHERE {where_sql}
+                """, params)
+                total = cursor.fetchone().get('total', 0)
+
+                cursor.execute(f"""
+                    SELECT p.id, p.sku, p.item_code, p.display_name, p.name, p.price, p.stock_qty, p.stock_status,
+                           p.tire_size_label, p.tire_speed_rating, p.tire_type, p.image_path, p.small_image,
+                           b.name AS brand_name,
+                           CASE WHEN (p.category_id = %(cat_id)s OR EXISTS (
+                               SELECT 1 FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id = %(cat_id)s
+                           )) THEN 1 ELSE 0 END AS is_assigned,
+                           COALESCE((
+                               SELECT pc.position FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id = %(cat_id)s LIMIT 1
+                           ), 0) AS position
+                    FROM products p
+                    LEFT JOIN brands b ON p.brand_id = b.id
+                    WHERE {where_sql}
+                    ORDER BY is_assigned DESC, position ASC, p.id ASC
+                    LIMIT %(limit)s OFFSET %(offset)s
+                """, params)
+                products = cursor.fetchall() or []
+
+                from services.store_context import StoreContext
+                from i18n import get_translated_value
+                loc = locale or StoreContext.get_current_language()
+
+                for prod in products:
+                    name_dict = parse_json_dict(prod.get('name'))
+                    prod['name_localized'] = get_translated_value(name_dict, loc) or prod.get('display_name') or ''
+                    if prod.get('price') is not None:
+                        prod['price_formatted'] = f"{float(prod['price']):.2f}"
+                    else:
+                        prod['price_formatted'] = '0.00'
+                    prod['thumbnail'] = prod.get('small_image') or prod.get('image_path') or '/static/images/placeholder-tyre.png'
+
+                total_pages = max(1, (total + per_page - 1) // per_page)
+                return {
+                    'products': products,
+                    'total': total,
+                    'page': page,
+                    'per_page': per_page,
+                    'total_pages': total_pages,
+                    'assigned_count': assigned_count
+                }
+        finally:
+            conn.close()
+
+    @classmethod
+    def save_category_products(cls, cat_id: int, assignments: list):
+        """Saves product category assignments and positions."""
+        if not cat_id:
+            return False
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                for item in assignments:
+                    pid = int(item['product_id'])
+                    assigned = bool(item.get('assigned', True))
+                    pos = int(item.get('position', 0))
+                    if assigned:
+                        cursor.execute("""
+                            INSERT INTO product_categories (product_id, category_id, position)
+                            VALUES (%s, %s, %s)
+                            ON DUPLICATE KEY UPDATE position = VALUES(position)
+                        """, (pid, cat_id, pos))
+                        cursor.execute("""
+                            UPDATE products SET category_id = %s WHERE id = %s AND (category_id IS NULL OR category_id = %s)
+                        """, (cat_id, pid, cat_id))
+                    else:
+                        cursor.execute("""
+                            DELETE FROM product_categories WHERE category_id = %s AND product_id = %s
+                        """, (cat_id, pid))
+                        cursor.execute("""
+                            UPDATE products SET category_id = NULL WHERE id = %s AND category_id = %s
+                        """, (pid, cat_id))
+                conn.commit()
+                return True
+        finally:
+            conn.close()
+
