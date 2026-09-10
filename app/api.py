@@ -4029,6 +4029,30 @@ def register_visionadmin_api_routes(app):
         log_activity('delete', 'attribute_group', group_id, None, {'deleted': True}, user_id=user_id)
         return jsonify({'success': True, 'message': 'Group deleted successfully.'}), 200
 
+    @app.route('/visionadmin/api/attribute-groups/<int:group_id>', methods=['PUT'])
+    def visionadmin_api_rename_attribute_group(group_id):
+        """Renames an attribute group."""
+        data = request.get_json() or {}
+        name = data.get('name')
+        if not name:
+            return jsonify({'error': 'Group name is required.'}), 400
+        user_id = get_current_admin_user_id()
+        AttributeService.rename_group(group_id, name, user_id=user_id)
+        return jsonify({'success': True, 'message': 'Group renamed successfully.'}), 200
+
+    @app.route('/visionadmin/api/attribute-sets/<int:set_id>/save-schema', methods=['POST', 'PUT'])
+    def visionadmin_api_save_attribute_set_full_schema(set_id):
+        """Saves attribute set name, groups, and assigned attributes hierarchy atomically."""
+        try:
+            data = request.get_json(force=True) or {}
+            set_name = data.get('name')
+            groups = data.get('groups') or []
+            user_id = get_current_admin_user_id()
+            AttributeService.save_full_set_schema(set_id, set_name, groups, user_id=user_id)
+            return jsonify({'success': True, 'message': 'Attribute set schema saved successfully!'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     @app.route('/visionadmin/api/catalog/form-schema/<int:set_id>', methods=['GET'])
     def visionadmin_api_get_product_form_schema(set_id):
         """Returns reactive Alpine.js form schema with scoped values & fallback flags."""

@@ -275,6 +275,120 @@ class AttributeService:
             conn.close()
 
     @staticmethod
+    def rename_group(group_id, name, user_id=None):
+        """Renames an attribute group."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                name_val = json.dumps(name) if isinstance(name, dict) else str(name)
+                cursor.execute("""
+                    UPDATE attribute_groups
+                    SET name = %s, updated_by = %s, updated_at = NOW()
+                    WHERE id = %s
+                """, (name_val, user_id, group_id))
+                conn.commit()
+                return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    @staticmethod
+    def save_full_set_schema(attribute_set_id, set_name, groups_data, user_id=None):
+        """
+        Atomically saves:
+        - Attribute set name
+        - Groups (create new, rename existing, delete removed non-system groups)
+        - Group attribute mappings (with sort order, preventing deletion of required attributes!)
+        """
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                # 1. Update set name
+                if set_name:
+                    cursor.execute("""
+                        UPDATE attribute_sets SET name = %s, updated_by = %s, updated_at = NOW()
+                        WHERE id = %s
+                    """, (set_name.strip(), user_id, attribute_set_id))
+
+                # 2. Get existing groups for this set
+                cursor.execute("SELECT id, name FROM attribute_groups WHERE attribute_set_id = %s", (attribute_set_id,))
+                existing_groups = {row['id']: row for row in cursor.fetchall()}
+
+                # 3. Get all required attributes across the system
+                cursor.execute("SELECT id, code FROM attributes WHERE is_required = 1 OR is_system = 1 OR code IN ('sku', 'name', 'price', 'status', 'product_name')")
+                required_attrs = {row['id']: row['code'] for row in cursor.fetchall()}
+
+                # Process groups in groups_data
+                seen_group_ids = set()
+                first_group_id = None
+
+                for g_idx, g in enumerate(groups_data):
+                    g_id = g.get('id')
+                    g_name = g.get('name') or 'General'
+                    g_name_val = json.dumps(g_name) if isinstance(g_name, dict) else str(g_name)
+                    clean_str = g_name.get('en') if isinstance(g_name, dict) else str(g_name)
+                    g_code = re.sub(r'[^a-z0-9_]+', '_', clean_str.lower()).strip('_') or f"group_{g_idx+1}"
+
+                    if g_id and g_id in existing_groups:
+                        # Update group name and sort order
+                        cursor.execute("""
+                            UPDATE attribute_groups SET name = %s, sort_order = %s, updated_by = %s
+                            WHERE id = %s
+                        """, (g_name_val, g_idx * 10, user_id, g_id))
+                        target_group_id = g_id
+                    else:
+                        # Insert new group
+                        cursor.execute("""
+                            INSERT INTO attribute_groups (attribute_set_id, name, code, sort_order, created_by, updated_by)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                        """, (attribute_set_id, g_name_val, g_code, g_idx * 10, user_id, user_id))
+                        target_group_id = cursor.lastrowid
+
+                    seen_group_ids.add(target_group_id)
+                    if first_group_id is None:
+                        first_group_id = target_group_id
+
+                    # Clear existing mappings for this group to replace with new order
+                    cursor.execute("DELETE FROM attribute_group_attributes WHERE attribute_group_id = %s", (target_group_id,))
+
+                    # Re-insert attributes for this group
+                    attrs = g.get('attributes') or []
+                    for a_idx, attr in enumerate(attrs):
+                        attr_id = attr.get('id') if isinstance(attr, dict) else attr
+                        if attr_id:
+                            cursor.execute("""
+                                INSERT INTO attribute_group_attributes (attribute_group_id, attribute_id, sort_order, created_by, updated_by)
+                                VALUES (%s, %s, %s, %s, %s)
+                            """, (target_group_id, attr_id, a_idx * 10, user_id, user_id))
+
+                # Delete groups that were removed (not in seen_group_ids)
+                for old_gid in existing_groups.keys():
+                    if old_gid not in seen_group_ids:
+                        cursor.execute("DELETE FROM attribute_group_attributes WHERE attribute_group_id = %s", (old_gid,))
+                        cursor.execute("DELETE FROM attribute_groups WHERE id = %s", (old_gid,))
+
+                # 4. Critical requirement check: ensure all required attributes are preserved in the set!
+                cursor.execute("""
+                    SELECT DISTINCT attribute_id FROM attribute_group_attributes aga
+                    JOIN attribute_groups ag ON aga.attribute_group_id = ag.id
+                    WHERE ag.attribute_set_id = %s
+                """, (attribute_set_id,))
+                assigned_attr_ids = {row['attribute_id'] for row in cursor.fetchall()}
+
+                if first_group_id:
+                    for req_id in required_attrs.keys():
+                        if req_id not in assigned_attr_ids:
+                            cursor.execute("""
+                                INSERT INTO attribute_group_attributes (attribute_group_id, attribute_id, sort_order, created_by, updated_by)
+                                VALUES (%s, %s, 999, %s, %s)
+                            """, (first_group_id, req_id, user_id, user_id))
+
+                conn.commit()
+                return True
+        finally:
+            conn.close()
+
+
+    @staticmethod
     def get_product_scoped_attributes(product_id, website_id=None, store_id=None, store_view_id=None):
         """
         Resolves product attribute values with 4-tier fallback:

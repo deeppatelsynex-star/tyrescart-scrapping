@@ -425,65 +425,14 @@
         </div>
       </div>
 
-      <!-- 5. Display Settings & Attribute Architecture -->
+      <!-- 5. Display Settings -->
       <div class="bg-white p-6 sm:p-8 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-6">
         <div class="flex items-center justify-between pb-3 border-b border-[#E8EDE4]">
           <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full bg-[#2563FF]"></span>
-            <h2 class="text-xs font-black uppercase tracking-wider text-[#1D4ED8]">Display Settings &amp; Attribute Architecture</h2>
+            <h2 class="text-xs font-black uppercase tracking-wider text-[#1D4ED8]">Display Settings</h2>
           </div>
-          <span class="text-[11px] font-bold text-slate-400">Attribute Schema &amp; Category Hierarchy</span>
-        </div>
-
-        <!-- Attribute Set Selector & Architecture Preview -->
-        <div class="p-5 rounded-2xl bg-blue-50/40 border border-blue-100 space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <label class="text-xs font-black text-[#1D4ED8] block">Default Attribute Set</label>
-              <span class="text-[11px] text-slate-500 font-medium">Select the attribute architecture used by products in this category</span>
-            </div>
-            <select 
-              x-model="form.default_attribute_set_id"
-              @change="loadAttributeSetSchema(form.default_attribute_set_id)"
-              class="px-4 py-2 text-xs font-bold border border-blue-200 rounded-xl bg-white text-slate-800 focus:outline-none focus:border-[#2563FF]"
-            >
-              <template x-for="s in attributeSets" :key="s.id">
-                <option :value="s.id" :selected="s.id == form.default_attribute_set_id" x-text="s.name"></option>
-              </template>
-            </select>
-          </div>
-
-          <!-- Dynamic Attribute Groups & Attributes Preview -->
-          <template x-if="loadingSchema">
-            <div class="py-4 text-center text-xs text-slate-400 font-semibold">Loading attribute set architecture...</div>
-          </template>
-
-          <template x-if="!loadingSchema && selectedSetSchema">
-            <div class="space-y-3 pt-2">
-              <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                <span>Associated Attribute Groups &amp; Schema</span>
-                <span class="font-normal normal-case text-slate-400" x-text="(selectedSetSchema.groups ? selectedSetSchema.groups.length : 0) + ' groups configured'"></span>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <template x-for="g in (selectedSetSchema.groups || [])" :key="g.id">
-                  <div class="p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-2xs space-y-2">
-                    <div class="flex items-center justify-between">
-                      <span class="text-xs font-bold text-slate-800" x-text="g.name"></span>
-                      <span class="px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 text-slate-500" x-text="(g.attributes ? g.attributes.length : 0) + ' attrs'"></span>
-                    </div>
-                    <div class="flex flex-wrap gap-1.5">
-                      <template x-for="a in (g.attributes || []).slice(0, 6)" :key="a.id">
-                        <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200/60" x-text="a.frontend_label || a.code"></span>
-                      </template>
-                      <template x-if="g.attributes && g.attributes.length > 6">
-                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold text-slate-400" x-text="'+' + (g.attributes.length - 6) + ' more'"></span>
-                      </template>
-                    </div>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </template>
+          <span class="text-[11px] font-bold text-slate-400">Category Hierarchy &amp; Storefront Display</span>
         </div>
 
         <!-- Hierarchy & Display Options -->

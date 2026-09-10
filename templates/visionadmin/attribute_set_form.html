@@ -21,12 +21,20 @@
 
     <div class="flex items-center gap-2.5">
       <a 
-        href="/visionadmin/attributes" 
+        href="/visionadmin/attributes?tab=sets" 
         class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs tracking-wide transition shadow-2xs active:scale-95"
       >
         <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
         <span>Back to Sets</span>
       </a>
+
+      <button 
+        type="button" 
+        @click="resetForm()" 
+        class="px-4 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs tracking-wide transition shadow-2xs active:scale-95 cursor-pointer"
+      >
+        Reset
+      </button>
 
       <template x-if="form.id">
         <a 
@@ -45,7 +53,7 @@
         :disabled="isSaving"
         class="px-6 py-2.5 rounded-2xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white font-bold text-xs tracking-wide transition shadow-xs disabled:opacity-50 active:scale-95 cursor-pointer"
       >
-        <span x-text="isSaving ? 'Saving...' : (form.id ? 'Save Changes' : 'Create Set')"></span>
+        <span x-text="isSaving ? 'Saving...' : (form.id ? 'Save Changes' : 'Save Attribute Set')"></span>
       </button>
     </div>
   </div>
@@ -54,7 +62,7 @@
   <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs p-6 sm:p-8 w-full space-y-6">
     <form @submit.prevent="saveSet()" class="space-y-5">
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1.5">Attribute Set Name <span class="text-rose-500">*</span></label>
+        <label class="block text-xs font-bold text-slate-700 mb-1.5">Name <span class="text-rose-500">*</span></label>
         <input 
           type="text" 
           x-model="form.name" 
@@ -62,7 +70,24 @@
           placeholder="e.g. Electric Vehicle (EV) Tyres, Commercial Fleet, Batteries" 
           class="w-full px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563FF]"
         />
+        <p class="text-[11px] text-slate-400 mt-1">For internal use.</p>
       </div>
+
+      <template x-if="!form.id">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Based On <span class="text-rose-500">*</span></label>
+          <select 
+            x-model="form.clone_from_id" 
+            class="w-full px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563FF]"
+          >
+            <template x-for="s in attributeSets" :key="s.id">
+              <option :value="s.id" x-text="s.name"></option>
+            </template>
+            <option value="">None (Blank Set with General Group)</option>
+          </select>
+          <p class="text-[11px] text-slate-400 mt-1">Select an existing attribute set to base this new set on (inherits all groups and attributes like Magento).</p>
+        </div>
+      </template>
 
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1.5">Slug / Machine Code</label>
@@ -75,35 +100,19 @@
         <p class="text-[10px] text-slate-400 mt-1">Unique slug used in catalog routing and EAV schema lookups.</p>
       </div>
 
-      <template x-if="!form.id">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">Clone Schema Groups From Template Set (Optional)</label>
-          <select 
-            x-model="form.clone_from_id" 
-            class="w-full px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563FF]"
-          >
-            <option value="">None (Create Blank Set with General Group)</option>
-            <template x-for="s in attributeSets" :key="s.id">
-              <option :value="s.id" x-text="`Inherit from: ${s.name} (#${s.id} • ${s.slug})`"></option>
-            </template>
-          </select>
-          <p class="text-[11px] text-slate-400 mt-1">Inherits all schema groups and attribute mappings from the selected template.</p>
-        </div>
-      </template>
-
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1.5">Description</label>
         <textarea 
           x-model="form.description" 
           rows="3" 
-          placeholder="Describe the vehicle category, sizing specifications, and EU labeling rules this set handles..." 
+          placeholder="Describe the catalog scope and specifications this set handles..." 
           class="w-full px-4 py-2.5 text-xs font-medium rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563FF]"
         ></textarea>
       </div>
 
       <div class="flex items-center justify-between pt-5 border-t border-[#F1F5F0]">
         <a 
-          href="/visionadmin/attributes" 
+          href="/visionadmin/attributes?tab=sets" 
           class="px-5 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs tracking-wide transition shadow-2xs"
         >
           Cancel
@@ -112,7 +121,7 @@
           type="submit" 
           :disabled="isSaving"
           class="px-6 py-2.5 rounded-2xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white font-bold text-xs tracking-wide transition shadow-xs disabled:opacity-50 cursor-pointer active:scale-95"
-          x-text="isSaving ? 'Saving...' : (form.id ? 'Save Changes' : 'Create Attribute Set')"
+          x-text="isSaving ? 'Saving...' : (form.id ? 'Save Changes' : 'Save Attribute Set')"
         ></button>
       </div>
     </form>
@@ -140,30 +149,48 @@ function visionAttributeSetFormApp(initialSetId = null) {
       try {
         const res = await fetch('/visionadmin/api/attribute-sets');
         const data = await res.json();
-          this.attributeSets = data.attribute_sets || [];
-          if (this.initialSetId) {
-            try {
-              const sRes = await fetch(`/visionadmin/api/attribute-sets/${this.initialSetId}`);
-              const sData = await sRes.json();
-              const setObj = sData.attribute_set || (this.attributeSets || []).find(s => Number(s.id) === Number(this.initialSetId));
-              if (setObj) {
-                this.form.id = setObj.id;
-                this.form.name = setObj.name;
-                this.form.slug = setObj.slug;
-                this.form.description = setObj.description || '';
-              }
-            } catch(e) {
-              const found = (this.attributeSets || []).find(s => Number(s.id) === Number(this.initialSetId));
-              if (found) {
-                this.form.id = found.id;
-                this.form.name = found.name;
-                this.form.slug = found.slug;
-                this.form.description = found.description || '';
-              }
+        this.attributeSets = data.attribute_sets || [];
+        
+        if (!this.initialSetId && this.attributeSets.length > 0) {
+          const defaultSet = this.attributeSets.find(s => s.slug === 'default' || s.is_system);
+          this.form.clone_from_id = defaultSet ? defaultSet.id : this.attributeSets[0].id;
+        }
+
+        if (this.initialSetId) {
+          try {
+            const sRes = await fetch(`/visionadmin/api/attribute-sets/${this.initialSetId}`);
+            const sData = await sRes.json();
+            const setObj = sData.attribute_set || (this.attributeSets || []).find(s => Number(s.id) === Number(this.initialSetId));
+            if (setObj) {
+              this.form.id = setObj.id;
+              this.form.name = setObj.name;
+              this.form.slug = setObj.slug;
+              this.form.description = setObj.description || '';
+            }
+          } catch(e) {
+            const found = (this.attributeSets || []).find(s => Number(s.id) === Number(this.initialSetId));
+            if (found) {
+              this.form.id = found.id;
+              this.form.name = found.name;
+              this.form.slug = found.slug;
+              this.form.description = found.description || '';
             }
           }
+        }
       } catch (err) {
         console.error('Error loading attribute sets:', err);
+      }
+    },
+
+    resetForm() {
+      if (this.initialSetId) {
+        this.initData();
+      } else {
+        this.form.name = '';
+        this.form.slug = '';
+        this.form.description = '';
+        const defaultSet = this.attributeSets.find(s => s.slug === 'default' || s.is_system);
+        this.form.clone_from_id = defaultSet ? defaultSet.id : (this.attributeSets[0] ? this.attributeSets[0].id : '');
       }
     },
 
@@ -184,7 +211,13 @@ function visionAttributeSetFormApp(initialSetId = null) {
         });
         const data = await res.json();
         if (data.success || data.set_id || data.id) {
-          window.location.href = '/visionadmin/attributes';
+          const newId = data.id || data.set_id || this.form.id;
+          if (!this.form.id && newId) {
+            // Direct to Schema Builder immediately (like Magento)
+            window.location.href = `/visionadmin/attribute-sets/${newId}/builder`;
+          } else {
+            window.location.href = '/visionadmin/attributes?tab=sets';
+          }
         } else {
           alert(data.error || 'Failed to save attribute set.');
         }

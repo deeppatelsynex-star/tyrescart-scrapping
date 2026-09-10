@@ -1,6 +1,6 @@
 {% extends "visionadmin/base.html" %}
 
-{% block title %}Dynamic Attributes &amp; Sizing - VisionAdmin{% endblock %}
+{% block title %}Dynamic Attributes - VisionAdmin{% endblock %}
 
 {% block content %}
 <div class="space-y-6" x-data="visionAttributesApp()" x-init="initData()">
@@ -15,8 +15,8 @@
         <span class="px-2.5 py-1 text-[11px] font-black uppercase tracking-wider rounded-lg bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]">E-Commerce Engine</span>
         <span class="text-xs text-slate-400 font-semibold">• Dynamic EAV &amp; Scope Hierarchy</span>
       </div>
-      <h1 class="text-2xl font-black text-[#0E1108] tracking-tight mt-1">Attributes &amp; Sizing Studio</h1>
-      <p class="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">Manage typed attributes, vehicle tyre dimensions, EU label parameters, and scoped attribute sets.</p>
+      <h1 class="text-2xl font-black text-[#0E1108] tracking-tight mt-1">Attributes Studio</h1>
+      <p class="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">Manage typed attributes, custom specifications, and scoped attribute sets.</p>
     </div>
     
     <div class="flex items-center gap-3">
@@ -229,46 +229,148 @@
     </div>
   </div>
 
-  <!-- TAB 2: ATTRIBUTE SETS -->
-  <div x-show="activeTab === 'sets'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-    <template x-for="set in attributeSets" :key="set.id">
-      <div class="bg-white rounded-3xl p-5 border border-[#E8EDE4] shadow-xs flex flex-col justify-between hover:border-[#2563FF]/40 transition">
-        <div>
-          <div class="flex items-center justify-between">
-            <span class="px-2.5 py-0.5 rounded-full bg-[#EFF6FF] text-[#1D4ED8] text-[10px] font-black uppercase">Set #<span x-text="set.id"></span></span>
-            <span class="text-xs font-mono text-slate-400" x-text="`${set.groups_count || 0} Groups`"></span>
-          </div>
-          <h3 class="text-base font-black text-[#0E1108] mt-3" x-text="set.name"></h3>
-          <p class="text-xs text-slate-500 font-medium mt-1" x-text="set.description || 'Pre-configured schema groups for vehicle sizing and EU labeling.'"></p>
-        </div>
+  <!-- TAB 2: ATTRIBUTE SETS (Magento-style Table Grid) -->
+  <div x-show="activeTab === 'sets'" class="space-y-4">
+    <!-- Filter bar -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-[#E8EDE4]">
+      <div class="relative w-full sm:w-80">
+        <input 
+          type="text" 
+          x-model="setSearchQuery" 
+          placeholder="Filter attribute sets by name or code..." 
+          class="w-full pl-9 pr-4 py-2 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]"
+        />
+        <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
 
-        <div class="mt-5 pt-4 border-t border-[#F1F5F0] flex items-center justify-between">
-          <div class="flex items-center gap-1.5">
-            <a 
-              :href="'/visionadmin/attribute-sets/' + set.id + '/edit'" 
-              class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
-              title="Edit Attribute Set"
-            >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </a>
-            <button 
-              type="button" 
-              @click="deleteAttributeSet(set)" 
-              class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-              title="Delete Attribute Set"
-            >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-slate-500 font-semibold" x-text="`${filteredAttributeSets.length} Attribute Sets`"></span>
+        <a 
+          href="/visionadmin/attribute-sets/create" 
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Add Attribute Set</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Data Table Container -->
+    <div x-show="attributeSets.length > 0" class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
+      <div class="overflow-x-auto">
+        <table id="attributeSetsTable" class="w-full text-left text-xs">
+          <thead class="bg-slate-50/80 border-b border-[#E8EDE4] text-slate-500 font-extrabold uppercase tracking-wider text-[10px]">
+            <tr>
+              <th class="px-5 py-3.5 w-20">ID</th>
+              <th class="px-5 py-3.5">Attribute Set Name</th>
+              <th class="px-5 py-3.5">Code / Slug</th>
+              <th class="px-5 py-3.5 text-center">Groups</th>
+              <th class="px-5 py-3.5 text-center">Type</th>
+              <th class="px-5 py-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#F1F5F0]">
+            <template x-for="set in paginatedAttributeSets" :key="set.id">
+              <tr @click="window.location.href = '/visionadmin/attribute-sets/' + set.id + '/builder'" class="hover:bg-[#F9FCF8] transition-colors cursor-pointer group">
+                <td class="px-5 py-3.5 font-mono font-bold text-slate-400 group-hover:text-[#1D4ED8] transition-colors" x-text="'#' + set.id"></td>
+                <td class="px-5 py-3.5">
+                  <div class="font-bold text-[#0E1108] text-sm group-hover:text-[#1D4ED8] transition-colors flex items-center gap-2">
+                    <span x-text="set.name"></span>
+                    <span class="text-[10px] text-slate-400 font-normal">↗ Builder</span>
+                  </div>
+                  <template x-if="set.description">
+                    <div class="text-[11px] text-slate-400 font-medium truncate max-w-md mt-0.5" x-text="set.description"></div>
+                  </template>
+                </td>
+                <td class="px-5 py-3.5">
+                  <span class="px-2 py-0.5 rounded bg-slate-100 font-mono text-slate-700 text-[11px] font-bold" x-text="set.slug || '-'"></span>
+                </td>
+                <td class="px-5 py-3.5 text-center">
+                  <span class="px-2.5 py-0.5 rounded-full bg-[#EFF6FF] text-[#1D4ED8] text-[11px] font-bold" x-text="`${set.groups_count || 0} Groups`"></span>
+                </td>
+                <td class="px-5 py-3.5 text-center">
+                  <span 
+                    class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                    :class="set.is_system ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-600'"
+                    x-text="set.is_system ? 'System Set' : 'Custom Set'"
+                  ></span>
+                </td>
+                <td class="px-5 py-3.5 text-right space-x-1.5 whitespace-nowrap" @click.stop>
+                  <a 
+                    :href="'/visionadmin/attribute-sets/' + set.id + '/builder'" 
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EFF6FF] hover:bg-[#DBEAFE] text-[#1D4ED8] text-xs font-bold transition cursor-pointer"
+                    title="Open Schema Builder"
+                  >
+                    <span>Schema Builder ↗</span>
+                  </a>
+                  <a 
+                    :href="'/visionadmin/attribute-sets/' + set.id + '/edit'" 
+                    class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer inline-block align-middle"
+                    title="Edit Set Info"
+                  >
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </a>
+                  <template x-if="!set.is_system">
+                    <button 
+                      type="button" 
+                      @click.stop="deleteAttributeSet(set)" 
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer inline-block align-middle"
+                      title="Delete Attribute Set"
+                    >
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  </template>
+                  <template x-if="set.is_system">
+                    <span class="p-1.5 text-slate-300 inline-block align-middle" title="System attribute sets cannot be deleted">
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </span>
+                  </template>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+
+        <!-- Alpine Pagination Bar for Sets -->
+        <div class="px-5 py-3.5 bg-slate-50/50 border-t border-[#E8EDE4] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-semibold text-slate-500">
+          <div class="flex items-center gap-2">
+            <span>Show</span>
+            <select x-model.number="setPerPage" @change="setPage = 1" class="px-3 py-1 text-xs">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+            <span>entries &nbsp;|&nbsp; Showing <span class="font-bold text-[#0E1108]" x-text="filteredAttributeSets.length === 0 ? 0 : (setPage - 1) * setPerPage + 1"></span> to <span class="font-bold text-[#0E1108]" x-text="Math.min(setPage * setPerPage, filteredAttributeSets.length)"></span> of <span class="font-bold text-[#0E1108]" x-text="filteredAttributeSets.length"></span> sets</span>
+          </div>
+
+          <div class="flex items-center gap-1" x-show="totalSetPages > 1">
+            <button type="button" @click="if (setPage > 1) setPage--" :disabled="setPage === 1" :class="setPage === 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-200 cursor-pointer'" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold transition">
+              Previous
+            </button>
+            <span class="px-3 py-1.5 text-xs font-bold text-[#0E1108]">
+              Page <span x-text="setPage"></span> of <span x-text="totalSetPages"></span>
+            </span>
+            <button type="button" @click="if (setPage < totalSetPages) setPage++" :disabled="setPage === totalSetPages" :class="setPage === totalSetPages ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-200 cursor-pointer'" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold transition">
+              Next
             </button>
           </div>
-          <a 
-            :href="'/visionadmin/attribute-sets/' + set.id + '/builder'" 
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#EFF6FF] hover:text-[#1D4ED8] text-slate-700 text-xs font-bold transition cursor-pointer"
-          >
-            <span>Schema Builder ↗</span>
-          </a>
         </div>
       </div>
-    </template>
+    </div>
+
+    <!-- Empty State -->
+    <div x-show="attributeSets.length === 0" class="bg-white rounded-3xl border border-[#E8EDE4] p-12 text-center shadow-xs">
+      <div class="w-12 h-12 rounded-2xl bg-[#EFF6FF] text-[#1D4ED8] flex items-center justify-center mx-auto mb-3">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      </div>
+      <h4 class="font-black text-sm text-[#0E1108]">No Attribute Sets Configured</h4>
+      <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Create an attribute set schema blueprint to group attributes for your catalog.</p>
+      <div class="mt-4">
+        <a href="/visionadmin/attribute-sets/create" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs font-bold transition">
+          <span>+ Add Attribute Set</span>
+        </a>
+      </div>
+    </div>
   </div>
 
   <!-- TAB 3: ATTRIBUTES TRASH TABLE -->
@@ -615,6 +717,9 @@ function visionAttributesApp() {
     searchQuery: '',
     scopeFilter: '',
     typeFilter: '',
+    setSearchQuery: '',
+    setPage: 1,
+    setPerPage: 10,
     attributes: [],
     trashAttributes: [],
     attributeSets: [],
@@ -679,6 +784,11 @@ function visionAttributesApp() {
         // Check if query params or URL specify attribute to open
         const path = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab') === 'sets') {
+          this.activeTab = 'sets';
+        } else if (urlParams.get('tab') === 'trash') {
+          this.activeTab = 'trash';
+        }
         const targetId = urlParams.get('id') || urlParams.get('attr_id');
         const targetCode = urlParams.get('code');
         if (path.endsWith('/attributes/new') || path.endsWith('/attributes/create') || urlParams.get('new') === '1') {
@@ -736,6 +846,25 @@ function visionAttributesApp() {
         const matchScope = !this.scopeFilter || a.scope === this.scopeFilter;
         const matchType = !this.typeFilter || a.type === this.typeFilter;
         return matchQ && matchScope && matchType;
+      });
+    },
+
+    get totalSetPages() {
+      return Math.ceil(this.filteredAttributeSets.length / this.setPerPage) || 1;
+    },
+
+    get paginatedAttributeSets() {
+      const start = (this.setPage - 1) * this.setPerPage;
+      return this.filteredAttributeSets.slice(start, start + this.setPerPage);
+    },
+
+    get filteredAttributeSets() {
+      return this.attributeSets.filter(s => {
+        const q = (this.setSearchQuery || '').toLowerCase().trim();
+        if (!q) return true;
+        return (s.name && s.name.toLowerCase().includes(q)) ||
+               (s.slug && s.slug.toLowerCase().includes(q)) ||
+               String(s.id).includes(q);
       });
     },
 
@@ -1191,6 +1320,10 @@ function visionAttributesApp() {
     },
 
     async deleteAttributeSet(set) {
+      if (set.is_system) {
+        alert('System attribute sets cannot be deleted.');
+        return;
+      }
       const confirmMsg = `Are you sure you want to move attribute set '${set.name}' to trash?`;
       if (!confirm(confirmMsg)) return;
 
