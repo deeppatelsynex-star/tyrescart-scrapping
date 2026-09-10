@@ -41,8 +41,12 @@ class Category:
         r['meta_title_en'] = get_translated_value(r['meta_title'], 'en')
         r['meta_title_ar'] = get_translated_value(r['meta_title'], 'ar')
         r['meta_desc_en'] = get_translated_value(r['meta_desc'], 'en')
-        r['meta_desc_ar'] = get_translated_value(r['meta_desc'], 'ar')
         r['default_attribute_set_id'] = r.get('default_attribute_set_id')
+        r['include_in_menu'] = bool(r.get('include_in_menu', 1)) if r.get('include_in_menu') is not None else True
+        r['is_anchor'] = bool(r.get('is_anchor', 1)) if r.get('is_anchor') is not None else True
+        r['display_mode'] = r.get('display_mode') or 'PRODUCTS'
+        r['use_in_search'] = bool(r.get('use_in_search', 1)) if r.get('use_in_search') is not None else True
+        r['display_in_autocomplete'] = bool(r.get('display_in_autocomplete', 1)) if r.get('display_in_autocomplete') is not None else True
         return r
 
     @classmethod
@@ -221,17 +225,24 @@ class Category:
                 sort_order = int(data.get('sort_order') or 0)
                 status = data.get('status') or 'active'
                 default_attr_set_id = int(data.get('default_attribute_set_id')) if data.get('default_attribute_set_id') else None
+                include_in_menu = 1 if data.get('include_in_menu', True) else 0
+                is_anchor = 1 if data.get('is_anchor', True) else 0
+                display_mode = str(data.get('display_mode') or 'PRODUCTS')
+                use_in_search = 1 if data.get('use_in_search', True) else 0
+                display_in_autocomplete = 1 if data.get('display_in_autocomplete', True) else 0
                 now = datetime.now(timezone.utc)
 
                 cursor.execute("""
                     INSERT INTO categories (
                         name, slug, parent_id, image, description, sort_order,
                         status, meta_title, meta_desc, default_attribute_set_id,
+                        include_in_menu, is_anchor, display_mode, use_in_search, display_in_autocomplete,
                         created_by, created_at, updated_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     name_json, slug, parent_id, image, desc_json, sort_order,
                     status, meta_t_json, meta_d_json, default_attr_set_id,
+                    include_in_menu, is_anchor, display_mode, use_in_search, display_in_autocomplete,
                     user_id, now, now
                 ))
                 conn.commit()
@@ -377,6 +388,13 @@ class Category:
                     default_attr_set_id = int(val_as) if val_as else None
                 else:
                     default_attr_set_id = existing.get('default_attribute_set_id')
+
+                include_in_menu = 1 if data.get('include_in_menu', existing.get('include_in_menu') if existing.get('include_in_menu') is not None else True) else 0
+                is_anchor = 1 if data.get('is_anchor', existing.get('is_anchor') if existing.get('is_anchor') is not None else True) else 0
+                display_mode = str(data.get('display_mode') or existing.get('display_mode') or 'PRODUCTS')
+                use_in_search = 1 if data.get('use_in_search', existing.get('use_in_search') if existing.get('use_in_search') is not None else True) else 0
+                display_in_autocomplete = 1 if data.get('display_in_autocomplete', existing.get('display_in_autocomplete') if existing.get('display_in_autocomplete') is not None else True) else 0
+
                 now = datetime.now(timezone.utc)
 
                 cursor.execute("""
@@ -391,12 +409,18 @@ class Category:
                         meta_title = %s,
                         meta_desc = %s,
                         default_attribute_set_id = %s,
+                        include_in_menu = %s,
+                        is_anchor = %s,
+                        display_mode = %s,
+                        use_in_search = %s,
+                        display_in_autocomplete = %s,
                         updated_by = %s,
                         updated_at = %s
                     WHERE id = %s AND deleted_at IS NULL
                 """, (
                     name_json, slug, parent_id, image, desc_json, sort_order,
                     status, meta_t_json, meta_d_json, default_attr_set_id,
+                    include_in_menu, is_anchor, display_mode, use_in_search, display_in_autocomplete,
                     user_id, now, cat_id
                 ))
                 conn.commit()

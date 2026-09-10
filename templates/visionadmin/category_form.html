@@ -5,16 +5,16 @@
 {% block content %}
 <div class="space-y-6" x-data="visionCategoryFormApp('{{ initial_mode | default('create', true) }}', {{ initial_cat_id | default('null', true) }})" x-init="initData()">
 
-  <!-- 1. Page Introduction / Heading & Top Actions Header -->
-  <div class="bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-4">
+  <!-- 1. Page Introduction / Heading & Top Actions Header (Magento 2 Style) -->
+  <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
     <!-- Scope & Breadcrumb Bar -->
     <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 text-xs">
-      <div class="flex items-center gap-2 font-semibold text-slate-400">
-        <a href="/visionadmin/categories" class="hover:text-[#1D4ED8] transition">Catalog</a>
+      <div class="flex items-center gap-2 font-semibold text-slate-500">
+        <a href="/visionadmin/categories" class="hover:text-[#2563FF] transition">Catalog</a>
         <span>/</span>
-        <a href="/visionadmin/categories" class="hover:text-[#1D4ED8] transition">Categories</a>
+        <a href="/visionadmin/categories" class="hover:text-[#2563FF] transition">Categories</a>
         <span>/</span>
-        <span class="text-[#1D4ED8] font-bold" x-text="form.id ? ('Edit: ' + form.name_en) : 'New Category'"></span>
+        <span class="text-slate-900 font-bold" x-text="form.id ? (form.name_en + ' (ID: ' + form.id + ')') : 'New Category'"></span>
       </div>
 
       <!-- Scope Indicator -->
@@ -28,18 +28,18 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <div class="flex items-center gap-3">
-          <h1 class="text-2xl font-black text-[#0E1108] tracking-tight" x-text="form.id ? (form.name_en + ' (ID: ' + form.id + ')') : 'New Category'"></h1>
+          <h1 class="text-xl font-black text-slate-900 tracking-tight" x-text="form.id ? (form.name_en + ' (ID: ' + form.id + ')') : 'New Category'"></h1>
           <template x-if="form.id">
             <span 
               class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider"
-              :class="form.status === 'active' ? 'bg-blue-50 text-[#2563FF] border border-blue-100' : 'bg-slate-100 text-slate-500 border border-slate-200'"
+              :class="form.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'"
               x-text="form.status"
             ></span>
           </template>
         </div>
         <p class="text-xs text-slate-500 font-medium mt-1">
           <template x-if="form.id">
-            <span>Slug: <code class="font-mono text-[11px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-700" x-text="'/' + form.slug"></code> &bull; Assigned Products: <span class="font-bold text-slate-800" x-text="assignedCount"></span></span>
+            <span>URL Key: <code class="font-mono text-[11px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-700" x-text="'/' + form.slug"></code> &bull; Products: <span class="font-bold text-slate-800" x-text="assignedCount"></span></span>
           </template>
           <template x-if="!form.id">
             <span>Configure category hierarchy, display settings, SEO, and product assignments.</span>
@@ -49,19 +49,21 @@
 
       <!-- Action Buttons -->
       <div class="flex flex-wrap items-center gap-2">
-        <a 
-          href="/visionadmin/categories" 
-          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs tracking-wide transition cursor-pointer shadow-2xs active:scale-95"
+        <!-- Import CSV Modal Trigger -->
+        <button 
+          type="button" 
+          @click="csvModalOpen = true"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] hover:bg-[#DBEAFE] text-[#1D4ED8] font-bold text-xs tracking-wide transition cursor-pointer shadow-2xs active:scale-95"
         >
-          <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
-          <span>Back to Categories</span>
-        </a>
+          <svg class="w-4 h-4 text-[#2563FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>Import CSV</span>
+        </button>
 
-        <template x-if="form.id">
+        <template x-if="form.id && form.id !== 2">
           <button 
             type="button" 
             @click="deleteCurrentCategory()" 
-            class="px-4 py-2.5 rounded-2xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs tracking-wide transition cursor-pointer active:scale-95"
+            class="px-4 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs tracking-wide transition cursor-pointer active:scale-95"
           >
             Delete Category
           </button>
@@ -70,7 +72,7 @@
         <button 
           type="button" 
           @click="resetForm()" 
-          class="px-4 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs tracking-wide transition cursor-pointer shadow-2xs active:scale-95"
+          class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs tracking-wide transition cursor-pointer shadow-2xs active:scale-95"
         >
           Reset
         </button>
@@ -79,17 +81,9 @@
           type="button" 
           @click="saveCategory(false)" 
           :disabled="saving"
-          class="px-5 py-2.5 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs tracking-wide transition cursor-pointer shadow-2xs disabled:opacity-50 active:scale-95"
+          class="px-5 py-2 rounded-xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white font-bold text-xs tracking-wide transition cursor-pointer shadow-xs disabled:opacity-50 active:scale-95 inline-flex items-center gap-1.5"
         >
-          <span x-text="saving ? 'Saving...' : 'Save & Continue Edit'"></span>
-        </button>
-
-        <button 
-          type="button" 
-          @click="saveCategory(true)" 
-          :disabled="saving"
-          class="px-6 py-2.5 rounded-2xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white font-bold text-xs tracking-wide transition cursor-pointer shadow-xs disabled:opacity-50 active:scale-95"
-        >
+          <svg x-show="saving" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
           <span x-text="saving ? 'Saving...' : 'Save Category'"></span>
         </button>
       </div>
@@ -109,100 +103,97 @@
   <!-- Main Content Layout (Two Panels: Category Tree on Left + Content Sections on Right) -->
   <div x-show="!loading" class="flex flex-col lg:flex-row gap-6 items-start">
 
-    <!-- LEFT SIDEBAR: Category Actions & Hierarchical Tree -->
-    <div class="w-full lg:w-80 xl:w-88 shrink-0 space-y-4">
-      <!-- Quick Tree Actions -->
-      <div class="flex items-center gap-2">
-        <button 
-          type="button" 
-          @click="addRootCategory()"
-          class="flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white font-bold text-xs shadow-xs transition cursor-pointer active:scale-95"
-        >
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>Add Root Category</span>
-        </button>
-
-        <button 
-          type="button" 
-          @click="addSubcategory()"
-          :disabled="!form.id"
-          class="flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-2xs transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
-          title="Add a new subcategory under the currently active category"
-        >
-          <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>Add Subcategory</span>
-        </button>
-      </div>
-
-      <!-- Category Tree Card -->
-      <div class="bg-white p-5 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-[#E8EDE4]">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-[#2563FF]"></span>
-            <h3 class="text-xs font-black uppercase tracking-wider text-[#1D4ED8]">Category Tree</h3>
-          </div>
-          <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500">
-            <button type="button" @click="expandAllTree(true)" class="hover:text-[#2563FF] cursor-pointer">Expand All</button>
-            <span>/</span>
-            <button type="button" @click="expandAllTree(false)" class="hover:text-[#2563FF] cursor-pointer">Collapse</button>
-          </div>
+    <!-- LEFT SIDEBAR: Category Actions & Hierarchical Tree (Magento 2 Style) -->
+    <div class="w-full lg:w-80 shrink-0 space-y-4">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
+        <!-- Top Action Buttons (Matching Screenshot) -->
+        <div class="space-y-2">
+          <button 
+            type="button" 
+            @click="addRootCategory()" 
+            class="w-full py-1.5 px-3 text-xs font-bold text-slate-800 bg-[#f5f5f5] hover:bg-[#e9e9e9] border border-[#adadad] rounded shadow-2xs transition cursor-pointer text-center"
+          >
+            Add Root Category
+          </button>
+          <button 
+            type="button" 
+            @click="addSubcategory()" 
+            :disabled="!form.id"
+            class="w-full py-1.5 px-3 text-xs font-bold text-slate-800 bg-[#f5f5f5] hover:bg-[#e9e9e9] border border-[#adadad] rounded shadow-2xs transition cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Add Subcategory
+          </button>
         </div>
 
-        <!-- Search Tree Input -->
+        <!-- Collapse All | Expand All -->
+        <div class="text-xs font-medium text-[#006bb4] pt-1 flex items-center gap-1.5 border-t border-slate-100">
+          <button type="button" @click="expandAllTree(false)" class="hover:underline cursor-pointer">Collapse All</button>
+          <span class="text-slate-400">|</span>
+          <button type="button" @click="expandAllTree(true)" class="hover:underline cursor-pointer">Expand All</button>
+        </div>
+
+        <!-- Filter Tree Input -->
         <div>
           <input 
             type="text" 
             x-model="treeSearch" 
-            placeholder="Search categories in tree..." 
-            class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#2563FF]"
+            placeholder="Filter categories..." 
+            class="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-[#2563FF]"
           />
         </div>
 
-        <!-- Tree Nodes List (Arbitrary Depth Magento Style) -->
-        <div class="space-y-0.5 max-h-[600px] overflow-y-auto pr-1">
-          <template x-if="!flatTreeNodes || flatTreeNodes.length === 0">
+        <!-- Dotted Hierarchy Tree List -->
+        <div class="space-y-0.5 max-h-[620px] overflow-y-auto pr-1 select-none pt-1">
+          <template x-if="treeLoading">
+            <div class="py-6 text-center text-xs text-slate-400 font-medium">Loading tree...</div>
+          </template>
+
+          <template x-if="!treeLoading && visibleFlatTreeNodes.length === 0">
             <div class="py-6 text-center text-xs text-slate-400 font-medium">No categories found.</div>
           </template>
 
           <template x-for="node in visibleFlatTreeNodes" :key="node.id">
             <div 
               @click="selectCategory(node.id)"
-              class="group flex items-center justify-between py-1.5 px-2 rounded-xl text-xs transition cursor-pointer select-none border relative"
-              :class="form.id === node.id ? 'bg-[#D6EEFB] text-[#004F8A] font-bold border-[#BFDBFE] shadow-2xs' : 'text-slate-700 hover:bg-slate-50 border-transparent'"
-              :style="'padding-left: ' + (node.depth * 18 + 8) + 'px'"
+              class="group flex items-center justify-between py-1 px-1.5 rounded text-xs transition cursor-pointer relative"
+              :class="form.id === node.id ? 'bg-[#D6EEFB] text-[#004F8A] font-semibold' : 'text-slate-800 hover:bg-slate-50'"
+              :style="'padding-left: ' + (node.depth * 18 + 4) + 'px'"
             >
-              <div class="flex items-center gap-1.5 min-w-0">
+              <div class="flex items-center min-w-0">
+                <!-- Dotted Branch Connector for Depth > 0 -->
+                <template x-if="node.depth > 0">
+                  <span class="w-4 h-5 flex items-center justify-center shrink-0 -ml-3.5 mr-0.5 relative pointer-events-none">
+                    <svg class="w-4 h-5 text-slate-400" viewBox="0 0 16 20" fill="none">
+                      <path d="M0 0 v20 M0 10 h16" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2,2"/>
+                    </svg>
+                  </span>
+                </template>
+
                 <!-- Expand/Collapse Triangle Toggle -->
                 <button 
                   type="button" 
                   x-show="node.has_children"
                   @click.stop="toggleNode(node)"
-                  class="w-4 h-4 flex items-center justify-center text-slate-400 hover:text-slate-800 transition cursor-pointer shrink-0"
+                  class="w-3.5 h-3.5 flex items-center justify-center text-slate-700 hover:text-black transition cursor-pointer shrink-0 mr-0.5"
                 >
-                  <svg class="w-2.5 h-2.5 transition-transform" :class="node._expanded ? 'rotate-90 text-slate-700' : 'text-slate-400'" viewBox="0 0 24 24" fill="currentColor">
+                  <svg class="w-2.5 h-2.5 transition-transform" :class="node._expanded ? 'rotate-90 text-slate-900' : 'text-slate-600'" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5v14l11-7z"/>
                   </svg>
                 </button>
-                <span x-show="!node.has_children" class="w-4 h-4 flex items-center justify-center text-slate-300 text-xs shrink-0">&bull;</span>
+                <span x-show="!node.has_children && node.depth === 0" class="w-3.5 h-3.5 shrink-0"></span>
 
                 <!-- Manila Dual Folder Icon -->
-                <span class="shrink-0">
+                <span class="shrink-0 mr-1.5">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="#E4B854" stroke="#B88A24" stroke-width="1.2">
                     <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                   </svg>
                 </span>
 
-                <!-- Category Name & ID -->
-                <span class="truncate font-semibold" :class="form.id === node.id ? 'text-[#004F8A]' : 'text-slate-800'" x-text="node.name_en || node.name"></span>
-                <span class="text-[10px] text-slate-400" x-text="'(ID: ' + node.id + ')'"></span>
+                <!-- Category Name & ID & Product Count -->
+                <span class="truncate" :class="form.id === node.id ? 'text-[#004F8A]' : 'text-slate-800'" x-text="node.name_en || node.name"></span>
+                <span class="text-[11px] text-slate-500 ml-1 shrink-0" x-text="'(ID: ' + node.id + ')'"></span>
+                <span class="text-[11px] font-bold text-slate-600 ml-1 shrink-0" x-text="'(' + (node.product_count || 0) + ')'"></span>
               </div>
-
-              <!-- Product count -->
-              <span 
-                class="ml-2 px-1.5 py-0.5 rounded-md text-[10px] font-black shrink-0"
-                :class="form.id === node.id ? 'bg-blue-100 text-[#1D4ED8]' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'"
-                x-text="'(' + (node.product_count || 0) + ')'"
-              ></span>
             </div>
           </template>
         </div>
@@ -212,275 +203,341 @@
     <!-- RIGHT MAIN CONTENT: The Exact Content Sequence from Reference Screenshot -->
     <div class="flex-1 min-w-0 space-y-6 w-full">
 
-      <!-- 2. Main Information Section (Basic Settings) -->
-      <div class="bg-white p-6 sm:p-8 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-6">
-        <div class="flex items-center justify-between pb-3 border-b border-[#E8EDE4]">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-[#2563FF]"></span>
-            <h2 class="text-xs font-black uppercase tracking-wider text-[#1D4ED8]">Basic Information</h2>
-          </div>
-          <span class="text-[11px] font-bold text-slate-400">Core Category Identity</span>
-        </div>
+      <!-- Main Settings Card (Magento 2 Layout) -->
+      <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/90 shadow-2xs space-y-5">
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          <!-- Enable Category Switch -->
-          <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
-            <div>
-              <label class="text-xs font-bold text-slate-800 block">Enable Category</label>
-              <span class="text-[11px] text-slate-500 font-medium">Activate this category on the storefront</span>
+        <!-- Top Fields Matching Reference Screenshot -->
+        <div class="space-y-4 pb-4">
+          <!-- 1. Enable Category -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center py-1">
+            <div class="md:col-span-4 lg:col-span-3">
+              <label class="block text-xs font-bold text-slate-800">Enable Category</label>
+              <span class="text-[11px] text-slate-400 font-mono block mt-0.5">[store view]</span>
             </div>
-            <button 
-              type="button" 
-              @click="form.status = (form.status === 'active' ? 'inactive' : 'active')"
-              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
-              :class="form.status === 'active' ? 'bg-[#2563FF]' : 'bg-slate-300'"
-            >
-              <span 
-                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"
-                :class="form.status === 'active' ? 'translate-x-5' : 'translate-x-0'"
-              ></span>
-            </button>
-          </div>
-
-          <!-- Include in Menu Switch -->
-          <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
-            <div>
-              <label class="text-xs font-bold text-slate-800 block">Include in Menu</label>
-              <span class="text-[11px] text-slate-500 font-medium">Display in navigation menus and header bars</span>
+            <div class="md:col-span-8 lg:col-span-9 flex items-center gap-2.5">
+              <button 
+                type="button" 
+                @click="form.status = (form.status === 'active' ? 'inactive' : 'active')"
+                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                :class="form.status === 'active' ? 'bg-[#79a22a]' : 'bg-slate-300'"
+              >
+                <span 
+                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"
+                  :class="form.status === 'active' ? 'translate-x-5' : 'translate-x-0'"
+                ></span>
+              </button>
+              <span class="text-xs font-bold text-slate-700" x-text="form.status === 'active' ? 'Yes' : 'No'"></span>
             </div>
-            <button 
-              type="button" 
-              @click="form.include_in_menu = !form.include_in_menu"
-              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
-              :class="form.include_in_menu ? 'bg-[#2563FF]' : 'bg-slate-300'"
-            >
-              <span 
-                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"
-                :class="form.include_in_menu ? 'translate-x-5' : 'translate-x-0'"
-              ></span>
-            </button>
           </div>
-        </div>
 
-        <!-- Category Name Field -->
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-xs font-bold text-slate-700">Category Name <span class="text-rose-500">*</span></label>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-500">Store Language: English</span>
-          </div>
-          <input 
-            type="text" 
-            x-model="form.name_en" 
-            @input="if (!form.id) form.slug = slugify(form.name_en)"
-            required 
-            placeholder="e.g. Passenger Car Tyres, SUV &amp; 4x4, Run-Flat Tyres"
-            class="w-full px-4 py-2.5 text-xs sm:text-sm font-semibold border border-slate-200 rounded-xl focus:outline-none focus:border-[#2563FF] focus:ring-2 focus:ring-[#2563FF]/15"
-          />
-        </div>
-      </div>
-
-      <!-- 3. Content Section (Image & Description) -->
-      <div class="bg-white p-6 sm:p-8 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-6">
-        <div class="flex items-center justify-between pb-3 border-b border-[#E8EDE4]">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-[#2563FF]"></span>
-            <h2 class="text-xs font-black uppercase tracking-wider text-[#1D4ED8]">Content</h2>
-          </div>
-          <span class="text-[11px] font-bold text-slate-400">Media &amp; Descriptive Copy</span>
-        </div>
-
-        <!-- Category Image Upload & Preview -->
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-2">Category Banner / Image</label>
-          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div class="w-28 h-20 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs relative group">
-              <template x-if="form.image">
-                <img :src="form.image" alt="Category Image" class="w-full h-full object-contain p-1.5" />
-              </template>
-              <template x-if="!form.image">
-                <div class="text-center p-2">
-                  <svg class="w-6 h-6 mx-auto text-slate-300 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-                  <span class="text-[10px] text-slate-400 font-bold block">No Image</span>
-                </div>
-              </template>
-              <template x-if="form.image">
-                <button 
-                  type="button" 
-                  @click="form.image = ''" 
-                  class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
-                  title="Remove Image"
-                >&times;</button>
-              </template>
+          <!-- 2. Include in Menu -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center py-1">
+            <div class="md:col-span-4 lg:col-span-3">
+              <label class="block text-xs font-bold text-slate-800">Include in Menu</label>
+              <span class="text-[11px] text-slate-400 font-mono block mt-0.5">[store view]</span>
             </div>
+            <div class="md:col-span-8 lg:col-span-9 flex items-center gap-2.5">
+              <button 
+                type="button" 
+                @click="form.include_in_menu = !form.include_in_menu"
+                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                :class="form.include_in_menu ? 'bg-[#79a22a]' : 'bg-slate-300'"
+              >
+                <span 
+                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"
+                  :class="form.include_in_menu ? 'translate-x-5' : 'translate-x-0'"
+                ></span>
+              </button>
+              <span class="text-xs font-bold text-slate-700" x-text="form.include_in_menu ? 'Yes' : 'No'"></span>
+            </div>
+          </div>
 
-            <div class="flex-1 space-y-2 w-full">
-              <div class="flex items-center gap-2">
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  @change="uploadImage($event)" 
-                  class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#EFF6FF] file:text-[#1D4ED8] hover:file:bg-blue-100 cursor-pointer"
-                />
-              </div>
+          <!-- 3. Category Name -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center py-1">
+            <div class="md:col-span-4 lg:col-span-3">
+              <label class="block text-xs font-bold text-slate-800">Category Name <span class="text-rose-600 font-black">*</span></label>
+              <span class="text-[11px] text-slate-400 font-mono block mt-0.5">[store view]</span>
+            </div>
+            <div class="md:col-span-8 lg:col-span-9">
               <input 
                 type="text" 
-                x-model="form.image" 
-                placeholder="Or paste external image URL directly..." 
-                class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl text-slate-600 focus:outline-none focus:border-[#2563FF]"
+                x-model="form.name_en" 
+                @input="if (!form.id) form.slug = slugify(form.name_en)"
+                required 
+                class="w-full max-w-2xl px-3 py-2 text-xs font-medium border border-[#adadad] rounded bg-white text-slate-800 focus:outline-none focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF]"
               />
             </div>
           </div>
-        </div>
 
-        <!-- Description Field -->
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">Description</label>
-          <textarea 
-            rows="5" 
-            x-model="form.description_en" 
-            placeholder="Detailed description of tyres and products under this category..." 
-            class="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#2563FF] focus:ring-2 focus:ring-[#2563FF]/15"
-          ></textarea>
-        </div>
-      </div>
-
-      <!-- 4. Search Engine Optimization (SEO) -->
-      <div class="bg-white p-6 sm:p-8 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-6">
-        <div class="flex items-center justify-between pb-3 border-b border-[#E8EDE4]">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-[#2563FF]"></span>
-            <h2 class="text-xs font-black uppercase tracking-wider text-[#1D4ED8]">Search Engine Optimization</h2>
-          </div>
-          <span class="text-[11px] font-bold text-slate-400">Metadata &amp; URL Key</span>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">URL Key <span class="text-rose-500">*</span></label>
-          <div class="relative flex items-center">
-            <span class="absolute left-3 text-slate-400 font-mono text-xs select-none">/</span>
-            <input 
-              type="text" 
-              x-model="form.slug" 
-              required 
-              placeholder="e.g. passenger-car-tyres"
-              class="w-full pl-7 pr-4 py-2.5 text-xs sm:text-sm font-mono border border-slate-200 rounded-xl focus:outline-none focus:border-[#2563FF] focus:ring-2 focus:ring-[#2563FF]/15"
-            />
-          </div>
-          <span class="text-[10px] text-slate-400 mt-1 block">Relative URL path for the category on the store front.</span>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">Meta Title</label>
-          <input 
-            type="text" 
-            x-model="form.meta_title_en" 
-            placeholder="e.g. Buy Passenger Car Tyres in UAE | Best Prices Online" 
-            class="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#2563FF] focus:ring-2 focus:ring-[#2563FF]/15"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">Meta Description</label>
-          <textarea 
-            rows="3" 
-            x-model="form.meta_desc_en" 
-            placeholder="Search engine snippet preview for this category..." 
-            class="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#2563FF] focus:ring-2 focus:ring-[#2563FF]/15"
-          ></textarea>
-        </div>
-      </div>
-
-      <!-- 5. Display Settings -->
-      <div class="bg-white p-6 sm:p-8 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-6">
-        <div class="flex items-center justify-between pb-3 border-b border-[#E8EDE4]">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-[#2563FF]"></span>
-            <h2 class="text-xs font-black uppercase tracking-wider text-[#1D4ED8]">Display Settings</h2>
-          </div>
-          <span class="text-[11px] font-bold text-slate-400">Category Hierarchy &amp; Storefront Display</span>
-        </div>
-
-        <!-- Hierarchy & Display Options -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1.5">Parent Category</label>
-            <select 
-              x-model="form.parent_id" 
-              class="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-[#2563FF]"
-            >
-              <option value="">None (Top-Level Category)</option>
-              <template x-for="p in parentOptions" :key="p.id">
-                <option :value="p.id" :disabled="form.id && p.id === form.id" x-text="p.name_en"></option>
-              </template>
-            </select>
+          <!-- 4. Use Category Name in product search -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start py-1">
+            <div class="md:col-span-4 lg:col-span-3">
+              <div class="flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-[#eb5202] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.5 7.05c-.38-.72-1.02-1.28-1.78-1.55l-1.32-.48c-.28-.1-.48-.35-.5-.65-.05-.8-.32-2.12-.9-3.07-.6-1-1.52-1.3-2.15-1.3-.8 0-1.4.5-1.6.8-.2-.3-.8-.8-1.6-.8-.63 0-1.55.3-2.15 1.3-.58.95-.85 2.27-.9 3.07-.02.3-.22.55-.5.65l-1.32.48c-.76.27-1.4.83-1.78 1.55C2.5 8.2 2 10.1 2 12.2c0 2.8 1.1 5.3 3 7.1 1.8 1.8 4.3 2.7 7 2.7s5.2-.9 7-2.7c1.9-1.8 3-4.3 3-7.1 0-2.1-.5-4-1.5-5.15z"/>
+                </svg>
+                <label class="block text-xs font-bold text-slate-800">Use Category Name in product search</label>
+              </div>
+              <span class="text-[11px] text-slate-400 font-mono block mt-0.5">[store view]</span>
+            </div>
+            <div class="md:col-span-8 lg:col-span-9 space-y-1">
+              <div class="flex items-center gap-2.5">
+                <button 
+                  type="button" 
+                  @click="form.use_in_search = !form.use_in_search"
+                  class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                  :class="form.use_in_search ? 'bg-[#79a22a]' : 'bg-slate-300'"
+                >
+                  <span 
+                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"
+                    :class="form.use_in_search ? 'translate-x-5' : 'translate-x-0'"
+                  ></span>
+                </button>
+                <span class="text-xs font-bold text-slate-700" x-text="form.use_in_search ? 'Yes' : 'No'"></span>
+              </div>
+              <p class="text-[11px] text-slate-500">If the category name is used for fulltext search on products.</p>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1.5">Sort Order</label>
-            <input 
-              type="number" 
-              x-model="form.sort_order" 
-              class="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#2563FF]"
-            />
+          <!-- 5. Display Category in Autocomplete -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start py-1">
+            <div class="md:col-span-4 lg:col-span-3">
+              <div class="flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-[#eb5202] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.5 7.05c-.38-.72-1.02-1.28-1.78-1.55l-1.32-.48c-.28-.1-.48-.35-.5-.65-.05-.8-.32-2.12-.9-3.07-.6-1-1.52-1.3-2.15-1.3-.8 0-1.4.5-1.6.8-.2-.3-.8-.8-1.6-.8-.63 0-1.55.3-2.15 1.3-.58.95-.85 2.27-.9 3.07-.02.3-.22.55-.5.65l-1.32.48c-.76.27-1.4.83-1.78 1.55C2.5 8.2 2 10.1 2 12.2c0 2.8 1.1 5.3 3 7.1 1.8 1.8 4.3 2.7 7 2.7s5.2-.9 7-2.7c1.9-1.8 3-4.3 3-7.1 0-2.1-.5-4-1.5-5.15z"/>
+                </svg>
+                <label class="block text-xs font-bold text-slate-800">Display Category in Autocomplete</label>
+              </div>
+              <span class="text-[11px] text-slate-400 font-mono block mt-0.5">[store view]</span>
+            </div>
+            <div class="md:col-span-8 lg:col-span-9 space-y-1">
+              <div class="flex items-center gap-2.5">
+                <button 
+                  type="button" 
+                  @click="form.display_in_autocomplete = !form.display_in_autocomplete"
+                  class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                  :class="form.display_in_autocomplete ? 'bg-[#79a22a]' : 'bg-slate-300'"
+                >
+                  <span 
+                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"
+                    :class="form.display_in_autocomplete ? 'translate-x-5' : 'translate-x-0'"
+                  ></span>
+                </button>
+                <span class="text-xs font-bold text-slate-700" x-text="form.display_in_autocomplete ? 'Yes' : 'No'"></span>
+              </div>
+              <p class="text-[11px] text-slate-500">If the category can be displayed in autocomplete results.</p>
+            </div>
           </div>
+        </div>
 
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1.5">Display Mode</label>
-            <select 
-              x-model="form.display_mode" 
-              class="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-[#2563FF]"
-            >
-              <option value="PRODUCTS">Products Only</option>
-              <option value="PAGE">Static Block Only</option>
-              <option value="PRODUCTS_AND_PAGE">Both Products and Static Block</option>
-            </select>
-          </div>
-
-          <!-- Anchor Category Switch -->
-          <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200/80">
+        <!-- Accordion 1: Content -->
+        <div class="border-t border-slate-200">
+          <button 
+            type="button" 
+            @click="accordion.content = !accordion.content"
+            class="w-full flex items-center justify-between py-3.5 hover:bg-slate-50 transition cursor-pointer text-left group select-none"
+          >
+            <span class="text-xs font-bold text-slate-800 group-hover:text-[#2563FF]">Content</span>
+            <span class="w-6 h-6 rounded-full border border-slate-300 flex items-center justify-center text-slate-500 group-hover:border-[#2563FF] group-hover:text-[#2563FF] transition shrink-0">
+              <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="accordion.content ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </button>
+          <div x-show="accordion.content" class="pb-6 pt-2 space-y-4">
+            <!-- Category Image Upload & Preview -->
             <div>
-              <label class="text-xs font-bold text-slate-800 block">Anchor Category</label>
-              <span class="text-[11px] text-slate-500 font-medium">Aggregate products from child subcategories</span>
+              <label class="block text-xs font-bold text-slate-700 mb-2">Category Banner / Image</label>
+              <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div class="w-28 h-20 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs relative group">
+                  <template x-if="form.image">
+                    <img :src="form.image" alt="Category Image" class="w-full h-full object-contain p-1.5" />
+                  </template>
+                  <template x-if="!form.image">
+                    <div class="text-center p-2">
+                      <svg class="w-6 h-6 mx-auto text-slate-300 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                      <span class="text-[10px] text-slate-400 font-bold block">No Image</span>
+                    </div>
+                  </template>
+                  <template x-if="form.image">
+                    <button 
+                      type="button" 
+                      @click="form.image = ''" 
+                      class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                      title="Remove Image"
+                    >&times;</button>
+                  </template>
+                </div>
+
+                <div class="flex-1 space-y-2 w-full">
+                  <div class="flex items-center gap-2">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      @change="uploadImage($event)" 
+                      class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#EFF6FF] file:text-[#1D4ED8] hover:file:bg-blue-100 cursor-pointer"
+                    />
+                  </div>
+                  <input 
+                    type="text" 
+                    x-model="form.image" 
+                    placeholder="Or paste external image URL directly..." 
+                    class="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg text-slate-600 focus:outline-none focus:border-[#2563FF]"
+                  />
+                </div>
+              </div>
             </div>
-            <button 
-              type="button" 
-              @click="form.is_anchor = !form.is_anchor"
-              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
-              :class="form.is_anchor ? 'bg-[#2563FF]' : 'bg-slate-300'"
-            >
-              <span 
-                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"
-                :class="form.is_anchor ? 'translate-x-5' : 'translate-x-0'"
-              ></span>
-            </button>
+
+            <!-- Description Field -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Description</label>
+              <textarea 
+                rows="4" 
+                x-model="form.description_en" 
+                placeholder="Detailed description of tyres and products under this category..." 
+                class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-[#2563FF]"
+              ></textarea>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- 6. Products in Category (Filter/Search + Table Grid + Product Image Tiles) -->
-      <div class="bg-white p-6 sm:p-8 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-6">
-        <!-- Section Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-[#E8EDE4]">
-          <div class="flex items-center gap-2.5">
-            <span class="w-2.5 h-2.5 rounded-full bg-[#2563FF]"></span>
-            <h2 class="text-xs font-black uppercase tracking-wider text-[#1D4ED8]">Products in Category</h2>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-50 text-[#2563FF] border border-blue-100" x-text="assignedCount + ' Assigned'"></span>
+        <!-- Accordion 2: Display Settings -->
+        <div class="border-t border-slate-200">
+          <button 
+            type="button" 
+            @click="accordion.display = !accordion.display"
+            class="w-full flex items-center justify-between py-3.5 hover:bg-slate-50 transition cursor-pointer text-left group select-none"
+          >
+            <span class="text-xs font-bold text-slate-800 group-hover:text-[#2563FF]">Display Settings</span>
+            <span class="w-6 h-6 rounded-full border border-slate-300 flex items-center justify-center text-slate-500 group-hover:border-[#2563FF] group-hover:text-[#2563FF] transition shrink-0">
+              <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="accordion.display ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </button>
+          <div x-show="accordion.display" class="pb-6 pt-2 space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Parent Category</label>
+                <select 
+                  x-model="form.parent_id" 
+                  class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-[#2563FF]"
+                >
+                  <option value="">None (Top-Level Category)</option>
+                  <template x-for="p in parentOptions" :key="p.id">
+                    <option :value="p.id" :disabled="form.id && p.id === form.id" x-text="p.name_en"></option>
+                  </template>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Sort Order</label>
+                <input 
+                  type="number" 
+                  x-model="form.sort_order" 
+                  class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-[#2563FF]"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Display Mode</label>
+                <select 
+                  x-model="form.display_mode" 
+                  class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-[#2563FF]"
+                >
+                  <option value="PRODUCTS">Products Only</option>
+                  <option value="PAGE">Static Block Only</option>
+                  <option value="PRODUCTS_AND_PAGE">Both Products and Static Block</option>
+                </select>
+              </div>
+
+              <!-- Anchor Category Switch -->
+              <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                <div>
+                  <label class="text-xs font-bold text-slate-800 block">Anchor Category</label>
+                  <span class="text-[10px] text-slate-500 font-medium">Aggregate products from subcategories</span>
+                </div>
+                <button 
+                  type="button" 
+                  @click="form.is_anchor = !form.is_anchor"
+                  class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                  :class="form.is_anchor ? 'bg-[#79a22a]' : 'bg-slate-300'"
+                >
+                  <span 
+                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out"
+                    :class="form.is_anchor ? 'translate-x-5' : 'translate-x-0'"
+                  ></span>
+                </button>
+              </div>
+            </div>
           </div>
+        </div>
 
-          <template x-if="form.id">
+        <!-- Accordion 3: Search Engine Optimization -->
+        <div class="border-t border-slate-200">
+          <button 
+            type="button" 
+            @click="accordion.seo = !accordion.seo"
+            class="w-full flex items-center justify-between py-3.5 hover:bg-slate-50 transition cursor-pointer text-left group select-none"
+          >
+            <span class="text-xs font-bold text-slate-800 group-hover:text-[#2563FF]">Search Engine Optimization</span>
+            <span class="w-6 h-6 rounded-full border border-slate-300 flex items-center justify-center text-slate-500 group-hover:border-[#2563FF] group-hover:text-[#2563FF] transition shrink-0">
+              <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="accordion.seo ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </button>
+          <div x-show="accordion.seo" class="pb-6 pt-2 space-y-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">URL Key <span class="text-rose-500">*</span></label>
+              <div class="relative flex items-center">
+                <span class="absolute left-3 text-slate-400 font-mono text-xs select-none">/</span>
+                <input 
+                  type="text" 
+                  x-model="form.slug" 
+                  required 
+                  placeholder="e.g. passenger-car-tyres"
+                  class="w-full pl-7 pr-3 py-2 text-xs font-mono border border-slate-200 rounded-lg focus:outline-none focus:border-[#2563FF]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Meta Title</label>
+              <input 
+                type="text" 
+                x-model="form.meta_title_en" 
+                placeholder="e.g. Buy Passenger Car Tyres in UAE" 
+                class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-[#2563FF]"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Meta Description</label>
+              <textarea 
+                rows="3" 
+                x-model="form.meta_desc_en" 
+                placeholder="Search engine snippet preview for this category..." 
+                class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-[#2563FF]"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accordion 4: Products in Category -->
+        <div class="border-t border-slate-200">
+          <button 
+            type="button" 
+            @click="accordion.products = !accordion.products"
+            class="w-full flex items-center justify-between py-3.5 hover:bg-slate-50 transition cursor-pointer text-left group select-none"
+          >
             <div class="flex items-center gap-2">
-              <button 
-                type="button" 
-                @click="saveProductAssignments()" 
-                :disabled="savingProducts"
-                class="px-4 py-2 rounded-xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white font-bold text-xs shadow-xs transition cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
-              >
-                <svg x-show="savingProducts" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                <span x-text="savingProducts ? 'Saving Positions...' : 'Save Product Positions'"></span>
-              </button>
+              <svg class="w-4 h-4 text-[#eb5202] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.5 7.05c-.38-.72-1.02-1.28-1.78-1.55l-1.32-.48c-.28-.1-.48-.35-.5-.65-.05-.8-.32-2.12-.9-3.07-.6-1-1.52-1.3-2.15-1.3-.8 0-1.4.5-1.6.8-.2-.3-.8-.8-1.6-.8-.63 0-1.55.3-2.15 1.3-.58.95-.85 2.27-.9 3.07-.02.3-.22.55-.5.65l-1.32.48c-.76.27-1.4.83-1.78 1.55C2.5 8.2 2 10.1 2 12.2c0 2.8 1.1 5.3 3 7.1 1.8 1.8 4.3 2.7 7 2.7s5.2-.9 7-2.7c1.9-1.8 3-4.3 3-7.1 0-2.1-.5-4-1.5-5.15z"/>
+              </svg>
+              <span class="text-xs font-bold text-slate-800 group-hover:text-[#2563FF]">Products in Category</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-[#2563FF] border border-blue-100" x-text="assignedCount + ' Assigned'"></span>
             </div>
-          </template>
-        </div>
+            <span class="w-6 h-6 rounded-full border border-slate-300 flex items-center justify-center text-slate-500 group-hover:border-[#2563FF] group-hover:text-[#2563FF] transition shrink-0">
+              <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="accordion.products ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </button>
+
+          <div x-show="accordion.products" class="pb-6 pt-2 space-y-6">
 
         <template x-if="!form.id">
           <div class="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-300 space-y-2">
@@ -541,6 +598,16 @@
                   class="px-4 py-2.5 rounded-xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-xs transition cursor-pointer"
                 >
                   Filter
+                </button>
+
+                <button 
+                  type="button" 
+                  @click="saveProductAssignments()" 
+                  :disabled="savingProducts"
+                  class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-xs transition cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                >
+                  <svg x-show="savingProducts" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                  <span x-text="savingProducts ? 'Saving Positions...' : 'Save Product Positions'"></span>
                 </button>
               </div>
             </div>
@@ -718,77 +785,208 @@
           </div>
         </template>
       </div>
-
-      <!-- 7. Supporting Information Section -->
-      <div class="bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-[#E8EDE4]">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-[#2563FF]"></span>
-            <h2 class="text-xs font-black uppercase tracking-wider text-[#1D4ED8]">Supporting Information</h2>
-          </div>
-          <span class="text-[11px] font-bold text-slate-400">System Records &amp; Timestamps</span>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-          <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Category ID</span>
-            <span class="font-mono font-bold text-slate-800 text-sm mt-0.5 block" x-text="form.id ? ('#' + form.id) : '—'"></span>
-          </div>
-
-          <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Created Date</span>
-            <span class="font-bold text-slate-800 text-xs mt-0.5 block" x-text="form.created_at || '—'"></span>
-          </div>
-
-          <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Last Updated</span>
-            <span class="font-bold text-slate-800 text-xs mt-0.5 block" x-text="form.updated_at || '—'"></span>
-          </div>
-
-          <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Store Front URL</span>
-            <template x-if="form.slug">
-              <a :href="'/category/' + form.slug" target="_blank" class="font-mono text-xs text-[#2563FF] hover:underline font-bold mt-0.5 block truncate" x-text="'/' + form.slug"></a>
-            </template>
-            <template x-if="!form.slug">
-              <span class="text-slate-400 mt-0.5 block">—</span>
-            </template>
-          </div>
-        </div>
-      </div>
-
-      <!-- 8. Final / Footer Action Bar -->
-      <div class="bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-        <a 
-          href="/visionadmin/categories" 
-          class="px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition cursor-pointer shadow-2xs active:scale-95"
-        >
-          Cancel &amp; Back to Categories
-        </a>
-
-        <div class="flex items-center gap-3">
-          <button 
-            type="button" 
-            @click="saveCategory(false)" 
-            :disabled="saving"
-            class="px-5 py-2.5 rounded-2xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs tracking-wide transition cursor-pointer shadow-2xs disabled:opacity-50 active:scale-95"
-          >
-            Save &amp; Continue Edit
-          </button>
-          <button 
-            type="button" 
-            @click="saveCategory(true)" 
-            :disabled="saving" 
-            class="px-6 py-2.5 rounded-2xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50 active:scale-95"
-          >
-            <span x-show="!saving" x-text="form.id ? 'Save Category' : 'Create Category'"></span>
-            <span x-show="saving">Saving...</span>
-          </button>
-        </div>
-      </div>
-
     </div>
   </div>
+
+  <!-- Supporting Information Section -->
+  <div class="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#2563FF]"></span>
+        <h2 class="text-xs font-black uppercase tracking-wider text-[#1D4ED8]">Supporting Information</h2>
+      </div>
+      <span class="text-[11px] font-bold text-slate-400">System Records &amp; Timestamps</span>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+      <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Category ID</span>
+        <span class="font-mono font-bold text-slate-800 text-sm mt-0.5 block" x-text="form.id ? ('#' + form.id) : '—'"></span>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Created Date</span>
+        <span class="font-bold text-slate-800 text-xs mt-0.5 block" x-text="form.created_at || '—'"></span>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Last Updated</span>
+        <span class="font-bold text-slate-800 text-xs mt-0.5 block" x-text="form.updated_at || '—'"></span>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Store Front URL</span>
+        <template x-if="form.slug">
+          <a :href="'/category/' + form.slug" target="_blank" class="font-mono text-xs text-[#2563FF] hover:underline font-bold mt-0.5 block truncate" x-text="'/' + form.slug"></a>
+        </template>
+        <template x-if="!form.slug">
+          <span class="text-slate-400 mt-0.5 block">—</span>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final / Footer Action Bar -->
+  <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+    <template x-if="form.id && form.id !== 2">
+      <button 
+        type="button" 
+        @click="deleteCurrentCategory()" 
+        class="px-5 py-2.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs tracking-wide transition cursor-pointer active:scale-95"
+      >
+        Delete Category
+      </button>
+    </template>
+    <template x-if="!form.id || form.id === 2">
+      <div></div>
+    </template>
+
+    <div class="flex items-center gap-3">
+      <button 
+        type="button" 
+        @click="resetForm()" 
+        class="px-5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs tracking-wide transition cursor-pointer shadow-2xs active:scale-95"
+      >
+        Reset
+      </button>
+      <button 
+        type="button" 
+        @click="saveCategory(false)" 
+        :disabled="saving"
+        class="px-6 py-2.5 rounded-xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50 active:scale-95 inline-flex items-center gap-1.5"
+      >
+        <svg x-show="saving" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+        <span x-show="!saving" x-text="form.id ? 'Save Category' : 'Save Category'"></span>
+        <span x-show="saving">Saving...</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- CSV Import Modal (Magento Category Paths) -->
+<div 
+  x-show="csvModalOpen" 
+  x-cloak 
+  class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-200"
+>
+  <div 
+    @click.away="if (!csvUploading) csvModalOpen = false" 
+    class="bg-white rounded-3xl border border-slate-200 max-w-xl w-full shadow-2xl overflow-hidden"
+  >
+    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-[#EFF6FF] flex items-center justify-center text-[#1D4ED8]">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div>
+          <h2 class="text-base font-black text-slate-900">Import Categories from CSV</h2>
+          <p class="text-xs text-slate-500 font-medium">Upload Magento-style category paths or product spreadsheets</p>
+        </div>
+      </div>
+      <button type="button" @click="if (!csvUploading) csvModalOpen = false" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 text-xl font-bold cursor-pointer">&times;</button>
+    </div>
+
+    <div class="p-6 space-y-5">
+      <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#EFF6FF]/60 border border-[#BFDBFE]">
+        <div>
+          <span class="text-xs font-bold text-[#1D4ED8] block">Need a template?</span>
+          <span class="text-[11px] text-slate-600">Download the pre-formatted CSV template with Magento category paths.</span>
+        </div>
+        <a 
+          href="/visionadmin/api/categories/sample-csv" 
+          class="px-3 py-1.5 rounded-lg bg-[#2563FF] text-white text-xs font-bold hover:bg-[#1D4ED8] transition inline-flex items-center gap-1.5"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Download</span>
+        </a>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-2">Select CSV File (.csv)</label>
+        <input 
+          type="file" 
+          id="cat-csv-file-input"
+          accept=".csv,text/csv" 
+          @change="selectedCsvFile = $event.target.files[0]"
+          class="block w-full text-xs text-slate-500 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer border border-dashed border-slate-300 rounded-2xl p-4 bg-slate-50/50"
+        />
+      </div>
+
+      <!-- Comprehensive Import Result Report -->
+      <template x-if="csvResult">
+        <div class="space-y-3">
+          <div class="p-4 rounded-2xl text-xs" :class="csvResult.success ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-rose-50 text-rose-900 border border-rose-200'">
+            <div class="font-extrabold flex items-center gap-2 mb-1.5">
+              <span x-show="csvResult.success">✓ Import Completed</span>
+              <span x-show="!csvResult.success">✕ Import Failed</span>
+            </div>
+            <p class="font-medium text-[11px] mb-3" x-text="csvResult.message || csvResult.error"></p>
+
+            <!-- Statistics Breakdown Grid -->
+            <template x-if="csvResult.total_rows !== undefined">
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] pt-3 border-t border-slate-200/60 font-semibold">
+                <div class="bg-white/90 p-2.5 rounded-xl border border-slate-200/70">
+                  <span class="text-slate-400 block text-[10px] uppercase font-bold">Total Rows</span>
+                  <span class="text-slate-900 font-black text-sm" x-text="csvResult.total_rows || 0"></span>
+                </div>
+                <div class="bg-white/90 p-2.5 rounded-xl border border-slate-200/70">
+                  <span class="text-slate-400 block text-[10px] uppercase font-bold">Unique Paths</span>
+                  <span class="text-slate-900 font-black text-sm" x-text="csvResult.unique_paths_count || 0"></span>
+                </div>
+                <div class="bg-white/90 p-2.5 rounded-xl border border-slate-200/70">
+                  <span class="text-slate-400 block text-[10px] uppercase font-bold">Total Categories</span>
+                  <span class="text-slate-900 font-black text-sm" x-text="csvResult.unique_categories_count || 0"></span>
+                </div>
+                <div class="bg-white/90 p-2.5 rounded-xl border border-emerald-200">
+                  <span class="text-emerald-600 block text-[10px] uppercase font-bold">Newly Created</span>
+                  <span class="text-emerald-700 font-black text-sm" x-text="csvResult.created_categories_count || 0"></span>
+                </div>
+                <div class="bg-white/90 p-2.5 rounded-xl border border-blue-200">
+                  <span class="text-blue-600 block text-[10px] uppercase font-bold">Reused Existing</span>
+                  <span class="text-blue-700 font-black text-sm" x-text="csvResult.existing_categories_count || 0"></span>
+                </div>
+                <div class="bg-white/90 p-2.5 rounded-xl border border-indigo-200">
+                  <span class="text-indigo-600 block text-[10px] uppercase font-bold">Products Mapped</span>
+                  <span class="text-indigo-700 font-black text-sm" x-text="csvResult.products_mapped_count || 0"></span>
+                </div>
+              </div>
+            </template>
+
+            <!-- Failed Rows / Errors -->
+            <template x-if="csvResult.errors && csvResult.errors.length > 0">
+              <div class="mt-3 pt-2.5 border-t border-rose-200/60 text-rose-700 max-h-28 overflow-y-auto space-y-1 text-[11px] font-mono">
+                <template x-for="(err, idx) in csvResult.errors" :key="idx">
+                  <div x-text="'• ' + err"></div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <div class="p-5 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50/50">
+      <button 
+        type="button" 
+        @click="if (!csvUploading) csvModalOpen = false" 
+        class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-white text-xs font-bold transition cursor-pointer"
+      >
+        Close
+      </button>
+      <button 
+        type="button" 
+        :disabled="!selectedCsvFile || csvUploading" 
+        @click="submitCsvUpload()" 
+        class="px-6 py-2.5 rounded-xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+      >
+        <svg x-show="csvUploading" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+        <span x-text="csvUploading ? 'Importing...' : 'Upload & Import'"></span>
+      </button>
+    </div>
+  </div>
+</div>
 
 </div>
 {% endblock %}
@@ -802,6 +1000,20 @@ function visionCategoryFormApp(initialMode, initialCatId) {
     loading: false,
     saving: false,
     savingProducts: false,
+
+    // Accordions matching reference screenshot
+    accordion: {
+      content: false,
+      display: false,
+      seo: false,
+      products: true
+    },
+
+    // CSV Import Modal State
+    csvModalOpen: false,
+    selectedCsvFile: null,
+    csvUploading: false,
+    csvResult: null,
 
     // Category tree & hierarchy
     treeNodes: [],
@@ -824,6 +1036,8 @@ function visionCategoryFormApp(initialMode, initialCatId) {
       default_attribute_set_id: 1,
       display_mode: 'PRODUCTS',
       is_anchor: true,
+      use_in_search: true,
+      display_in_autocomplete: true,
       description_en: '',
       meta_title_en: '',
       meta_desc_en: '',
@@ -1004,10 +1218,12 @@ function visionCategoryFormApp(initialMode, initialCatId) {
             image: c.image || '',
             sort_order: c.sort_order || 0,
             status: c.status || 'active',
-            include_in_menu: c.include_in_menu !== false,
+            include_in_menu: c.include_in_menu !== false && c.include_in_menu !== 0,
             default_attribute_set_id: c.default_attribute_set_id || 1,
             display_mode: c.display_mode || 'PRODUCTS',
-            is_anchor: c.is_anchor !== false,
+            is_anchor: c.is_anchor !== false && c.is_anchor !== 0,
+            use_in_search: c.use_in_search !== false && c.use_in_search !== 0,
+            display_in_autocomplete: c.display_in_autocomplete !== false && c.display_in_autocomplete !== 0,
             description_en: c.description_en || '',
             meta_title_en: c.meta_title_en || '',
             meta_desc_en: c.meta_desc_en || '',
@@ -1033,7 +1249,7 @@ function visionCategoryFormApp(initialMode, initialCatId) {
 
     async selectCategory(id) {
       if (this.form.id === id) return;
-      history.pushState(null, '', `/visionadmin/categories/${id}/edit`);
+      history.pushState(null, '', `/visionadmin/categories?id=${id}`);
       await this.loadCategory(id);
     },
 
@@ -1050,6 +1266,8 @@ function visionCategoryFormApp(initialMode, initialCatId) {
         default_attribute_set_id: 1,
         display_mode: 'PRODUCTS',
         is_anchor: true,
+        use_in_search: true,
+        display_in_autocomplete: true,
         description_en: '',
         meta_title_en: '',
         meta_desc_en: '',
@@ -1222,7 +1440,7 @@ function visionCategoryFormApp(initialMode, initialCatId) {
 
     async saveCategory(exitAfter = false) {
       if (!this.form.name_en.trim()) {
-        alert('Category name is required.');
+        this.showToast('Category name is required.', 'error');
         return;
       }
 
@@ -1239,6 +1457,11 @@ function visionCategoryFormApp(initialMode, initialCatId) {
           image: this.form.image || null,
           sort_order: parseInt(this.form.sort_order, 10) || 0,
           status: this.form.status || 'active',
+          include_in_menu: this.form.include_in_menu ? 1 : 0,
+          is_anchor: this.form.is_anchor ? 1 : 0,
+          display_mode: this.form.display_mode || 'PRODUCTS',
+          use_in_search: this.form.use_in_search ? 1 : 0,
+          display_in_autocomplete: this.form.display_in_autocomplete ? 1 : 0,
           default_attribute_set_id: this.form.default_attribute_set_id ? parseInt(this.form.default_attribute_set_id, 10) : 1,
           description_en: this.form.description_en ? this.form.description_en.trim() : null,
           meta_title_en: this.form.meta_title_en ? this.form.meta_title_en.trim() : null,
@@ -1260,21 +1483,20 @@ function visionCategoryFormApp(initialMode, initialCatId) {
             await this.saveProductAssignments();
           }
 
-          await this.loadTree();
+          await Promise.all([
+            this.loadTree(),
+            this.loadParentOptions()
+          ]);
 
-          if (exitAfter) {
-            window.location.href = '/visionadmin/categories';
-          } else {
-            history.replaceState(null, '', `/visionadmin/categories/${savedCatId}/edit`);
-            await this.loadCategory(savedCatId);
-            alert(data.message || 'Category saved successfully!');
-          }
+          history.replaceState(null, '', `/visionadmin/categories?id=${savedCatId}`);
+          await this.loadCategory(savedCatId);
+          this.showToast(data.message || 'Category saved successfully!', 'success');
         } else {
-          alert(data.error || 'Failed to save category.');
+          this.showToast(data.error || 'Failed to save category.', 'error');
         }
       } catch (err) {
         console.error('Save category error:', err);
-        alert('Network error saving category.');
+        this.showToast('Network error saving category.', 'error');
       } finally {
         this.saving = false;
       }
@@ -1282,19 +1504,97 @@ function visionCategoryFormApp(initialMode, initialCatId) {
 
     async deleteCurrentCategory() {
       if (!this.form.id) return;
+      if (this.form.id === 2) {
+        alert("The root 'Default Category' (ID: 2) cannot be deleted.");
+        return;
+      }
       if (!confirm(`Are you sure you want to delete category '${this.form.name_en}'?`)) return;
       try {
         const res = await fetch(`/visionadmin/api/categories/${this.form.id}`, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) {
-          window.location.href = '/visionadmin/categories';
+          this.showToast(data.message || 'Category moved to trash successfully.', 'success');
+          await Promise.all([
+            this.loadTree(),
+            this.loadParentOptions()
+          ]);
+          history.replaceState(null, '', '/visionadmin/categories?id=2');
+          await this.loadCategory(2);
         } else {
-          alert(data.error || 'Failed to delete category.');
+          this.showToast(data.error || 'Failed to delete category.', 'error');
         }
       } catch (err) {
         console.error('Delete error:', err);
-        alert('Error deleting category.');
+        this.showToast('Error deleting category.', 'error');
       }
+    },
+
+    openCsvModal() {
+      this.csvModalOpen = true;
+      this.selectedCsvFile = null;
+      this.csvResult = null;
+      const input = document.getElementById('cat-csv-file-input');
+      if (input) input.value = '';
+    },
+
+    async submitCsvUpload() {
+      if (!this.selectedCsvFile) {
+        this.showToast('Please select a CSV file first.', 'error');
+        return;
+      }
+
+      this.csvUploading = true;
+      this.csvResult = null;
+      const fd = new FormData();
+      fd.append('file', this.selectedCsvFile);
+
+      try {
+        const res = await fetch('/visionadmin/api/categories/import-csv', {
+          method: 'POST',
+          body: fd
+        });
+        const data = await res.json();
+        this.csvResult = data;
+        if (data.success) {
+          const msg = data.message || 'Categories imported successfully!';
+          this.showToast(msg, 'success');
+          await Promise.all([
+            this.loadTree(),
+            this.loadParentOptions()
+          ]);
+          if (this.form.id) {
+            await this.loadCategory(this.form.id);
+          } else {
+            await this.loadCategory(2);
+          }
+        } else {
+          this.showToast(data.error || 'Failed to import CSV.', 'error');
+        }
+      } catch (err) {
+        console.error('CSV import error:', err);
+        this.csvResult = { success: false, message: 'Network error while importing CSV.' };
+        this.showToast('Network error while importing CSV.', 'error');
+      } finally {
+        this.csvUploading = false;
+      }
+    },
+
+    showToast(message, type = 'success') {
+      if (window.showToast) {
+        window.showToast(message, type);
+        return;
+      }
+      const toast = document.createElement('div');
+      toast.className = `fixed bottom-5 right-5 z-[99999] px-5 py-3 rounded-2xl text-xs font-bold text-white shadow-xl transition-all duration-300 transform translate-y-0 ${
+        type === 'error' ? 'bg-rose-600' : 'bg-[#0E1108] border border-[#2563FF]/40 text-[#2563FF]'
+      }`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
     }
   };
 }

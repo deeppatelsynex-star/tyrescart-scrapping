@@ -436,7 +436,8 @@ def register_visionadmin_routes(app):
     @app.route('/visonadmin/categories', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_categories():
-        return render_template('visionadmin/categories.html', page='categories', is_catalog=True)
+        cat_id = request.args.get('id', type=int) or 2
+        return render_template('visionadmin/category_form.html', page='categories', is_catalog=True, initial_mode='edit', initial_cat_id=cat_id)
 
     @app.route('/visionadmin/catalog/categories/new', methods=['GET'])
     @app.route('/visionadmin/categories/new', methods=['GET'])
