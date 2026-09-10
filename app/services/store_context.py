@@ -188,13 +188,18 @@ class StoreContext:
                 # If store_view_id is specified, fetch the view first to infer store/website if needed
                 current_view = None
                 if req_view_id and str(req_view_id).isdigit():
-                    cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NULL", (int(req_view_id),))
+                    cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NULL AND is_active = 1", (int(req_view_id),))
                     current_view = cursor.fetchone()
                     if current_view:
                         if not req_store_id:
                             req_store_id = current_view.get('store_id')
                         if not req_web_id:
                             req_web_id = current_view.get('website_id')
+                    else:
+                        # Stale or inactive view in session - clear it
+                        if has_request_context() and 'admin_active_store_view_id' in session:
+                            session.pop('admin_active_store_view_id', None)
+                            session['admin_active_scope_name'] = 'All Store Views'
 
                 # Resolve Website
                 if req_web_id and str(req_web_id).isdigit():
@@ -203,6 +208,9 @@ class StoreContext:
                 else:
                     cursor.execute("SELECT * FROM websites WHERE is_default = 1 AND deleted_at IS NULL LIMIT 1")
                     current_web = cursor.fetchone()
+                    if not current_web:
+                        cursor.execute("SELECT * FROM websites WHERE deleted_at IS NULL ORDER BY sort_order ASC, id ASC LIMIT 1")
+                        current_web = cursor.fetchone()
 
                 # Resolve Store
                 if req_store_id and str(req_store_id).isdigit():
@@ -210,19 +218,19 @@ class StoreContext:
                     current_store = cursor.fetchone()
                 else:
                     web_id = current_web['id'] if current_web else 1
-                    cursor.execute("SELECT * FROM stores WHERE website_id = %s AND deleted_at IS NULL ORDER BY sort_order ASC LIMIT 1", (web_id,))
+                    cursor.execute("SELECT * FROM stores WHERE website_id = %s AND deleted_at IS NULL ORDER BY sort_order ASC, id ASC LIMIT 1", (web_id,))
                     current_store = cursor.fetchone()
 
                 # Resolve Store View / Locale if not already resolved
                 if not current_view:
-                    if req_view_id and str(req_view_id).isdigit():
-                        cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NULL", (int(req_view_id),))
-                        current_view = cursor.fetchone()
-                    elif current_store and current_store.get('default_store_view_id'):
-                        cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NULL", (int(current_store['default_store_view_id']),))
+                    if current_store and current_store.get('default_store_view_id'):
+                        cursor.execute("SELECT * FROM store_views WHERE id = %s AND deleted_at IS NULL AND is_active = 1", (int(current_store['default_store_view_id']),))
                         current_view = cursor.fetchone()
                     if not current_view and current_store:
-                        cursor.execute("SELECT * FROM store_views WHERE store_id = %s AND deleted_at IS NULL ORDER BY sort_order ASC LIMIT 1", (current_store['id'],))
+                        cursor.execute("SELECT * FROM store_views WHERE store_id = %s AND deleted_at IS NULL AND is_active = 1 ORDER BY sort_order ASC, id ASC LIMIT 1", (current_store['id'],))
+                        current_view = cursor.fetchone()
+                    if not current_view and current_web:
+                        cursor.execute("SELECT * FROM store_views WHERE website_id = %s AND deleted_at IS NULL AND is_active = 1 ORDER BY sort_order ASC, id ASC LIMIT 1", (current_web['id'],))
                         current_view = cursor.fetchone()
 
                 if has_app_context():
