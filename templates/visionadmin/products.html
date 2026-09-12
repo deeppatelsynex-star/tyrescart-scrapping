@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="visionProductsApp('{{ initial_view | default('', true) }}', {{ initial_product_id | default('null', true) }})" x-init="attributeSets = {{ (attribute_sets or []) | tojson | safe }}; initData()">
+<div class="space-y-6" x-data="visionProductsApp('{{ initial_view | default('', true) }}', {{ initial_product_id | default('null', true) }})" x-init='attributeSets = {{ (attribute_sets or []) | tojson }}; initData()'>
 
   <!-- ========================================================================= -->
   <!-- CATALOG PRODUCTS LISTING PAGE                                             -->

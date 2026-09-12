@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="visionProductsApp('{{ initial_view | default('new', true) }}', {{ initial_product_id | default('null', true) }})" x-init="attributeSets = {{ (attribute_sets or []) | tojson | safe }}; initData()">
+<div class="space-y-6" x-data="visionProductsApp('{{ initial_view | default('new', true) }}', {{ initial_product_id | default('null', true) }})" x-init='attributeSets = {{ (attribute_sets or []) | tojson }}; initData()'>
   <!-- FULL PAGE: MAGENTO 2 ADMIN CATALOG PRODUCT STUDIO                         -->
   <!-- ========================================================================= -->
   <!-- Top Action Bar (Full Page Header) -->
@@ -118,7 +118,7 @@
       <div class="p-6 sm:p-8 space-y-6 text-xs">
 
         <!-- Global Attribute Set Selector Card (Always visible at the top of Product Form) -->
-        <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden">
+        <div class="bg-white border border-slate-200 rounded-xs shadow-2xs">
           <div class="p-5 sm:px-8 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1">
               <div class="w-full sm:w-60 text-left sm:text-right pr-2 shrink-0">
@@ -176,7 +176,7 @@
             </div>
           </template>
 
-          <template x-for="(group, gIdx) in form.attribute_groups" :key="group.id || gIdx">
+          <template x-for="(group, gIdx) in (form.attribute_groups || []).filter(g => !['content', 'images', 'search_engine_optimization', 'autosettings', 'subscriptions_by_stripe'].includes(g.code))" :key="group.id || gIdx">
             <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden transition">
               
               <!-- Accordion Header -->
@@ -187,7 +187,7 @@
                 <div class="flex items-center gap-2.5">
                   <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
                   <span class="text-xs sm:text-sm font-bold text-[#303030] uppercase tracking-wide" x-text="formatGroupName(group)"></span>
-                  <span class="text-[11px] text-slate-400 font-semibold px-2 py-0.5 rounded-full bg-slate-100" x-text="(group.attributes ? group.attributes.length : 0) + ' attributes'"></span>
+                  <span class="text-[11px] text-slate-400 font-semibold px-2 py-0.5 rounded-full bg-slate-100" x-text="(group.attributes ? group.attributes.filter(a => a.code !== 'attribute_set_id' && a.code !== 'category_ids' && a.code !== 'display_name').length : 0) + ' attributes'"></span>
                 </div>
                 
                 <div class="flex items-center gap-2">
@@ -207,7 +207,7 @@
                 </template>
 
                 <!-- Attribute rows in this group -->
-                <template x-for="(attr, aIdx) in (group.attributes || [])" :key="attr.id || attr.code">
+                <template x-for="(attr, aIdx) in (group.attributes || []).filter(a => a.code !== 'attribute_set_id' && a.code !== 'category_ids' && a.code !== 'display_name')" :key="attr.id || attr.code">
                   <div class="flex flex-col sm:flex-row sm:items-start py-2">
                     
                     <!-- Left Column: Label + Scope -->
@@ -471,37 +471,45 @@
                       </template>
 
                       <!-- 11. Select Dropdowns (Pattern, Tyre Marking, Width, Height, Rim, Origin, EV Tyre, Runflat, Year, Warranty Period, Promotion, Tyre Type, etc.) -->
-                      <template x-if="attr.type === 'select' && attr.code !== 'brand' && attr.code !== 'attribute_set_id' && attr.code !== 'category_id'">
+                      <template x-if="attr.type === 'select' && attr.code !== 'brand' && attr.code !== 'attribute_set_id' && attr.code !== 'category_id' && (attr.options && attr.options.length > 0)">
                         <select 
                           :value="form.dynamic_attributes[attr.code] !== undefined && form.dynamic_attributes[attr.code] !== null ? String(form.dynamic_attributes[attr.code]) : ''"
                           @change="form.dynamic_attributes[attr.code] = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
                           :required="attr.is_required"
-                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden cursor-pointer"
                         >
                           <option value="">-- Please Select --</option>
-                          <template x-for="opt in (attr.options || [])" :key="opt.id || opt.value">
+                          <template x-for="opt in attr.options" :key="opt.id || opt.value">
                             <option :value="opt.value" x-text="typeof opt.label === 'object' ? (opt.label.en || opt.value) : (opt.label || opt.value)" :selected="isSelectOptionSelected(attr.code, opt.value)"></option>
                           </template>
                         </select>
                       </template>
 
-                      <!-- 12. Weight Field (with unit selector) -->
+                      <!-- Select fallback if attribute has no options configured in database (render clean input instead of empty dropdown) -->
+                      <template x-if="attr.type === 'select' && attr.code !== 'brand' && attr.code !== 'attribute_set_id' && attr.code !== 'category_id' && (!attr.options || attr.options.length === 0)">
+                        <input 
+                          type="text" 
+                          :value="form.dynamic_attributes[attr.code] !== undefined && form.dynamic_attributes[attr.code] !== null ? form.dynamic_attributes[attr.code] : ''"
+                          @input="form.dynamic_attributes[attr.code] = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
+                          :placeholder="'Enter ' + formatAttrName(attr)" 
+                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                          :required="attr.is_required"
+                        />
+                      </template>
+
+                      <!-- 12. Weight Field -->
                       <template x-if="attr.code === 'weight'">
                         <div class="flex items-center gap-2 w-full max-w-2xl">
                           <input 
                             type="number" 
                             step="0.01" 
                             :value="form.dynamic_attributes['weight'] !== undefined ? form.dynamic_attributes['weight'] : form.weight"
-                            @input="form.dynamic_attributes['weight'] = $event.target.value; syncDynamicField('weight', $event.target.value)"
+                            @input="form.dynamic_attributes['weight'] = $event.target.value; form.weight = $event.target.value; syncDynamicField('weight', $event.target.value)"
                             placeholder="0.0" 
-                            class="w-24 px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                            class="w-32 px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
                             :required="attr.is_required"
                           />
-                          <span class="text-xs text-slate-600 font-medium">lbs</span>
-                          <select class="px-2.5 py-1.5 rounded-xs border border-[#adadad] text-xs bg-white text-slate-700 outline-hidden">
-                            <option>This item has weight</option>
-                            <option>This item has no weight</option>
-                          </select>
+                          <span class="text-xs text-slate-600 font-medium">kg</span>
                         </div>
                       </template>
 
