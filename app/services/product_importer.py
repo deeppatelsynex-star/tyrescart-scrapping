@@ -187,8 +187,12 @@ class ProductImporter:
                 b_str = (row.get('brand') or row.get('brand_name') or row.get('manufacturer') or '').strip()
                 brand_id = brand_map.get(b_str.lower())
 
-                # Resolve category paths
-                cat_cell = row.get('categories') or ''
+                # Resolve category paths (accept the same column-name variants CategoryImporter does)
+                cat_cell = (
+                    row.get('categories') or row.get('category') or
+                    row.get('category_path') or row.get('category_paths') or
+                    row.get('_category') or ''
+                )
                 parsed_paths = parse_category_paths(cat_cell)
                 assigned_category_ids = []
                 for p in parsed_paths:

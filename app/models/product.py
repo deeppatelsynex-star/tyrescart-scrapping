@@ -928,8 +928,11 @@ class Product:
                     params.append(json.dumps(data['gallery_json'] or []))
 
                 for fld, col in [('description', 'description'), ('short_desc', 'short_desc'), ('meta_title', 'meta_title'), ('meta_desc', 'meta_desc')]:
-                    if fld in data:
-                        val = data[fld]
+                    fld_en = f'{fld}_en'
+                    has_plain = fld in data
+                    has_en = fld_en in data
+                    if has_plain or has_en:
+                        val = data.get(fld) if has_plain else None
                         exist_d = parse_json_dict(existing.get(col)) if existing.get(col) else {}
                         if not isinstance(exist_d, dict):
                             exist_d = {}
@@ -948,8 +951,12 @@ class Product:
                                     exist_d[curr_lang] = s
                             else:
                                 exist_d[curr_lang] = s
-                        elif val is None:
+                        elif val is None and not has_en:
                             exist_d = {}
+                        if has_en:
+                            en_val = data.get(fld_en)
+                            if en_val is not None and str(en_val).strip():
+                                exist_d['en'] = str(en_val).strip()
                         fields.append(f"{col} = %s")
                         params.append(json.dumps(exist_d, ensure_ascii=False))
 
