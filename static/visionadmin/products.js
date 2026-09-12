@@ -186,11 +186,18 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       attribute_set_id: ''
     },
 
+    formDragAttr: null,
+    formDragFromGroupId: null,
+    formDragOverAttrId: null,
+    formDragOverPosition: null,
+    isSavingOrder: false,
+
     form: {
       id: null,
       attribute_set_id: 2,
       dynamic_attributes: {},
       attribute_groups: [],
+      attributesReordered: false,
       loadingSchema: false,
       sku: '',
       display_name: '',
@@ -565,6 +572,153 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         }
       }
       return attr.name || attr.code || '';
+    },
+
+    isFormDragOverBefore(attrId) {
+      return this.formDragAttr && this.formDragOverAttrId === attrId && this.formDragOverPosition === 'before';
+    },
+
+    isFormDragOverAfter(attrId) {
+      return this.formDragAttr && this.formDragOverAttrId === attrId && this.formDragOverPosition === 'after';
+    },
+
+    moveFormAttrUp(groupId, aIdx) {
+      const group = (this.form.attribute_groups || []).find(g => g.id === groupId);
+      if (!group || !group.attributes || aIdx <= 0) return;
+      const item = group.attributes.splice(aIdx, 1)[0];
+      group.attributes.splice(aIdx - 1, 0, item);
+      this.form.attributesReordered = true;
+    },
+
+    moveFormAttrDown(groupId, aIdx) {
+      const group = (this.form.attribute_groups || []).find(g => g.id === groupId);
+      if (!group || !group.attributes || aIdx >= group.attributes.length - 1) return;
+      const item = group.attributes.splice(aIdx, 1)[0];
+      group.attributes.splice(aIdx + 1, 0, item);
+      this.form.attributesReordered = true;
+    },
+
+    onFormDragStartAttr(event, attr, fromGroupId) {
+      this.formDragAttr = attr;
+      this.formDragFromGroupId = fromGroupId;
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', String(attr.id));
+    },
+
+    onFormDragEndAttr() {
+      this.formDragAttr = null;
+      this.formDragFromGroupId = null;
+      this.formDragOverAttrId = null;
+      this.formDragOverPosition = null;
+    },
+
+    onFormDragOverAttr(event, targetAttr, groupId) {
+      if (!this.formDragAttr || this.formDragAttr.id === targetAttr.id) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.dataTransfer.dropEffect = 'move';
+      const rect = event.currentTarget.getBoundingClientRect();
+      const relY = event.clientY - rect.top;
+      this.formDragOverAttrId = targetAttr.id;
+      this.formDragOverPosition = (relY < rect.height / 2) ? 'before' : 'after';
+    },
+
+    onFormDragLeaveAttr(event, targetAttr) {
+      if (this.formDragOverAttrId === targetAttr.id) {
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (event.clientY < rect.top || event.clientY >= rect.bottom || event.clientX < rect.left || event.clientX >= rect.right) {
+          this.formDragOverAttrId = null;
+          this.formDragOverPosition = null;
+        }
+      }
+    },
+
+    onFormDropOnAttr(event, targetAttr, targetGroupId) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!this.formDragAttr) return;
+
+      const attr = this.formDragAttr;
+      const fromGroupId = this.formDragFromGroupId;
+      const position = this.formDragOverPosition || 'before';
+
+      this.formDragOverAttrId = null;
+      this.formDragOverPosition = null;
+
+      if (attr.id === targetAttr.id) {
+        this.onFormDragEndAttr();
+        return;
+      }
+
+      // Remove from source group
+      const srcGroup = (this.form.attribute_groups || []).find(g => g.id === fromGroupId);
+      if (srcGroup && srcGroup.attributes) {
+        srcGroup.attributes = srcGroup.attributes.filter(a => a.id !== attr.id);
+      }
+
+      // Insert into target group
+      const tgtGroup = (this.form.attribute_groups || []).find(g => g.id === targetGroupId);
+      if (tgtGroup) {
+        if (!tgtGroup.attributes) tgtGroup.attributes = [];
+        const targetIdx = tgtGroup.attributes.findIndex(a => a.id === targetAttr.id);
+        if (targetIdx !== -1) {
+          const insertIdx = (position === 'after') ? targetIdx + 1 : targetIdx;
+          tgtGroup.attributes.splice(insertIdx, 0, attr);
+        } else {
+          tgtGroup.attributes.push(attr);
+        }
+      }
+
+      this.form.attributesReordered = true;
+      this.onFormDragEndAttr();
+    },
+
+    async saveFormAttributeOrder() {
+      if (!this.form.attribute_set_id) return;
+      this.isSavingOrder = true;
+      try {
+        const activeSet = (this.attributeSets || []).find(s => s.id == this.form.attribute_set_id);
+        const setName = activeSet ? activeSet.name : 'Tyres';
+        const payload = {
+          name: setName,
+          groups: (this.form.attribute_groups || []).map((g, idx) => ({
+            id: g.id,
+            name: this.formatGroupName(g),
+            sort_order: idx * 10,
+            attributes: (g.attributes || []).map((a, aIdx) => ({
+              id: a.id,
+              sort_order: aIdx * 10
+            }))
+          }))
+        };
+
+        const res = await fetch(`/visionadmin/api/attribute-sets/${this.form.attribute_set_id}/save-schema`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.form.attributesReordered = false;
+          if (typeof this.showToast === 'function') {
+            this.showToast('Attribute sort order saved successfully to Attribute Set!', 'success');
+          } else {
+            alert(data.message || 'Attribute sort order saved successfully to Attribute Set!');
+          }
+        } else {
+          alert(data.error || 'Failed to save attribute sort order.');
+        }
+      } catch (err) {
+        console.error('Error saving attribute order:', err);
+        alert('Network error saving attribute order.');
+      } finally {
+        this.isSavingOrder = false;
+      }
+    },
+
+    async resetFormAttributeOrder() {
+      this.form.attributesReordered = false;
+      await this.loadDynamicSchema(this.form.attribute_set_id, this.isEditMode ? this.form.id : null);
     },
 
     async fetchProducts() {

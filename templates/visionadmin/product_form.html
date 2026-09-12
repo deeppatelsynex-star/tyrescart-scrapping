@@ -126,29 +126,96 @@
             <span>Loading attribute set specifications...</span>
           </div>
 
+          <!-- Notification banner when attributes are reordered in product form -->
+          <div 
+            x-show="form.attributesReordered" 
+            x-cloak
+            class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between flex-wrap gap-2 transition"
+          >
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#1D4ED8]">
+              <svg class="w-4 h-4 text-[#2563FF] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <span>Attribute sort order changed in this form. Would you like to save this order to the Attribute Set?</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button 
+                type="button" 
+                @click="saveFormAttributeOrder()" 
+                :disabled="isSavingOrder"
+                class="px-3 py-1 rounded-lg bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-2xs"
+              >
+                <svg x-show="isSavingOrder" class="animate-spin -ml-1 mr-1 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                <span x-text="isSavingOrder ? 'Saving...' : 'Save Order to Set'"></span>
+              </button>
+              <button 
+                type="button" 
+                @click="resetFormAttributeOrder()" 
+                class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 text-xs font-medium transition cursor-pointer"
+              >
+                Reset Order
+              </button>
+            </div>
+          </div>
+
           <!-- Dynamic Attributes List for Selected Attribute Set (33 sequential attributes) -->
           <div x-show="!form.loadingSchema" class="space-y-1">
             <template x-for="group in form.attribute_groups" :key="group.id">
               <div>
-                <!-- Display group heading only if multiple distinct non-general groups exist -->
-                <template x-if="form.attribute_groups.length > 1 && group.code !== 'general' && group.code !== 'product_details'">
-                  <div class="pt-5 pb-2 border-b border-slate-200 mb-3 flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-[#2563FF]"></span>
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600" x-text="formatGroupName(group)"></h3>
+                <!-- Display group heading only if multiple distinct groups exist -->
+                <template x-if="form.attribute_groups.length > 1">
+                  <div class="pt-6 pb-2.5 border-b border-slate-200 mb-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
+                      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700" x-text="formatGroupName(group)"></h3>
+                    </div>
+                    <span class="text-[11px] text-slate-400 font-semibold" x-text="(group.attributes ? group.attributes.length : 0) + ' attributes'"></span>
                   </div>
                 </template>
 
                 <!-- Attribute rows in this group -->
-                <template x-for="attr in (group.attributes || [])" :key="attr.id || attr.code">
-                  <div class="flex flex-col sm:flex-row sm:items-start py-2 border-b border-transparent">
+                <template x-for="(attr, aIdx) in (group.attributes || [])" :key="attr.id || attr.code">
+                  <div 
+                    draggable="true"
+                    @dragstart="onFormDragStartAttr($event, attr, group.id)"
+                    @dragend="onFormDragEndAttr()"
+                    @dragover="onFormDragOverAttr($event, attr, group.id)"
+                    @dragleave="onFormDragLeaveAttr($event, attr)"
+                    @drop="onFormDropOnAttr($event, attr, group.id)"
+                    class="flex flex-col sm:flex-row sm:items-start py-2 border-b border-transparent transition relative group/frow"
+                    :class="[
+                      formDragAttr && formDragAttr.id === attr.id ? 'opacity-30' : '',
+                      isFormDragOverBefore(attr.id) ? 'border-t-2 !border-t-[#2563FF] bg-blue-50/20' : '',
+                      isFormDragOverAfter(attr.id) ? 'border-b-2 !border-b-[#2563FF] bg-blue-50/20' : ''
+                    ]"
+                  >
                     
-                    <!-- Left Column: Label + Scope -->
-                    <div class="w-full sm:w-60 text-left sm:text-right pr-6 pt-1.5 shrink-0">
-                      <label class="text-xs font-semibold text-[#303030]">
-                        <span x-text="formatAttrName(attr)"></span>
-                        <span x-show="attr.is_required" class="text-rose-600 font-bold ml-0.5">*</span>
-                      </label>
-                      <span class="block text-[10px] text-slate-400 font-normal mt-0.5" x-text="'[' + formatScope(attr.scope) + ']'"></span>
+                    <!-- Left Column: Label + Scope + Reorder Controls -->
+                    <div class="w-full sm:w-60 text-left sm:text-right pr-6 pt-1.5 shrink-0 flex items-start justify-between sm:justify-end gap-2">
+                      <!-- Quick Reorder Controls (Grip + Up/Down on hover) -->
+                      <div class="flex items-center gap-0.5 opacity-0 group-hover/frow:opacity-100 transition shrink-0">
+                        <span class="text-slate-300 hover:text-slate-600 cursor-grab active:cursor-grabbing text-xs tracking-tighter select-none px-0.5" title="Drag to reorder attribute">⋮⋮</span>
+                        <button 
+                          type="button" 
+                          @click.stop="moveFormAttrUp(group.id, aIdx)" 
+                          :disabled="aIdx === 0"
+                          class="w-4 h-4 rounded hover:bg-slate-200 disabled:opacity-20 flex items-center justify-center text-[9px] text-slate-600 cursor-pointer"
+                          title="Move Up"
+                        >▲</button>
+                        <button 
+                          type="button" 
+                          @click.stop="moveFormAttrDown(group.id, aIdx)" 
+                          :disabled="aIdx === ((group.attributes || []).length - 1)"
+                          class="w-4 h-4 rounded hover:bg-slate-200 disabled:opacity-20 flex items-center justify-center text-[9px] text-slate-600 cursor-pointer"
+                          title="Move Down"
+                        >▼</button>
+                      </div>
+
+                      <div>
+                        <label class="text-xs font-semibold text-[#303030]">
+                          <span x-text="formatAttrName(attr)"></span>
+                          <span x-show="attr.is_required" class="text-rose-600 font-bold ml-0.5">*</span>
+                        </label>
+                        <span class="block text-[10px] text-slate-400 font-normal mt-0.5" x-text="'[' + formatScope(attr.scope) + ']'"></span>
+                      </div>
                     </div>
 
                     <!-- Right Column: Input Control -->

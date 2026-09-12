@@ -159,23 +159,31 @@
 
           <template x-for="(group, gIdx) in schema.groups" :key="group.id || gIdx">
             <div 
-              class="rounded-2xl transition duration-150 p-2 border"
+              class="rounded-2xl transition duration-150 p-2 border relative"
               :class="[
                 selectedGroupId === group.id ? 'border-[#2563FF]/50 bg-blue-50/20' : 'border-slate-100 hover:border-slate-200',
-                dragOverGroupId === group.id ? 'ring-2 ring-[#2563FF] bg-blue-50/50 border-[#2563FF]' : ''
+                isDragOverGroupBefore(group.id) ? 'border-t-2 !border-t-[#2563FF] bg-blue-50/30' : '',
+                isDragOverGroupAfter(group.id) ? 'border-b-2 !border-b-[#2563FF] bg-blue-50/30' : '',
+                draggedAttr && dragOverGroupId === group.id ? 'ring-2 ring-[#2563FF] bg-blue-50/30 border-[#2563FF]' : ''
               ]"
-              @dragover.prevent="onDragOverGroup($event, group.id)"
+              @dragover="onDragOverGroup($event, group.id, gIdx)"
               @dragleave="onDragLeaveGroup($event, group.id)"
-              @drop.prevent="onDropIntoGroup($event, group.id)"
+              @drop="onDropIntoGroup($event, group.id, gIdx)"
             >
               <!-- Group Folder Row -->
               <div 
-                class="flex items-center justify-between p-2 rounded-xl text-xs font-bold transition cursor-pointer group select-none"
+                draggable="true"
+                @dragstart="onDragStartGroup($event, group, gIdx)"
+                @dragend="onDragEndGroup()"
+                class="flex items-center justify-between p-2 rounded-xl text-xs font-bold transition cursor-pointer select-none group/gh"
                 :class="selectedGroupId === group.id ? 'bg-[#EFF6FF] text-[#1D4ED8]' : 'text-slate-800 hover:bg-slate-50'"
                 @click="selectedGroupId = group.id"
                 @dblclick="startRenameGroup(group)"
               >
                 <div class="flex items-center gap-2 min-w-0 flex-1">
+                  <!-- Group Drag Handle -->
+                  <span class="text-slate-300 hover:text-slate-600 cursor-grab active:cursor-grabbing text-xs tracking-tighter select-none px-0.5" title="Drag to reorder group">⋮⋮</span>
+
                   <!-- Folder icon -->
                   <span class="text-base select-none">📁</span>
 
@@ -197,6 +205,25 @@
                 </div>
 
                 <div class="flex items-center gap-2 shrink-0">
+                  <!-- Move Group Up / Down buttons -->
+                  <template x-if="schema.groups && schema.groups.length > 1">
+                    <div class="flex items-center gap-0.5 opacity-0 group-hover/gh:opacity-100 transition">
+                      <button 
+                        type="button" 
+                        @click.stop="moveGroupUp(gIdx)" 
+                        :disabled="gIdx === 0"
+                        class="w-5 h-5 rounded hover:bg-slate-200 disabled:opacity-20 flex items-center justify-center text-[10px] text-slate-600 cursor-pointer"
+                        title="Move Group Up"
+                      >▲</button>
+                      <button 
+                        type="button" 
+                        @click.stop="moveGroupDown(gIdx)" 
+                        :disabled="gIdx === schema.groups.length - 1"
+                        class="w-5 h-5 rounded hover:bg-slate-200 disabled:opacity-20 flex items-center justify-center text-[10px] text-slate-600 cursor-pointer"
+                        title="Move Group Down"
+                      >▼</button>
+                    </div>
+                  </template>
                   <span 
                     class="px-2 py-0.5 rounded-md text-[10px] font-black"
                     :class="selectedGroupId === group.id ? 'bg-blue-100 text-[#1D4ED8]' : 'bg-slate-100 text-slate-500'"
@@ -209,7 +236,7 @@
               <div class="border-l-2 border-dashed border-slate-200 ml-4 pl-3.5 space-y-1 py-1 mt-1">
                 <template x-if="!group.attributes || group.attributes.length === 0">
                   <div class="py-2 text-[11px] text-slate-400 italic pl-1">
-                    Drag attributes from right column here
+                    Drag attributes here
                   </div>
                 </template>
 
@@ -218,17 +245,45 @@
                     draggable="true"
                     @dragstart="onDragStartAttr($event, attr, group.id)"
                     @dragend="onDragEndAttr()"
-                    class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition cursor-grab active:cursor-grabbing group/attr select-none shadow-2xs"
-                    :class="draggedAttr && draggedAttr.id === attr.id ? 'opacity-40 border-dashed border-blue-400' : ''"
+                    @dragover="onDragOverAttr($event, attr, group.id)"
+                    @dragleave="onDragLeaveAttr($event, attr)"
+                    @drop="onDropOnAttr($event, attr, group.id)"
+                    class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 border transition cursor-grab active:cursor-grabbing group/attr select-none shadow-2xs relative"
+                    :class="[
+                      draggedAttr && draggedAttr.id === attr.id ? 'opacity-30 border-dashed border-blue-400' : 'border-slate-100 hover:border-slate-200',
+                      isDragOverAttrBefore(attr.id) ? 'border-t-2 !border-t-[#2563FF] bg-blue-50/20' : '',
+                      isDragOverAttrAfter(attr.id) ? 'border-b-2 !border-b-[#2563FF] bg-blue-50/20' : ''
+                    ]"
                   >
-                    <div class="flex items-center gap-2 min-w-0">
-                      <!-- Attribute icon (document / table symbol) -->
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <!-- Attribute Drag Grip -->
+                      <span class="text-slate-300 group-hover/attr:text-slate-600 cursor-grab active:cursor-grabbing text-xs tracking-tighter select-none px-0.5" title="Drag to reorder attribute">⋮⋮</span>
+
+                      <!-- Attribute icon -->
                       <span class="text-slate-400 text-xs select-none">📄</span>
                       <span class="font-mono text-slate-800 text-[11px]" x-text="attr.code"></span>
                       <span class="text-[11px] text-slate-400 truncate max-w-[120px]" x-text="formatAttrName(attr) !== attr.code ? ('(' + formatAttrName(attr) + ')') : ''"></span>
                     </div>
 
-                    <div class="flex items-center gap-1.5 shrink-0">
+                    <div class="flex items-center gap-1 shrink-0">
+                      <!-- Quick Move Up / Down Buttons -->
+                      <div class="flex items-center gap-0.5 opacity-0 group-hover/attr:opacity-100 transition mr-1">
+                        <button 
+                          type="button" 
+                          @click.stop="moveAttrUp(group.id, aIdx)" 
+                          :disabled="aIdx === 0"
+                          class="w-4 h-4 rounded hover:bg-slate-200 disabled:opacity-20 flex items-center justify-center text-[9px] text-slate-600 cursor-pointer"
+                          title="Move Up"
+                        >▲</button>
+                        <button 
+                          type="button" 
+                          @click.stop="moveAttrDown(group.id, aIdx)" 
+                          :disabled="aIdx === (group.attributes.length - 1)"
+                          class="w-4 h-4 rounded hover:bg-slate-200 disabled:opacity-20 flex items-center justify-center text-[9px] text-slate-600 cursor-pointer"
+                          title="Move Down"
+                        >▼</button>
+                      </div>
+
                       <!-- Required Lock Badge -->
                       <template x-if="isRequiredAttribute(attr)">
                         <span 
@@ -368,7 +423,11 @@ function visionAttributeSetBuilderApp(initialSetId) {
     // Drag and drop state
     draggedAttr: null,
     draggedFromGroupId: null,
+    dragOverAttrId: null,
+    dragOverAttrPosition: null, // 'before' | 'after'
+    draggedGroup: null,
     dragOverGroupId: null,
+    dragOverGroupPosition: null, // 'before' | 'after'
     dragOverUnassigned: false,
 
     async initData() {
@@ -562,67 +621,223 @@ function visionAttributeSetBuilderApp(initialSetId) {
       group.attributes = group.attributes.filter(a => a.id !== attrId);
     },
 
-    // HTML5 Drag and Drop Handlers
+    isDragOverAttrBefore(attrId) {
+      return this.draggedAttr && this.dragOverAttrId === attrId && this.dragOverAttrPosition === 'before';
+    },
+
+    isDragOverAttrAfter(attrId) {
+      return this.draggedAttr && this.dragOverAttrId === attrId && this.dragOverAttrPosition === 'after';
+    },
+
+    isDragOverGroupBefore(groupId) {
+      return this.draggedGroup && this.dragOverGroupId === groupId && this.dragOverGroupPosition === 'before';
+    },
+
+    isDragOverGroupAfter(groupId) {
+      return this.draggedGroup && this.dragOverGroupId === groupId && this.dragOverGroupPosition === 'after';
+    },
+
+    moveAttrUp(groupId, aIdx) {
+      const group = this.schema.groups.find(g => g.id === groupId);
+      if (!group || !group.attributes || aIdx <= 0) return;
+      const item = group.attributes.splice(aIdx, 1)[0];
+      group.attributes.splice(aIdx - 1, 0, item);
+    },
+
+    moveAttrDown(groupId, aIdx) {
+      const group = this.schema.groups.find(g => g.id === groupId);
+      if (!group || !group.attributes || aIdx >= group.attributes.length - 1) return;
+      const item = group.attributes.splice(aIdx, 1)[0];
+      group.attributes.splice(aIdx + 1, 0, item);
+    },
+
+    moveGroupUp(gIdx) {
+      if (!this.schema.groups || gIdx <= 0) return;
+      const item = this.schema.groups.splice(gIdx, 1)[0];
+      this.schema.groups.splice(gIdx - 1, 0, item);
+    },
+
+    moveGroupDown(gIdx) {
+      if (!this.schema.groups || gIdx >= this.schema.groups.length - 1) return;
+      const item = this.schema.groups.splice(gIdx, 1)[0];
+      this.schema.groups.splice(gIdx + 1, 0, item);
+    },
+
+    // HTML5 Drag and Drop Handlers for Attributes
     onDragStartAttr(event, attr, fromGroupId) {
       this.draggedAttr = attr;
       this.draggedFromGroupId = fromGroupId;
+      this.draggedGroup = null;
       event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', attr.id);
+      event.dataTransfer.setData('text/plain', JSON.stringify({ type: 'attr', id: attr.id, fromGroupId }));
     },
 
     onDragEndAttr() {
       this.draggedAttr = null;
       this.draggedFromGroupId = null;
+      this.dragOverAttrId = null;
+      this.dragOverAttrPosition = null;
       this.dragOverGroupId = null;
+      this.dragOverGroupPosition = null;
       this.dragOverUnassigned = false;
     },
 
-    onDragOverGroup(event, groupId) {
+    onDragOverAttr(event, targetAttr, groupId) {
+      if (!this.draggedAttr || this.draggedAttr.id === targetAttr.id) return;
       event.preventDefault();
+      event.stopPropagation();
       event.dataTransfer.dropEffect = 'move';
+      const rect = event.currentTarget.getBoundingClientRect();
+      const relY = event.clientY - rect.top;
+      this.dragOverAttrId = targetAttr.id;
+      this.dragOverAttrPosition = (relY < rect.height / 2) ? 'before' : 'after';
       this.dragOverGroupId = groupId;
     },
 
-    onDragLeaveGroup(event, groupId) {
-      if (this.dragOverGroupId === groupId) {
-        this.dragOverGroupId = null;
+    onDragLeaveAttr(event, targetAttr) {
+      if (this.dragOverAttrId === targetAttr.id) {
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (event.clientY < rect.top || event.clientY >= rect.bottom || event.clientX < rect.left || event.clientX >= rect.right) {
+          this.dragOverAttrId = null;
+          this.dragOverAttrPosition = null;
+        }
       }
     },
 
-    onDropIntoGroup(event, targetGroupId) {
+    onDropOnAttr(event, targetAttr, targetGroupId) {
       event.preventDefault();
-      this.dragOverGroupId = null;
+      event.stopPropagation();
       if (!this.draggedAttr) return;
 
       const attr = this.draggedAttr;
       const fromGroupId = this.draggedFromGroupId;
+      const position = this.dragOverAttrPosition || 'before';
 
-      if (fromGroupId === targetGroupId) {
-        this.draggedAttr = null;
-        this.draggedFromGroupId = null;
+      this.dragOverAttrId = null;
+      this.dragOverAttrPosition = null;
+      this.dragOverGroupId = null;
+
+      if (attr.id === targetAttr.id) {
+        this.onDragEndAttr();
         return;
       }
 
-      // If dragged from another group, remove from old group
+      // 1. Remove attr from source group
       if (fromGroupId !== null) {
-        const oldGroup = this.schema.groups.find(g => g.id === fromGroupId);
-        if (oldGroup && oldGroup.attributes) {
-          oldGroup.attributes = oldGroup.attributes.filter(a => a.id !== attr.id);
+        const srcGroup = this.schema.groups.find(g => g.id === fromGroupId);
+        if (srcGroup && srcGroup.attributes) {
+          srcGroup.attributes = srcGroup.attributes.filter(a => a.id !== attr.id);
         }
       }
 
-      // Add into target group
-      const targetGroup = this.schema.groups.find(g => g.id === targetGroupId);
-      if (targetGroup) {
-        if (!targetGroup.attributes) targetGroup.attributes = [];
-        if (!targetGroup.attributes.find(a => a.id === attr.id)) {
-          targetGroup.attributes.push(attr);
+      // 2. Insert into target group relative to targetAttr
+      const tgtGroup = this.schema.groups.find(g => g.id === targetGroupId);
+      if (tgtGroup) {
+        if (!tgtGroup.attributes) tgtGroup.attributes = [];
+        const targetIdx = tgtGroup.attributes.findIndex(a => a.id === targetAttr.id);
+        if (targetIdx !== -1) {
+          const insertIdx = (position === 'after') ? targetIdx + 1 : targetIdx;
+          tgtGroup.attributes.splice(insertIdx, 0, attr);
+        } else {
+          tgtGroup.attributes.push(attr);
         }
       }
 
       this.selectedGroupId = targetGroupId;
+      this.onDragEndAttr();
+    },
+
+    onDragOverGroup(event, groupId, gIdx) {
+      if (this.draggedGroup && this.draggedGroup.id !== groupId) {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        const rect = event.currentTarget.getBoundingClientRect();
+        const relY = event.clientY - rect.top;
+        this.dragOverGroupId = groupId;
+        this.dragOverGroupPosition = (relY < rect.height / 2) ? 'before' : 'after';
+        return;
+      }
+      if (this.draggedAttr) {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        this.dragOverGroupId = groupId;
+      }
+    },
+
+    onDragLeaveGroup(event, groupId) {
+      if (this.dragOverGroupId === groupId) {
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (event.clientY < rect.top || event.clientY >= rect.bottom || event.clientX < rect.left || event.clientX >= rect.right) {
+          this.dragOverGroupId = null;
+          this.dragOverGroupPosition = null;
+        }
+      }
+    },
+
+    onDropIntoGroup(event, targetGroupId, gIdx) {
+      event.preventDefault();
+
+      // Case A: Dropping a Group
+      if (this.draggedGroup) {
+        if (this.draggedGroup.id === targetGroupId) {
+          this.onDragEndGroup();
+          return;
+        }
+        const fromIdx = this.schema.groups.findIndex(g => g.id === this.draggedGroup.id);
+        let toIdx = this.schema.groups.findIndex(g => g.id === targetGroupId);
+        if (fromIdx !== -1 && toIdx !== -1) {
+          const [movedGroup] = this.schema.groups.splice(fromIdx, 1);
+          if (this.dragOverGroupPosition === 'after' && fromIdx > toIdx) {
+            toIdx += 1;
+          } else if (this.dragOverGroupPosition === 'before' && fromIdx < toIdx) {
+            toIdx -= 1;
+          }
+          this.schema.groups.splice(Math.max(0, toIdx), 0, movedGroup);
+        }
+        this.onDragEndGroup();
+        return;
+      }
+
+      // Case B: Dropping an Attribute into group container
+      if (this.draggedAttr) {
+        const attr = this.draggedAttr;
+        const fromGroupId = this.draggedFromGroupId;
+        this.dragOverGroupId = null;
+        this.dragOverAttrId = null;
+
+        // If from another group, remove from old
+        if (fromGroupId !== null && fromGroupId !== targetGroupId) {
+          const oldGroup = this.schema.groups.find(g => g.id === fromGroupId);
+          if (oldGroup && oldGroup.attributes) {
+            oldGroup.attributes = oldGroup.attributes.filter(a => a.id !== attr.id);
+          }
+        }
+
+        const targetGroup = this.schema.groups.find(g => g.id === targetGroupId);
+        if (targetGroup) {
+          if (!targetGroup.attributes) targetGroup.attributes = [];
+          if (!targetGroup.attributes.find(a => a.id === attr.id)) {
+            targetGroup.attributes.push(attr);
+          }
+        }
+
+        this.selectedGroupId = targetGroupId;
+        this.onDragEndAttr();
+      }
+    },
+
+    // HTML5 Drag and Drop Handlers for Groups
+    onDragStartGroup(event, group, gIdx) {
+      this.draggedGroup = group;
       this.draggedAttr = null;
-      this.draggedFromGroupId = null;
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', JSON.stringify({ type: 'group', id: group.id, index: gIdx }));
+    },
+
+    onDragEndGroup() {
+      this.draggedGroup = null;
+      this.dragOverGroupId = null;
+      this.dragOverGroupPosition = null;
     },
 
     onDragOverUnassigned(event) {
@@ -644,15 +859,14 @@ function visionAttributeSetBuilderApp(initialSetId) {
       const fromGroupId = this.draggedFromGroupId;
 
       if (fromGroupId === null) {
-        this.draggedAttr = null;
+        this.onDragEndAttr();
         return;
       }
 
       // CRITICAL CHECK: Required attributes cannot be deleted/removed!
       if (this.isRequiredAttribute(attr)) {
         alert(`Required attribute '${this.formatAttrName(attr)}' (${attr.code}) cannot be deleted or removed by anyone.`);
-        this.draggedAttr = null;
-        this.draggedFromGroupId = null;
+        this.onDragEndAttr();
         return;
       }
 
@@ -662,8 +876,7 @@ function visionAttributeSetBuilderApp(initialSetId) {
         oldGroup.attributes = oldGroup.attributes.filter(a => a.id !== attr.id);
       }
 
-      this.draggedAttr = null;
-      this.draggedFromGroupId = null;
+      this.onDragEndAttr();
     },
 
     resetSchema() {

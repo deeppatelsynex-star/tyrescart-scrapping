@@ -222,6 +222,21 @@ class AttributeService:
             conn.close()
 
     @staticmethod
+    def _normalize_group_name_json(name):
+        if isinstance(name, dict):
+            return json.dumps(name)
+        if isinstance(name, str):
+            trimmed = name.strip()
+            if (trimmed.startswith('{') and trimmed.endswith('}')) or (trimmed.startswith('"') and trimmed.endswith('"')):
+                try:
+                    json.loads(trimmed)
+                    return trimmed
+                except Exception:
+                    pass
+            return json.dumps({'en': name})
+        return json.dumps({'en': str(name or 'Group')})
+
+    @staticmethod
     def add_group_to_set(attribute_set_id, name, code=None, sort_order=10, user_id=None):
         conn = get_connection()
         try:
@@ -230,7 +245,7 @@ class AttributeService:
                     clean_code = re.sub(r'[^a-z0-9_]+', '_', (name.get('en') if isinstance(name, dict) else str(name)).lower()).strip('_')
                 else:
                     clean_code = code
-                name_val = json.dumps(name) if isinstance(name, dict) else str(name)
+                name_val = AttributeService._normalize_group_name_json(name)
                 cursor.execute("""
                     INSERT INTO attribute_groups (attribute_set_id, name, code, sort_order, created_by, updated_by)
                     VALUES (%s, %s, %s, %s, %s, %s)
@@ -287,7 +302,7 @@ class AttributeService:
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                name_val = json.dumps(name) if isinstance(name, dict) else str(name)
+                name_val = AttributeService._normalize_group_name_json(name)
                 cursor.execute("""
                     UPDATE attribute_groups
                     SET name = %s, updated_by = %s, updated_at = NOW()
@@ -331,7 +346,7 @@ class AttributeService:
                 for g_idx, g in enumerate(groups_data):
                     g_id = g.get('id')
                     g_name = g.get('name') or 'General'
-                    g_name_val = json.dumps(g_name) if isinstance(g_name, dict) else str(g_name)
+                    g_name_val = AttributeService._normalize_group_name_json(g_name)
                     clean_str = g_name.get('en') if isinstance(g_name, dict) else str(g_name)
                     g_code = re.sub(r'[^a-z0-9_]+', '_', clean_str.lower()).strip('_') or f"group_{g_idx+1}"
 
