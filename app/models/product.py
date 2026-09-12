@@ -478,6 +478,7 @@ class Product:
                 from services.store_context import StoreContext
                 from i18n import parse_json_dict, get_translated_value
                 curr_lang = StoreContext.get_current_language()
+                now = datetime.now(timezone.utc)
 
                 sku = str(data.get('sku') or '').strip().upper()
                 name_val = data.get('name') or data.get('name_en') or data.get('display_name') or ''
