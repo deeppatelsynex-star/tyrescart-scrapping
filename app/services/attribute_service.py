@@ -542,7 +542,7 @@ class AttributeService:
                 if attr_type in ('number', 'decimal') and value not in (None, ''):
                     val_number = float(value)
                 elif attr_type == 'boolean' and value not in (None, ''):
-                    val_boolean = 1 if value in (True, 1, '1', 'true', 'True') else 0
+                    val_boolean = 1 if str(value).strip().lower() in ('true', '1', 'yes', 'y') or value is True else 0
                 elif attr_type == 'date' and value not in (None, ''):
                     val_date = str(value)
                 elif attr_type in ('json', 'multiselect') and value not in (None, ''):
@@ -637,7 +637,22 @@ class AttributeService:
 
                 # Fallback to products.attributes_json
                 if (c_val is None or c_val == '') and prod_data.get('attributes_json') and isinstance(prod_data['attributes_json'], dict):
-                    c_val = prod_data['attributes_json'].get(code)
+                    attrs_j = prod_data['attributes_json']
+                    c_val = attrs_j.get(code)
+                    if c_val is None or c_val == '':
+                        if code == 'tire_size':
+                            c_val = attrs_j.get('tyre_size') or attrs_j.get('tire_size_label')
+                        elif code == 'load_speed_index':
+                            c_val = attrs_j.get('load_speed_index') or attrs_j.get('load_index')
+                            sr = attrs_j.get('tire_speed_rating') or prod_data.get('tire_speed_rating')
+                            if c_val and sr and not any(ch.isalpha() for ch in str(c_val)):
+                                c_val = f"{c_val}{sr}".strip()
+                        elif code == 'origin':
+                            c_val = attrs_j.get('country') or attrs_j.get('country_of_origin')
+                        elif code == 'tax_class':
+                            c_val = attrs_j.get('tax_class_name')
+                        elif code == 'promotion':
+                            c_val = attrs_j.get('offers') or 'None'
 
                 # Fallback to direct columns in products table
                 if (c_val is None or c_val == '') and prod_data:
@@ -657,6 +672,16 @@ class AttributeService:
                         c_val = prod_data.get('display_name') or prod_data.get('name')
                     elif code == 'display_name':
                         c_val = prod_data.get('display_name')
+                    elif code == 'tire_size':
+                        c_val = prod_data.get('tire_size_label')
+                    elif code == 'origin':
+                        c_val = prod_data.get('country_of_origin')
+                    elif code == 'load_speed_index':
+                        li = prod_data.get('tire_load_index') or ''
+                        sr = prod_data.get('tire_speed_rating') or ''
+                        c_val = f"{li}{sr}".strip() or None
+                    elif code == 'promotion':
+                        c_val = 'None'
                     elif code in prod_data and prod_data.get(code) is not None:
                         c_val = prod_data.get(code)
 
