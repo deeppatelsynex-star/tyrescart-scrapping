@@ -222,7 +222,7 @@ class AttributeService:
                     for a in g.get('attributes', []):
                         all_assigned_codes.add(a.get('code'))
 
-                if 'sku' not in all_assigned_codes or 'product_name' not in all_assigned_codes:
+                if 'sku' not in all_assigned_codes or ('product_name' not in all_assigned_codes and 'name' not in all_assigned_codes):
                     cursor.execute("""
                         SELECT * FROM attributes
                         WHERE code IN ('attribute_set_id', 'status', 'product_name', 'sku', 'price', 'categories', 'tax_class', 'visibility', 'tabby_payment')

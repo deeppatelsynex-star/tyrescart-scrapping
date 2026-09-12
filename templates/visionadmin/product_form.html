@@ -239,10 +239,10 @@
                       </template>
 
                       <!-- 5. Product Name Row -->
-                      <template x-if="attr.code === 'product_name'">
+                      <template x-if="attr.code === 'product_name' || attr.code === 'name'">
                         <input 
                           type="text" 
-                          :value="form.display_name || form.dynamic_attributes['product_name'] || ''"
+                          :value="form.display_name || form.dynamic_attributes['product_name'] || form.dynamic_attributes['name'] || ''"
                           @input="onProductNameInput($event.target.value)"
                           placeholder="" 
                           class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
@@ -267,16 +267,16 @@
                         </div>
                       </template>
 
-                      <!-- 7. Price & Price Per Item (AED prefix & Advanced Pricing) -->
-                      <template x-if="attr.code === 'price' || attr.code === 'price_per_item'">
+                      <!-- 7. Price & Price Per Item / Advanced Pricing -->
+                      <template x-if="['price', 'price_per_item', 'special_price', 'cost', 'tier_price', 'msrp'].includes(attr.code)">
                         <div>
                           <div class="flex items-center w-full max-w-[220px] rounded-xs border border-[#adadad] bg-white overflow-hidden shadow-2xs focus-within:border-[#2563FF]">
                             <span class="px-3 py-1.5 bg-slate-100 border-r border-[#adadad] text-xs font-semibold text-slate-600 select-none">AED</span>
                             <input 
                               type="number" 
                               step="0.01" 
-                              :value="form.dynamic_attributes[attr.code] !== undefined && form.dynamic_attributes[attr.code] !== null && form.dynamic_attributes[attr.code] !== '' ? form.dynamic_attributes[attr.code] : (attr.code === 'price' ? form.price : '')"
-                              @input="form.dynamic_attributes[attr.code] = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
+                              :value="form.dynamic_attributes[attr.code] !== undefined && form.dynamic_attributes[attr.code] !== null && form.dynamic_attributes[attr.code] !== '' ? form.dynamic_attributes[attr.code] : (attr.code === 'price' ? form.price : (attr.code === 'cost' ? form.cost_price : ''))"
+                              @input="form.dynamic_attributes[attr.code] = $event.target.value; if (attr.code === 'price') form.price = $event.target.value; if (attr.code === 'cost') form.cost_price = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
                               placeholder="0.00" 
                               class="w-full px-2.5 py-1.5 text-xs font-medium text-slate-800 outline-hidden"
                               :required="attr.is_required"
@@ -289,7 +289,7 @@
                       </template>
 
                       <!-- 8. Categories Component (Multi-Select Tag Pills matching Magento 2) -->
-                      <template x-if="attr.code === 'categories'">
+                      <template x-if="attr.code === 'categories' || attr.code === 'category_ids'">
                         <div class="w-full max-w-3xl flex items-center gap-2 relative" @click.outside="categoryDropdownOpen = false">
                           <!-- Rectangular Magento category select box -->
                           <div 
@@ -523,8 +523,33 @@
                         />
                       </template>
 
-                      <!-- 17. Fallback Generic Textbox Input (for any other attribute type) -->
-                      <template x-if="!['sku', 'brand', 'status', 'attribute_set_id', 'product_name', 'url_key', 'price', 'price_per_item', 'categories', 'weight'].includes(attr.code) && !['text', 'string', 'varchar', 'number', 'decimal', 'integer', 'float', 'textarea', 'select', 'multiselect', 'boolean', 'date'].includes(attr.type)">
+                      <!-- 17. File / Image Input -->
+                      <template x-if="attr.type === 'file'">
+                        <div class="space-y-2">
+                          <div class="flex items-center gap-2 max-w-2xl">
+                            <input 
+                              type="text" 
+                              :value="form.dynamic_attributes[attr.code] || (attr.code === 'image' || attr.code === 'small_image' ? form.image_path : '')"
+                              @input="form.dynamic_attributes[attr.code] = $event.target.value; if (attr.code === 'image' || attr.code === 'small_image') form.image_path = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
+                              placeholder="Image URL or upload path"
+                              class="w-full px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                              :required="attr.is_required"
+                            />
+                            <label class="px-3 py-1.5 rounded-xs bg-[#514943] hover:bg-[#3d3732] text-white text-xs font-semibold cursor-pointer shadow-xs transition select-none whitespace-nowrap shrink-0">
+                              <span>Browse</span>
+                              <input type="file" @change="uploadImage($event); form.dynamic_attributes[attr.code] = form.image_path" accept="image/*" class="hidden" />
+                            </label>
+                          </div>
+                          <template x-if="form.dynamic_attributes[attr.code] || (attr.code === 'image' && form.image_path)">
+                            <div class="w-16 h-16 border border-slate-200 rounded-xs bg-white p-1 relative flex items-center justify-center">
+                              <img :src="form.dynamic_attributes[attr.code] || form.image_path" alt="Preview" class="max-w-full max-h-full object-contain" />
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+
+                      <!-- 18. Fallback Generic Textbox Input (for any other attribute type) -->
+                      <template x-if="!['sku', 'brand', 'status', 'attribute_set_id', 'product_name', 'name', 'url_key', 'price', 'price_per_item', 'categories', 'category_ids', 'weight'].includes(attr.code) && !['text', 'string', 'varchar', 'number', 'decimal', 'integer', 'float', 'textarea', 'select', 'multiselect', 'boolean', 'date', 'file'].includes(attr.type)">
                         <input 
                           type="text" 
                           :value="form.dynamic_attributes[attr.code] !== undefined && form.dynamic_attributes[attr.code] !== null ? form.dynamic_attributes[attr.code] : ''"

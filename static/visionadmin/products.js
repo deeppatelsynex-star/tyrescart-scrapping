@@ -934,7 +934,15 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         this.form.sku = this.form.dynamic_attributes.sku;
       }
       if (!this.form.display_name && this.form.dynamic_attributes) {
-        this.form.display_name = this.form.dynamic_attributes.product_name || this.form.dynamic_attributes.display_name || '';
+        this.form.display_name = this.form.dynamic_attributes.product_name || this.form.dynamic_attributes.name || this.form.dynamic_attributes.display_name || '';
+      }
+      if ((!this.form.category_ids || this.form.category_ids.length === 0) && this.form.dynamic_attributes && this.form.dynamic_attributes.category_ids) {
+        const cids = this.form.dynamic_attributes.category_ids;
+        if (Array.isArray(cids)) {
+          this.form.category_ids = cids.map(Number);
+        } else if (typeof cids === 'string') {
+          this.form.category_ids = cids.split(',').map(s => parseInt(s.trim(), 10)).filter(Boolean);
+        }
       }
       if ((!this.form.price || isNaN(parseFloat(this.form.price))) && this.form.dynamic_attributes && this.form.dynamic_attributes.price) {
         this.form.price = this.form.dynamic_attributes.price;
