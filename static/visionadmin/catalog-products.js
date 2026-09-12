@@ -444,13 +444,6 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         this.form.category_ids.splice(idx, 1);
       } else {
         this.form.category_ids.push(numId);
-        if (!this.isEditMode) {
-          const cat = (this.categories || []).find(c => Number(c.id) === numId);
-          if (cat && cat.default_attribute_set_id && Number(cat.default_attribute_set_id) !== Number(this.form.attribute_set_id)) {
-            this.form.attribute_set_id = Number(cat.default_attribute_set_id);
-            this.onAttributeSetChange(this.form.attribute_set_id);
-          }
-        }
       }
       this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
     },
