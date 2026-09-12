@@ -245,8 +245,12 @@ class ProductImporter:
                     if raw_k is None or raw_v is None:
                         continue
                     clean_k = str(raw_k).strip()
-                    val_str = str(raw_v).strip()
                     if not clean_k:
+                        continue
+
+                    # Ignore attribute set indicators from dynamic attributes as attribute_set_id is a core column
+                    k_lower = clean_k.lower()
+                    if k_lower in ('attribute_set_id', 'attribute_set', 'attribute_set_code', 'attribute_set_name'):
                         continue
 
                     # Keep raw column value

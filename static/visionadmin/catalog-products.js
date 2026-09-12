@@ -444,6 +444,13 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         this.form.category_ids.splice(idx, 1);
       } else {
         this.form.category_ids.push(numId);
+        if (!this.isEditMode) {
+          const cat = (this.categories || []).find(c => Number(c.id) === numId);
+          if (cat && cat.default_attribute_set_id && Number(cat.default_attribute_set_id) !== Number(this.form.attribute_set_id)) {
+            this.form.attribute_set_id = Number(cat.default_attribute_set_id);
+            this.onAttributeSetChange(this.form.attribute_set_id);
+          }
+        }
       }
       this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
     },
@@ -698,7 +705,7 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       this.form = {
         id: null,
         attribute_set_id: defaultSetId,
-        dynamic_attributes: { status: 'active', attribute_set_id: defaultSetId },
+        dynamic_attributes: { status: 'active' },
         attribute_groups: [],
         loadingSchema: false,
         sku: '',
@@ -808,7 +815,6 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       if (p.run_flat !== undefined && dynAttrs.run_flat === undefined) dynAttrs.run_flat = Boolean(p.run_flat);
       if (p.ev_rated !== undefined && dynAttrs.ev_rated === undefined) dynAttrs.ev_rated = Boolean(p.ev_rated);
       if (p.width && !dynAttrs.width) dynAttrs.width = String(parseInt(p.width, 10));
-      if (p.attribute_set_id && !dynAttrs.attribute_set_id) dynAttrs.attribute_set_id = p.attribute_set_id;
 
       this.form = {
         id: p.id,

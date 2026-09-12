@@ -225,9 +225,9 @@ class AttributeService:
                 if 'sku' not in all_assigned_codes or ('product_name' not in all_assigned_codes and 'name' not in all_assigned_codes):
                     cursor.execute("""
                         SELECT * FROM attributes
-                        WHERE code IN ('attribute_set_id', 'status', 'product_name', 'sku', 'price', 'categories', 'tax_class', 'visibility', 'tabby_payment')
+                        WHERE code IN ('status', 'product_name', 'sku', 'price', 'categories', 'tax_class', 'visibility', 'tabby_payment')
                           AND deleted_at IS NULL
-                        ORDER BY FIELD(code, 'attribute_set_id', 'status', 'product_name', 'sku', 'price', 'categories', 'tax_class', 'visibility', 'tabby_payment')
+                        ORDER BY FIELD(code, 'status', 'product_name', 'sku', 'price', 'categories', 'tax_class', 'visibility', 'tabby_payment')
                     """)
                     core_attrs = cursor.fetchall()
                     for a in core_attrs:
