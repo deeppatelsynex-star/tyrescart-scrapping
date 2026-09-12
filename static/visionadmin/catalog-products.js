@@ -57,6 +57,37 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       downloadable: false
     },
 
+    groupAccordions: {},
+
+    toggleGroupAccordion(groupId) {
+      const key = String(groupId);
+      if (this.groupAccordions[key] === undefined) {
+        this.groupAccordions[key] = false;
+      } else {
+        this.groupAccordions[key] = !this.groupAccordions[key];
+      }
+    },
+
+    isGroupAccordionOpen(groupId, gIdx) {
+      const key = String(groupId);
+      if (this.groupAccordions[key] !== undefined) {
+        return this.groupAccordions[key];
+      }
+      return true;
+    },
+
+    expandAllGroups() {
+      (this.form.attribute_groups || []).forEach(g => {
+        this.groupAccordions[String(g.id)] = true;
+      });
+    },
+
+    collapseAllGroups() {
+      (this.form.attribute_groups || []).forEach(g => {
+        this.groupAccordions[String(g.id)] = false;
+      });
+    },
+
     toggleAccordion(key) {
       this.accordions[key] = !this.accordions[key];
     },
@@ -519,6 +550,7 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         const data = await res.json();
         if (data.schema && data.schema.groups) {
           this.form.attribute_groups = data.schema.groups || [];
+          this.groupAccordions = {};
           // Initialize dynamic attributes mapping if not already set
           this.form.attribute_groups.forEach(group => {
             (group.attributes || []).forEach(attr => {

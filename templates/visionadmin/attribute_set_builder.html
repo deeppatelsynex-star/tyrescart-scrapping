@@ -146,7 +146,16 @@
             </button>
           </div>
 
-          <p class="text-[11px] text-slate-500 font-medium italic">Double click on a group to rename it.</p>
+          <div class="flex items-center justify-between">
+            <p class="text-[11px] text-slate-500 font-medium italic">Double click on a group to rename it.</p>
+            <template x-if="schema && schema.groups && schema.groups.length > 1">
+              <div class="flex items-center gap-1.5 text-[11px]">
+                <button type="button" @click="expandAllGroups()" class="text-[#2563FF] hover:underline font-semibold cursor-pointer">Expand All</button>
+                <span class="text-slate-300">|</span>
+                <button type="button" @click="collapseAllGroups()" class="text-slate-500 hover:text-slate-800 hover:underline font-semibold cursor-pointer">Collapse All</button>
+              </div>
+            </template>
+          </div>
         </div>
 
         <!-- Groups Tree Container -->
@@ -180,12 +189,22 @@
                 @click="selectedGroupId = group.id"
                 @dblclick="startRenameGroup(group)"
               >
-                <div class="flex items-center gap-2 min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                  <!-- Accordion Chevron toggle button -->
+                  <button 
+                    type="button" 
+                    @click.stop="toggleGroupAccordion(group.id)" 
+                    class="w-5 h-5 rounded-md hover:bg-slate-200/80 flex items-center justify-center text-slate-400 hover:text-slate-700 transition cursor-pointer shrink-0"
+                    :title="isGroupAccordionOpen(group.id) ? 'Collapse group' : 'Expand group'"
+                  >
+                    <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="isGroupAccordionOpen(group.id) ? 'rotate-90' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+
                   <!-- Group Drag Handle -->
                   <span class="text-slate-300 hover:text-slate-600 cursor-grab active:cursor-grabbing text-xs tracking-tighter select-none px-0.5" title="Drag to reorder group">⋮⋮</span>
 
                   <!-- Folder icon -->
-                  <span class="text-base select-none">📁</span>
+                  <span class="text-base select-none cursor-pointer" @click.stop="toggleGroupAccordion(group.id)">📁</span>
 
                   <!-- Group Name / Inline Edit -->
                   <template x-if="editingGroupId === group.id">
@@ -233,7 +252,7 @@
               </div>
 
               <!-- Attributes List under this group with Tree Branch line -->
-              <div class="border-l-2 border-dashed border-slate-200 ml-4 pl-3.5 space-y-1 py-1 mt-1">
+              <div x-show="isGroupAccordionOpen(group.id)" class="border-l-2 border-dashed border-slate-200 ml-4 pl-3.5 space-y-1 py-1 mt-1">
                 <template x-if="!group.attributes || group.attributes.length === 0">
                   <div class="py-2 text-[11px] text-slate-400 italic pl-1">
                     Drag attributes here
@@ -430,6 +449,35 @@ function visionAttributeSetBuilderApp(initialSetId) {
     dragOverGroupPosition: null, // 'before' | 'after'
     dragOverUnassigned: false,
 
+    // Accordion expand/collapse state for groups
+    groupAccordions: {},
+
+    toggleGroupAccordion(groupId) {
+      const key = String(groupId);
+      if (this.groupAccordions[key] === undefined) {
+        this.groupAccordions[key] = false;
+      } else {
+        this.groupAccordions[key] = !this.groupAccordions[key];
+      }
+    },
+
+    isGroupAccordionOpen(groupId) {
+      const key = String(groupId);
+      return this.groupAccordions[key] !== undefined ? this.groupAccordions[key] : true;
+    },
+
+    expandAllGroups() {
+      (this.schema?.groups || []).forEach(g => {
+        this.groupAccordions[String(g.id)] = true;
+      });
+    },
+
+    collapseAllGroups() {
+      (this.schema?.groups || []).forEach(g => {
+        this.groupAccordions[String(g.id)] = false;
+      });
+    },
+
     async initData() {
       await Promise.all([
         this.loadSchema(),
@@ -607,6 +655,7 @@ function visionAttributeSetBuilderApp(initialSetId) {
         if (!targetGroup.attributes.find(a => a.id === attr.id)) {
           targetGroup.attributes.push(attr);
         }
+        this.groupAccordions[String(this.selectedGroupId)] = true;
       }
     },
 
@@ -744,6 +793,7 @@ function visionAttributeSetBuilderApp(initialSetId) {
       }
 
       this.selectedGroupId = targetGroupId;
+      this.groupAccordions[String(targetGroupId)] = true;
       this.onDragEndAttr();
     },
 
@@ -822,6 +872,7 @@ function visionAttributeSetBuilderApp(initialSetId) {
         }
 
         this.selectedGroupId = targetGroupId;
+        this.groupAccordions[String(targetGroupId)] = true;
         this.onDragEndAttr();
       }
     },

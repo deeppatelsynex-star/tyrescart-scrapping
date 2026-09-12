@@ -117,57 +117,80 @@
       <!-- Scrollable Form Body -->
       <div class="p-6 sm:p-8 space-y-6 text-xs">
 
-        <!-- Card: Main Product Attributes -->
-        <div class="bg-white border border-slate-200 rounded-xs p-6 sm:p-8 shadow-2xs space-y-2">
-          
-          <!-- Loading indicator while switching attribute set -->
-          <div x-show="form.loadingSchema" class="py-6 flex items-center justify-center gap-2 text-slate-400 font-medium">
-            <svg class="w-4 h-4 animate-spin text-[#2563FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-            <span>Loading attribute set specifications...</span>
-          </div>
+        <!-- Loading indicator while switching attribute set -->
+        <div x-show="form.loadingSchema" class="bg-white border border-slate-200 rounded-xs p-8 shadow-2xs flex items-center justify-center gap-2 text-slate-400 font-medium">
+          <svg class="w-4 h-4 animate-spin text-[#2563FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+          <span>Loading attribute set specifications...</span>
+        </div>
 
-          <!-- Notification banner when attributes are reordered in product form -->
-          <div 
-            x-show="form.attributesReordered" 
-            x-cloak
-            class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between flex-wrap gap-2 transition"
-          >
-            <div class="flex items-center gap-2 text-xs font-semibold text-[#1D4ED8]">
-              <svg class="w-4 h-4 text-[#2563FF] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-              <span>Attribute sort order changed in this form. Would you like to save this order to the Attribute Set?</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <button 
-                type="button" 
-                @click="saveFormAttributeOrder()" 
-                :disabled="isSavingOrder"
-                class="px-3 py-1 rounded-lg bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-2xs"
-              >
-                <svg x-show="isSavingOrder" class="animate-spin -ml-1 mr-1 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                <span x-text="isSavingOrder ? 'Saving...' : 'Save Order to Set'"></span>
-              </button>
-              <button 
-                type="button" 
-                @click="resetFormAttributeOrder()" 
-                class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 text-xs font-medium transition cursor-pointer"
-              >
-                Reset Order
-              </button>
-            </div>
+        <!-- Notification banner when attributes are reordered in product form -->
+        <div 
+          x-show="form.attributesReordered" 
+          x-cloak
+          class="p-3.5 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between flex-wrap gap-2 transition shadow-2xs"
+        >
+          <div class="flex items-center gap-2 text-xs font-semibold text-[#1D4ED8]">
+            <svg class="w-4 h-4 text-[#2563FF] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span>Attribute sort order changed in this form. Would you like to save this order to the Attribute Set?</span>
           </div>
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              @click="saveFormAttributeOrder()" 
+              :disabled="isSavingOrder"
+              class="px-3 py-1 rounded-lg bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs font-bold transition cursor-pointer flex items-center gap-1 shadow-2xs"
+            >
+              <svg x-show="isSavingOrder" class="animate-spin -ml-1 mr-1 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+              <span x-text="isSavingOrder ? 'Saving...' : 'Save Order to Set'"></span>
+            </button>
+            <button 
+              type="button" 
+              @click="resetFormAttributeOrder()" 
+              class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 text-xs font-medium transition cursor-pointer"
+            >
+              Reset Order
+            </button>
+          </div>
+        </div>
 
-          <!-- Dynamic Attributes List for Selected Attribute Set (33 sequential attributes) -->
-          <div x-show="!form.loadingSchema" class="space-y-1">
-            <template x-for="group in form.attribute_groups" :key="group.id">
-              <div>
-                <!-- Display group heading only if multiple distinct groups exist -->
-                <template x-if="form.attribute_groups.length > 1">
-                  <div class="pt-6 pb-2.5 border-b border-slate-200 mb-4 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                      <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
-                      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700" x-text="formatGroupName(group)"></h3>
-                    </div>
-                    <span class="text-[11px] text-slate-400 font-semibold" x-text="(group.attributes ? group.attributes.length : 0) + ' attributes'"></span>
+        <!-- Dynamic Attribute Group Accordions (Magento-style collapsible cards) -->
+        <div x-show="!form.loadingSchema" class="space-y-4">
+          <!-- Expand / Collapse All helper when multiple groups exist -->
+          <template x-if="form.attribute_groups && form.attribute_groups.length > 1">
+            <div class="flex items-center justify-end gap-2 px-1 text-xs">
+              <button type="button" @click="expandAllGroups()" class="text-[#2563FF] hover:underline font-semibold cursor-pointer">Expand All Groups</button>
+              <span class="text-slate-300">|</span>
+              <button type="button" @click="collapseAllGroups()" class="text-slate-500 hover:text-slate-800 hover:underline font-semibold cursor-pointer">Collapse All Groups</button>
+            </div>
+          </template>
+
+          <template x-for="(group, gIdx) in form.attribute_groups" :key="group.id || gIdx">
+            <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden transition">
+              
+              <!-- Accordion Header -->
+              <div 
+                @click="toggleGroupAccordion(group.id)" 
+                class="w-full py-3.5 px-6 flex items-center justify-between border-b border-slate-100 hover:bg-slate-50/75 cursor-pointer transition select-none"
+              >
+                <div class="flex items-center gap-2.5">
+                  <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
+                  <span class="text-xs sm:text-sm font-bold text-[#303030] uppercase tracking-wide" x-text="formatGroupName(group)"></span>
+                  <span class="text-[11px] text-slate-400 font-semibold px-2 py-0.5 rounded-full bg-slate-100" x-text="(group.attributes ? group.attributes.length : 0) + ' attributes'"></span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-slate-400 font-medium hidden sm:inline" x-text="isGroupAccordionOpen(group.id, gIdx) ? 'Collapse' : 'Expand'"></span>
+                  <div class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-slate-500">
+                    <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="isGroupAccordionOpen(group.id, gIdx) ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Accordion Body (Attribute Inputs) -->
+              <div x-show="isGroupAccordionOpen(group.id, gIdx)" class="p-6 sm:p-8 space-y-2 border-t border-slate-100">
+                <template x-if="!group.attributes || group.attributes.length === 0">
+                  <div class="py-6 text-center text-xs text-slate-400 font-medium italic">
+                    No attributes assigned to this group.
                   </div>
                 </template>
 
@@ -552,9 +575,8 @@
                   </div>
                 </template>
               </div>
-            </template>
-          </div>
-
+            </div>
+          </template>
         </div>
 
         <!-- =================================================================== -->
