@@ -216,6 +216,41 @@ class AttributeService:
 
                     g['attributes'] = attrs
 
+                # Ensure core attributes (product_name, sku, price, etc.) exist in every set
+                all_assigned_codes = set()
+                for g in groups:
+                    for a in g.get('attributes', []):
+                        all_assigned_codes.add(a.get('code'))
+
+                if 'sku' not in all_assigned_codes or 'product_name' not in all_assigned_codes:
+                    cursor.execute("""
+                        SELECT * FROM attributes
+                        WHERE code IN ('attribute_set_id', 'status', 'product_name', 'sku', 'price', 'categories', 'tax_class', 'visibility', 'tabby_payment')
+                          AND deleted_at IS NULL
+                        ORDER BY FIELD(code, 'attribute_set_id', 'status', 'product_name', 'sku', 'price', 'categories', 'tax_class', 'visibility', 'tabby_payment')
+                    """)
+                    core_attrs = cursor.fetchall()
+                    for a in core_attrs:
+                        if a.get('name') and isinstance(a['name'], str):
+                            try:
+                                a['name'] = json.loads(a['name'])
+                            except Exception:
+                                pass
+                        if a.get('type') in ('select', 'multiselect'):
+                            a['options'] = AttributeService.get_attribute_options(a['id'])
+                        else:
+                            a['options'] = []
+
+                    general_group = {
+                        'id': f"general_{attribute_set_id}",
+                        'attribute_set_id': attribute_set_id,
+                        'name': {'en': 'General Attributes', 'ar': 'الخصائص العامة'},
+                        'code': 'general',
+                        'sort_order': 0,
+                        'attributes': [a for a in core_attrs if a['code'] not in all_assigned_codes]
+                    }
+                    groups.insert(0, general_group)
+
                 attr_set['groups'] = groups
                 return attr_set
         finally:

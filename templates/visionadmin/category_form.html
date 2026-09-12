@@ -522,7 +522,7 @@
         <div class="border-t border-slate-200">
           <button 
             type="button" 
-            @click="accordion.products = !accordion.products"
+            @click="accordion.products = !accordion.products; if (accordion.products && products.length === 0) loadProducts(1)"
             class="w-full flex items-center justify-between py-3.5 hover:bg-slate-50 transition cursor-pointer text-left group select-none"
           >
             <div class="flex items-center gap-2">
@@ -576,8 +576,8 @@
                   @change="loadProducts(1)"
                   class="py-2.5 px-3 text-xs font-bold border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-[#2563FF]"
                 >
-                  <option value="all">All Products</option>
-                  <option value="1">Assigned Only</option>
+                  <option value="1">Assigned Products (Category-Wise)</option>
+                  <option value="all">All Products (Assign More)</option>
                   <option value="0">Unassigned Only</option>
                 </select>
 
@@ -1061,7 +1061,7 @@ function visionCategoryFormApp(initialMode, initialCatId) {
     productsTotalPages: 1,
     assignedCount: 0,
     productSearch: '',
-    productAssignedFilter: 'all',
+    productAssignedFilter: '1',
     productStockFilter: '',
 
     // Local changes for product assignments and positions: product_id -> { assigned: boolean, position: number }

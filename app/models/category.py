@@ -574,20 +574,35 @@ class Category:
 
     @classmethod
     def get_category_products(cls, cat_id: int, search: str = None, assigned: str = 'all', page: int = 1, per_page: int = 20, stock_status: str = None, locale: str = None):
-        """Returns products with assignment status and position for a category."""
+        """Returns products with assignment status and position for a category, including descendant categories."""
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                # Total assigned count for category
-                cursor.execute("""
-                    SELECT COUNT(*) AS assigned_count
+                # 1. Collect cat_id and all its descendant category IDs for category-wise lookup
+                cursor.execute("SELECT id, parent_id FROM categories WHERE deleted_at IS NULL")
+                all_cats = cursor.fetchall() or []
+                descendant_ids = {int(cat_id)}
+                added = True
+                while added:
+                    added = False
+                    for c in all_cats:
+                        pid = c.get('parent_id')
+                        cid = c.get('id')
+                        if pid is not None and int(pid) in descendant_ids and cid is not None and int(cid) not in descendant_ids:
+                            descendant_ids.add(int(cid))
+                            added = True
+                cat_id_list = list(descendant_ids)
+                cat_ids_str = ','.join(str(i) for i in cat_id_list)
+
+                # Clause matching membership in this category or any descendant category
+                in_cat_clause = f"(p.category_id IN ({cat_ids_str}) OR EXISTS (SELECT 1 FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id IN ({cat_ids_str})))"
+
+                # Total assigned count for this category and its subcategories
+                cursor.execute(f"""
+                    SELECT COUNT(DISTINCT p.id) AS assigned_count
                     FROM products p
-                    WHERE p.deleted_at IS NULL AND (
-                        p.category_id = %s OR EXISTS (
-                            SELECT 1 FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id = %s
-                        )
-                    )
-                """, (cat_id, cat_id))
+                    WHERE p.deleted_at IS NULL AND {in_cat_clause}
+                """)
                 assigned_count = cursor.fetchone().get('assigned_count', 0)
 
                 where_clauses = ["p.deleted_at IS NULL"]
@@ -598,9 +613,9 @@ class Category:
                 }
 
                 if assigned in ('1', 'assigned', 'true'):
-                    where_clauses.append("(p.category_id = %(cat_id)s OR EXISTS (SELECT 1 FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id = %(cat_id)s))")
+                    where_clauses.append(in_cat_clause)
                 elif assigned in ('0', 'unassigned', 'false'):
-                    where_clauses.append("NOT (p.category_id = %(cat_id)s OR EXISTS (SELECT 1 FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id = %(cat_id)s))")
+                    where_clauses.append(f"NOT {in_cat_clause}")
 
                 if search and search.strip():
                     term = f"%{search.strip()}%"
@@ -614,7 +629,7 @@ class Category:
                 where_sql = " AND ".join(where_clauses)
 
                 cursor.execute(f"""
-                    SELECT COUNT(*) AS total
+                    SELECT COUNT(DISTINCT p.id) AS total
                     FROM products p
                     LEFT JOIN brands b ON p.brand_id = b.id
                     WHERE {where_sql}
@@ -625,9 +640,10 @@ class Category:
                     SELECT p.id, p.sku, p.item_code, p.display_name, p.name, p.price, p.stock_qty, p.stock_status,
                            p.tire_size_label, p.tire_speed_rating, p.tire_type, p.image_path, p.small_image,
                            b.name AS brand_name,
+                           CASE WHEN {in_cat_clause} THEN 1 ELSE 0 END AS is_assigned,
                            CASE WHEN (p.category_id = %(cat_id)s OR EXISTS (
                                SELECT 1 FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id = %(cat_id)s
-                           )) THEN 1 ELSE 0 END AS is_assigned,
+                           )) THEN 1 ELSE 0 END AS is_directly_assigned,
                            COALESCE((
                                SELECT pc.position FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id = %(cat_id)s LIMIT 1
                            ), 0) AS position

@@ -953,6 +953,24 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         return;
       }
 
+      // Validate all required attributes configured in the active attribute set
+      for (const group of (this.form.attribute_groups || [])) {
+        for (const attr of (group.attributes || [])) {
+          if (attr.is_required) {
+            const code = attr.code;
+            const dynVal = this.form.dynamic_attributes ? this.form.dynamic_attributes[code] : undefined;
+            const formVal = this.form[code];
+            const hasVal = (dynVal !== undefined && dynVal !== null && String(dynVal).trim() !== '') ||
+                           (formVal !== undefined && formVal !== null && String(formVal).trim() !== '');
+            if (!hasVal) {
+              const label = attr.frontend_label || (typeof attr.name === 'object' ? (attr.name.en || attr.name.ar) : attr.name) || code;
+              this.showToast(`Please fill in required field: ${label}`, 'error');
+              return;
+            }
+          }
+        }
+      }
+
       this.isSubmitting = true;
       try {
         const url = (this.isEditMode && !duplicate)
