@@ -44,17 +44,9 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
     accordions: {
       sources: true,
       content: false,
-      configurations: false,
-      subscriptions: false,
       media: false,
       seo: false,
-      websites: false,
-      related: false,
-      custom_options: false,
-      design: false,
-      schedule: false,
-      gift: false,
-      downloadable: false
+      websites: false
     },
 
     groupAccordions: {},
