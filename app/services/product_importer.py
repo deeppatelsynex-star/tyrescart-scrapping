@@ -1,11 +1,13 @@
 """
-app/services/product_importer.py - Product & Category CSV Importer Service
+app/services/product_importer.py - Dynamic Multi-Type Product & Category CSV Importer Service
 
-Handles importing products along with Magento category hierarchy paths and brands.
-- Parses categories column into hierarchical tree under root ID 2 (Default Category).
+Handles importing products of any type (Tyres, Batteries, Wheels, Accessories, etc.):
+- Automatically detects or maps attribute sets (Tyres, Battery, Wheels, Default, etc.).
+- Dynamically matches CSV columns to database attribute definitions rather than static code.
+- Automatically handles option resolution and auto-creation for select/multiselect attributes.
+- Preserves all CSV columns in attributes_json and syncs to EAV product_attribute_values.
+- Parses hierarchical category paths under root ID 2 (Default Category) via CategoryImporter.
 - Auto-creates any missing brands.
-- Creates products with all tyre attributes, inventories, website assignments.
-- Maps leaf category IDs into product_categories table and product.category_id.
 """
 
 import csv
@@ -23,17 +25,42 @@ from services.category_importer import CategoryImporter, parse_category_paths
 def slugify(text: str) -> str:
     if not text:
         return ""
-    text = text.lower().strip()
+    text = str(text).lower().strip()
     text = re.sub(r'[^\w\s-]', '', text)
     text = re.sub(r'[\s_-]+', '-', text)
     return text.strip('-')
+
+
+# Common column aliases mapping user-friendly or legacy CSV column headers
+# to canonical attribute codes defined in the attributes table.
+ATTRIBUTE_ALIAS_MAP = {
+    'tyre_size': 'tire_size',
+    'tire_size_label': 'tire_size',
+    'size': 'tire_size',
+    'load_index': 'load_speed_index',
+    'speed_rating': 'tire_speed_rating',
+    'country': 'origin',
+    'country_of_origin': 'origin',
+    'country_of_manufacture': 'origin',
+    'tax_class_name': 'tax_class',
+    'tax_class_id': 'tax_class',
+    'offers': 'promotion',
+    'voltage': 'volts',
+    'voltage_v': 'volts',
+    'battery_capacity': 'mah',
+    'capacity': 'mah',
+    'cca_rating': 'cca',
+    'cold_cranking_amps': 'cca',
+    'warranty': 'warranty_period',
+    'short_description': 'short_desc',
+}
 
 
 class ProductImporter:
     @classmethod
     def import_csv(cls, file_content, user_id: int = 1) -> dict:
         """
-        Imports products and their category hierarchies from CSV.
+        Imports products of ANY type (Batteries, Wheels, Tyres, etc.) from CSV.
         Supports bytes, str, or file-like stream.
         """
         if isinstance(file_content, bytes):
@@ -49,19 +76,41 @@ class ProductImporter:
         else:
             return {'success': False, 'error': 'Invalid file stream.', 'imported': 0}
 
-        # Step 1: Run CategoryImporter to ensure category tree hierarchy exists
+        # Step 1: Run CategoryImporter to ensure all category hierarchies exist
         cat_result = CategoryImporter.import_csv(text, user_id=user_id)
 
         # Step 2: Build category tree cache: (parent_id, name_en.lower()) -> category_id
         conn = get_connection()
         cat_tree = {}
+        set_lookup = {}
+        attr_map = {}
         try:
             with conn.cursor() as cur:
+                # Cache categories
                 cur.execute("SELECT id, parent_id, name FROM categories WHERE deleted_at IS NULL")
                 for c in cur.fetchall():
                     nd = parse_json_dict(c['name'])
                     name_en = (nd.get('en') if isinstance(nd, dict) else str(c['name'])).strip().lower()
                     cat_tree[(c['parent_id'], name_en)] = c['id']
+
+                # Cache attribute sets (name -> id, slug -> id, singular/plural)
+                cur.execute("SELECT id, name, slug FROM attribute_sets WHERE deleted_at IS NULL")
+                for s in cur.fetchall():
+                    s_id = s['id']
+                    s_name = str(s['name']).strip().lower()
+                    s_slug = str(s['slug']).strip().lower() if s.get('slug') else s_name
+                    set_lookup[s_name] = s_id
+                    set_lookup[s_slug] = s_id
+                    if s_name.endswith('s'):
+                        set_lookup[s_name[:-1]] = s_id
+                    else:
+                        set_lookup[s_name + 's'] = s_id
+
+                # Cache all attribute definitions from DB
+                cur.execute("SELECT id, code, name, type FROM attributes WHERE deleted_at IS NULL")
+                for a in cur.fetchall():
+                    c_code = a['code'].strip().lower()
+                    attr_map[c_code] = a
         finally:
             conn.close()
 
@@ -88,7 +137,7 @@ class ProductImporter:
 
         distinct_brands = set()
         for r in rows:
-            b_val = (r.get('brand') or r.get('brand_name') or '').strip()
+            b_val = (r.get('brand') or r.get('brand_name') or r.get('manufacturer') or '').strip()
             if b_val:
                 distinct_brands.add(b_val)
 
@@ -106,7 +155,7 @@ class ProductImporter:
                 }, user_id=user_id)
                 brand_map[b_name.lower()] = new_b_id
 
-        # Step 4: Import each product
+        # Step 4: Import each product row dynamically
         imported = 0
         updated = 0
         errors = []
@@ -119,21 +168,22 @@ class ProductImporter:
                     continue
 
                 item_code = (row.get('item_code') or sku).strip()
-                name = (row.get('name') or row.get('display_name') or sku).strip()
+                name = (row.get('name') or row.get('product_name') or row.get('display_name') or sku).strip()
                 display_name = (row.get('display_name') or row.get('pattern') or name).strip()
+                
                 raw_price = row.get('price') or '0'
                 try:
                     price = float(raw_price)
-                except ValueError:
+                except (ValueError, TypeError):
                     price = 0.0
 
-                raw_cost = row.get('cost') or None
+                raw_cost = row.get('cost') or row.get('cost_price') or None
                 try:
                     cost_price = float(raw_cost) if raw_cost else None
-                except ValueError:
+                except (ValueError, TypeError):
                     cost_price = None
 
-                b_str = (row.get('brand') or '').strip()
+                b_str = (row.get('brand') or row.get('brand_name') or row.get('manufacturer') or '').strip()
                 brand_id = brand_map.get(b_str.lower())
 
                 # Resolve category paths
@@ -147,131 +197,160 @@ class ProductImporter:
 
                 primary_category_id = assigned_category_ids[0] if assigned_category_ids else None
 
-                # Dimensions and specs
-                width = (row.get('width') or '').strip()
-                height = (row.get('height') or '').strip()
-                rim = (row.get('rim') or '').strip()
-                tyre_size = (row.get('tyre_size') or '').strip()
-                if not tyre_size and width and height and rim:
-                    tyre_size = f"{width}/{height} R{rim}"
+                # Resolve Attribute Set dynamically
+                raw_set_hint = (
+                    row.get('attribute_set_code') or 
+                    row.get('attribute_set') or 
+                    row.get('attribute_set_name') or 
+                    row.get('parts_category') or ''
+                ).strip().lower()
 
-                raw_load_index = (row.get('load_index') or '').strip()
-                load_index = raw_load_index
-                speed_rating = (row.get('speed_rating') or row.get('tire_speed_rating') or '').strip()
-                if raw_load_index:
-                    import re
-                    m = re.match(r'^(\d{2,3})\s*([A-Za-z]+)$', raw_load_index)
-                    if m:
-                        load_index = m.group(1)
-                        if not speed_rating:
-                            speed_rating = m.group(2).upper()
+                resolved_set_id = set_lookup.get(raw_set_hint)
+                if not resolved_set_id:
+                    # Infer set based on column indicators present in this row
+                    cols_present = {k.strip().lower() for k, v in row.items() if v is not None and str(v).strip() != ''}
+                    if {'volts', 'voltage', 'cca', 'battery_type', 'mah', 'terminal_layout'} & cols_present:
+                        resolved_set_id = set_lookup.get('battery') or 3
+                    elif {'bolt_pattern_pcd', 'wheel_type', 'offset', 'hub_bore', 'back_space_inches'} & cols_present:
+                        resolved_set_id = set_lookup.get('wheels') or 7
+                    elif {'tyre_size', 'tire_size', 'width', 'height', 'rim', 'load_index', 'speed_rating'} & cols_present:
+                        resolved_set_id = set_lookup.get('tyres') or 1
+                    else:
+                        resolved_set_id = set_lookup.get('default') or 2
 
-                pattern = (row.get('pattern') or '').strip()
-                country = (row.get('country') or '').strip()
-                year = (row.get('year') or '').strip()
-                warranty_period = (row.get('warranty_period') or '').strip()
-                parts_category = (row.get('parts_category') or 'Tyres').strip()
-                tyres_category = (row.get('tyres_category') or 'Premium').strip()
-                price_included = (row.get('price_included_text') or row.get('price_included') or 'Fitted Price').strip()
-                runflat_raw = (row.get('runflat') or '').strip().lower()
-                run_flat = 1 if runflat_raw in ('yes', '1', 'true') else 0
-                ev_raw = (row.get('ev_tyre') or '').strip().lower()
-                ev_rated = 1 if ev_raw in ('yes', '1', 'true') else 0
-                tabby_raw = (row.get('tabby_payment') or '').strip().lower()
-                pay_later_eligible = 1 if tabby_raw in ('yes', '1', 'true') else 0
-
-                base_image = (row.get('base_image') or '').strip()
+                # Standard core fields
+                status_raw = str(row.get('status') or '1').strip().lower()
+                status = 'active' if status_raw in ('1', 'active', 'true', 'yes') else 'inactive'
+                visibility = (row.get('visibility') or 'Catalog, Search').strip()
+                base_image = (row.get('base_image') or row.get('image_path') or row.get('image') or '').strip()
                 small_image = (row.get('small_image') or base_image).strip()
                 url_key = (row.get('url_key') or slugify(name)).strip()
+
                 raw_weight = row.get('weight')
                 try:
                     weight = float(raw_weight) if raw_weight else None
                 except (ValueError, TypeError):
                     weight = None
 
-                # Dynamic attributes dictionary matching Magento fields
-                dynamic_attrs = {
-                    'sku': sku,
-                    'item_code': item_code,
-                    'price': str(price),
-                    'price_per_item': row.get('price_per_item') or str(price),
-                    'brand': b_str,
-                    'pattern': pattern,
-                    'display_name': display_name,
-                    'product_name': name,
-                    'tyre_marking': (row.get('tyre_marking') or '').strip(),
-                    'oem_tyres': (row.get('oem_tyres') or '').strip(),
-                    'ev_tyre': 'Yes' if ev_rated else 'No',
-                    'tyre_size': tyre_size,
-                    'tire_size': tyre_size,
-                    'tire_size_label': tyre_size,
-                    'width': width,
-                    'height': height,
-                    'aspect_ratio': height,
-                    'rim': rim,
-                    'rim_size': rim,
-                    'load_index': load_index,
-                    'load_speed_index': raw_load_index or f"{load_index}{speed_rating}".strip(),
-                    'tire_load_index': load_index,
-                    'tire_speed_rating': speed_rating,
-                    'year': year,
-                    'runflat': 'Yes' if run_flat else 'No',
-                    'country': country,
-                    'country_of_origin': country,
-                    'origin': country,
-                    'parts_category': parts_category,
-                    'tyre_type': (row.get('tyre_type') or 'Car').strip(),
-                    'warranty_period': warranty_period,
-                    'tyres_category': tyres_category,
-                    'tabby_payment': 'Yes' if pay_later_eligible else 'No',
-                    'price_included_text': price_included,
-                    'tax_class': (row.get('tax_class_name') or row.get('tax_class') or 'Taxable Goods').strip(),
-                    'tax_class_name': (row.get('tax_class_name') or row.get('tax_class') or 'Taxable Goods').strip(),
-                    'promotion': (row.get('offers') or row.get('promotion') or 'None').strip(),
-                    'offers': (row.get('offers') or row.get('promotion') or '').strip(),
-                    'visibility': (row.get('visibility') or 'Catalog, Search').strip()
-                }
+                raw_qty = row.get('qty') or row.get('stock_qty') or '10'
+                try:
+                    stock_qty = int(float(raw_qty))
+                except (ValueError, TypeError):
+                    stock_qty = 10
+                stock_status = (row.get('stock_status') or ('in_stock' if stock_qty > 0 else 'out_of_stock')).strip()
 
+                # Build dynamic attributes dictionary from ALL columns present in CSV
+                dynamic_attrs = {}
+                for raw_k, raw_v in row.items():
+                    if raw_k is None or raw_v is None:
+                        continue
+                    clean_k = str(raw_k).strip()
+                    val_str = str(raw_v).strip()
+                    if not clean_k:
+                        continue
+
+                    # Keep raw column value
+                    dynamic_attrs[clean_k] = val_str
+
+                    # Match against database attributes table
+                    k_lower = clean_k.lower()
+                    attr_def = attr_map.get(k_lower)
+                    if not attr_def and k_lower in ATTRIBUTE_ALIAS_MAP:
+                        target_code = ATTRIBUTE_ALIAS_MAP[k_lower]
+                        attr_def = attr_map.get(target_code)
+
+                    if attr_def:
+                        code = attr_def['code']
+                        a_type = attr_def['type']
+                        if a_type == 'boolean':
+                            normalized_val = 'Yes' if val_str.lower() in ('1', 'true', 'yes', 'y') else 'No'
+                        else:
+                            normalized_val = val_str
+                        dynamic_attrs[code] = normalized_val
+
+                # Smart additive helpers for domain-specific attributes (only if relevant fields present)
+                width = dynamic_attrs.get('width') or ''
+                height = dynamic_attrs.get('height') or dynamic_attrs.get('aspect_ratio') or ''
+                rim = dynamic_attrs.get('rim') or dynamic_attrs.get('rim_size') or ''
+                if width and height and rim and not dynamic_attrs.get('tire_size'):
+                    auto_size = f"{width}/{height} R{rim}"
+                    dynamic_attrs['tire_size'] = auto_size
+                    dynamic_attrs['tire_size_label'] = auto_size
+
+                raw_load = dynamic_attrs.get('load_index') or dynamic_attrs.get('load_speed_index') or ''
+                extracted_speed = dynamic_attrs.get('speed_rating') or dynamic_attrs.get('tire_speed_rating') or ''
+                extracted_load = raw_load
+                if raw_load:
+                    m = re.match(r'^(\d{2,3})\s*([A-Za-z]+)$', raw_load)
+                    if m:
+                        extracted_load = m.group(1)
+                        if not extracted_speed:
+                            extracted_speed = m.group(2).upper()
+                    dynamic_attrs['load_speed_index'] = raw_load
+                    dynamic_attrs['load_index'] = extracted_load
+                    dynamic_attrs['tire_load_index'] = extracted_load
+                    if extracted_speed:
+                        dynamic_attrs['tire_speed_rating'] = extracted_speed
+
+                # Country / Origin normalization
+                country_val = dynamic_attrs.get('country') or dynamic_attrs.get('country_of_origin') or dynamic_attrs.get('origin')
+                if country_val:
+                    dynamic_attrs['origin'] = country_val
+                    dynamic_attrs['country'] = country_val
+                    dynamic_attrs['country_of_origin'] = country_val
+
+                # Tax class normalization
+                tax_val = dynamic_attrs.get('tax_class') or dynamic_attrs.get('tax_class_name') or 'Taxable Goods'
+                dynamic_attrs['tax_class'] = tax_val
+                dynamic_attrs['tax_class_name'] = tax_val
+
+                # Promotion normalization
+                promo_val = dynamic_attrs.get('promotion') or dynamic_attrs.get('offers') or 'None'
+                dynamic_attrs['promotion'] = promo_val
+
+                # Boolean flags
+                runflat_raw = str(dynamic_attrs.get('runflat') or '').strip().lower()
+                run_flat = 1 if runflat_raw in ('yes', '1', 'true') else 0
+                ev_raw = str(dynamic_attrs.get('ev_tyre') or '').strip().lower()
+                ev_rated = 1 if ev_raw in ('yes', '1', 'true') else 0
+                tabby_raw = str(dynamic_attrs.get('tabby_payment') or '').strip().lower()
+                pay_later_eligible = 1 if tabby_raw in ('yes', '1', 'true') else 0
+
+                parts_cat = (dynamic_attrs.get('parts_category') or row.get('attribute_set_code') or 'Tyres').strip()
+                tyres_cat = dynamic_attrs.get('tyres_category')
+                year_val = dynamic_attrs.get('year')
+                price_included = (dynamic_attrs.get('price_included_text') or dynamic_attrs.get('price_included') or 'Fitted Price').strip()
+
+                # Build universal product payload
                 product_payload = {
                     'sku': sku,
                     'website_id': 1,
+                    'website_ids': [1],
                     'item_code': item_code,
-                    'parts_category': parts_category,
-                    'tyres_category': tyres_category,
-                    'year': year,
+                    'parts_category': parts_cat,
+                    'tyres_category': tyres_cat,
+                    'year': year_val,
                     'price_included': price_included,
                     'small_image': small_image,
                     'small_image_alt': display_name,
                     'display_name': display_name,
                     'name_en': name,
                     'slug': url_key,
-                    'attribute_set_id': 1,  # Tyres
+                    'attribute_set_id': resolved_set_id,
                     'brand_id': brand_id,
                     'category_id': primary_category_id,
                     'category_ids': assigned_category_ids,
-                    'website_ids': [1],
                     'price': price,
                     'cost_price': cost_price,
-                    'stock_qty': 10,
-                    'stock_status': 'in_stock',
-                    'vehicle_type': 'car',
-                    'tire_type': 'summer',
-                    'width': width,
-                    'aspect_ratio': height,
-                    'rim_size': rim,
-                    'tire_size_label': tyre_size,
-                    'tire_speed_rating': speed_rating,
-                    'tire_load_index': load_index,
-                    'tire_pattern': pattern,
-                    'country_of_origin': country,
-                    'warranty_months': 12,
+                    'stock_qty': stock_qty,
+                    'stock_status': stock_status,
                     'weight': weight,
                     'run_flat': run_flat,
                     'ev_rated': ev_rated,
                     'pay_later_eligible': pay_later_eligible,
                     'image_path': base_image,
-                    'status': 'active',
-                    'visibility': 'visible',
+                    'status': status,
+                    'visibility': visibility,
                     'short_desc_en': (row.get('short_description') or '').strip(),
                     'description_en': (row.get('description') or '').strip(),
                     'meta_title_en': (row.get('meta_title') or '').strip(),
@@ -280,6 +359,21 @@ class ProductImporter:
                     'attributes_json': dynamic_attrs
                 }
 
+                # Direct columns for tyre attributes if present
+                if dynamic_attrs.get('tire_size'):
+                    product_payload['tire_size_label'] = dynamic_attrs['tire_size']
+                if extracted_load:
+                    product_payload['tire_load_index'] = extracted_load
+                if extracted_speed:
+                    product_payload['tire_speed_rating'] = extracted_speed
+                if dynamic_attrs.get('pattern'):
+                    product_payload['tire_pattern'] = dynamic_attrs['pattern']
+                if dynamic_attrs.get('tyre_type'):
+                    product_payload['tire_type'] = dynamic_attrs['tyre_type']
+                if country_val:
+                    product_payload['country_of_origin'] = country_val
+
+                # Insert or Update product
                 existing_p = Product.find_by_sku(sku)
                 if existing_p:
                     Product.update(existing_p['id'], product_payload, user_id=user_id)

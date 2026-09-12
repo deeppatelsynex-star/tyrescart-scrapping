@@ -550,6 +550,25 @@ class AttributeService:
                 elif value is not None:
                     val_text = str(value)
 
+                if attr_type == 'select' and option_id is None and value not in (None, ''):
+                    clean_opt_val = str(value).strip()
+                    if clean_opt_val:
+                        cursor.execute("""
+                            SELECT id FROM attribute_options 
+                            WHERE attribute_id = %s AND (LOWER(value) = LOWER(%s) OR JSON_UNQUOTE(JSON_EXTRACT(label, '$.en')) = %s)
+                            LIMIT 1
+                        """, (attribute_id, clean_opt_val, clean_opt_val))
+                        opt_row = cursor.fetchone()
+                        if opt_row:
+                            option_id = opt_row['id']
+                        else:
+                            lbl_json = json.dumps({'en': clean_opt_val, 'ar': clean_opt_val}, ensure_ascii=False)
+                            cursor.execute("""
+                                INSERT INTO attribute_options (attribute_id, value, label, created_by, updated_by, created_at, updated_at)
+                                VALUES (%s, %s, %s, %s, %s, NOW(), NOW())
+                            """, (attribute_id, clean_opt_val, lbl_json, user_id, user_id))
+                            option_id = cursor.lastrowid
+
                 # Scoped match condition
                 scope_cond = "website_id IS NULL AND store_id IS NULL AND store_view_id IS NULL"
                 scope_params = [product_id, attribute_id]
