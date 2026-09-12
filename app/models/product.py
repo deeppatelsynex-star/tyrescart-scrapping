@@ -582,42 +582,89 @@ class Product:
                 if not tire_size_label and dyn_attrs.get('tire_size_label'):
                     tire_size_label = str(dyn_attrs['tire_size_label']).strip()
 
-                now = datetime.now(timezone.utc)
+                website_id = cls._safe_int(data.get('website_id'), 1)
+                item_code = (data.get('item_code') or '').strip() or None
+                parts_category = (data.get('parts_category') or '').strip() or None
+                tyres_category = (data.get('tyres_category') or '').strip() or None
+                if tyres_category:
+                    tc_l = tyres_category.lower()
+                    if tc_l == 'budget':
+                        tyres_category = 'Budget'
+                    elif tc_l == 'quality':
+                        tyres_category = 'Quality'
+                    elif tc_l == 'premium':
+                        tyres_category = 'Premium'
+                    else:
+                        tyres_category = None
+
+                raw_year = data.get('year')
+                year = None
+                if raw_year:
+                    try:
+                        y_int = int(str(raw_year).strip())
+                        if 1901 <= y_int <= 2155:
+                            year = y_int
+                    except (ValueError, TypeError):
+                        year = None
+
+                make_ids = data.get('make_ids')
+                if make_ids is not None and not isinstance(make_ids, str):
+                    make_ids = json.dumps(make_ids)
+                elif isinstance(make_ids, str) and not make_ids.strip():
+                    make_ids = None
+
+                price_included = data.get('price_included') or data.get('price_included_text')
+                if price_included:
+                    if isinstance(price_included, dict):
+                        price_included = json.dumps(price_included, ensure_ascii=False)
+                    elif isinstance(price_included, str):
+                        if price_included.strip().startswith('{'):
+                            price_included = price_included.strip()
+                        else:
+                            price_included = json.dumps({'en': price_included.strip()}, ensure_ascii=False)
+                else:
+                    price_included = None
+
+                small_image = (data.get('small_image') or image_path or '').strip() or None
+                small_image_alt = (data.get('small_image_alt') or image_alt or display_name or '').strip() or None
 
                 cursor.execute("""
                     INSERT INTO products (
-                        attribute_set_id, attributes_json,
-                        sku, display_name, slug, name, description, short_desc,
+                        website_id, attribute_set_id, attributes_json,
+                        sku, item_code, parts_category, tyres_category, year, make_ids, price_included,
+                        display_name, slug, name, description, short_desc,
                         price, list_price, sale_price, cost_price, currency,
                         stock_qty, stock_status, manage_stock, min_order_qty, max_order_qty,
                         tire_size_label, tire_speed_rating, tire_load_index, tire_type, tire_pattern,
                         run_flat, ev_rated, oem_approved, oem_brand, vehicle_type,
-                        brand_id, category_id, image_path, image_alt, gallery_json,
+                        brand_id, category_id, image_path, image_alt, small_image, small_image_alt, gallery_json,
                         weight, country_of_origin, warranty_months,
                         is_featured, is_new, sort_order, status, visibility, pay_later_eligible,
                         canonical_url, meta_title, meta_desc,
                         created_by, created_at, updated_at
                     ) VALUES (
-                        %s, %s,
-                        %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s,
                         %s, %s, %s, %s, %s, %s,
                         %s, %s, %s,
                         %s, %s, %s
                     )
                 """, (
-                    attribute_set_id, attributes_json,
-                    sku, display_name, slug, json.dumps(name_json), description, short_desc,
+                    website_id, attribute_set_id, attributes_json,
+                    sku, item_code, parts_category, tyres_category, year, make_ids, price_included,
+                    display_name, slug, json.dumps(name_json), description, short_desc,
                     price, list_price, sale_price, cost_price, 'AED',
                     stock_qty, stock_status, manage_stock, min_order_qty, max_order_qty,
                     tire_size_label, tire_speed_rating, tire_load_index, tire_type, tire_pattern,
                     run_flat, ev_rated, oem_approved, oem_brand, vehicle_type,
-                    brand_id, category_id, image_path, image_alt, gallery_json,
+                    brand_id, category_id, image_path, image_alt, small_image, small_image_alt, gallery_json,
                     weight, country_of_origin, warranty_months,
                     is_featured, is_new, sort_order, status, visibility, pay_later_eligible,
                     canonical_url, meta_title, meta_desc,
@@ -814,10 +861,66 @@ class Product:
                         fields.append(f"{fk_col} = %s")
                         params.append(val)
 
-                for str_col in ['image_path', 'image_alt', 'canonical_url']:
+                for str_col in ['image_path', 'image_alt', 'small_image', 'small_image_alt', 'canonical_url', 'item_code', 'parts_category']:
                     if str_col in data:
                         fields.append(f"{str_col} = %s")
-                        params.append(data[str_col] or None)
+                        params.append((str(data[str_col]).strip()) if data[str_col] else None)
+
+                if 'website_id' in data:
+                    fields.append("website_id = %s")
+                    params.append(cls._safe_int(data['website_id'], 1))
+
+                if 'tyres_category' in data:
+                    tc = (str(data['tyres_category']).strip()) if data['tyres_category'] else None
+                    if tc:
+                        tc_l = tc.lower()
+                        if tc_l == 'budget':
+                            tc = 'Budget'
+                        elif tc_l == 'quality':
+                            tc = 'Quality'
+                        elif tc_l == 'premium':
+                            tc = 'Premium'
+                        else:
+                            tc = None
+                    fields.append("tyres_category = %s")
+                    params.append(tc)
+
+                if 'year' in data:
+                    raw_y = data['year']
+                    y_val = None
+                    if raw_y:
+                        try:
+                            y_int = int(str(raw_y).strip())
+                            if 1901 <= y_int <= 2155:
+                                y_val = y_int
+                        except (ValueError, TypeError):
+                            y_val = None
+                    fields.append("year = %s")
+                    params.append(y_val)
+
+                if 'make_ids' in data:
+                    m_ids = data['make_ids']
+                    if m_ids is not None and not isinstance(m_ids, str):
+                        m_ids = json.dumps(m_ids)
+                    elif isinstance(m_ids, str) and not m_ids.strip():
+                        m_ids = None
+                    fields.append("make_ids = %s")
+                    params.append(m_ids)
+
+                if 'price_included' in data or 'price_included_text' in data:
+                    pi = data.get('price_included') or data.get('price_included_text')
+                    if pi:
+                        if isinstance(pi, dict):
+                            pi = json.dumps(pi, ensure_ascii=False)
+                        elif isinstance(pi, str):
+                            if pi.strip().startswith('{'):
+                                pi = pi.strip()
+                            else:
+                                pi = json.dumps({'en': pi.strip()}, ensure_ascii=False)
+                    else:
+                        pi = None
+                    fields.append("price_included = %s")
+                    params.append(pi)
 
                 if 'gallery_json' in data:
                     fields.append("gallery_json = %s")

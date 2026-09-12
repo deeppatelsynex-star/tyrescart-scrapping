@@ -155,11 +155,24 @@ class ProductImporter:
                 if not tyre_size and width and height and rim:
                     tyre_size = f"{width}/{height} R{rim}"
 
-                load_index = (row.get('load_index') or '').strip()
+                raw_load_index = (row.get('load_index') or '').strip()
+                load_index = raw_load_index
+                speed_rating = (row.get('speed_rating') or row.get('tire_speed_rating') or '').strip()
+                if raw_load_index:
+                    import re
+                    m = re.match(r'^(\d{2,3})\s*([A-Za-z]+)$', raw_load_index)
+                    if m:
+                        load_index = m.group(1)
+                        if not speed_rating:
+                            speed_rating = m.group(2).upper()
+
                 pattern = (row.get('pattern') or '').strip()
                 country = (row.get('country') or '').strip()
                 year = (row.get('year') or '').strip()
                 warranty_period = (row.get('warranty_period') or '').strip()
+                parts_category = (row.get('parts_category') or 'Tyres').strip()
+                tyres_category = (row.get('tyres_category') or 'Premium').strip()
+                price_included = (row.get('price_included_text') or row.get('price_included') or 'Fitted Price').strip()
                 runflat_raw = (row.get('runflat') or '').strip().lower()
                 run_flat = 1 if runflat_raw in ('yes', '1', 'true') else 0
                 ev_raw = (row.get('ev_tyre') or '').strip().lower()
@@ -168,7 +181,13 @@ class ProductImporter:
                 pay_later_eligible = 1 if tabby_raw in ('yes', '1', 'true') else 0
 
                 base_image = (row.get('base_image') or '').strip()
+                small_image = (row.get('small_image') or base_image).strip()
                 url_key = (row.get('url_key') or slugify(name)).strip()
+                raw_weight = row.get('weight')
+                try:
+                    weight = float(raw_weight) if raw_weight else None
+                except (ValueError, TypeError):
+                    weight = None
 
                 # Dynamic attributes dictionary matching Magento fields
                 dynamic_attrs = {
@@ -192,23 +211,31 @@ class ProductImporter:
                     'rim_size': rim,
                     'load_index': load_index,
                     'tire_load_index': load_index,
+                    'tire_speed_rating': speed_rating,
                     'year': year,
                     'runflat': 'Yes' if run_flat else 'No',
                     'country': country,
                     'country_of_origin': country,
-                    'parts_category': (row.get('parts_category') or 'Tyres').strip(),
+                    'parts_category': parts_category,
                     'tyre_type': (row.get('tyre_type') or 'Car').strip(),
                     'warranty_period': warranty_period,
-                    'tyres_category': (row.get('tyres_category') or 'Premium').strip(),
+                    'tyres_category': tyres_category,
                     'tabby_payment': 'Yes' if pay_later_eligible else 'No',
-                    'price_included_text': (row.get('price_included_text') or 'Fitted Price').strip(),
+                    'price_included_text': price_included,
                     'tax_class_name': (row.get('tax_class_name') or 'Taxable Goods').strip(),
                     'visibility': (row.get('visibility') or 'Catalog, Search').strip()
                 }
 
                 product_payload = {
                     'sku': sku,
+                    'website_id': 1,
                     'item_code': item_code,
+                    'parts_category': parts_category,
+                    'tyres_category': tyres_category,
+                    'year': year,
+                    'price_included': price_included,
+                    'small_image': small_image,
+                    'small_image_alt': display_name,
                     'display_name': display_name,
                     'name_en': name,
                     'slug': url_key,
@@ -227,10 +254,12 @@ class ProductImporter:
                     'aspect_ratio': height,
                     'rim_size': rim,
                     'tire_size_label': tyre_size,
+                    'tire_speed_rating': speed_rating,
                     'tire_load_index': load_index,
                     'tire_pattern': pattern,
                     'country_of_origin': country,
                     'warranty_months': 12,
+                    'weight': weight,
                     'run_flat': run_flat,
                     'ev_rated': ev_rated,
                     'pay_later_eligible': pay_later_eligible,
