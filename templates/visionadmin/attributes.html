@@ -161,26 +161,27 @@
                 <td class="px-5 py-3.5 text-center">
                   <span class="text-xs font-bold" :class="attr.is_required ? 'text-rose-600' : 'text-slate-300'" x-text="attr.is_required ? '● Required' : 'Optional'"></span>
                 </td>
-                <td class="px-5 py-3.5 text-right space-x-1 whitespace-nowrap" @click.stop>
-                  <button 
-                    type="button" 
-                    @click.stop="viewAttribute(attr)" 
+                <td class="px-5 py-3.5 text-right" @click.stop>
+                  <div class="flex items-center justify-end gap-1">
+                  <button
+                    type="button"
+                    @click.stop="viewAttribute(attr)"
                     class="p-1.5 rounded-lg text-slate-500 hover:text-[#1D4ED8] hover:bg-[#EFF6FF] transition cursor-pointer"
                     title="Inspect Attribute"
                   >
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
-                  <a 
-                    :href="'/visionadmin/attributes/' + attr.id + '/edit'" 
+                  <a
+                    :href="'/visionadmin/attributes/' + attr.id + '/edit'"
                     class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
                     title="Edit Attribute"
                   >
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   </a>
                   <template x-if="!isRequiredAttribute(attr)">
-                    <button 
-                      type="button" 
-                      @click.stop="deleteAttribute(attr)" 
+                    <button
+                      type="button"
+                      @click.stop="deleteAttribute(attr)"
                       class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                       title="Delete Attribute"
                     >
@@ -188,13 +189,14 @@
                     </button>
                   </template>
                   <template x-if="isRequiredAttribute(attr)">
-                    <span 
-                      class="p-1.5 text-slate-300 inline-block align-middle cursor-not-allowed" 
+                    <span
+                      class="p-1.5 text-slate-300 inline-block align-middle cursor-not-allowed"
                       title="Required attribute cannot be deleted"
                     >
                       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     </span>
                   </template>
+                  </div>
                 </td>
               </tr>
             </template>
@@ -305,26 +307,27 @@
                     x-text="set.is_system ? 'System Set' : 'Custom Set'"
                   ></span>
                 </td>
-                <td class="px-5 py-3.5 text-right space-x-1.5 whitespace-nowrap" @click.stop>
-                  <a 
-                    :href="'/visionadmin/attribute-sets/' + set.id + '/builder'" 
+                <td class="px-5 py-3.5 text-right" @click.stop>
+                  <div class="flex items-center justify-end gap-1.5">
+                  <a
+                    :href="'/visionadmin/attribute-sets/' + set.id + '/builder'"
                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EFF6FF] hover:bg-[#DBEAFE] text-[#1D4ED8] text-xs font-bold transition cursor-pointer"
                     title="Open Schema Builder"
                   >
                     <span>Schema Builder ↗</span>
                   </a>
-                  <a 
-                    :href="'/visionadmin/attribute-sets/' + set.id + '/edit'" 
-                    class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer inline-block align-middle"
+                  <a
+                    :href="'/visionadmin/attribute-sets/' + set.id + '/edit'"
+                    class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
                     title="Edit Set Info"
                   >
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   </a>
                   <template x-if="!set.is_system">
-                    <button 
-                      type="button" 
-                      @click.stop="deleteAttributeSet(set)" 
-                      class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer inline-block align-middle"
+                    <button
+                      type="button"
+                      @click.stop="deleteAttributeSet(set)"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                       title="Delete Attribute Set"
                     >
                       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -335,6 +338,7 @@
                       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     </span>
                   </template>
+                  </div>
                 </td>
               </tr>
             </template>
