@@ -27,6 +27,7 @@ from visionadmin.admin_auth import (
     verify_and_consume_admin_reset_token,
 )
 from mailer import send_email
+from services.attribute_service import AttributeService
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
@@ -388,7 +389,8 @@ def register_visionadmin_routes(app):
     @app.route('/admin/products', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_products():
-        return render_template('visionadmin/products.html', page='products', is_catalog=True, initial_view='list')
+        sets = AttributeService.get_attribute_sets()
+        return render_template('visionadmin/products.html', page='products', is_catalog=True, initial_view='list', attribute_sets=sets)
 
     @app.route('/visionadmin/catalog/products/new', methods=['GET'])
     @app.route('/visionadmin/products/new', methods=['GET'])
@@ -397,14 +399,16 @@ def register_visionadmin_routes(app):
     @app.route('/visonadmin/products/create', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_products_create():
-        return render_template('visionadmin/product_form.html', page='products', is_catalog=True, initial_view='new')
+        sets = AttributeService.get_attribute_sets()
+        return render_template('visionadmin/product_form.html', page='products', is_catalog=True, initial_view='new', attribute_sets=sets)
 
     @app.route('/visionadmin/catalog/products/<int:product_id>/edit', methods=['GET'])
     @app.route('/visionadmin/products/<int:product_id>/edit', methods=['GET'])
     @app.route('/visonadmin/products/<int:product_id>/edit', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_products_edit(product_id):
-        return render_template('visionadmin/product_form.html', page='products', is_catalog=True, initial_view='edit', initial_product_id=product_id)
+        sets = AttributeService.get_attribute_sets()
+        return render_template('visionadmin/product_form.html', page='products', is_catalog=True, initial_view='edit', initial_product_id=product_id, attribute_sets=sets)
 
     @app.route('/visionadmin/catalog/brands', methods=['GET'])
     @app.route('/visionadmin/brands', methods=['GET'])
@@ -461,7 +465,8 @@ def register_visionadmin_routes(app):
     @app.route('/visonadmin/catalog/attributes', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_attributes():
-        return render_template('visionadmin/attributes.html', page='attributes')
+        sets = AttributeService.get_attribute_sets()
+        return render_template('visionadmin/attributes.html', page='attributes', attribute_sets=sets)
 
     @app.route('/visionadmin/attributes/new', methods=['GET'])
     @app.route('/visionadmin/attributes/create', methods=['GET'])
@@ -488,14 +493,16 @@ def register_visionadmin_routes(app):
     @app.route('/visonadmin/attribute-sets/create', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_attribute_sets_create():
-        return render_template('visionadmin/attribute_set_form.html', page='attributes', initial_mode='create')
+        sets = AttributeService.get_attribute_sets()
+        return render_template('visionadmin/attribute_set_form.html', page='attributes', initial_mode='create', attribute_sets=sets)
 
     @app.route('/visionadmin/attribute-sets/<int:set_id>/edit', methods=['GET'])
     @app.route('/visionadmin/catalog/attribute-sets/<int:set_id>/edit', methods=['GET'])
     @app.route('/visonadmin/attribute-sets/<int:set_id>/edit', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_attribute_sets_edit(set_id):
-        return render_template('visionadmin/attribute_set_form.html', page='attributes', initial_mode='edit', initial_set_id=set_id)
+        sets = AttributeService.get_attribute_sets()
+        return render_template('visionadmin/attribute_set_form.html', page='attributes', initial_mode='edit', initial_set_id=set_id, attribute_sets=sets)
 
     @app.route('/visionadmin/attribute-sets/<int:set_id>/builder', methods=['GET'])
     @app.route('/visionadmin/attribute-sets/<int:set_id>/schema', methods=['GET'])
@@ -504,7 +511,8 @@ def register_visionadmin_routes(app):
     @app.route('/visonadmin/attribute-sets/<int:set_id>/schema', methods=['GET'])
     @login_required_visionadmin
     def visionadmin_attribute_sets_builder(set_id):
-        return render_template('visionadmin/attribute_set_builder.html', page='attributes', initial_set_id=set_id)
+        sets = AttributeService.get_attribute_sets()
+        return render_template('visionadmin/attribute_set_builder.html', page='attributes', initial_set_id=set_id, attribute_sets=sets)
 
     @app.route('/visionadmin/stores', methods=['GET'])
     @app.route('/visionadmin/websites', methods=['GET'])

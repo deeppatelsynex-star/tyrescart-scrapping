@@ -734,7 +734,7 @@ function visionAttributesApp() {
     setPerPage: 10,
     attributes: [],
     trashAttributes: [],
-    attributeSets: [],
+    attributeSets: {{ (attribute_sets or []) | tojson | safe }},
     trashAttributeSets: [],
     showCreateModal: false,
     showSetModal: false,

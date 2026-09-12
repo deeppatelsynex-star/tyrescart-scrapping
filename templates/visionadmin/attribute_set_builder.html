@@ -27,6 +27,19 @@
 
     <!-- Actions -->
     <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+      <!-- Attribute Set Switcher Dropdown (Switch between all 7 attribute sets directly) -->
+      <div class="flex items-center gap-2 px-3.5 py-2 rounded-2xl border border-slate-200 bg-white shadow-2xs">
+        <label class="text-[11px] font-bold text-slate-500 whitespace-nowrap">Set:</label>
+        <select 
+          onchange="if (this.value) window.location.href = '/visionadmin/catalog/attribute-sets/' + this.value + '/builder'"
+          class="text-xs font-bold text-slate-800 bg-transparent focus:outline-none cursor-pointer pr-1"
+        >
+          {% for s in attribute_sets %}
+            <option value="{{ s.id }}" {% if s.id == initial_set_id %}selected{% endif %}>{{ s.name }} ({{ s.groups_count }} groups)</option>
+          {% endfor %}
+        </select>
+      </div>
+
       <a 
         href="/visionadmin/attributes?tab=sets" 
         class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs tracking-wide transition shadow-2xs active:scale-95 cursor-pointer"

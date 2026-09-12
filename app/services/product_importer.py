@@ -101,6 +101,7 @@ class ProductImporter:
                     s_slug = str(s['slug']).strip().lower() if s.get('slug') else s_name
                     set_lookup[s_name] = s_id
                     set_lookup[s_slug] = s_id
+                    set_lookup[str(s_id)] = s_id
                     if s_name.endswith('s'):
                         set_lookup[s_name[:-1]] = s_id
                     else:
@@ -202,10 +203,14 @@ class ProductImporter:
                     row.get('attribute_set_code') or 
                     row.get('attribute_set') or 
                     row.get('attribute_set_name') or 
+                    row.get('attribute_set_id') or 
                     row.get('parts_category') or ''
                 ).strip().lower()
 
                 resolved_set_id = set_lookup.get(raw_set_hint)
+                if not resolved_set_id and raw_set_hint.isdigit():
+                    resolved_set_id = int(raw_set_hint)
+
                 if not resolved_set_id:
                     # Infer set based on column indicators present in this row
                     cols_present = {k.strip().lower() for k, v in row.items() if v is not None and str(v).strip() != ''}
@@ -213,7 +218,11 @@ class ProductImporter:
                         resolved_set_id = set_lookup.get('battery') or 3
                     elif {'bolt_pattern_pcd', 'wheel_type', 'offset', 'hub_bore', 'back_space_inches'} & cols_present:
                         resolved_set_id = set_lookup.get('wheels') or 7
-                    elif {'tyre_size', 'tire_size', 'width', 'height', 'rim', 'load_index', 'speed_rating'} & cols_present:
+                    elif {'bike_tyre_type'} & cols_present:
+                        resolved_set_id = set_lookup.get('motorcycle tyres') or set_lookup.get('motorcycle_tyres') or 4
+                    elif {'color_finish'} & cols_present and 'wheel_type' not in cols_present and 'offset' not in cols_present:
+                        resolved_set_id = set_lookup.get('rim protectors') or set_lookup.get('rim_protectors') or 5
+                    elif {'tyre_size', 'tire_size', 'width', 'height', 'rim', 'load_index', 'speed_rating', 'pattern', 'oem_tyres', 'runflat', 'tyre_type'} & cols_present:
                         resolved_set_id = set_lookup.get('tyres') or 1
                     else:
                         resolved_set_id = set_lookup.get('default') or 2
@@ -247,6 +256,8 @@ class ProductImporter:
                     clean_k = str(raw_k).strip()
                     if not clean_k:
                         continue
+
+                    val_str = str(raw_v).strip()
 
                     # Ignore attribute set indicators from dynamic attributes as attribute_set_id is a core column
                     k_lower = clean_k.lower()

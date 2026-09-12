@@ -80,8 +80,13 @@
             x-model="form.clone_from_id" 
             class="w-full px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563FF]"
           >
-            <template x-for="s in attributeSets" :key="s.id">
-              <option :value="s.id" x-text="s.name"></option>
+            {% for s in attribute_sets %}
+              <option value="{{ s.id }}">{{ s.name }}</option>
+            {% endfor %}
+            <template x-if="!{{ (attribute_sets or []) | length }}">
+              <template x-for="s in attributeSets" :key="s.id">
+                <option :value="s.id" x-text="s.name"></option>
+              </template>
             </template>
             <option value="">None (Blank Set with General Group)</option>
           </select>
@@ -135,7 +140,7 @@
 function visionAttributeSetFormApp(initialSetId = null) {
   return {
     initialSetId: initialSetId,
-    attributeSets: [],
+    attributeSets: {{ (attribute_sets or []) | tojson | safe }},
     isSaving: false,
     form: {
       id: initialSetId,

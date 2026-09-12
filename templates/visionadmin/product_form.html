@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="visionProductsApp('{{ initial_view | default('new', true) }}', {{ initial_product_id | default('null', true) }})" x-init="initData()">
+<div class="space-y-6" x-data="visionProductsApp('{{ initial_view | default('new', true) }}', {{ initial_product_id | default('null', true) }})" x-init="attributeSets = {{ (attribute_sets or []) | tojson | safe }}; initData()">
   <!-- FULL PAGE: MAGENTO 2 ADMIN CATALOG PRODUCT STUDIO                         -->
   <!-- ========================================================================= -->
   <!-- Top Action Bar (Full Page Header) -->
@@ -133,8 +133,13 @@
                   @change="onAttributeSetChange(form.attribute_set_id, isEditMode ? form.id : null)" 
                   class="w-full px-3 py-2 rounded-xs border border-[#adadad] focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] text-xs font-bold text-slate-800 bg-white shadow-2xs outline-hidden cursor-pointer"
                 >
-                  <template x-for="s in attributeSets" :key="s.id">
-                    <option :value="s.id" x-text="s.name" :selected="s.id == form.attribute_set_id"></option>
+                  {% for s in attribute_sets %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                  {% endfor %}
+                  <template x-if="!{{ (attribute_sets or []) | length }}">
+                    <template x-for="s in attributeSets" :key="s.id">
+                      <option :value="s.id" x-text="s.name" :selected="s.id == form.attribute_set_id"></option>
+                    </template>
                   </template>
                 </select>
                 <a 
