@@ -162,6 +162,22 @@
     `;
   }
 
+  function renderCustomSection(sec, page, locale) {
+    // Full-width escape hatch for raw HTML authored directly in the Sections
+    // admin's CKEditor field — unlike renderContentImageSection, this does
+    // not constrain content to a narrow "story" column, so multi-column
+    // grids, step layouts, FAQ accordions, etc. can use the full .wrap width.
+    return `
+      <section class="custom-html-section" id="section-${sec.id}">
+        <div class="wrap">
+          ${sec.section_subtitle ? `<span class="eyebrow">${escapeHtml(sec.section_subtitle)}</span>` : ''}
+          ${sec.section_title ? `<h2>${escapeHtml(sec.section_title)}</h2>` : ''}
+          ${sec.content || ''}
+        </div>
+      </section>
+    `;
+  }
+
   function renderContentImageSection(sec, page, locale) {
     const hasImage = Boolean(sec.image && sec.image.trim());
     const isLeft = sec.image_position === 'left';
@@ -516,6 +532,9 @@
             case 'cta':
               finalHtml += renderCtaSection(sec, page, locale);
               break;
+            case 'custom':
+              finalHtml += renderCustomSection(sec, page, locale);
+              break;
             default:
               finalHtml += renderContentImageSection(sec, page, locale);
               break;
@@ -525,8 +544,27 @@
 
       root.innerHTML = finalHtml;
 
-      // 3. Initialize scroll-triggered interactive count-up animation for numbers
+      // 3. innerHTML never executes embedded <script> tags (browsers ignore
+      // them by design), so any raw HTML authored in a section's CKEditor
+      // field — JSON-LD blocks, small interaction scripts — needs its
+      // <script> elements manually re-created to actually run.
+      root.querySelectorAll('script').forEach(oldScript => {
+        const newScript = document.createElement('script');
+        for (const attr of oldScript.attributes) newScript.setAttribute(attr.name, attr.value);
+        newScript.textContent = oldScript.textContent;
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+      });
+
+      // 4. Initialize scroll-triggered interactive count-up animation for numbers
       initStatsCounterObserver(root);
+
+      // 5. Re-scan for FAQ accordions inside content that was just injected
+      // (client.js's own DOMContentLoaded scan already ran before this
+      // async fetch resolved, so any .faq-item markup written directly into
+      // a section's raw HTML needs a manual re-bind here).
+      if (typeof window.initFaqAccordion === 'function') {
+        window.initFaqAccordion();
+      }
 
     } catch (err) {
       console.error('Failed to load page sections dynamically:', err);

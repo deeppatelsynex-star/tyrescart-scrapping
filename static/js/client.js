@@ -479,61 +479,81 @@
 
   /* ---------- Smooth Exclusive FAQ Accordion Engine ---------- */
   function initFaqAccordion() {
-    var faqContainers = document.querySelectorAll('.faq, .dynamic-faq-block, [id^="faq"], .faq-list');
-    faqContainers.forEach(function(container) {
-      // 1. Button-based FAQ items (Smooth CSS Grid Accordion)
-      var faqButtons = container.querySelectorAll('.faq-item .faq-summary');
-      faqButtons.forEach(function(btn) {
-        if (btn._faqBound) return;
-        btn._faqBound = true;
+    // 1. Button-based FAQ items (Smooth CSS Grid Accordion)
+    var faqButtons = document.querySelectorAll('.faq-item .faq-summary, .faq-item .faq-trigger, .faq-item .tv-faq-trigger, .faq-item button.faq-question-btn, .faq-item button[aria-expanded], [data-faq-item] button');
+    faqButtons.forEach(function(btn) {
+      if (btn._faqBound || btn.dataset.bound === 'true') return;
+      btn._faqBound = true;
+      btn.dataset.bound = 'true';
 
-        btn.addEventListener('click', function(e) {
-          e.preventDefault();
-          var item = btn.closest('.faq-item');
-          if (!item) return;
-          var isAlreadyActive = item.classList.contains('active');
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        var item = btn.closest('.faq-item, .tv-faq-item, [data-faq-item]');
+        if (!item) return;
+        var isAlreadyActive = item.classList.contains('active');
 
-          // Smoothly close all other items in this list container
-          var allItems = container.querySelectorAll('.faq-item');
+        // Smoothly close all other items in this list container
+        var container = item.closest('.faq-list, .faq, .dynamic-faq-block, .tv-faq-container, [id^="faq"]') || item.parentElement;
+        if (container) {
+          var allItems = container.querySelectorAll('.faq-item, .tv-faq-item, [data-faq-item]');
           allItems.forEach(function(otherItem) {
             if (otherItem !== item && otherItem.classList.contains('active')) {
               otherItem.classList.remove('active');
-              var otherBtn = otherItem.querySelector('.faq-summary');
+              var otherBtn = otherItem.querySelector('.faq-summary, .faq-trigger, .tv-faq-trigger, button[aria-expanded]');
               if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+              var otherIcon = otherItem.querySelector('.faq-icon');
+              if (otherIcon) otherIcon.innerHTML = '+';
+              var otherAnswer = otherItem.querySelector('.faq-answer');
+              if (otherAnswer && otherAnswer.style.maxHeight) otherAnswer.style.maxHeight = '0px';
             }
           });
+        }
 
-          // Toggle clicked item
-          if (isAlreadyActive) {
-            item.classList.remove('active');
-            btn.setAttribute('aria-expanded', 'false');
-          } else {
-            item.classList.add('active');
-            btn.setAttribute('aria-expanded', 'true');
+        // Toggle clicked item
+        if (isAlreadyActive) {
+          item.classList.remove('active');
+          btn.setAttribute('aria-expanded', 'false');
+          var icon = item.querySelector('.faq-icon');
+          if (icon) icon.innerHTML = '+';
+          var answer = item.querySelector('.faq-answer');
+          if (answer && answer.style.maxHeight) answer.style.maxHeight = '0px';
+        } else {
+          item.classList.add('active');
+          btn.setAttribute('aria-expanded', 'true');
+          var icon = item.querySelector('.faq-icon');
+          if (icon) icon.innerHTML = '&minus;';
+          var answer = item.querySelector('.faq-answer');
+          if (answer && answer.style.maxHeight) {
+            var inner = answer.querySelector('.faq-answer-inner');
+            answer.style.maxHeight = ((inner ? inner.scrollHeight : 200) + 40) + 'px';
           }
-        });
+        }
       });
+    });
 
-      // 2. Native <details> fallback support
-      var allDetails = container.querySelectorAll('details');
-      allDetails.forEach(function(detail) {
-        if (detail._faqBound) return;
-        detail._faqBound = true;
+    // 2. Native <details> fallback support
+    var allDetails = document.querySelectorAll('.faq details, .faq-list details, details.faq-item');
+    allDetails.forEach(function(detail) {
+      if (detail._faqBound || detail.dataset.bound === 'true') return;
+      detail._faqBound = true;
+      detail.dataset.bound = 'true';
 
-        detail.addEventListener('toggle', function() {
-          if (this.open) {
-            detail.classList.add('active');
-            allDetails.forEach(function(other) {
+      detail.addEventListener('toggle', function() {
+        if (this.open) {
+          detail.classList.add('active');
+          var container = detail.closest('.faq-list, .faq') || detail.parentElement;
+          if (container) {
+            container.querySelectorAll('details').forEach(function(other) {
               if (other !== detail && other.open) {
                 other.open = false;
                 other.removeAttribute('open');
                 other.classList.remove('active');
               }
             });
-          } else {
-            detail.classList.remove('active');
           }
-        });
+        } else {
+          detail.classList.remove('active');
+        }
       });
     });
   }
@@ -545,6 +565,11 @@
     initFaqAccordion();
     sliderInit();
   }
+
+  // Exposed so content injected after DOMContentLoaded (e.g. dynamic
+  // page/section HTML fetched and inserted by client-page-sections.js) can
+  // re-scan for FAQ accordions without needing a second copy of this logic.
+  window.initFaqAccordion = initFaqAccordion;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAll);
@@ -609,3 +634,187 @@ sliderInit = function() {
     }, 3000);
 
 };
+
+// ==========================================================================
+// TYRESVISION CMS PAGES & DYNAMIC COMPONENTS (Page.html)
+// ==========================================================================
+window.initTvPageComponents = function() {
+    // 1. Delegate .faq-item to the primary CSS Grid FAQ accordion engine
+    if (typeof window.initFaqAccordion === 'function') {
+        window.initFaqAccordion();
+    }
+
+    // 2. Standalone handler for legacy .tv-faq-item ONLY (never binds to .faq-item)
+    var tvFaqItems = document.querySelectorAll('.tv-faq-item:not(.faq-item)');
+    tvFaqItems.forEach(function(item) {
+        var summaryBtn = item.querySelector('.tv-faq-trigger');
+        if (!summaryBtn) return;
+        if (summaryBtn._tvFaqBound || summaryBtn.dataset.bound === 'true') return;
+        summaryBtn._tvFaqBound = true;
+        summaryBtn.dataset.bound = 'true';
+
+        summaryBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var isOpen = item.classList.contains('active');
+            var container = item.closest('.tv-faq-container') || item.parentElement;
+
+            // Exclusive accordion behavior within the container
+            if (container) {
+                container.querySelectorAll('.tv-faq-item:not(.faq-item)').forEach(function(sib) {
+                    if (sib !== item) {
+                        sib.classList.remove('active');
+                        var sibBtn = sib.querySelector('.tv-faq-trigger');
+                        if (sibBtn) sibBtn.setAttribute('aria-expanded', 'false');
+                        var sibPanel = sib.querySelector('.tv-faq-panel');
+                        if (sibPanel) sibPanel.style.maxHeight = '0px';
+                    }
+                });
+            }
+
+            if (!isOpen) {
+                item.classList.add('active');
+                summaryBtn.setAttribute('aria-expanded', 'true');
+                var panel = item.querySelector('.tv-faq-panel');
+                if (panel) panel.style.maxHeight = (panel.scrollHeight + 30) + 'px';
+            } else {
+                item.classList.remove('active');
+                summaryBtn.setAttribute('aria-expanded', 'false');
+                var panel = item.querySelector('.tv-faq-panel');
+                if (panel) panel.style.maxHeight = '0px';
+            }
+        });
+    });
+
+    // 2. CMS Hero Quote Form Handler
+    var quoteForms = document.querySelectorAll('form#quoteForm');
+    quoteForms.forEach(function(qForm) {
+        if (qForm.dataset.bound === 'true') return;
+        qForm.dataset.bound = 'true';
+
+        qForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var sizeInput = qForm.querySelector('input[name="tyreSize"]');
+            var size = sizeInput ? sizeInput.value.trim() : '';
+            if (!size) {
+                if (sizeInput) {
+                    sizeInput.focus();
+                    sizeInput.style.borderColor = '#ef4444';
+                }
+                return;
+            }
+
+            var makeInput = qForm.querySelector('input[name="carMake"]');
+            var make = makeInput ? makeInput.value.trim() : '';
+            var emirateSelect = qForm.querySelector('select[name="emirate"]');
+            var emirate = emirateSelect ? emirateSelect.value : '';
+
+            var pageTitle = document.title ? document.title.split('|')[0].trim() : 'TyresVision UAE';
+            var msgLines = [
+                "Hi TyresVision, I would like a tyre quote.",
+                "Tyre size: " + size
+            ];
+            if (make) msgLines.push("Car: " + make);
+            if (emirate) msgLines.push("Emirate: " + emirate);
+            msgLines.push("Source: " + pageTitle);
+
+            // Record enquiry in database asynchronously
+            try {
+                fetch('/api/v1/enquiry', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        tyre_size: size,
+                        vehicle: make,
+                        city: emirate,
+                        enquiry_for: 'CMS Page Quote (' + pageTitle + ')',
+                        form_type: 'cms_page_hero_quote',
+                        message: msgLines.join("\n")
+                    })
+                }).catch(function() {});
+            } catch (err) {}
+
+            var waUrl = "https://wa.me/971505069575?text=" + encodeURIComponent(msgLines.join("\n"));
+            window.open(waUrl, "_blank", "noopener");
+        });
+    });
+
+    // 3. Open WhatsApp and external action links safely
+    var extLinks = document.querySelectorAll('.tv-table-quote-btn, .tv-card-link, .tv-table-link, .chip-interactive, .get-quote-link');
+    extLinks.forEach(function(link) {
+        if (link.getAttribute('href') && (link.getAttribute('href').startsWith('http') || link.getAttribute('href').startsWith('https://wa.me'))) {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener');
+        }
+    });
+
+    // 4. Antigravity 3D Tilt on Terrain Cards
+    var terrainCards = document.querySelectorAll('.tv-terrain-card');
+    terrainCards.forEach(function(card) {
+        card.addEventListener('mousemove', function(e) {
+            var rect = card.getBoundingClientRect();
+            var x = e.clientX - rect.left - rect.width / 2;
+            var y = e.clientY - rect.top - rect.height / 2;
+            var rotX = (-y / (rect.height / 2)) * 6;
+            var rotY = (x / (rect.width / 2)) * 6;
+            card.style.transform = 'perspective(1000px) rotateX(' + rotX.toFixed(2) + 'deg) rotateY(' + rotY.toFixed(2) + 'deg) translateY(-6px)';
+        });
+        card.addEventListener('mouseleave', function() {
+            card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+        });
+    });
+
+    // 5. GSAP Motion & ScrollTrigger Animations
+    if (typeof gsap !== 'undefined') {
+        if (typeof ScrollTrigger !== 'undefined') {
+            gsap.registerPlugin(ScrollTrigger);
+
+            if (document.querySelector('.tv-terrain-grid')) {
+                gsap.from('.tv-terrain-card', {
+                    scrollTrigger: {
+                        trigger: '.tv-terrain-grid',
+                        start: 'top 95%',
+                        once: true
+                    },
+                    y: 24,
+                    duration: 0.6,
+                    stagger: 0.1,
+                    ease: 'power2.out',
+                    clearProps: 'opacity,transform'
+                });
+            }
+
+            if (document.querySelector('.tv-4x4-knowledge-grid')) {
+                gsap.from('.tv-4x4-knowledge-img-wrap', {
+                    scrollTrigger: {
+                        trigger: '.tv-4x4-knowledge-grid',
+                        start: 'top 90%',
+                        once: true
+                    },
+                    y: 20,
+                    duration: 0.7,
+                    ease: 'power2.out',
+                    clearProps: 'opacity,transform'
+                });
+                gsap.from('.tv-4x4-knowledge-card', {
+                    scrollTrigger: {
+                        trigger: '.tv-4x4-knowledge-grid',
+                        start: 'top 90%',
+                        once: true
+                    },
+                    y: 20,
+                    duration: 0.6,
+                    stagger: 0.1,
+                    ease: 'power2.out',
+                    clearProps: 'opacity,transform'
+                });
+            }
+        }
+    }
+};
+
+// Auto-run on DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initTvPageComponents);
+} else {
+    window.initTvPageComponents();
+}

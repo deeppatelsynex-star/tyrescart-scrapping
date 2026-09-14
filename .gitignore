@@ -54,3 +54,7 @@ backups/
 
 seed_dynamic_attributes_data.sql
 seed_product_attribute_values.sql
+
+# Runtime-uploaded content (product/brand/page images) — deployed directly
+# to each server's own static/uploads/, never through git.
+static/uploads/

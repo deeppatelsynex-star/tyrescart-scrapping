@@ -41,6 +41,20 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
     csvUploading: false,
     csvResult: null,
 
+    resolveProductImage(img) {
+      if (!img || !img.toString().trim()) {
+        return '/static/assets/images/no-image-available.svg';
+      }
+      let s = img.toString().trim().replace(/\\/g, '/');
+      if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:')) {
+        return s;
+      }
+      if (!s.startsWith('/')) {
+        s = '/' + s;
+      }
+      return s;
+    },
+
     accordions: {
       sources: true,
       content: false,

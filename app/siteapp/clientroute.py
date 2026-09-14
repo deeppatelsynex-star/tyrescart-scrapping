@@ -420,6 +420,311 @@ def about_us_locale(lang_code):
     return resp
 
 
+@site_bp.route('/mobile-tyre-fitting')
+def mobile_tyre_fitting():
+    """Dedicated high-fidelity Mobile Tyre Fitting landing page."""
+    locale = _get_locale()
+    page = Page.find_by_slug('mobile-tyre-fitting')
+    resp = make_response(render_template('Client/MobileTyreFitting.html', page=page, slug='mobile-tyre-fitting', locale=locale))
+    resp.set_cookie('site_locale', locale, max_age=31536000, path='/')
+    return resp
+
+
+@site_bp.route('/<string(length=2):lang_code>/mobile-tyre-fitting')
+def mobile_tyre_fitting_locale(lang_code):
+    """Directly render Mobile Tyre Fitting page for dynamic locale."""
+    code = lang_code.lower()
+    session['site_locale'] = code
+    page = Page.find_by_slug('mobile-tyre-fitting')
+    resp = make_response(render_template('Client/MobileTyreFitting.html', page=page, slug='mobile-tyre-fitting', locale=code))
+    resp.set_cookie('site_locale', code, max_age=31536000, path='/')
+    return resp
+
+
+# --- PRODUCT CATALOG / CAR TYRES LISTING ---
+def _render_product_listing(locale):
+    """Renders the dedicated product listing catalog with data and sidebar filters from MySQL database."""
+    from db import get_connection
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            # Total active count in DB
+            cur.execute("SELECT COUNT(*) as total FROM products WHERE deleted_at IS NULL AND status = 'active'")
+            c_row = cur.fetchone()
+            db_total_count = c_row['total'] if c_row else 0
+
+            # 1. Fetch active products with brand join (limit 240 for responsive catalog browsing)
+            cur.execute("""
+                SELECT p.*, b.name as brand_name, b.slug as brand_slug, b.logo as brand_logo
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE p.deleted_at IS NULL AND p.status = 'active'
+                ORDER BY p.sort_order ASC, p.id ASC
+                LIMIT 240
+            """)
+            raw_products = cur.fetchall()
+
+            products = []
+            for p in raw_products:
+                p_dict = dict(p)
+                attr = p_dict.get('attributes_json')
+                if isinstance(attr, str):
+                    try:
+                        attr = json.loads(attr)
+                    except Exception:
+                        attr = {}
+                elif not isinstance(attr, dict):
+                    attr = {}
+                p_dict['attr'] = attr
+                p_dict['rating'] = attr.get('rating', 4.5)
+                p_dict['reviews'] = attr.get('reviews', 50)
+                p_dict['badge'] = attr.get('badge')
+                p_dict['badge_class'] = attr.get('badge_class', 'badge-blue')
+                p_dict['season'] = attr.get('season', 'Summer')
+                b_slug = p_dict.get('brand_slug') or (p_dict.get('brand_name') or 'michelin').lower().replace(' ', '')
+                p_dict['brand_logo'] = p_dict.get('brand_logo') or f"/static/assets/images/brands/{b_slug}.svg"
+                
+                # Normalize image_path:
+                raw_img = p_dict.get('image_path') or p_dict.get('small_image') or attr.get('image')
+                if raw_img and str(raw_img).strip():
+                    img_s = str(raw_img).strip().replace('\\', '/')
+                    if not (img_s.startswith('http://') or img_s.startswith('https://') or img_s.startswith('data:')):
+                        if not img_s.startswith('/'):
+                            img_s = '/' + img_s
+                    p_dict['image_path'] = img_s
+                else:
+                    p_dict['image_path'] = '/static/assets/images/no-image-available.svg'
+
+                # Ensure display_name is readable
+                if not p_dict.get('display_name'):
+                    name_raw = p_dict.get('name')
+                    if isinstance(name_raw, dict):
+                        p_dict['display_name'] = name_raw.get('en') or list(name_raw.values())[0] if name_raw else p_dict.get('sku')
+                    elif isinstance(name_raw, str) and name_raw.strip().startswith('{'):
+                        try:
+                            n_json = json.loads(name_raw)
+                            p_dict['display_name'] = n_json.get('en') or list(n_json.values())[0]
+                        except Exception:
+                            p_dict['display_name'] = name_raw
+                    else:
+                        p_dict['display_name'] = name_raw or p_dict.get('sku')
+
+                products.append(p_dict)
+
+            # 2. Sidebar: Brands from DB (active brands + product counts)
+            cur.execute("""
+                SELECT b.id, b.name, b.slug, b.logo, COUNT(p.id) as cnt
+                FROM brands b
+                LEFT JOIN products p ON p.brand_id = b.id AND p.deleted_at IS NULL AND p.status = 'active'
+                WHERE b.status = 'active'
+                GROUP BY b.id, b.name, b.slug, b.logo
+                ORDER BY cnt DESC, b.name ASC
+            """)
+            filter_brands = []
+            for b in cur.fetchall():
+                b_slug = b.get('slug') or (b.get('name') or '').lower().replace(' ', '')
+                b_logo = b.get('logo') or f"/static/assets/images/brands/{b_slug}.svg"
+                filter_brands.append({
+                    'id': b['id'],
+                    'name': b['name'],
+                    'slug': b_slug,
+                    'logo': b_logo,
+                    'count': b.get('cnt', 0)
+                })
+
+            # 3. Sidebar: Tyre Sizes from DB (from active products + attribute_options)
+            cur.execute("""
+                SELECT tire_size_label as size, COUNT(*) as cnt
+                FROM products
+                WHERE deleted_at IS NULL AND status = 'active' 
+                  AND tire_size_label IS NOT NULL AND tire_size_label != ''
+                GROUP BY tire_size_label
+                ORDER BY cnt DESC, tire_size_label ASC
+            """)
+            filter_sizes = []
+            seen_sizes = set()
+            for r in cur.fetchall():
+                sz = r['size'].strip()
+                if sz and sz not in seen_sizes:
+                    seen_sizes.add(sz)
+                    filter_sizes.append({'size': sz, 'count': r['cnt']})
+
+            # Supplement from attribute_options (attributes.code = 'tire_size')
+            cur.execute("""
+                SELECT ao.value as size, COUNT(p.id) as cnt
+                FROM attribute_options ao
+                JOIN attributes a ON ao.attribute_id = a.id AND a.code = 'tire_size'
+                LEFT JOIN products p ON p.tire_size_label = ao.value AND p.deleted_at IS NULL AND p.status = 'active'
+                GROUP BY ao.id, ao.value, ao.sort_order
+                ORDER BY cnt DESC, ao.sort_order ASC, ao.value ASC
+                LIMIT 25
+            """)
+            for r in cur.fetchall():
+                sz = r['size'].strip() if r.get('size') else ''
+                if sz and sz not in seen_sizes:
+                    seen_sizes.add(sz)
+                    filter_sizes.append({'size': sz, 'count': r['cnt']})
+
+            # 4. Sidebar: Vehicle Types from DB
+            cur.execute("""
+                SELECT ao.value, ao.label, ao.sort_order
+                FROM attribute_options ao
+                JOIN attributes a ON ao.attribute_id = a.id AND a.code = 'vehicle_type'
+                ORDER BY ao.sort_order ASC
+            """)
+            v_rows = cur.fetchall()
+
+            cur.execute("""
+                SELECT LOWER(vehicle_type) as vtype, COUNT(*) as cnt
+                FROM products
+                WHERE deleted_at IS NULL AND status = 'active' AND vehicle_type IS NOT NULL
+                GROUP BY vehicle_type
+            """)
+            vehicle_prod_counts = {r['vtype']: r['cnt'] for r in cur.fetchall() if r.get('vtype')}
+            vehicle_key_map = {
+                'Passenger Car': 'car',
+                'SUV / 4x4': 'suv',
+                'Light Truck / Van': 'van',
+                'Performance / Sport': 'sport',
+                'Commercial Van': 'van',
+                'Car': 'car',
+                'SUV': 'suv',
+                '4x4': '4x4',
+                'EV': 'ev'
+            }
+            filter_vehicles = []
+            seen_v_keys = set()
+            for vr in v_rows:
+                raw_val = vr.get('value') or ''
+                lbl_raw = vr.get('label')
+                label_dict = {}
+                if isinstance(lbl_raw, str):
+                    try:
+                        label_dict = json.loads(lbl_raw)
+                    except Exception:
+                        label_dict = {'en': raw_val}
+                elif isinstance(lbl_raw, dict):
+                    label_dict = lbl_raw
+                label = label_dict.get(locale) or label_dict.get('en') or raw_val
+                key = vehicle_key_map.get(raw_val, raw_val.lower().replace(' ', '_'))
+                cnt = vehicle_prod_counts.get(key, 0)
+                if key == 'suv' and '4x4' in vehicle_prod_counts:
+                    cnt += vehicle_prod_counts.get('4x4', 0)
+                if key not in seen_v_keys:
+                    seen_v_keys.add(key)
+                    filter_vehicles.append({'key': key, 'label': label, 'count': cnt})
+
+            for vk, vc in vehicle_prod_counts.items():
+                if vk not in seen_v_keys:
+                    seen_v_keys.add(vk)
+                    filter_vehicles.append({
+                        'key': vk,
+                        'label': vk.upper() if len(vk) <= 3 else vk.replace('_', ' ').title(),
+                        'count': vc
+                    })
+
+            # 5. Sidebar: Tyre Types / Seasons from DB
+            cur.execute("""
+                SELECT ao.value, ao.label, ao.sort_order
+                FROM attribute_options ao
+                JOIN attributes a ON ao.attribute_id = a.id AND a.code = 'season'
+                ORDER BY ao.sort_order ASC
+            """)
+            season_rows = cur.fetchall()
+
+            cur.execute("""
+                SELECT LOWER(tire_type) as ttype, COUNT(*) as cnt
+                FROM products
+                WHERE deleted_at IS NULL AND status = 'active' AND tire_type IS NOT NULL
+                GROUP BY tire_type
+            """)
+            tire_type_counts = {r['ttype']: r['cnt'] for r in cur.fetchall() if r.get('ttype')}
+
+            cur.execute("""
+                SELECT COUNT(*) as cnt
+                FROM products
+                WHERE deleted_at IS NULL AND status = 'active' AND run_flat = 1
+            """)
+            rf_res = cur.fetchone()
+            run_flat_cnt = rf_res['cnt'] if rf_res else 0
+
+            filter_tyre_types = []
+            for sr in season_rows:
+                raw_val = sr.get('value') or ''
+                lbl_raw = sr.get('label')
+                label_dict = {}
+                if isinstance(lbl_raw, str):
+                    try:
+                        label_dict = json.loads(lbl_raw)
+                    except Exception:
+                        label_dict = {'en': raw_val}
+                elif isinstance(lbl_raw, dict):
+                    label_dict = lbl_raw
+                label = label_dict.get(locale) or label_dict.get('en') or raw_val
+                key = raw_val.lower().replace('-', '_').replace(' ', '_')
+                filter_tyre_types.append({
+                    'key': key,
+                    'label': label,
+                    'count': tire_type_counts.get(key, 0)
+                })
+
+            filter_tyre_types.append({
+                'key': 'run_flat',
+                'label': 'Run Flat',
+                'count': run_flat_cnt
+            })
+
+            # 6. Sidebar: Price Range from DB
+            cur.execute("""
+                SELECT MIN(price) as min_p, MAX(price) as max_p
+                FROM products
+                WHERE deleted_at IS NULL AND status = 'active'
+            """)
+            pr_row = cur.fetchone()
+            min_price = int(pr_row['min_p']) if pr_row and pr_row['min_p'] is not None else 100
+            max_price = int(pr_row['max_p']) if pr_row and pr_row['max_p'] is not None else 2000
+            if min_price >= max_price:
+                max_price = min_price + 1000
+
+            total_count = db_total_count or len(products)
+
+            resp = make_response(render_template(
+                'Client/ProductListing.html',
+                products=products,
+                total_count=total_count,
+                filter_brands=filter_brands,
+                filter_sizes=filter_sizes,
+                filter_vehicles=filter_vehicles,
+                filter_tyre_types=filter_tyre_types,
+                min_price=min_price,
+                max_price=max_price,
+                locale=locale
+            ))
+            resp.set_cookie('site_locale', locale, max_age=31536000, path='/')
+            return resp
+    finally:
+        conn.close()
+
+
+@site_bp.route('/car-tyres')
+@site_bp.route('/tyres')
+@site_bp.route('/products')
+def car_tyres_listing():
+    """Client storefront Car Tyres / Product Listing catalog."""
+    locale = _get_locale()
+    return _render_product_listing(locale)
+
+
+@site_bp.route('/<string(length=2):lang_code>/car-tyres')
+@site_bp.route('/<string(length=2):lang_code>/tyres')
+@site_bp.route('/<string(length=2):lang_code>/products')
+def car_tyres_listing_locale(lang_code):
+    """Client storefront Car Tyres / Product Listing catalog with dynamic locale."""
+    code = lang_code.lower()
+    session['site_locale'] = code
+    return _render_product_listing(code)
+
+
 @site_bp.route('/<string(length=2):lang_code>/page/<slug>')
 @site_bp.route('/<string(length=2):lang_code>/<slug>')
 def page_detail_locale(lang_code, slug):
@@ -430,10 +735,17 @@ def page_detail_locale(lang_code, slug):
         return blog_locale(code)
     elif slug == 'about-us':
         return about_us_locale(code)
+    elif slug == 'mobile-tyre-fitting':
+        return mobile_tyre_fitting_locale(code)
+    elif slug in ('car-tyres', 'tyres', 'products'):
+        return _render_product_listing(code)
 
     page = Page.find_by_slug(slug)
     if page:
-        resp = make_response(render_template('Client/AboutUs.html', page=page, slug=slug, locale=code))
+        template = 'Client/AboutUs.html' if slug == 'about-us' else 'Client/Page.html'
+        raw_sections = PageSection.all_for_page(slug, include_inactive=False)
+        sections = [PageSection.to_localized_dict(s, locale=code) for s in raw_sections]
+        resp = make_response(render_template(template, page=page, slug=slug, locale=code, sections=sections))
         resp.set_cookie('site_locale', code, max_age=31536000, path='/')
         return resp
     blog = Blog.find_by_slug(slug)
@@ -448,10 +760,17 @@ def page_detail(slug):
     """Generic static CMS content page reader with dynamic sections support."""
     if slug in ('tcsadmin', 'visionadmin', 'visonadmin', 'admin', 'static', 'api', 'login', 'logout', 'forgot-password', 'reset-password', 'favicon.ico'):
         abort(404)
+    if slug == 'mobile-tyre-fitting':
+        return mobile_tyre_fitting()
+    if slug in ('car-tyres', 'tyres', 'products'):
+        return car_tyres_listing()
     locale = _get_locale()
     page = Page.find_by_slug(slug)
     if page:
-        return render_template('Client/AboutUs.html', page=page, slug=slug, locale=locale)
+        template = 'Client/AboutUs.html' if slug == 'about-us' else 'Client/Page.html'
+        raw_sections = PageSection.all_for_page(slug, include_inactive=False)
+        sections = [PageSection.to_localized_dict(s, locale=locale) for s in raw_sections]
+        return render_template(template, page=page, slug=slug, locale=locale, sections=sections)
     blog = Blog.find_by_slug(slug)
     if blog:
         return redirect(f'/blog/{slug}')

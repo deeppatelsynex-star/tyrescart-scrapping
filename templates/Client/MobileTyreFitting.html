@@ -1,0 +1,1693 @@
+{% extends 'Client/layout.html' %}
+
+{% block title %}Mobile Tyre Fitting in Dubai & Abu Dhabi | TyresVision{% endblock %}
+
+{% block meta_description %}Mobile tyre fitting at your home, office or car park across Dubai and Abu Dhabi. Send your tyre size and location on WhatsApp for a price in minutes.{% endblock %}
+
+{% block canonical_url %}https://www.tyresvision.com/mobile-tyre-fitting{% endblock %}
+
+{% block extra_head %}
+<!-- GSAP & ScrollTrigger for Antigravity Motion -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<style>
+/* ==========================================================================
+   ANTIGRAVITY DESIGN EXPERT STYLES: MOBILE TYRE FITTING
+   Weightlessness, Spatial Depth, Glassmorphism, 3D Elevation & Fluid Responsive
+   ========================================================================== */
+
+:root {
+  --mtf-primary: #0284c7;
+  --mtf-primary-dark: #0369a1;
+  --mtf-navy: #0b2147;
+  --mtf-navy-deep: #06152d;
+  --mtf-hero-bg: #0d3875;
+  --mtf-hero-grad: linear-gradient(135deg, #092e66 0%, #0d4187 45%, #1558aa 80%, #08295b 100%);
+  --mtf-wa-green: #10b981;
+  --mtf-wa-green-hover: #059669;
+  --mtf-ice-bg: #f0f7ff;
+  --mtf-ice-border: #dbeafe;
+  --mtf-card-border: #e2e8f0;
+  --mtf-slate-dark: #1e293b;
+  --mtf-slate-muted: #64748b;
+  --mtf-slate-body: #475569;
+  --mtf-shadow-subtle: 0 4px 20px -2px rgba(11, 33, 71, 0.05);
+  --mtf-shadow-elevated: 0 14px 34px -4px rgba(11, 33, 71, 0.08);
+  --mtf-shadow-float: 0 24px 48px -8px rgba(11, 33, 71, 0.12);
+}
+
+/* Base Wrapper & Containers */
+.mtf-page {
+  color: var(--mtf-slate-body);
+  font-family: inherit;
+  overflow-x: hidden;
+  background: #ffffff;
+}
+
+.mtf-wrap {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.mtf-section {
+  padding: 56px 0;
+  position: relative;
+}
+
+/* Headings & Badges */
+.mtf-heading-center {
+  text-align: center;
+  margin-bottom: 44px;
+}
+
+.mtf-badge-pill {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  background: #e0f2fe;
+  color: #0284c7;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.mtf-badge-transp {
+  display: inline-block;
+  color: #0284c7;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.mtf-h2 {
+  color: var(--mtf-navy);
+  font-size: clamp(1.85rem, 3.2vw, 2.35rem);
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+
+.mtf-sub-text {
+  color: var(--mtf-slate-muted);
+  font-size: 1.02rem;
+  line-height: 1.6;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   1. HERO SECTION
+   ========================================================================== */
+.mtf-hero {
+  background-color: #2563FF;
+  background-image: linear-gradient(135deg, rgba(7, 14, 27, 0.48) 0%, rgba(13, 30, 68, 0.22) 50%, rgba(5, 10, 20, 0.58) 100%),
+                    url('/static/uploads/pages/banner_1788954653_64dd43ed.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  color: #ffffff;
+  padding-top: 24px;
+  padding-bottom: 56px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mtf-hero::before {
+  content: '';
+  position: absolute;
+  top: -150px;
+  right: -100px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.18) 0%, rgba(2, 132, 199, 0) 70%);
+  pointer-events: none;
+}
+
+.mtf-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 28px;
+}
+
+.mtf-breadcrumb a {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.mtf-breadcrumb a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.mtf-hero-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 36px;
+  align-items: center;
+}
+
+.mtf-hero-title {
+  color: #ffffff;
+  font-size: clamp(2.2rem, 3.8vw, 3.1rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  margin-bottom: 18px;
+}
+
+.mtf-hero-lead {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 1.02rem;
+  line-height: 1.68;
+  margin-bottom: 30px;
+  max-width: 530px;
+}
+
+.mtf-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 34px;
+}
+
+.btn-hero-wa {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--mtf-wa-green);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  text-decoration: none;
+  box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.45);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.btn-hero-wa:hover {
+  background: var(--mtf-wa-green-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -4px rgba(16, 185, 129, 0.55);
+}
+
+.btn-hero-call {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: #ffffff;
+  color: var(--mtf-navy);
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 12px 22px;
+  border-radius: 9999px;
+  text-decoration: none;
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.btn-hero-call:hover {
+  background: #f8fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.22);
+}
+
+.mtf-hero-trust {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.mtf-trust-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.mtf-trust-icon {
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+}
+
+.mtf-hero-media {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1000px;
+}
+
+.mtf-hero-img-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.35);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.mtf-hero-img-wrap:hover {
+  transform: translateY(-4px) scale(1.01);
+}
+
+.mtf-hero-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+/* ==========================================================================
+   2. HOW IT WORKS (SIMPLE STEPS)
+   ========================================================================== */
+.mtf-steps-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-top: 20px;
+}
+
+/* Horizontal dotted line behind circular icons */
+.mtf-steps-track::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  border-top: 2px dashed #93c5fd;
+  z-index: 1;
+}
+
+.mtf-step-col {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.mtf-step-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #0284c7;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 22px -3px rgba(2, 132, 199, 0.38);
+  margin-bottom: 18px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.mtf-step-col:hover .mtf-step-circle {
+  transform: translateY(-4px) scale(1.08);
+  background: #0369a1;
+  box-shadow: 0 14px 26px -3px rgba(2, 132, 199, 0.5);
+}
+
+.mtf-step-title {
+  color: var(--mtf-navy);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.mtf-step-desc {
+  color: var(--mtf-slate-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  max-width: 230px;
+}
+
+/* ==========================================================================
+   3. WHAT OUR VANS CARRY
+   ========================================================================== */
+.mtf-carry-header {
+  margin-bottom: 30px;
+}
+
+.mtf-carry-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+.mtf-carry-card {
+  background: #ffffff;
+  border: 1px solid var(--mtf-card-border);
+  border-radius: 14px;
+  padding: 22px 18px;
+  box-shadow: var(--mtf-shadow-subtle);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  will-change: transform, box-shadow;
+}
+
+.mtf-carry-card:hover {
+  transform: translateY(-5px);
+  border-color: #bfdbfe;
+  box-shadow: var(--mtf-shadow-elevated);
+}
+
+.mtf-carry-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #f0f9ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0284c7;
+}
+
+.mtf-carry-title {
+  color: var(--mtf-navy);
+  font-size: 0.96rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.mtf-carry-desc {
+  color: var(--mtf-slate-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   4. WHAT MOBILE TYRE FITTING COSTS (PRICING PANEL)
+   ========================================================================== */
+.mtf-pricing-panel {
+  background: var(--mtf-ice-bg);
+  border: 1px solid var(--mtf-ice-border);
+  border-radius: 24px;
+  padding: 44px 40px;
+  margin: 16px 0;
+  box-shadow: inset 0 2px 8px rgba(2, 132, 199, 0.03);
+}
+
+.mtf-pricing-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.85fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.mtf-pricing-sub {
+  color: var(--mtf-slate-muted);
+  font-size: 0.98rem;
+  margin-bottom: 26px;
+}
+
+.mtf-pricing-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.mtf-price-card {
+  background: #ffffff;
+  border: 1px solid #e0e7ff;
+  border-radius: 16px;
+  padding: 22px 20px;
+  box-shadow: var(--mtf-shadow-subtle);
+  transition: all 0.3s ease;
+}
+
+.mtf-price-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--mtf-shadow-elevated);
+}
+
+.mtf-price-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.mtf-price-label {
+  font-size: 0.8rem;
+  color: var(--mtf-slate-muted);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.mtf-price-value {
+  color: var(--mtf-navy);
+  font-size: 1.28rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+.mtf-price-desc {
+  color: var(--mtf-slate-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.btn-price-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.94rem;
+  font-weight: 600;
+  padding: 12px 26px;
+  border-radius: 9999px;
+  text-decoration: none;
+  box-shadow: 0 8px 20px -3px rgba(2, 132, 199, 0.4);
+  transition: all 0.3s ease;
+}
+
+.btn-price-action:hover {
+  background: #0369a1;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -3px rgba(2, 132, 199, 0.5);
+}
+
+.mtf-pricing-artwork {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.mtf-pricing-art-wrap {
+  width: 100%;
+  max-width: 330px;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--mtf-shadow-elevated);
+  transition: transform 0.4s ease;
+}
+
+.mtf-pricing-art-wrap:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.mtf-pricing-art-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ==========================================================================
+   5. WHERE WE CAN AND CAN'T FIT
+   ========================================================================== */
+.mtf-fit-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 32px;
+  align-items: stretch;
+}
+
+.mtf-fit-table {
+  background: #ffffff;
+  border: 1px solid var(--mtf-card-border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--mtf-shadow-subtle);
+  display: flex;
+  flex-direction: column;
+}
+
+.mtf-fit-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.2s ease;
+}
+
+.mtf-fit-row:last-child {
+  border-bottom: none;
+}
+
+.mtf-fit-row:hover {
+  background: #f8fafc;
+}
+
+.mtf-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  width: 86px;
+  justify-content: center;
+}
+
+.mtf-pill-yes {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.mtf-pill-ask {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.mtf-pill-no {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.mtf-fit-text {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--mtf-slate-body);
+}
+
+.mtf-fit-text strong {
+  color: var(--mtf-navy);
+  font-weight: 700;
+}
+
+.mtf-fit-skyline-card {
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--mtf-shadow-subtle);
+  border: 1px solid var(--mtf-card-border);
+  display: flex;
+  align-items: stretch;
+  background: #eff6ff;
+  transition: all 0.3s ease;
+}
+
+.mtf-fit-skyline-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--mtf-shadow-elevated);
+}
+
+.mtf-fit-skyline-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ==========================================================================
+   6. EV & RUN-FLATS BANNER
+   ========================================================================== */
+.mtf-ev-banner {
+  background: #f0f7ff;
+  border: 1px solid #dbeafe;
+  border-radius: 20px;
+  padding: 24px 32px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  box-shadow: var(--mtf-shadow-subtle);
+  margin-top: 36px;
+  transition: all 0.3s ease;
+}
+
+.mtf-ev-banner:hover {
+  box-shadow: var(--mtf-shadow-elevated);
+  border-color: #bfdbfe;
+}
+
+.mtf-ev-car-img {
+  width: 140px;
+  height: auto;
+  flex-shrink: 0;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.1));
+}
+
+.mtf-ev-content {
+  flex-grow: 1;
+}
+
+.mtf-ev-title {
+  color: var(--mtf-navy);
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.mtf-ev-desc {
+  color: var(--mtf-slate-body);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.btn-ev-learn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 9999px;
+  text-decoration: none;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px -2px rgba(2, 132, 199, 0.4);
+  transition: all 0.25s ease;
+}
+
+.btn-ev-learn:hover {
+  background: #0369a1;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px -2px rgba(2, 132, 199, 0.5);
+}
+
+/* ==========================================================================
+   7. AREAS OUR VANS COVER
+   ========================================================================== */
+.mtf-areas-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.mtf-area-card {
+  background: #ffffff;
+  border: 1px solid var(--mtf-card-border);
+  border-radius: 16px;
+  padding: 26px 24px;
+  box-shadow: var(--mtf-shadow-subtle);
+  transition: all 0.3s ease;
+}
+
+.mtf-area-card:hover {
+  transform: translateY(-4px);
+  border-color: #bfdbfe;
+  box-shadow: var(--mtf-shadow-elevated);
+}
+
+.mtf-area-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mtf-area-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mtf-area-title {
+  color: var(--mtf-navy);
+  font-size: 1.12rem;
+  font-weight: 800;
+}
+
+.mtf-area-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.mtf-area-list li {
+  font-size: 0.88rem;
+  color: var(--mtf-slate-body);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mtf-area-list li::before {
+  content: '•';
+  color: #94a3b8;
+  font-size: 1.1rem;
+}
+
+.mtf-area-desc {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--mtf-slate-body);
+}
+
+/* ==========================================================================
+   8. FAQS & SIDEBAR CONTACT
+   ========================================================================== */
+.mtf-faq-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.mtf-faq-view-all {
+  color: #0284c7;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.mtf-faq-view-all:hover {
+  color: #0369a1;
+  transform: translateX(3px);
+}
+
+.mtf-faq-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.mtf-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mtf-accordion-item {
+  background: #ffffff;
+  border: 1px solid var(--mtf-card-border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.mtf-accordion-item.active {
+  border-color: #93c5fd;
+  box-shadow: 0 4px 16px -2px rgba(2, 132, 199, 0.08);
+}
+
+.mtf-accordion-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--mtf-navy);
+  font-size: 0.96rem;
+  font-weight: 700;
+  line-height: 1.35;
+  transition: color 0.2s ease;
+}
+
+.mtf-accordion-btn:hover {
+  color: #0284c7;
+}
+
+.mtf-accordion-chevron {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #0284c7;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mtf-accordion-item.active .mtf-accordion-chevron {
+  transform: rotate(180deg);
+}
+
+.mtf-accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mtf-accordion-item.active .mtf-accordion-content {
+  max-height: 300px;
+}
+
+.mtf-accordion-body {
+  padding: 0 20px 20px 20px;
+  color: var(--mtf-slate-body);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* FAQ Sticky Contact Box */
+.mtf-sticky-help {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 32px 26px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--mtf-shadow-subtle);
+  position: sticky;
+  top: 96px;
+}
+
+.mtf-help-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #e0f2fe;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mtf-help-title {
+  color: var(--mtf-navy);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.mtf-help-desc {
+  color: var(--mtf-slate-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  max-width: 260px;
+}
+
+.btn-help-wa {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--mtf-wa-green);
+  color: #ffffff;
+  font-size: 0.94rem;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 9999px;
+  text-decoration: none;
+  box-shadow: 0 6px 16px -2px rgba(16, 185, 129, 0.35);
+  transition: all 0.25s ease;
+}
+
+.btn-help-wa:hover {
+  background: var(--mtf-wa-green-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -2px rgba(16, 185, 129, 0.45);
+}
+
+.btn-help-call {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #ffffff;
+  color: var(--mtf-navy);
+  border: 1.5px solid #cbd5e1;
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding: 11px 20px;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+
+.btn-help-call:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  transform: translateY(-2px);
+}
+
+/* Bottom note */
+.mtf-bottom-note {
+  margin-top: 40px;
+  text-align: center;
+  color: var(--mtf-slate-muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.mtf-bottom-note a {
+  color: #0284c7;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.mtf-bottom-note a:hover {
+  color: #0369a1;
+}
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .mtf-carry-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .mtf-steps-track {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+  }
+  .mtf-steps-track::before {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .mtf-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .mtf-hero-media {
+    order: -1;
+  }
+  .mtf-pricing-grid,
+  .mtf-fit-grid,
+  .mtf-faq-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .mtf-carry-grid {
+    grid-template-columns: 1fr;
+  }
+  .mtf-areas-grid {
+    grid-template-columns: 1fr;
+  }
+  .mtf-ev-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 24px;
+  }
+  .mtf-fit-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .mtf-pricing-cards {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mtf-page">
+
+  <!-- ========================================================================
+       1. HERO SECTION
+       ======================================================================== -->
+  <section class="mtf-hero">
+    <div class="mtf-wrap">
+      <!-- Breadcrumb -->
+      <nav class="mtf-breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span>&rsaquo;</span>
+        <span>Mobile Tyre Fitting in Dubai and Abu Dhabi</span>
+      </nav>
+
+      <div class="mtf-hero-grid">
+        <!-- Left Column: Copy & Actions -->
+        <div class="mtf-hero-content">
+          <h1 class="mtf-hero-title">
+            Mobile Tyre Fitting in<br>Dubai and Abu Dhabi
+          </h1>
+          <p class="mtf-hero-lead">
+            Send us your tyre size and location on WhatsApp and we'll confirm a price and a fitting time within minutes. Our mobile tyre fitting service reaches homes, offices and apartment car parks across Dubai and Abu Dhabi, so you never have to sit in traffic for a tyre change.
+          </p>
+
+          <div class="mtf-hero-actions">
+            <a href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20mobile%20tyre%20fitting%20at%20my%20location." target="_blank" rel="noopener" class="btn-hero-wa">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.03-1.25-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.78 2.72 4.31 3.81.6.26 1.07.42 1.44.54.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.11-.22-.17-.47-.29z"/></svg>
+              <span>WhatsApp for mobile fitting</span>
+            </a>
+            <a href="tel:+971505069575" class="btn-hero-call">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <span>+971 50 506 9575</span>
+            </a>
+          </div>
+
+          <!-- Trust Badges -->
+          <div class="mtf-hero-trust">
+            <div class="mtf-trust-item">
+              <span class="mtf-trust-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </span>
+              <span>Trusted & reliable</span>
+            </div>
+            <div class="mtf-trust-item">
+              <span class="mtf-trust-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </span>
+              <span>Same-day fitting</span>
+            </div>
+            <div class="mtf-trust-item">
+              <span class="mtf-trust-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              </span>
+              <span>Dubai & Abu Dhabi</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Branded Hero Artwork -->
+        <div class="mtf-hero-media">
+          <div class="mtf-hero-img-wrap">
+            <img src="/static/assets/images/mobile-fitting-hero-van.png" alt="TyresVision Mobile Tyre Fitting Van with Dubai Skyline - We come to you!" class="mtf-hero-img">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       2. SIMPLE STEPS: HOW IT WORKS
+       ======================================================================== -->
+  <section class="mtf-section">
+    <div class="mtf-wrap">
+      <div class="mtf-heading-center">
+        <span class="mtf-badge-pill">SIMPLE STEPS</span>
+        <h2 class="mtf-h2">How mobile tyre fitting works</h2>
+        <p class="mtf-sub-text">
+          Booking a mobile tyre service in Dubai or Abu Dhabi is one continuous handoff, from your phone to your driveway.
+        </p>
+      </div>
+
+      <div class="mtf-steps-track">
+        <!-- Step 1 -->
+        <div class="mtf-step-col">
+          <div class="mtf-step-circle">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.03-1.25-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.78 2.72 4.31 3.81.6.26 1.07.42 1.44.54.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.11-.22-.17-.47-.29z"/></svg>
+          </div>
+          <h3 class="mtf-step-title">1. Send your tyre size</h3>
+          <p class="mtf-step-desc">Snap the sidewall or tell us your car make and model on WhatsApp.</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="mtf-step-col">
+          <div class="mtf-step-circle">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          </div>
+          <h3 class="mtf-step-title">2. Drop a location pin</h3>
+          <p class="mtf-step-desc">Home, office or apartment car park — the van comes to the exact spot (not just the area).</p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="mtf-step-col">
+          <div class="mtf-step-circle">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          </div>
+          <h3 class="mtf-step-title">3. We confirm a time</h3>
+          <p class="mtf-step-desc">Agreed on WhatsApp before the van leaves the depot, so you're not waiting all day.</p>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="mtf-step-col">
+          <div class="mtf-step-circle">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <h3 class="mtf-step-title">4. Fitted where you're parked</h3>
+          <p class="mtf-step-desc">New tyres mounted, balanced and torqued to spec — no drop-off, no second trip.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       3. WHAT OUR VANS CARRY
+       ======================================================================== -->
+  <section class="mtf-section" style="padding-top: 10px;">
+    <div class="mtf-wrap">
+      <div class="mtf-carry-header">
+        <h2 class="mtf-h2" style="margin-bottom: 6px;">What our vans carry</h2>
+        <p style="color: var(--mtf-slate-muted); font-size: 0.98rem;">Each van is a self-contained workshop, not a spare tyre and a jack.</p>
+      </div>
+
+      <div class="mtf-carry-grid">
+        <!-- Card 1 -->
+        <div class="mtf-carry-card">
+          <div class="mtf-carry-icon">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle><path d="M12 3v5M12 16v5M3 12h5M16 12h5"/></svg>
+          </div>
+          <div>
+            <h3 class="mtf-carry-title">Tyre changer</h3>
+            <p class="mtf-carry-desc">Full mounting and demounting equipment for run-flats and low-profile tyres.</p>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="mtf-carry-card">
+          <div class="mtf-carry-icon">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="2.5"></circle><path d="M12 2a10 10 0 0 1 10 10M12 12l7 7M12 12l-7-7M12 12l-7 7M12 12l7-7"/></svg>
+          </div>
+          <div>
+            <h3 class="mtf-carry-title">On-site wheel balancer</h3>
+            <p class="mtf-carry-desc">Balances happen at your location, every time — it's never quickly skipped.</p>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="mtf-carry-card">
+          <div class="mtf-carry-icon">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          </div>
+          <div>
+            <h3 class="mtf-carry-title">Calibrated torque wrench</h3>
+            <p class="mtf-carry-desc">Wheel nuts torqued to the manufacturer's exact spec, not just tightened by hand.</p>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="mtf-carry-card">
+          <div class="mtf-carry-icon">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="5" rx="1"></rect><rect x="8" y="7" width="8" height="14" rx="2"></rect><line x1="12" y1="11" x2="12" y2="17"></line></svg>
+          </div>
+          <div>
+            <h3 class="mtf-carry-title">New valves, every fitting</h3>
+            <p class="mtf-carry-desc">A worn valve is a slow puncture waiting to happen, so we fit new valves every time.</p>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="mtf-carry-card">
+          <div class="mtf-carry-icon">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5M11 19h8.2a1.8 1.8 0 0 0 1.58-1 1.8 1.8 0 0 0 0-1.8l-4-7M15.5 4.5l-4-4-4 4M11.5 2v7.5"/></svg>
+          </div>
+          <div>
+            <h3 class="mtf-carry-title">Space for your old tyres</h3>
+            <p class="mtf-carry-desc">We take them away with us for recycling — you don't need to store or dispose of them.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       4. WHAT MOBILE TYRE FITTING COSTS (TRANSPARENT PRICING)
+       ======================================================================== -->
+  <section class="mtf-section">
+    <div class="mtf-wrap">
+      <div class="mtf-pricing-panel">
+        <div class="mtf-pricing-grid">
+          <!-- Left Column -->
+          <div>
+            <span class="mtf-badge-transp">TRANSPARENT PRICING</span>
+            <h2 class="mtf-h2" style="margin-bottom: 8px;">What mobile fitting costs</h2>
+            <p class="mtf-pricing-sub">The price splits into two clear parts, and we tell you both before the van moves.</p>
+
+            <div class="mtf-pricing-cards">
+              <!-- Option 1 -->
+              <div class="mtf-price-card">
+                <div class="mtf-price-card-icon">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle><path d="M12 3v5M12 16v5M3 12h5M16 12h5"/></svg>
+                </div>
+                <div class="mtf-price-label">At a partner centre</div>
+                <div class="mtf-price-value">Free fitting</div>
+                <p class="mtf-price-desc">Tyre cost only. Drive in, or drop the wheels off.</p>
+              </div>
+
+              <!-- Option 2 -->
+              <div class="mtf-price-card">
+                <div class="mtf-price-card-icon">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </div>
+                <div class="mtf-price-label">At your location</div>
+                <div class="mtf-price-value">Tyre cost + call-out fee</div>
+                <p class="mtf-price-desc">Fee confirmed on WhatsApp before dispatch — no surprises on arrival.</p>
+              </div>
+            </div>
+
+            <a href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20what%20is%20the%20mobile%20fitting%20price%20for%20my%20tyres%3F" target="_blank" rel="noopener" class="btn-price-action">
+              <span>Get a mobile fitting price</span>
+              <span>&rarr;</span>
+            </a>
+          </div>
+
+          <!-- Right Column Artwork -->
+          <div class="mtf-pricing-artwork">
+            <div class="mtf-pricing-art-wrap">
+              <img src="/static/assets/images/mobile-fitting-tyres-card.png" alt="Quality tyres fitted wherever you are - TyresVision" class="mtf-pricing-art-img">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       5. WHERE WE CAN AND CAN'T FIT
+       ======================================================================== -->
+  <section class="mtf-section">
+    <div class="mtf-wrap">
+      <div style="margin-bottom: 28px;">
+        <h2 class="mtf-h2" style="margin-bottom: 6px;">Where we can and can't fit</h2>
+        <p style="color: var(--mtf-slate-muted); font-size: 0.98rem;">We'd rather tell you upfront than send a van that can't do the job:</p>
+      </div>
+
+      <div class="mtf-fit-grid">
+        <!-- Left Column: Status Table -->
+        <div class="mtf-fit-table">
+          <!-- Row 1 -->
+          <div class="mtf-fit-row">
+            <span class="mtf-pill-badge mtf-pill-yes">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Yes</span>
+            </span>
+            <div class="mtf-fit-text">
+              <strong>Villa driveway</strong> — our most common job, plenty of room to work safely.
+            </div>
+          </div>
+
+          <!-- Row 2 -->
+          <div class="mtf-fit-row">
+            <span class="mtf-pill-badge mtf-pill-yes">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Yes</span>
+            </span>
+            <div class="mtf-fit-text">
+              <strong>Apartment car park</strong> — with building access confirmed in advance, so security lets the van in.
+            </div>
+          </div>
+
+          <!-- Row 3 -->
+          <div class="mtf-fit-row">
+            <span class="mtf-pill-badge mtf-pill-ask">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <span>Ask first</span>
+            </span>
+            <div class="mtf-fit-text">
+              <strong>Height-restricted basements/parking</strong> — some of our vans won't clear the entrance, so check with us before booking.
+            </div>
+          </div>
+
+          <!-- Row 4 -->
+          <div class="mtf-fit-row">
+            <span class="mtf-pill-badge mtf-pill-no">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <span>No</span>
+            </span>
+            <div class="mtf-fit-text">
+              <strong>Busy roadside on Sheikh Zayed Road or similar highways</strong> — too dangerous to fit safely. We'll arrange recovery to a partner centre instead.
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Serving Dubai & Abu Dhabi Skyline Graphic -->
+        <div class="mtf-fit-skyline-card">
+          <img src="/static/assets/images/mobile-fitting-skyline.png" alt="Serving Dubai & Abu Dhabi - TyresVision Mobile Vans" class="mtf-fit-skyline-img">
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           6. EV & RUN-FLATS SECTION
+           ==================================================================== -->
+      <div class="mtf-ev-banner" style="margin-top: 36px;">
+        <img src="/static/assets/images/mobile-fitting-ev-car.png" alt="Electric Car EV tyre fitting" class="mtf-ev-car-img">
+        <div class="mtf-ev-content">
+          <h2 class="mtf-h2" style="font-size: 1.45rem; margin-bottom: 8px; color: #ffffff;">EVs, run-flats and 4x4s at your location</h2>
+          <p class="mtf-ev-desc" style="color: rgba(255,255,255,0.92); line-height: 1.65; font-size: 0.96rem;">
+            Electric vehicles must be lifted on their marked jacking pads only &mdash; never on the battery housing &mdash; and our vans carry specific mounting equipment for run-flats and heavy 4x4s. Learn more on our dedicated <a href="/ev-tyres" style="color:#ffffff; font-weight:700; text-decoration:underline;">EV and run-flat tyres</a> page, or verify your vehicle dimensions to <a href="/tyre-sizes" style="color:#ffffff; font-weight:700; text-decoration:underline;">find your tyre size</a>.
+          </p>
+        </div>
+        <a href="/ev-tyres" class="btn-ev-learn">
+          <span>Learn more</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       7. AREAS OUR VANS COVER
+       ======================================================================== -->
+  <section class="mtf-section">
+    <div class="mtf-wrap">
+      <div>
+        <h2 class="mtf-h2" style="margin-bottom: 6px;">Areas our vans cover</h2>
+        <p style="color: var(--mtf-slate-muted); font-size: 0.98rem;">
+          Our mobile tyre vans operate daily across Dubai and Abu Dhabi, with specialized coverage for drivers seeking <a href="/tyre-shop-dubai" style="color:var(--mtf-primary); font-weight:700; text-decoration:underline;">tyre fitting in Dubai</a> or convenient doorstep <a href="/tyre-shop-abu-dhabi" style="color:var(--mtf-primary); font-weight:700; text-decoration:underline;">tyre fitting in Abu Dhabi</a>:
+        </p>
+      </div>
+
+      <div class="mtf-areas-grid">
+        <!-- Col 1: Dubai -->
+        <div class="mtf-area-card">
+          <div class="mtf-area-head">
+            <div class="mtf-area-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="9" y1="6" x2="9.01" y2="6"></line><line x1="15" y1="6" x2="15.01" y2="6"></line><line x1="9" y1="10" x2="9.01" y2="10"></line><line x1="15" y1="10" x2="15.01" y2="10"></line><line x1="9" y1="14" x2="9.01" y2="14"></line><line x1="15" y1="14" x2="15.01" y2="14"></line><line x1="9" y1="18" x2="15" y2="18"></line></svg>
+            </div>
+            <h3 class="mtf-area-title"><a href="/tyre-shop-dubai" style="color:inherit; text-decoration:none;">Dubai</a></h3>
+          </div>
+          <ul class="mtf-area-list">
+            <li>Downtown Dubai & Business Bay</li>
+            <li>Dubai Marina & JBR</li>
+            <li>Jumeirah & Umm Suqeim</li>
+            <li>Arabian Ranches & Mudon</li>
+            <li>Al Barsha & Motor City</li>
+            <li>Mirdif & Dubai Silicon Oasis</li>
+          </ul>
+        </div>
+
+        <!-- Col 2: Abu Dhabi -->
+        <div class="mtf-area-card">
+          <div class="mtf-area-head">
+            <div class="mtf-area-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C9 6 6 8 6 12v9h12v-9c0-4-3-6-6-10z"/><path d="M2 21h20"/><circle cx="12" cy="12" r="2"/></svg>
+            </div>
+            <h3 class="mtf-area-title"><a href="/tyre-shop-abu-dhabi" style="color:inherit; text-decoration:none;">Abu Dhabi</a></h3>
+          </div>
+          <ul class="mtf-area-list">
+            <li>Al Reem Island & Al Raha Beach</li>
+            <li>Khalifa City & Al Reef</li>
+            <li>Yas Island & Saadiyat Island</li>
+            <li>Mussafah & Al Bateen</li>
+            <li>Al Ain Road corridor</li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Northern Emirates -->
+        <div class="mtf-area-card">
+          <div class="mtf-area-head">
+            <div class="mtf-area-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            </div>
+            <h3 class="mtf-area-title">Northern Emirates</h3>
+          </div>
+          <p class="mtf-area-desc">
+            Mobile fitting in Sharjah is available on request. Other locations handled through our partner fitting centres rather than a mobile van — send your location on WhatsApp and we'll confirm the fastest option.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       8. FAQS & STICKY HELP CARD
+       ======================================================================== -->
+  <section class="mtf-section">
+    <div class="mtf-wrap">
+      <div class="mtf-faq-header-row">
+        <h2 class="mtf-h2" style="margin-bottom: 0;">Mobile tyre fitting FAQs</h2>
+        <a href="/#faq" class="mtf-faq-view-all">
+          <span>View all FAQs</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="mtf-faq-grid">
+        <!-- Left: Accordions -->
+        <div class="mtf-accordion" id="mtf-faq-list">
+          <!-- Item 1 (Initially Expanded) -->
+          <div class="mtf-accordion-item active">
+            <button type="button" class="mtf-accordion-btn" aria-expanded="true">
+              <span>How long does mobile tyre fitting take?</span>
+              <svg class="mtf-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="mtf-accordion-content" style="max-height: 200px;">
+              <div class="mtf-accordion-body">
+                Most single-tyre jobs take 20-30 minutes once the van arrives. A full set of four, including balancing, usually takes under an hour.
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 2 -->
+          <div class="mtf-accordion-item">
+            <button type="button" class="mtf-accordion-btn" aria-expanded="false">
+              <span>Do I need to be there when the van arrives?</span>
+              <svg class="mtf-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="mtf-accordion-content">
+              <div class="mtf-accordion-body">
+                You don't need to stand there for the whole job, but someone needs to be reachable to unlock the car and confirm the work afterwards. Many customers leave the key with building security.
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 3 -->
+          <div class="mtf-accordion-item">
+            <button type="button" class="mtf-accordion-btn" aria-expanded="false">
+              <span>Can you fit tyres in my building's car park?</span>
+              <svg class="mtf-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="mtf-accordion-content">
+              <div class="mtf-accordion-body">
+                Usually yes, as long as building security can grant the van access and the ceiling height clears our equipment. Basement parking with low clearance is the one case we ask you to check with us first.
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 4 -->
+          <div class="mtf-accordion-item">
+            <button type="button" class="mtf-accordion-btn" aria-expanded="false">
+              <span>Is wheel balancing included in mobile fitting?</span>
+              <svg class="mtf-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="mtf-accordion-content">
+              <div class="mtf-accordion-body">
+                Yes. Every mobile van carries an on-site wheel balancer, so balancing is done at your location as part of the fitting — it's never skipped.
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 5 -->
+          <div class="mtf-accordion-item">
+            <button type="button" class="mtf-accordion-btn" aria-expanded="false">
+              <span>Do you take away my old tyres?</span>
+              <svg class="mtf-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="mtf-accordion-content">
+              <div class="mtf-accordion-body">
+                Yes, we take your old tyres with us for recycling at no extra cost — you don't need to find somewhere to store or dispose of them.
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 6 -->
+          <div class="mtf-accordion-item">
+            <button type="button" class="mtf-accordion-btn" aria-expanded="false">
+              <span>How much does mobile tyre fitting cost in Dubai?</span>
+              <svg class="mtf-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="mtf-accordion-content">
+              <div class="mtf-accordion-body">
+                Tyre fitting at one of our partner centres is free. Mobile fitting at your own location has a call-out fee on top, which we always confirm on WhatsApp before dispatching a van — send your tyre size and area for an exact price.
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 7 -->
+          <div class="mtf-accordion-item">
+            <button type="button" class="mtf-accordion-btn" aria-expanded="false">
+              <span>Can your van fit an EV or a 4x4 at my home?</span>
+              <svg class="mtf-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="mtf-accordion-content">
+              <div class="mtf-accordion-body">
+                Yes. Our teams are trained to lift EVs on the correct jacking pads, and our vans carry the equipment for run-flat and off-road 4x4 tyres.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Sticky Help Card -->
+        <div>
+          <div class="mtf-sticky-help">
+            <div class="mtf-help-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+            </div>
+            <h3 class="mtf-help-title">Still have a question?</h3>
+            <p class="mtf-help-desc">Send us your tyre size and location on WhatsApp and we'll get back to you within minutes.</p>
+
+            <a href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20have%20a%20question%20about%20mobile%20tyre%20fitting." target="_blank" rel="noopener" class="btn-help-wa">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.03-1.25-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.78 2.72 4.31 3.81.6.26 1.07.42 1.44.54.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.11-.22-.17-.47-.29z"/></svg>
+              <span>WhatsApp us</span>
+            </a>
+
+            <a href="tel:+971505069575" class="btn-help-call">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <span>Call +971 50 506 9575</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Note -->
+      <div class="mtf-bottom-note">
+        Looking for a fitting centre instead of a van? See <a href="/#services">tyre fitting in Dubai</a> or <a href="/#services">tyre fitting in Abu Dhabi</a>, or <a href="/#sizes">find your tyre size</a> before you book.
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  'use strict';
+
+  // 1. Accordion Toggle Logic
+  const items = document.querySelectorAll('.mtf-accordion-item');
+  items.forEach(function (item) {
+    const btn = item.querySelector('.mtf-accordion-btn');
+    const content = item.querySelector('.mtf-accordion-content');
+
+    btn.addEventListener('click', function () {
+      const isOpen = item.classList.contains('active');
+
+      // Close all other items
+      items.forEach(function (other) {
+        other.classList.remove('active');
+        other.querySelector('.mtf-accordion-btn').setAttribute('aria-expanded', 'false');
+        other.querySelector('.mtf-accordion-content').style.maxHeight = '0';
+      });
+
+      // Toggle current item
+      if (!isOpen) {
+        item.classList.add('active');
+        btn.setAttribute('aria-expanded', 'true');
+        content.style.maxHeight = content.scrollHeight + 30 + 'px';
+      }
+    });
+  });
+
+  // 2. GSAP Antigravity Motion Animations
+  if (typeof gsap !== 'undefined') {
+    // Hero Entrance
+    gsap.from('.mtf-hero-title', { opacity: 0, y: 30, duration: 0.9, ease: 'power3.out' });
+    gsap.from('.mtf-hero-lead', { opacity: 0, y: 25, duration: 0.9, delay: 0.15, ease: 'power3.out' });
+    gsap.from('.mtf-hero-actions', { opacity: 0, y: 20, duration: 0.8, delay: 0.3, ease: 'power3.out' });
+    gsap.from('.mtf-hero-trust .mtf-trust-item', { opacity: 0, y: 15, duration: 0.6, delay: 0.45, stagger: 0.1, ease: 'power2.out' });
+    gsap.from('.mtf-hero-img-wrap', { opacity: 0, scale: 0.95, y: 25, duration: 1.1, delay: 0.2, ease: 'power3.out' });
+
+    // ScrollTrigger Card Animations
+    if (typeof ScrollTrigger !== 'undefined') {
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Stagger Steps
+      gsap.from('.mtf-step-col', {
+        scrollTrigger: {
+          trigger: '.mtf-steps-track',
+          start: 'top 85%'
+        },
+        opacity: 0,
+        y: 35,
+        stagger: 0.15,
+        duration: 0.8,
+        ease: 'power3.out'
+      });
+
+      // Stagger Van Carry Cards
+      gsap.from('.mtf-carry-card', {
+        scrollTrigger: {
+          trigger: '.mtf-carry-grid',
+          start: 'top 85%'
+        },
+        opacity: 0,
+        y: 30,
+        stagger: 0.1,
+        duration: 0.7,
+        ease: 'power2.out'
+      });
+
+      // Pricing Panel
+      gsap.from('.mtf-pricing-panel', {
+        scrollTrigger: {
+          trigger: '.mtf-pricing-panel',
+          start: 'top 85%'
+        },
+        opacity: 0,
+        y: 40,
+        duration: 0.9,
+        ease: 'power3.out'
+      });
+
+      // Fit Rows
+      gsap.from('.mtf-fit-row', {
+        scrollTrigger: {
+          trigger: '.mtf-fit-table',
+          start: 'top 85%'
+        },
+        opacity: 0,
+        x: -25,
+        stagger: 0.12,
+        duration: 0.6,
+        ease: 'power2.out'
+      });
+
+      // Area Cards
+      gsap.from('.mtf-area-card', {
+        scrollTrigger: {
+          trigger: '.mtf-areas-grid',
+          start: 'top 85%'
+        },
+        opacity: 0,
+        y: 30,
+        stagger: 0.15,
+        duration: 0.8,
+        ease: 'power3.out'
+      });
+    }
+  }
+
+  // 3. 3D Spatial Tilt Hover on Interactive Cards
+  const tiltElements = document.querySelectorAll('.mtf-carry-card, .mtf-price-card, .mtf-area-card');
+  tiltElements.forEach(function (el) {
+    el.addEventListener('mousemove', function (e) {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const xPercent = (x / rect.width - 0.5) * 8; // max 4 deg
+      const yPercent = (y / rect.height - 0.5) * -8;
+      el.style.transform = `perspective(800px) rotateX(${yPercent}deg) rotateY(${xPercent}deg) translateY(-4px)`;
+    });
+    el.addEventListener('mouseleave', function () {
+      el.style.transform = '';
+    });
+  });
+});
+</script>
+{% endblock %}

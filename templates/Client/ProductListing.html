@@ -1,0 +1,1235 @@
+{% extends 'Client/layout.html' %}
+
+{% block title %}Car Tyres Dubai & Abu Dhabi | Buy Premium Tyres Online | TyresVision{% endblock %}
+
+{% block meta_description %}Shop premium car tyres online in UAE. Leading brands including Michelin, Bridgestone, Continental, Pirelli & Goodyear with free doorstep mobile fitting.{% endblock %}
+
+{% block canonical_url %}https://www.tyresvision.com/car-tyres{% endblock %}
+
+{% block extra_head %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap');
+
+/* =============================================================================
+   ANTIGRAVITY DESIGN EXPERT: PRODUCT LISTING / CAR TYRES CATALOG
+   Matching exact design reference: ChatGPT Image Sep 14, 2026, 02_44_06 PM.png
+   ============================================================================= */
+
+:root {
+  --tv-blue-brand: #2563EB;
+  --tv-blue-hover: #1D4ED8;
+  --tv-dark-navy: #0F172A;
+  --tv-slate-text: #475569;
+  --tv-slate-muted: #64748B;
+  --tv-border-light: #E2E8F0;
+  --tv-card-bg: #FFFFFF;
+}
+
+/* 1. HERO BANNER */
+.tv-cat-hero {
+  position: relative;
+  background-color: #021a48;
+  background-image: linear-gradient(90deg, #021844 0%, rgba(2, 24, 68, 0.96) 32%, rgba(2, 24, 68, 0.5) 48%, rgba(2, 24, 68, 0.05) 62%, rgba(2, 24, 68, 0) 75%), url('/static/assets/images/products/car_tyres_banner.jpg');
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
+  padding: clamp(48px, 6vw, 76px) 0 clamp(52px, 6.5vw, 84px) 0;
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.tv-cat-hero .wrap {
+  position: relative;
+  z-index: 2;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.tv-cat-hero-content {
+  max-width: 580px;
+}
+
+.tv-cat-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #93C5FD;
+  margin-bottom: 16px;
+}
+
+.tv-cat-breadcrumb a {
+  color: #BFDBFE;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s ease;
+}
+
+.tv-cat-breadcrumb a:hover {
+  color: #ffffff;
+}
+
+.tv-cat-breadcrumb .sep {
+  color: #60A5FA;
+  font-size: 0.75rem;
+}
+
+.tv-cat-breadcrumb .current {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.tv-cat-hero-title {
+  font-size: clamp(2.3rem, 3.8vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  text-shadow: 0 2px 10px rgba(2, 24, 68, 0.5);
+}
+
+.tv-cat-hero-sub {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
+  max-width: 520px;
+  text-shadow: 0 1px 4px rgba(2, 24, 68, 0.4);
+}
+
+/* Floating Script Badge in Sky: "Drive with Confidence" */
+.tv-cat-sky-badge {
+  position: absolute;
+  top: 32px;
+  left: 640px;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Caveat', 'Segoe Script', 'Brush Script MT', cursive, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.6rem, 2.2vw, 2.1rem);
+  line-height: 1.05;
+  color: #ffffff;
+  text-shadow: 0 0 18px rgba(56, 189, 248, 0.9), 0 2px 8px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.tv-cat-sky-badge span:last-child {
+  padding-left: 20px;
+}
+
+@media(max-width: 1120px) {
+  .tv-cat-sky-badge {
+    display: none;
+  }
+}
+
+/* 2. MAIN CATALOG LAYOUT */
+.tv-catalog-wrap {
+  max-width: 1720px;
+  width: 96%;
+  margin: 0 auto;
+  padding: 32px 16px 72px 16px;
+}
+
+.tv-catalog-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+@media(max-width: 1024px) {
+  .tv-catalog-layout {
+    flex-direction: column;
+  }
+  .tv-filter-sidebar {
+    width: 100% !important;
+    position: static !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+}
+
+/* 3. SIDEBAR FILTERS */
+.tv-filter-sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border: 1px solid var(--tv-border-light);
+  border-radius: 16px;
+  padding: 20px 16px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.03);
+  position: -webkit-sticky;
+  position: sticky;
+  top: 24px;
+  align-self: flex-start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.tv-filter-group {
+  border-bottom: 1px solid #F1F5F9;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+
+.tv-filter-group:last-of-type {
+  border-bottom: none;
+  margin-bottom: 24px;
+  padding-bottom: 0;
+}
+
+.tv-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--tv-dark-navy);
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 14px;
+}
+
+.tv-filter-header svg {
+  color: #64748B;
+  transition: transform 0.2s ease;
+}
+
+.tv-filter-header.collapsed svg {
+  transform: rotate(-90deg);
+}
+
+.tv-filter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tv-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #334155;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tv-filter-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid #CBD5E1;
+  accent-color: var(--tv-blue-brand);
+  cursor: pointer;
+}
+
+.tv-filter-count {
+  color: #94A3B8;
+  font-size: 0.82rem;
+}
+
+.tv-search-size-box {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  background: #F8FAFC;
+  margin-bottom: 12px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.tv-search-size-box:focus {
+  border-color: var(--tv-blue-brand);
+  background: #ffffff;
+}
+
+.tv-filter-more-link {
+  color: var(--tv-blue-brand);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 6px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.tv-filter-more-link:hover {
+  text-decoration: underline;
+}
+
+/* Price Range Slider */
+.tv-price-slider-wrap {
+  padding: 8px 4px 4px 4px;
+}
+
+.tv-price-range-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tv-range-slider {
+  width: 100%;
+  accent-color: var(--tv-blue-brand);
+  cursor: pointer;
+}
+
+.tv-price-range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--tv-dark-navy);
+  margin-top: 8px;
+}
+
+.tv-btn-clear-filters {
+  width: 100%;
+  padding: 10px 16px;
+  background: #ffffff;
+  border: 1.5px solid var(--tv-blue-brand);
+  color: var(--tv-blue-brand);
+  font-weight: 700;
+  font-size: 0.88rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.tv-btn-clear-filters:hover {
+  background: #EFF6FF;
+}
+
+/* 4. MAIN PRODUCT CATALOG */
+.tv-catalog-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.tv-catalog-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.tv-catalog-count-heading {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--tv-dark-navy);
+  margin: 0;
+}
+
+.tv-catalog-sort {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #64748B;
+}
+
+.tv-sort-select {
+  padding: 8px 14px;
+  border: 1px solid var(--tv-border-light);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--tv-dark-navy);
+  background: #ffffff;
+  cursor: pointer;
+  outline: none;
+}
+
+.tv-sort-select:focus {
+  border-color: var(--tv-blue-brand);
+}
+
+/* 5. PRODUCT CARDS GRID (8-COLUMN SINGLE ROW) */
+.tv-products-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media(max-width: 1560px) {
+  .tv-products-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media(max-width: 1240px) {
+  .tv-products-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media(max-width: 820px) {
+  .tv-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media(max-width: 480px) {
+  .tv-products-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 6. INDIVIDUAL PRODUCT CARD */
+.tv-product-card {
+  background: #ffffff;
+  border: 1px solid #EDF2F7;
+  border-radius: 14px;
+  padding: 10px 8px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  min-width: 0;
+}
+
+.tv-product-card:hover {
+  transform: translateY(-3px);
+  border-color: #CBD5E1;
+  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.08);
+}
+
+.tv-card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 20px;
+  margin-bottom: 2px;
+}
+
+/* Badges */
+.tv-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 100px;
+  color: #ffffff;
+  display: inline-block;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.tv-badge.badge-blue { background: #2563EB; }
+.tv-badge.badge-red { background: #EF4444; }
+.tv-badge.badge-green { background: #10B981; }
+.tv-badge.badge-orange { background: #F59E0B; }
+.tv-badge.badge-emerald { background: #059669; }
+
+.tv-btn-wishlist {
+  background: none;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  padding: 2px;
+  transition: color 0.15s ease, transform 0.15s ease;
+  margin-left: auto;
+}
+
+.tv-btn-wishlist:hover {
+  color: #EF4444;
+  transform: scale(1.15);
+}
+
+.tv-btn-wishlist.active {
+  color: #EF4444;
+  fill: #EF4444;
+}
+
+/* Image */
+.tv-card-img-wrap {
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px 0 6px 0;
+  overflow: hidden;
+}
+
+.tv-product-img {
+  max-height: 84px;
+  max-width: 100%;
+  object-fit: contain;
+  transition: transform 0.25s ease;
+}
+
+.tv-product-card:hover .tv-product-img {
+  transform: scale(1.05);
+}
+
+/* Brand Logo */
+.tv-card-brand-logo {
+  height: 16px;
+  max-width: 68px;
+  object-fit: contain;
+  margin: 0 auto 5px auto;
+  display: block;
+}
+
+/* Title & Size */
+.tv-product-model-name {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--tv-dark-navy);
+  margin: 0 0 2px 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.tv-product-size-label {
+  font-size: 0.72rem;
+  color: #64748B;
+  font-weight: 500;
+  margin: 0 0 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+/* Metadata tag row */
+.tv-product-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  color: #64748B;
+  margin-bottom: 4px;
+}
+
+.tv-meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.tv-meta-tag svg {
+  color: #94A3B8;
+  width: 12px;
+  height: 12px;
+}
+
+/* Ratings */
+.tv-product-rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  margin-bottom: 6px;
+}
+
+.tv-star-icon {
+  color: #F59E0B;
+}
+
+.tv-rating-num {
+  font-weight: 700;
+  color: var(--tv-dark-navy);
+}
+
+.tv-reviews-count {
+  color: #94A3B8;
+}
+
+/* Price */
+.tv-product-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.tv-price-curr {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--tv-dark-navy);
+}
+
+.tv-price-curr.sale {
+  color: #EF4444;
+}
+
+.tv-price-list {
+  font-size: 0.72rem;
+  color: #94A3B8;
+  text-decoration: line-through;
+}
+
+/* Add to cart pill */
+.tv-btn-add-cart {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--tv-blue-brand);
+  color: #ffffff;
+  border: none;
+  border-radius: 100px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tv-btn-add-cart:hover {
+  background: var(--tv-blue-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+/* 7. PAGINATION */
+.tv-pagination-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--tv-border-light);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.tv-pagination-info {
+  font-size: 0.9rem;
+  color: #64748B;
+}
+
+.tv-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tv-page-btn {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--tv-border-light);
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.tv-page-btn:hover {
+  border-color: var(--tv-blue-brand);
+  color: var(--tv-blue-brand);
+}
+
+.tv-page-btn.active {
+  background: var(--tv-blue-brand);
+  border-color: var(--tv-blue-brand);
+  color: #ffffff;
+}
+
+.tv-page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Quick Toast Notification */
+.tv-toast-notify {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #0F172A;
+  color: #ffffff;
+  padding: 14px 22px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  z-index: 9999;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.tv-toast-notify.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 1. HERO BANNER -->
+<section class="tv-cat-hero">
+  <div class="wrap">
+    <div class="tv-cat-hero-content">
+      <nav class="tv-cat-breadcrumb" aria-label="Breadcrumb">
+        <a href="/">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>Home</span>
+        </a>
+        <span class="sep">&rsaquo;</span>
+        <a href="/tyres">Tyres</a>
+        <span class="sep">&rsaquo;</span>
+        <span class="current">Car Tyres</span>
+      </nav>
+
+      <h1 class="tv-cat-hero-title">Car Tyres</h1>
+      <p class="tv-cat-hero-sub">Choose from a wide range of premium tyres for a safer and smoother journey.</p>
+    </div>
+
+    <!-- Floating Script Badge in Sky: "Drive with Confidence" -->
+    <div class="tv-cat-sky-badge" aria-hidden="true">
+      <span>Drive</span>
+      <span>with Confidence</span>
+    </div>
+  </div>
+</section>
+
+<!-- 2. MAIN CATALOG WRAPPER -->
+<main class="tv-catalog-wrap">
+  <div class="tv-catalog-layout">
+    
+    <!-- LEFT SIDEBAR FILTERS -->
+    <aside class="tv-filter-sidebar" aria-label="Product Filters">
+      <!-- 1. Vehicle Type -->
+      <div class="tv-filter-group">
+        <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+          <span>Vehicle Type</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="tv-filter-list">
+          {% for v in filter_vehicles %}
+          <label class="tv-filter-item">
+            <input type="checkbox" name="vehicle_type" value="{{ v.key }}" onchange="filterProducts()">
+            <span>{{ v.label }}</span> <span class="tv-filter-count">({{ v.count }})</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 2. Tyre Size -->
+      <div class="tv-filter-group">
+        <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+          <span>Tyre Size</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <input type="text" class="tv-search-size-box" placeholder="Search size (e.g. 205/55 R16)" oninput="searchFilterSizes(this.value)">
+        <div class="tv-filter-list" id="filter-size-list">
+          {% if filter_sizes|length == 0 %}
+          <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No sizes available</span>
+          {% endif %}
+          {% for s in filter_sizes[:6] %}
+          <label class="tv-filter-item" data-size="{{ s.size }}">
+            <input type="checkbox" name="size" value="{{ s.size }}" onchange="filterProducts()">
+            <span>{{ s.size }}</span> <span class="tv-filter-count">({{ s.count }})</span>
+          </label>
+          {% endfor %}
+          {% if filter_sizes|length > 6 %}
+          <div id="extra-sizes" style="display:none; flex-direction:column; gap:10px;">
+            {% for s in filter_sizes[6:] %}
+            <label class="tv-filter-item" data-size="{{ s.size }}">
+              <input type="checkbox" name="size" value="{{ s.size }}" onchange="filterProducts()">
+              <span>{{ s.size }}</span> <span class="tv-filter-count">({{ s.count }})</span>
+            </label>
+            {% endfor %}
+          </div>
+          <span class="tv-filter-more-link" onclick="toggleExtraSizes(this)">Show more</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 3. Brand -->
+      <div class="tv-filter-group">
+        <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+          <span>Brand</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="tv-filter-list" id="filter-brand-list">
+          {% if filter_brands|length == 0 %}
+          <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No brands available</span>
+          {% endif %}
+          {% for b in filter_brands[:6] %}
+          <label class="tv-filter-item" data-brand="{{ b.slug }}">
+            <input type="checkbox" name="brand" value="{{ b.slug }}" onchange="filterProducts()">
+            <span>{{ b.name }}</span> <span class="tv-filter-count">({{ b.count }})</span>
+          </label>
+          {% endfor %}
+          {% if filter_brands|length > 6 %}
+          <div id="extra-brands" style="display:none; flex-direction:column; gap:10px;">
+            {% for b in filter_brands[6:] %}
+            <label class="tv-filter-item" data-brand="{{ b.slug }}">
+              <input type="checkbox" name="brand" value="{{ b.slug }}" onchange="filterProducts()">
+              <span>{{ b.name }}</span> <span class="tv-filter-count">({{ b.count }})</span>
+            </label>
+            {% endfor %}
+          </div>
+          <span class="tv-filter-more-link" onclick="toggleExtraBrands(this)">Show more</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 4. Price Range -->
+      <div class="tv-filter-group">
+        <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+          <span>Price Range</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="tv-price-slider-wrap">
+          <div class="tv-price-range-inputs">
+            <input type="range" class="tv-range-slider" min="{{ min_price }}" max="{{ max_price }}" step="25" value="{{ max_price }}" id="max-price-slider" oninput="updatePriceFilter(this.value)">
+          </div>
+          <div class="tv-price-range-labels">
+            <span>AED {{ min_price }}</span>
+            <span id="price-slider-val">&le; AED {{ max_price }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Tyre Type -->
+      <div class="tv-filter-group">
+        <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+          <span>Tyre Type</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="tv-filter-list">
+          {% for t in filter_tyre_types %}
+          <label class="tv-filter-item">
+            <input type="checkbox" name="tire_type" value="{{ t.key }}" onchange="filterProducts()">
+            <span>{{ t.label }}</span> <span class="tv-filter-count">({{ t.count }})</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Clear all filters button -->
+      <button type="button" class="tv-btn-clear-filters" onclick="clearAllFilters()">Clear all filters</button>
+    </aside>
+
+    <!-- RIGHT MAIN CATALOG COLUMN -->
+    <div class="tv-catalog-main">
+      <!-- Top Sort Bar -->
+      <div class="tv-catalog-top-bar">
+        <h2 class="tv-catalog-count-heading" id="catalog-count-heading">{{ total_count or 16 }} Car Tyres</h2>
+        <div class="tv-catalog-sort">
+          <label for="sort-select">Sort by:</label>
+          <select id="sort-select" class="tv-sort-select" onchange="sortProducts(this.value)">
+            <option value="popular">Most Popular</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Customer Rating</option>
+            <option value="newest">Newest Arrivals</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 4-Column Product Cards Grid -->
+      <div class="tv-products-grid" id="products-grid-container">
+        {% if products|length == 0 %}
+        <div class="tv-empty-catalog" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: #fff; border-radius: 16px; border: 1px dashed var(--tv-border-light);">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" style="margin: 0 auto 16px; display: block;"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--tv-dark-navy); margin-bottom: 8px;">No Tyres Found in Database</h3>
+          <p style="color: #64748B; font-size: 0.95rem; max-width: 420px; margin: 0 auto;">No active tyre products are currently in the database. Active products will automatically populate here.</p>
+        </div>
+        {% endif %}
+        {% for p in products %}
+        <div class="tv-product-card"
+             data-brand="{{ p.brand_slug or (p.brand_name|lower) }}"
+             data-size="{{ p.tire_size_label }}"
+             data-vehicle="{{ p.vehicle_type or 'car' }}"
+             data-type="{{ p.tire_type or 'summer' }}"
+             data-price="{{ p.price|float }}"
+             data-rating="{{ p.rating|float }}"
+             data-order="{{ p.sort_order or loop.index }}">
+          
+          <!-- Card Top Row: Badge & Wishlist -->
+          <div class="tv-card-top-row">
+            {% if p.badge %}
+            <span class="tv-badge {{ p.badge_class or 'badge-blue' }}">{{ p.badge }}</span>
+            {% else %}
+            <span></span>
+            {% endif %}
+            <button class="tv-btn-wishlist" onclick="toggleWishlist(this)" title="Save to wishlist" type="button">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            </button>
+          </div>
+
+          <!-- Tyre Image -->
+          <div class="tv-card-img-wrap">
+            <img src="{{ p.image_path or '/static/assets/images/no-image-available.svg' }}" 
+                 alt="{{ p.display_name }}" 
+                 class="tv-product-img" 
+                 loading="lazy" 
+                 onerror="this.src='/static/assets/images/no-image-available.svg'; this.onerror=null;">
+          </div>
+
+          <!-- Brand Logo -->
+          <img src="{{ p.brand_logo }}" alt="{{ p.brand_name }}" class="tv-card-brand-logo" loading="lazy">
+
+          <!-- Model Name -->
+          <h3 class="tv-product-model-name">{{ p.display_name }}</h3>
+
+          <!-- Size Spec -->
+          <div class="tv-product-size-label">{{ p.tire_size_label }}</div>
+
+          <!-- Metadata Icons Row -->
+          <div class="tv-product-meta-row">
+            <span class="tv-meta-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              <span>{{ (p.vehicle_type or 'car')|capitalize }}</span>
+            </span>
+            <span>&bull;</span>
+            <span class="tv-meta-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              <span>{{ p.season or 'Summer' }}</span>
+            </span>
+          </div>
+
+          <!-- Rating -->
+          <div class="tv-product-rating-row">
+            <span class="tv-star-icon">&#9733;</span>
+            <span class="tv-rating-num">{{ p.rating }}</span>
+            <span class="tv-reviews-count">({{ p.reviews }})</span>
+          </div>
+
+          <!-- Price Row -->
+          <div class="tv-product-price-row">
+            <span class="tv-price-curr {% if p.list_price %}sale{% endif %}">AED {{ p.price|int }}</span>
+            {% if p.list_price %}
+            <span class="tv-price-list">AED {{ p.list_price|int }}</span>
+            {% endif %}
+          </div>
+
+          <!-- Add to Cart Pill Button -->
+          <button type="button" class="tv-btn-add-cart" onclick="addToCart(this, '{{ p.brand_name }} {{ p.display_name }}', {{ p.price|int }})">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <span>Add to cart</span>
+          </button>
+
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- 7. BOTTOM PAGINATION BAR -->
+      <div class="tv-pagination-wrap">
+        <div class="tv-pagination-info" id="pagination-info">
+          Showing 1&ndash;16 of 124 tyres
+        </div>
+        <div class="tv-pagination-controls" id="pagination-controls">
+          <!-- Rendered dynamically by JavaScript with working data -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- Floating Toast Notification -->
+<div id="tv-toast" class="tv-toast-notify" role="status" aria-live="polite">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+  <span id="tv-toast-msg">Added to your fitting cart!</span>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+/* =============================================================================
+   PRODUCT LISTING CATALOG CLIENT INTERACTIVITY
+   Live filter, size search, price slider, sort, add to cart & dynamic pagination
+   ============================================================================= */
+
+const PER_PAGE = 16;
+let currentPage = 1;
+let currentFilteredCards = [];
+
+function toggleFilterGroup(el) {
+  el.classList.toggle('collapsed');
+  const group = el.closest('.tv-filter-group');
+  if (group) {
+    const isCollapsed = el.classList.contains('collapsed');
+    Array.from(group.children).forEach(child => {
+      if (child !== el) {
+        child.style.display = isCollapsed ? 'none' : '';
+      }
+    });
+  }
+}
+
+function toggleExtraSizes(link) {
+  const extra = document.getElementById('extra-sizes');
+  if (extra.style.display === 'none' || !extra.style.display) {
+    extra.style.display = 'flex';
+    link.textContent = 'Show less';
+  } else {
+    extra.style.display = 'none';
+    link.textContent = 'Show more';
+  }
+}
+
+function toggleExtraBrands(link) {
+  const extra = document.getElementById('extra-brands');
+  if (extra.style.display === 'none' || !extra.style.display) {
+    extra.style.display = 'flex';
+    link.textContent = 'Show less';
+  } else {
+    extra.style.display = 'none';
+    link.textContent = 'Show more';
+  }
+}
+
+function searchFilterSizes(query) {
+  const q = query.trim().toLowerCase();
+  const items = document.querySelectorAll('#filter-size-list .tv-filter-item');
+  items.forEach(it => {
+    const size = (it.getAttribute('data-size') || '').toLowerCase();
+    if (!q || size.includes(q)) {
+      it.style.display = 'flex';
+    } else {
+      it.style.display = 'none';
+    }
+  });
+}
+
+function updatePriceFilter(val) {
+  document.getElementById('price-slider-val').textContent = '<= AED ' + parseInt(val).toLocaleString();
+  filterProducts(true);
+}
+
+function initPagination() {
+  const container = document.getElementById('products-grid-container');
+  if (!container) return;
+  currentFilteredCards = Array.from(container.querySelectorAll('.tv-product-card'));
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const pageParam = parseInt(urlParams.get('page'));
+  if (pageParam && pageParam > 0) {
+    currentPage = pageParam;
+  } else {
+    currentPage = 1;
+  }
+
+  filterProducts(false);
+}
+
+function applyPagination() {
+  const total = currentFilteredCards.length;
+  const totalPages = Math.ceil(total / PER_PAGE) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  const startIndex = (currentPage - 1) * PER_PAGE;
+  const endIndex = Math.min(startIndex + PER_PAGE, total);
+
+  // Hide all cards first
+  const allCards = document.querySelectorAll('.tv-product-card');
+  allCards.forEach(c => { c.style.display = 'none'; });
+
+  // Show only current page cards from currentFilteredCards
+  for (let i = startIndex; i < endIndex; i++) {
+    if (currentFilteredCards[i]) {
+      currentFilteredCards[i].style.display = 'flex';
+    }
+  }
+
+  // Update pagination info text: Showing 1–16 of 124 tyres
+  const infoEl = document.getElementById('pagination-info');
+  if (infoEl) {
+    if (total === 0) {
+      infoEl.textContent = 'Showing 0 tyres';
+    } else {
+      infoEl.innerHTML = `Showing ${startIndex + 1}&ndash;${endIndex} of ${total} tyres`;
+    }
+  }
+
+  // Update count heading
+  const heading = document.getElementById('catalog-count-heading');
+  if (heading) {
+    heading.textContent = `${total} Car Tyres`;
+  }
+
+  renderPaginationControls(totalPages);
+}
+
+function renderPaginationControls(totalPages) {
+  const controls = document.getElementById('pagination-controls');
+  if (!controls) return;
+
+  if (totalPages <= 1) {
+    controls.style.display = 'none';
+    return;
+  }
+  controls.style.display = 'flex';
+
+  let html = '';
+  // Prev button
+  const prevDisabled = currentPage <= 1 ? 'disabled' : '';
+  html += `<button type="button" class="tv-page-btn" ${prevDisabled} onclick="goToPage(${currentPage - 1})" aria-label="Previous page">&lsaquo;</button>`;
+
+  // Page numbers (1 to totalPages)
+  for (let i = 1; i <= totalPages; i++) {
+    const activeCls = i === currentPage ? ' active' : '';
+    html += `<button type="button" class="tv-page-btn${activeCls}" onclick="goToPage(${i})">${i}</button>`;
+  }
+
+  // Next button
+  const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+  html += `<button type="button" class="tv-page-btn" ${nextDisabled} onclick="goToPage(${currentPage + 1})" aria-label="Next page">&rsaquo;</button>`;
+
+  controls.innerHTML = html;
+}
+
+function goToPage(page) {
+  const totalPages = Math.ceil(currentFilteredCards.length / PER_PAGE) || 1;
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+
+  const url = new URL(window.location);
+  url.searchParams.set('page', page);
+  window.history.pushState({}, '', url);
+
+  applyPagination();
+
+  const mainCol = document.querySelector('.tv-catalog-main');
+  if (mainCol) {
+    mainCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function filterProducts(resetPage = true) {
+  const allCards = Array.from(document.querySelectorAll('.tv-product-card'));
+  const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value);
+  const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value);
+  const selectedBrands = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(cb => cb.value.toLowerCase());
+  const selectedTypes = Array.from(document.querySelectorAll('input[name="tire_type"]:checked')).map(cb => cb.value);
+  const maxPrice = parseFloat(document.getElementById('max-price-slider').value) || 2000;
+
+  currentFilteredCards = allCards.filter(card => {
+    const vType = card.getAttribute('data-vehicle');
+    const size = card.getAttribute('data-size');
+    const brand = (card.getAttribute('data-brand') || '').toLowerCase();
+    const tType = card.getAttribute('data-type');
+    const price = parseFloat(card.getAttribute('data-price')) || 0;
+
+    const matchVehicle = selectedVehicles.length === 0 || selectedVehicles.includes(vType);
+    const matchSize = selectedSizes.length === 0 || selectedSizes.includes(size);
+    const matchBrand = selectedBrands.length === 0 || selectedBrands.includes(brand);
+    const matchType = selectedTypes.length === 0 || selectedTypes.includes(tType);
+    const matchPrice = price <= maxPrice;
+
+    return matchVehicle && matchSize && matchBrand && matchType && matchPrice;
+  });
+
+  if (resetPage) {
+    currentPage = 1;
+    const url = new URL(window.location);
+    url.searchParams.delete('page');
+    window.history.pushState({}, '', url);
+  }
+
+  applyPagination();
+}
+
+function sortProducts(sortBy) {
+  const container = document.getElementById('products-grid-container');
+  const allCards = Array.from(container.querySelectorAll('.tv-product-card'));
+
+  allCards.sort((a, b) => {
+    if (sortBy === 'price-asc') {
+      return parseFloat(a.getAttribute('data-price')) - parseFloat(b.getAttribute('data-price'));
+    } else if (sortBy === 'price-desc') {
+      return parseFloat(b.getAttribute('data-price')) - parseFloat(a.getAttribute('data-price'));
+    } else if (sortBy === 'rating') {
+      return parseFloat(b.getAttribute('data-rating')) - parseFloat(a.getAttribute('data-rating'));
+    } else if (sortBy === 'newest') {
+      return parseInt(b.getAttribute('data-order')) - parseInt(a.getAttribute('data-order'));
+    } else {
+      return parseInt(a.getAttribute('data-order')) - parseInt(b.getAttribute('data-order'));
+    }
+  });
+
+  allCards.forEach(card => container.appendChild(card));
+  filterProducts(true);
+}
+
+function clearAllFilters() {
+  document.querySelectorAll('.tv-filter-sidebar input[type="checkbox"]').forEach(cb => {
+    cb.checked = false;
+  });
+  const searchBox = document.querySelector('.tv-search-size-box');
+  if (searchBox) {
+    searchBox.value = '';
+    searchFilterSizes('');
+  }
+  const slider = document.getElementById('max-price-slider');
+  if (slider) {
+    slider.value = slider.max;
+    document.getElementById('price-slider-val').textContent = '<= AED ' + parseInt(slider.max).toLocaleString();
+  }
+  filterProducts(true);
+}
+
+function toggleWishlist(btn) {
+  btn.classList.toggle('active');
+  const isSaved = btn.classList.contains('active');
+  showToast(isSaved ? 'Added to your wishlist!' : 'Removed from wishlist');
+}
+
+function addToCart(btn, title, price) {
+  const originalHTML = btn.innerHTML;
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Added';
+  btn.style.background = '#10B981';
+
+  showToast('Added ' + title + ' (AED ' + price + ') to cart!');
+
+  setTimeout(() => {
+    btn.innerHTML = originalHTML;
+    btn.style.background = '';
+  }, 2200);
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('tv-toast');
+  const msgEl = document.getElementById('tv-toast-msg');
+  if (!toast) return;
+  msgEl.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2800);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  initPagination();
+});
+</script>
+{% endblock %}

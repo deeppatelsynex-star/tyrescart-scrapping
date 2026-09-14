@@ -238,6 +238,7 @@ class Product:
                     pass
             if isinstance(d['category_name'], dict):
                 d['category_name_display'] = get_translated_value(d['category_name'], loc)
+                d['category_name'] = d['category_name_display']
             else:
                 d['category_name_display'] = str(d['category_name'])
 
@@ -255,6 +256,18 @@ class Product:
                 d['category_ids'] = [d['category_id']] if d.get('category_id') else []
         elif 'category_ids' not in d and d.get('category_id'):
             d['category_ids'] = [d['category_id']]
+
+        # Normalize image paths
+        for img_k in ['image_path', 'small_image']:
+            val = d.get(img_k)
+            if val and str(val).strip():
+                s = str(val).strip().replace('\\', '/')
+                if not (s.startswith('http://') or s.startswith('https://') or s.startswith('data:')):
+                    if not s.startswith('/'):
+                        s = '/' + s
+                d[img_k] = s
+            else:
+                d[img_k] = '/static/assets/images/no-image-available.svg'
 
         # Date / Timestamp formatting
         for k in ['created_at', 'updated_at', 'deleted_at', 'sale_start_date', 'sale_end_date']:

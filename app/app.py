@@ -151,7 +151,7 @@ register_version_endpoints(app)
 
 @app.route('/tyrescart/<path:filename>')
 def serve_tyrescart_image(filename):
-    """Serves tyrescart product images if available locally, else falls back to tyre placeholder."""
+    """Serves tyrescart product images if available locally, else falls back to clean placeholder."""
     for folder in [
         os.path.join(app.static_folder, 'tyrescart'),
         os.path.join(app.static_folder, 'uploads', 'products'),
@@ -163,7 +163,7 @@ def serve_tyrescart_image(filename):
             return send_from_directory(folder, filename)
 
     placeholder_dir = os.path.join(app.static_folder, 'assets', 'images')
-    return send_from_directory(placeholder_dir, 'online-tyres-shop-dubai.png')
+    return send_from_directory(placeholder_dir, 'no-image-available.svg')
 
 
 # ============================================================================
@@ -176,7 +176,7 @@ def handle_404_error(e):
     clean_path = request.path.lower().split('?')[0]
     if any(clean_path.endswith(ext) for ext in ('.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.ico')):
         placeholder_dir = os.path.join(app.static_folder, 'assets', 'images')
-        return send_from_directory(placeholder_dir, 'online-tyres-shop-dubai.png')
+        return send_from_directory(placeholder_dir, 'no-image-available.svg')
 
     if request.path.startswith(('/tcsadmin/api/', '/visionadmin/api/', '/api/')) or request.headers.get('Accept') == 'application/json':
         return jsonify({
