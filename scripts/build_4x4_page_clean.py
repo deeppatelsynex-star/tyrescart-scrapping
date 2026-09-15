@@ -29,15 +29,15 @@ def build_hero_section(title, eyebrow, lead, wa_text, wa_msg, breadcrumb_label="
 <section class="tv-page-hero">
   <div class="wrap hero-grid">
     <div class="tv-hero-left">
-      <nav class="about-breadcrumb" aria-label="Breadcrumb" style="margin-bottom: 20px;">
+      <nav class="about-breadcrumb" aria-label="Breadcrumb" style="margin-bottom: 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
         <a href="/">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
           <span>Home</span>
         </a>
         <span class="sep" aria-hidden="true">/</span>
         <span class="current">{breadcrumb_label}</span>
+        <span class="breadcrumb-eyebrow" style="color:#38bdf8; font-weight:700; font-size:0.84rem; letter-spacing:0.06em; margin-left:4px;">&mdash; {eyebrow}</span>
       </nav>
-      <span class="eyebrow">&mdash; {eyebrow}</span>
       <h1>{title}</h1>
       <p class="lead">{lead}</p>
       <div class="cta-row">
@@ -117,7 +117,7 @@ def build_faq_section(title, faqs):
 <section class="faq tv-section-block" style="background:#F8FAFC;">
   <div class="wrap" style="max-width:860px">
     <div class="center tv-section-head">
-      <span class="eyebrow">&mdash; FREQUENTLY ASKED QUESTIONS &mdash;</span>
+      <span class="eyebrow">&bull; FREQUENTLY ASKED QUESTIONS &bull;</span>
       <h2>{title}</h2>
       <p class="lead">Answers to key questions from drivers across the Emirates.</p>
     </div>
@@ -222,7 +222,7 @@ def build_page_off_road_4x4():
 <section class="tv-section-block" style="background:#ffffff;">
   <div class="wrap">
     <div class="center tv-section-head">
-      <span class="eyebrow">&mdash; HONEST TYRE ADVICE &mdash;</span>
+      <span class="eyebrow">&bull; HONEST TYRE ADVICE &bull;</span>
       <h2 class="center tv-section-title">Highway, all-terrain or mud-terrain &mdash; which do you actually need?</h2>
       <p class="center tv-section-subtitle" style="max-width:840px; margin:0 auto 36px auto; font-size:1.06rem; line-height:1.75; color:#475569;">Most UAE SUV owners never leave tarmac but get sold all-terrain tyres they don&rsquo;t need. A/T tyres are noisier, wear faster in heat and cost fuel. If your off-road is the gravel outside a farm gate, buy highway tyres.</p>
     </div>
@@ -451,7 +451,7 @@ def build_page_off_road_4x4():
 <section class="tv-section-block" style="background:#ffffff;">
   <div class="wrap">
     <div class="center tv-section-head">
-      <span class="eyebrow">&mdash; CRUCIAL SAFETY STANDARD &mdash;</span>
+      <span class="eyebrow">&bull; CRUCIAL SAFETY STANDARD &bull;</span>
       <h2>Load rating on heavy SUVs</h2>
       <p class="lead">Why tyre load capacity is non-negotiable for large vehicles in extreme summer heat.</p>
     </div>
@@ -465,7 +465,7 @@ def build_page_off_road_4x4():
           </span>
           <h3 style="font-size:1.45rem; font-weight:800; color:#0F172A; margin:0 0 12px 0;">Never compromise on load index</h3>
           <p style="font-size:1.02rem; line-height:1.7; color:#334155; margin:0 0 16px 0;">The 116 or 121 after the size is the load index. Fitting a lower rating to save a few hundred dirhams on a loaded Patrol in July is the most dangerous saving in this market. We won’t sell one.</p>
-          <p style="font-size:0.96rem; line-height:1.65; color:#64748B; margin:0;">Heavy 4x4s like the Nissan Patrol and Toyota Land Cruiser weigh approximately 2.8 tonnes unloaded. Fully loaded with passengers, luggage, and desert recovery gear, gross vehicle weight easily surpasses 3.3 tonnes. At sustained 140 km/h highway speeds in 50&deg;C summer temperatures, an under-rated passenger tyre flexes excessively, building fatal heat that leads to catastrophic sidewall blowout.</p>
+          <p style="font-size:1.02rem; line-height:1.7; color:#334155; margin:0;">Heavy 4x4s like the Nissan Patrol and Toyota Land Cruiser weigh approximately 2.8 tonnes unloaded. Fully loaded with passengers, luggage, and desert recovery gear, gross vehicle weight easily surpasses 3.3 tonnes. At sustained 140 km/h highway speeds in 50&deg;C summer temperatures, an under-rated passenger tyre flexes excessively, building fatal heat that leads to catastrophic sidewall blowout.</p>
         </div>
         <div class="tv-4x4-load-card">
           <div style="display:flex; align-items:center; gap:10px;">
@@ -483,7 +483,7 @@ def build_page_off_road_4x4():
             </div>
           </div>
           <div style="margin-top:8px;">
-            <a class="tv-btn-wa-green" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20please%20verify%20the%20load%20index%20for%20my%204x4." target="_blank" rel="noopener" style="width:100%; justify-content:center; padding:10px 16px; font-size:0.9rem;">
+            <a class="tv-btn-wa-green" href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20please%20verify%20the%20load%20index%20for%20my%204x4." target="_blank" rel="noopener" style="width:100%; justify-content:center; padding:10px 14px; font-size:clamp(0.82rem, 2.5vw, 0.9rem); white-space:normal; text-align:center; line-height:1.35;">
               <span>Check My 4x4 Load Rating on WhatsApp</span>
             </a>
           </div>
@@ -502,7 +502,7 @@ def build_page_off_road_4x4():
         <img src="/static/assets/images/4x4/desert_tyre_vehicle.png" alt="Desert Ready Always - 4x4 Tyre on UAE Sand Dunes" loading="lazy">
       </div>
       <div class="tv-4x4-knowledge-content">
-        <span class="eyebrow" style="color:#2563FF; font-weight:800; font-size:0.82rem; letter-spacing:0.1em; text-transform:uppercase;">&mdash; DESERT EXPEDITIONS &mdash;</span>
+        <span class="eyebrow" style="color:#2563FF; font-weight:800; font-size:0.82rem; letter-spacing:0.1em; text-transform:uppercase;">&bull; DESERT EXPEDITIONS &bull;</span>
         <h2 style="font-size:clamp(1.85rem, 3.2vw, 2.4rem); font-weight:800; color:#0F172A; margin:8px 0 12px 0;">Tyres for desert driving</h2>
         <p style="font-size:1.02rem; line-height:1.65; color:#475569; margin:0 0 24px 0;">Sidewall strength, deflating to 15&ndash;18 psi for sand, and re-inflating before rejoining the highway &mdash; driving on tarmac at sand pressure is how sidewalls fail.</p>
 
@@ -564,7 +564,7 @@ def build_page_off_road_4x4():
 <section class="tv-section-block" style="background:#ffffff;">
   <div class="wrap">
     <div class="center tv-section-head">
-      <span class="eyebrow">&mdash; TRANSPARENT PRICING &mdash;</span>
+      <span class="eyebrow">&bull; TRANSPARENT PRICING &bull;</span>
       <h2>4x4 tyre prices</h2>
       <p class="lead">Clear upfront pricing tiers with free workshop balancing or doorstep mobile fitting.</p>
     </div>

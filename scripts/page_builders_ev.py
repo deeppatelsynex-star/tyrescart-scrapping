@@ -73,12 +73,12 @@ def build_page_ev():
         max_h = "style=\"max-height: 250px;\"" if is_first else ""
         faq_html += f"""
       <div class="faq-item{open_cls}" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:14px; margin-bottom:12px; overflow:hidden; transition:border-color 0.2s ease;">
-        <button class="faq-trigger" type="button" aria-expanded="{'true' if is_first else 'false'}" style="width:100%; display:flex; justify-content:space-between; align-items:center; padding:18px 24px; background:none; border:none; text-align:left; cursor:pointer; font-size:1.02rem; font-weight:700; color:#0F172A;">
+        <button class="faq-trigger" type="button" aria-expanded="{'true' if is_first else 'false'}" style="width:100%; display:flex; justify-content:space-between; align-items:center; padding:16px 20px; background:none; border:none; text-align:left; cursor:pointer; font-size:1.02rem; font-weight:700; color:#0F172A;">
           <span>{f['q']}</span>
           <span class="faq-icon" style="font-size:1.3rem; font-weight:400; color:#2563FF; margin-left:14px; flex-shrink:0;">{icon_char}</span>
         </button>
         <div class="faq-answer" {max_h} style="transition:max-height 0.3s cubic-bezier(0,1,0,1);">
-          <div class="faq-answer-inner" style="padding:0 24px 20px 24px;">
+          <div class="faq-answer-inner" style="padding:0 20px 16px 20px;">
             <p style="margin:0; font-size:0.95rem; line-height:1.7; color:#475569;">{f['a']}</p>
           </div>
         </div>
@@ -228,40 +228,40 @@ def build_page_ev():
 
     <div class="tv-ev-grid-3">
       <!-- Advice Card 1: Load index & HL -->
-      <div class="tv-ev-advice-card">
+      <div class="tv-ev-advice-card" style="display:flex; flex-direction:column; height:100%;">
         <div class="tv-ev-icon-circle">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
           </svg>
         </div>
-        <h3 style="font-size:1.25rem; font-weight:800; color:#0F172A; margin:0 0 12px 0;">Check the &ldquo;HL&rdquo; (High Load) Rating</h3>
-        <p style="font-size:0.95rem; line-height:1.7; color:#475569; margin:0 0 12px 0;">EVs are heavier than petrol cars. Always choose HL or XL rated tyres to handle the extra battery mass safely, especially during extreme summer highway heat.</p>
-        <p style="font-size:0.88rem; line-height:1.6; color:#64748B; margin:0;">On heavy EVs like Tesla Model X or Mercedes EQE, standard tyres overheat at 120 km/h, leading to ply separation. HL is strictly non-negotiable.</p>
+        <h3 style="font-size:1.25rem; font-weight:800; color:#0F172A; margin:0 0 12px 0; min-height:56px; display:flex; align-items:flex-start;">Check the &ldquo;HL&rdquo; (High Load) Rating</h3>
+        <p style="font-size:0.95rem; line-height:1.7; color:#475569; margin:0 0 12px 0; min-height:80px;">EVs are heavier than petrol cars. Always choose HL or XL rated tyres to handle the extra battery mass safely, especially during extreme summer highway heat.</p>
+        <p style="font-size:0.88rem; line-height:1.6; color:#64748B; margin:0; flex:1;">On heavy EVs like Tesla Model X or Mercedes EQE, standard tyres overheat at 120 km/h, leading to ply separation. HL is strictly non-negotiable.</p>
       </div>
 
       <!-- Advice Card 2: Why EV tyres wear faster & rotation -->
-      <div class="tv-ev-advice-card">
+      <div class="tv-ev-advice-card" style="display:flex; flex-direction:column; height:100%;">
         <div class="tv-ev-icon-circle">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
           </svg>
         </div>
-        <h3 style="font-size:1.25rem; font-weight:800; color:#0F172A; margin:0 0 12px 0;">Rotate Tyres Every 8,000&ndash;10,000 KM</h3>
-        <p style="font-size:0.95rem; line-height:1.7; color:#475569; margin:0 0 12px 0;">Instant torque delivery and heavy regenerative braking induce rapid shoulder scrub. Regular rotation balances wear across driven axles and extends tyre lifespan.</p>
-        <p style="font-size:0.88rem; line-height:1.6; color:#64748B; margin:0;">Dual-motor all-wheel-drive configurations bias power delivery dynamically, causing asymmetrical outer edge wear without timely rotations.</p>
+        <h3 style="font-size:1.25rem; font-weight:800; color:#0F172A; margin:0 0 12px 0; min-height:56px; display:flex; align-items:flex-start;">Rotate Tyres Every 8,000&ndash;10,000 KM</h3>
+        <p style="font-size:0.95rem; line-height:1.7; color:#475569; margin:0 0 12px 0; min-height:80px;">Instant torque delivery and heavy regenerative braking induce rapid shoulder scrub. Regular rotation balances wear across driven axles and extends tyre lifespan.</p>
+        <p style="font-size:0.88rem; line-height:1.6; color:#64748B; margin:0; flex:1;">Dual-motor all-wheel-drive configurations bias power delivery dynamically, causing asymmetrical outer edge wear without timely rotations.</p>
       </div>
 
       <!-- Advice Card 3: Run-flat vs normal tyres -->
-      <div class="tv-ev-advice-card">
+      <div class="tv-ev-advice-card" style="display:flex; flex-direction:column; height:100%;">
         <div class="tv-ev-icon-circle">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
             <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
           </svg>
         </div>
-        <h3 style="font-size:1.25rem; font-weight:800; color:#0F172A; margin:0 0 12px 0;">Run-Flat vs Normal Tyre Swaps</h3>
-        <p style="font-size:0.95rem; line-height:1.7; color:#475569; margin:0 0 12px 0;">You can switch from harsh run-flats to standard tyres for superior comfort and lower costs. Ensure you carry an emergency 12V inflator kit as most EVs lack a spare.</p>
-        <p style="font-size:0.88rem; line-height:1.6; color:#64748B; margin:0;">Standard tyres absorb road bumps significantly better, decreasing high-frequency chassis vibration transmitted into sensitive electronics.</p>
+        <h3 style="font-size:1.25rem; font-weight:800; color:#0F172A; margin:0 0 12px 0; min-height:56px; display:flex; align-items:flex-start;">Run-Flat vs Normal Tyre Swaps</h3>
+        <p style="font-size:0.95rem; line-height:1.7; color:#475569; margin:0 0 12px 0; min-height:80px;">You can switch from harsh run-flats to standard tyres for superior comfort and lower costs. Ensure you carry an emergency 12V inflator kit as most EVs lack a spare.</p>
+        <p style="font-size:0.88rem; line-height:1.6; color:#64748B; margin:0; flex:1;">Standard tyres absorb road bumps significantly better, decreasing high-frequency chassis vibration transmitted into sensitive electronics.</p>
       </div>
     </div>
 
