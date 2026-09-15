@@ -347,6 +347,29 @@
           </div>
         </div>
 
+        <!-- 3. MARKETING (ACCORDION - CART PRICE RULES) -->
+        {% set is_marketing = page in ['cart_price_rules', 'marketing'] %}
+        <div class="space-y-1">
+          <button type="button" onclick="toggleSidebarAccordion('marketing')"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if is_marketing %}bg-[#EFF6FF] text-[#2563FF]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+            <div class="flex items-center gap-3">
+              <svg class="w-4 h-4 {% if is_marketing %}text-[#2563FF]{% else %}text-slate-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                <line x1="7" y1="7" x2="7.01" y2="7"/>
+              </svg>
+              <span>Marketing</span>
+            </div>
+            <svg id="va-chevron-marketing" class="w-4 h-4 transition-transform duration-200 {% if is_marketing %}rotate-180 text-[#2563FF]{% else %}text-slate-400{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+
+          <div id="va-menu-marketing" class="{% if not is_marketing %}hidden{% endif %} pl-9 pr-2 py-1 space-y-1">
+            <a href="/visionadmin/marketing/cart-price-rules" class="flex items-center justify-between py-1.5 px-2.5 rounded-lg text-xs font-semibold transition {% if page == 'cart_price_rules' %}text-[#2563FF] font-extrabold bg-indigo-50/60{% else %}text-slate-600 hover:text-slate-950 hover:bg-slate-50{% endif %}">
+              <span>Cart Price Rules</span>
+              {% if page == 'cart_price_rules' %}<span class="w-1.5 h-1.5 rounded-full bg-[#2563FF]"></span>{% endif %}
+            </a>
+          </div>
+        </div>
+
         <!-- 8. STORES (DIRECT LINK - IMAGE 1) -->
         <a href="/visionadmin/stores" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-200 {% if page == 'stores' %}bg-[#EFF6FF] text-[#2563FF]{% else %}text-slate-700 hover:bg-slate-50 hover:text-slate-900{% endif %}">
           <div class="flex items-center gap-3">

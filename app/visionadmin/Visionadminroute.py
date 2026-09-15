@@ -28,6 +28,9 @@ from visionadmin.admin_auth import (
 )
 from mailer import send_email
 from services.attribute_service import AttributeService
+from services.cart_price_rule_service import CartPriceRuleService
+import csv
+import io
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
@@ -543,3 +546,177 @@ def register_visionadmin_routes(app):
     @login_required_visionadmin
     def visionadmin_reports():
         return redirect('/tcsadmin/reports')
+
+    # ========================================================================
+    # 11. MARKETING - CART PRICE RULES ROUTES (cart_price_rules tables)
+    # ========================================================================
+
+    @app.route('/visionadmin/marketing/cart-price-rules', methods=['GET'])
+    @app.route('/visonadmin/marketing/cart-price-rules', methods=['GET'])
+    @app.route('/visionadmin/cart-price-rules', methods=['GET'])
+    @app.route('/visonadmin/cart-price-rules', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_list():
+        counts = CartPriceRuleService.get_counts()
+        lookups = CartPriceRuleService.get_lookups()
+        return render_template(
+            'visionadmin/cart_price_rules.html',
+            page='cart_price_rules',
+            section='marketing',
+            counts=counts,
+            customer_groups=lookups.get('customer_groups', [])
+        )
+
+    @app.route('/visionadmin/api/cart-price-rules/data', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_data_api():
+        search = request.args.get('search')
+        status = request.args.get('status')
+        coupon_type = request.args.get('coupon_type')
+        customer_group_id = request.args.get('customer_group_id')
+        sort_by = request.args.get('sort_by', 'priority')
+        sort_dir = request.args.get('sort_dir', 'asc')
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 25))
+
+        res = CartPriceRuleService.get_rules(
+            search=search,
+            status=status,
+            coupon_type=coupon_type,
+            customer_group_id=customer_group_id,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+            page=page,
+            per_page=per_page
+        )
+        res['counts'] = CartPriceRuleService.get_counts()
+        return jsonify(res)
+
+    @app.route('/visionadmin/marketing/cart-price-rules/new', methods=['GET'])
+    @app.route('/visonadmin/marketing/cart-price-rules/new', methods=['GET'])
+    @app.route('/visionadmin/cart-price-rules/new', methods=['GET'])
+    @app.route('/visonadmin/cart-price-rules/new', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_create():
+        lookups = CartPriceRuleService.get_lookups()
+        return render_template(
+            'visionadmin/cart_price_rule_form.html',
+            page='cart_price_rules',
+            section='marketing',
+            initial_mode='create',
+            rule=None,
+            lookups=lookups
+        )
+
+    @app.route('/visionadmin/api/cart-price-rules', methods=['POST'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_store_api():
+        data = request.get_json(silent=True) or request.form.to_dict()
+        try:
+            admin_id = session.get('admin_user_id') or session.get('user_id')
+            rule_id = CartPriceRuleService.create_rule(data, admin_id=admin_id)
+            return jsonify({
+                'success': True,
+                'message': 'Cart price rule created successfully.',
+                'rule_id': rule_id,
+                'redirect': '/visionadmin/marketing/cart-price-rules'
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+
+    @app.route('/visionadmin/marketing/cart-price-rules/<int:rule_id>/edit', methods=['GET'])
+    @app.route('/visonadmin/marketing/cart-price-rules/<int:rule_id>/edit', methods=['GET'])
+    @app.route('/visionadmin/cart-price-rules/<int:rule_id>/edit', methods=['GET'])
+    @app.route('/visonadmin/cart-price-rules/<int:rule_id>/edit', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_edit(rule_id):
+        rule = CartPriceRuleService.get_rule(rule_id)
+        if not rule:
+            return render_template('404.html', requested_path=request.path), 404
+        lookups = CartPriceRuleService.get_lookups()
+        return render_template(
+            'visionadmin/cart_price_rule_form.html',
+            page='cart_price_rules',
+            section='marketing',
+            initial_mode='edit',
+            rule=rule,
+            lookups=lookups
+        )
+
+    @app.route('/visionadmin/api/cart-price-rules/<int:rule_id>', methods=['POST', 'PUT'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_update_api(rule_id):
+        data = request.get_json(silent=True) or request.form.to_dict()
+        try:
+            admin_id = session.get('admin_user_id') or session.get('user_id')
+            CartPriceRuleService.update_rule(rule_id, data, admin_id=admin_id)
+            return jsonify({
+                'success': True,
+                'message': 'Cart price rule updated successfully.',
+                'rule_id': rule_id,
+                'redirect': '/visionadmin/marketing/cart-price-rules'
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+
+    @app.route('/visionadmin/api/cart-price-rules/<int:rule_id>', methods=['DELETE'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_delete_api(rule_id):
+        try:
+            ok = CartPriceRuleService.delete_rule(rule_id)
+            if not ok:
+                return jsonify({'success': False, 'error': 'Rule not found or already deleted.'}), 404
+            return jsonify({'success': True, 'message': 'Cart price rule deleted successfully.'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+
+    @app.route('/visionadmin/api/cart-price-rules/<int:rule_id>/coupons/data', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_coupons_data_api(rule_id):
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 50))
+        search = request.args.get('search')
+        res = CartPriceRuleService.get_coupons(rule_id, page=page, per_page=per_page, search=search)
+        return jsonify(res)
+
+    @app.route('/visionadmin/api/cart-price-rules/<int:rule_id>/coupons/generate', methods=['POST'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_coupons_generate_api(rule_id):
+        data = request.get_json(silent=True) or request.form.to_dict()
+        try:
+            admin_id = session.get('admin_user_id') or session.get('user_id')
+            count = CartPriceRuleService.generate_coupons(rule_id, data, admin_id=admin_id)
+            return jsonify({'success': True, 'count': count, 'message': f'Generated {count} coupon codes successfully.'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+
+    @app.route('/visionadmin/api/cart-price-rules/<int:rule_id>/coupons/export', methods=['GET'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_coupons_export(rule_id):
+        coupons = CartPriceRuleService.get_export_coupons(rule_id)
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['Code', 'Usage Limit', 'Used Count', 'Is Primary', 'Created At'])
+        for c in coupons:
+            writer.writerow([
+                c['code'],
+                c['usage_limit'] if c['usage_limit'] is not None else 'Unlimited',
+                c['used_count'],
+                'Yes' if c['is_primary'] else 'No',
+                c['created_at'].isoformat() if hasattr(c['created_at'], 'isoformat') else str(c['created_at'])
+            ])
+        resp = make_response(output.getvalue())
+        resp.headers['Content-Disposition'] = f'attachment; filename=rule-{rule_id}-coupons.csv'
+        resp.headers['Content-Type'] = 'text/csv; charset=utf-8'
+        return resp
+
+    @app.route('/visionadmin/api/cart-price-rules/<int:rule_id>/coupons/<int:coupon_id>', methods=['DELETE'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_coupon_delete_api(rule_id, coupon_id):
+        try:
+            ok = CartPriceRuleService.delete_coupon(rule_id, coupon_id)
+            if not ok:
+                return jsonify({'success': False, 'error': 'Coupon not found.'}), 404
+            return jsonify({'success': True, 'message': 'Coupon code deleted successfully.'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 400

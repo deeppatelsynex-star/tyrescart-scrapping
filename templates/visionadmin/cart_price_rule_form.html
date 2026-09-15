@@ -1,0 +1,1035 @@
+{% extends "visionadmin/base.html" %}
+
+{% block title %}{{ 'Edit Cart Price Rule' if initial_mode == 'edit' else 'Create Cart Price Rule' }} - VisionAdmin{% endblock %}
+
+{% block content %}
+<script id="cart-rule-initial-data" type="application/json">
+  {{ (rule or {}) | tojson | safe }}
+</script>
+
+<div class="space-y-6" x-data="cartPriceRuleFormApp('{{ initial_mode }}')" x-init="initForm()">
+
+  <!-- Breadcrumbs & Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs">
+    <div>
+      <nav class="flex items-center gap-2 text-xs font-bold text-slate-400 mb-1">
+        <a href="/visionadmin/marketing/cart-price-rules" class="hover:text-slate-800 transition">Marketing</a>
+        <span>&rsaquo;</span>
+        <a href="/visionadmin/marketing/cart-price-rules" class="hover:text-slate-800 transition">Cart Price Rules</a>
+        <span>&rsaquo;</span>
+        <span class="text-slate-700">{{ 'Edit Rule' if initial_mode == 'edit' else 'New Rule' }}</span>
+      </nav>
+      <div class="flex items-center gap-3 mt-1">
+        <h1 class="text-2xl font-black text-[#0E1108] tracking-tight" x-text="form.name || 'New Cart Price Rule'"></h1>
+        
+        <template x-if="form.label_default">
+          <span class="px-2.5 py-1 text-[11px] font-black uppercase tracking-wider rounded-lg bg-emerald-600 text-white shadow-2xs" x-text="form.label_default"></span>
+        </template>
+        
+        <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-full" 
+              :class="form.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'"
+              x-text="form.is_active ? 'Active' : 'Inactive'"></span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-3">
+      <a 
+        href="/visionadmin/marketing/cart-price-rules" 
+        class="px-4 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold shadow-2xs transition cursor-pointer"
+      >
+        Cancel
+      </a>
+      <button 
+        type="button" 
+        @click="saveRule()" 
+        :disabled="saving"
+        class="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-[#2563FF] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer disabled:opacity-50 active:scale-95"
+      >
+        <svg x-show="saving" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+        <span x-text="saving ? 'Saving...' : 'Save Cart Price Rule'"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="bg-white p-2 rounded-2xl border border-[#E8EDE4] shadow-xs flex items-center gap-1.5 overflow-x-auto">
+    <button 
+      type="button" 
+      @click="activeTab = 'info'" 
+      :class="activeTab === 'info' ? 'bg-[#2563FF] text-white font-black shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-bold'"
+      class="px-4 py-2 rounded-xl text-xs transition cursor-pointer whitespace-nowrap flex items-center gap-2"
+    >
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span>1. Rule Information</span>
+    </button>
+
+    <button 
+      type="button" 
+      @click="activeTab = 'conditions'" 
+      :class="activeTab === 'conditions' ? 'bg-[#2563FF] text-white font-black shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-bold'"
+      class="px-4 py-2 rounded-xl text-xs transition cursor-pointer whitespace-nowrap flex items-center gap-2"
+    >
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M14 9l3 3-3 3"/></svg>
+      <span>2. Cart Conditions</span>
+    </button>
+
+    <button 
+      type="button" 
+      @click="activeTab = 'actions'" 
+      :class="activeTab === 'actions' ? 'bg-[#2563FF] text-white font-black shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-bold'"
+      class="px-4 py-2 rounded-xl text-xs transition cursor-pointer whitespace-nowrap flex items-center gap-2"
+    >
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span>3. Actions &amp; Tyre Criteria</span>
+    </button>
+
+    <template x-if="mode === 'edit' && form.coupon_type === 'SPECIFIC_COUPON'">
+      <button 
+        type="button" 
+        @click="activeTab = 'coupons'; loadCoupons()" 
+        :class="activeTab === 'coupons' ? 'bg-[#2563FF] text-white font-black shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-bold'"
+        class="px-4 py-2 rounded-xl text-xs transition cursor-pointer whitespace-nowrap flex items-center gap-2"
+      >
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>4. Manage Coupon Codes</span>
+      </button>
+    </template>
+  </div>
+
+  <!-- Form Body -->
+  <form @submit.prevent="saveRule()">
+    
+    <!-- ==================================================================== -->
+    <!-- TAB 1: RULE INFORMATION                                              -->
+    <!-- ==================================================================== -->
+    <div x-show="activeTab === 'info'" class="space-y-6">
+      <div class="bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-6">
+        <h2 class="text-base font-black text-slate-900 border-b border-slate-100 pb-3">General Information</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Rule Name -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Rule Name <span class="text-rose-500">*</span></label>
+            <input 
+              type="text" 
+              x-model="form.name" 
+              required
+              placeholder="e.g. Buy 3 Get 1 Free on MatraX Romero Tyres" 
+              class="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563FF] transition"
+            >
+            <p class="text-[11px] text-slate-400">Internal name displayed in admin dashboards and reports.</p>
+          </div>
+
+          <!-- Promotional / Cart Label (Reference Image field!) -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">
+              Promotional Banner Label <span class="text-emerald-600 font-extrabold">(Front Store &amp; Cart)</span>
+            </label>
+            <input 
+              type="text" 
+              x-model="form.label_default" 
+              placeholder="e.g. BUY 3 GET 1 FREE" 
+              class="w-full px-3.5 py-2.5 text-xs font-black tracking-wide uppercase bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563FF] transition"
+            >
+            <!-- Quick Preset Chips -->
+            <div class="flex items-center gap-1.5 flex-wrap pt-1">
+              <span class="text-[10px] text-slate-400 font-bold">Quick Presets:</span>
+              <button type="button" @click="form.label_default = 'BUY 3 GET 1 FREE'" class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer">BUY 3 GET 1 FREE</button>
+              <button type="button" @click="form.label_default = 'FREE WHEEL ALIGNMENT'" class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition cursor-pointer">FREE WHEEL ALIGNMENT</button>
+              <button type="button" @click="form.label_default = 'SPECIAL PROMOTION'" class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition cursor-pointer">SPECIAL PROMOTION</button>
+              <button type="button" @click="form.label_default = 'BUY 2 GET 10% OFF'" class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition cursor-pointer">BUY 2 GET 10% OFF</button>
+            </div>
+            <p class="text-[11px] text-slate-400">Displays on top of product cards in the store as shown in the reference image.</p>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold text-slate-700">Internal Description / Promotion Terms</label>
+          <textarea 
+            x-model="form.description" 
+            rows="2" 
+            placeholder="Promotion terms, eligibility details or customer service notes..."
+            class="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563FF] transition"
+          ></textarea>
+        </div>
+
+        <!-- Status & Priority & Dates -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
+          <!-- Active Toggle -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Active Status</label>
+            <div class="flex items-center gap-3 pt-1">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" x-model="form.is_active" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563FF]"></div>
+              </label>
+              <span class="text-xs font-bold text-slate-800" x-text="form.is_active ? 'Enabled' : 'Disabled'"></span>
+            </div>
+          </div>
+
+          <!-- Priority -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Priority (0 = Highest)</label>
+            <input 
+              type="number" 
+              min="0" 
+              max="9999" 
+              x-model.number="form.priority" 
+              class="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563FF] transition"
+            >
+            <p class="text-[10px] text-slate-400">Rule with priority 0 runs before priority 10.</p>
+          </div>
+
+          <!-- From Date -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Start Date (From)</label>
+            <input 
+              type="date" 
+              x-model="form.from_date" 
+              class="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563FF] transition"
+            >
+          </div>
+
+          <!-- To Date -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">End Date (To)</label>
+            <input 
+              type="date" 
+              x-model="form.to_date" 
+              class="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563FF] transition"
+            >
+          </div>
+        </div>
+
+        <!-- Customer Groups -->
+        <div class="space-y-2 pt-2 border-t border-slate-100">
+          <label class="block text-xs font-bold text-slate-700">Eligible Customer Groups <span class="text-rose-500">*</span></label>
+          <div class="flex flex-wrap gap-2 pt-1">
+            {% for g in lookups.customer_groups %}
+            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border cursor-pointer transition select-none text-xs font-bold"
+                   :class="form.customer_group_ids.includes({{ g.id }}) ? 'bg-blue-50 border-[#2563FF] text-[#2563FF]' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
+              <input type="checkbox" :value="{{ g.id }}" x-model="form.customer_group_ids" class="rounded text-[#2563FF] focus:ring-0">
+              <span>{{ g.name }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          <p class="text-[11px] text-slate-400">Select which customer tiers qualify for this promotion.</p>
+        </div>
+
+        <!-- Coupon Type Configuration -->
+        <div class="space-y-4 pt-4 border-t border-slate-100">
+          <h3 class="text-xs font-black uppercase tracking-wider text-slate-400">Coupon Application Model</h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Option 1: Auto-Apply -->
+            <label class="p-4 rounded-2xl border-2 cursor-pointer transition flex items-start gap-3"
+                   :class="form.coupon_type === 'NO_COUPON' ? 'border-[#2563FF] bg-blue-50/40' : 'border-slate-200 bg-white hover:bg-slate-50'">
+              <input type="radio" name="coupon_type" value="NO_COUPON" x-model="form.coupon_type" class="mt-1 text-[#2563FF] focus:ring-0">
+              <div>
+                <div class="text-xs font-black text-slate-900">Auto-Apply (No Coupon Required)</div>
+                <p class="text-[11px] text-slate-500 mt-0.5">Promotion automatically activates in store &amp; checkout when criteria are satisfied (e.g. Buy 3 Get 1 Free, Free Wheel Alignment).</p>
+              </div>
+            </label>
+
+            <!-- Option 2: Specific Coupon -->
+            <label class="p-4 rounded-2xl border-2 cursor-pointer transition flex items-start gap-3"
+                   :class="form.coupon_type === 'SPECIFIC_COUPON' ? 'border-[#2563FF] bg-blue-50/40' : 'border-slate-200 bg-white hover:bg-slate-50'">
+              <input type="radio" name="coupon_type" value="SPECIFIC_COUPON" x-model="form.coupon_type" class="mt-1 text-[#2563FF] focus:ring-0">
+              <div>
+                <div class="text-xs font-black text-slate-900">Specific Coupon Code</div>
+                <p class="text-[11px] text-slate-500 mt-0.5">Requires the customer to manually enter a coupon code during checkout to unlock the discount.</p>
+              </div>
+            </label>
+          </div>
+
+          <!-- Coupon Inputs (Only when SPECIFIC_COUPON) -->
+          <div x-show="form.coupon_type === 'SPECIFIC_COUPON'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 rounded-2xl bg-purple-50/50 border border-purple-100">
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-slate-700">Primary Coupon Code <span class="text-rose-500">*</span></label>
+              <input 
+                type="text" 
+                x-model="form.coupon_code" 
+                placeholder="e.g. TYRESVISION25" 
+                class="w-full px-3.5 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-white border border-purple-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition"
+              >
+              <p class="text-[10px] text-purple-700 font-semibold">Customers enter this code to apply the promotion.</p>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-slate-700">Uses Per Customer (Optional)</label>
+              <input 
+                type="number" 
+                min="1" 
+                x-model.number="form.uses_per_customer" 
+                placeholder="Unlimited if left empty" 
+                class="w-full px-3.5 py-2.5 text-xs font-semibold bg-white border border-purple-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition"
+              >
+              <p class="text-[10px] text-slate-400">Leave blank for unlimited uses per customer.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- TAB 2: CART CONDITIONS                                               -->
+    <!-- ==================================================================== -->
+    <div x-show="activeTab === 'conditions'" x-cloak class="space-y-6">
+      <div class="bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-6">
+        <div>
+          <h2 class="text-base font-black text-slate-900">Cart-Level Qualification Conditions</h2>
+          <p class="text-xs text-slate-500 mt-1">Determine when the entire customer shopping cart qualifies for this promotion.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Cart Subtotal -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+            <label class="block text-xs font-bold text-slate-700">Minimum Cart Subtotal (AED)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-bold text-slate-400">AED</span>
+              <input 
+                type="number" 
+                step="0.01" 
+                min="0"
+                x-model.number="cartConditions.min_subtotal" 
+                placeholder="0.00" 
+                class="w-full pl-12 pr-3.5 py-2 text-xs font-bold bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#2563FF]"
+              >
+            </div>
+            <p class="text-[10px] text-slate-400">0 = no minimum spend requirement.</p>
+          </div>
+
+          <!-- Total Qty -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+            <label class="block text-xs font-bold text-slate-700">Minimum Total Items Qty</label>
+            <input 
+              type="number" 
+              min="0"
+              x-model.number="cartConditions.min_qty" 
+              placeholder="e.g. 4" 
+              class="w-full px-3.5 py-2 text-xs font-bold bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#2563FF]"
+            >
+            <p class="text-[10px] text-slate-400">e.g. set to 4 for set-of-4 tyre deals.</p>
+          </div>
+
+          <!-- Total Weight -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+            <label class="block text-xs font-bold text-slate-700">Total Cart Weight (kg)</label>
+            <input 
+              type="number" 
+              step="0.1" 
+              min="0"
+              x-model.number="cartConditions.min_weight" 
+              placeholder="Optional" 
+              class="w-full px-3.5 py-2 text-xs font-bold bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#2563FF]"
+            >
+            <p class="text-[10px] text-slate-400">Leave blank if weight is not restricted.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- TAB 3: ACTIONS & TYRE ITEM CONDITIONS (CORE FEATURE)                 -->
+    <!-- ==================================================================== -->
+    <div x-show="activeTab === 'actions'" x-cloak class="space-y-6">
+      
+      <!-- 1. Discount Calculation Formula -->
+      <div class="bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-6">
+        <div>
+          <h2 class="text-base font-black text-slate-900">Discount Calculation &amp; Promotions Engine</h2>
+          <p class="text-xs text-slate-500 mt-1">Configure whether this rule gives a percentage discount, fixed amount, or Buy X Get Y Free promotion.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <!-- Discount Type -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Discount Formula</label>
+            <select 
+              x-model="form.discount_type" 
+              class="w-full px-3.5 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563FF] transition cursor-pointer"
+            >
+              <option value="percent_of_original">Percent of Product Price (%)</option>
+              <option value="fixed_per_item">Fixed Amount Per Item (AED)</option>
+              <option value="fixed_for_cart">Fixed Amount For Whole Cart (AED)</option>
+            </select>
+          </div>
+
+          <!-- Discount Amount -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">
+              <span x-text="form.discount_type === 'percent_of_original' ? 'Discount Percentage (%)' : 'Discount Amount (AED)'"></span>
+              <span class="text-rose-500">*</span>
+            </label>
+            <input 
+              type="number" 
+              step="0.01" 
+              min="0" 
+              x-model.number="form.discount_amount" 
+              required
+              class="w-full px-3.5 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563FF] transition"
+            >
+          </div>
+
+          <!-- Discount Qty Step (BXGY) -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Discount Qty Step (BXGY Group Size)</label>
+            <input 
+              type="number" 
+              min="1" 
+              x-model.number="form.discount_qty_step" 
+              placeholder="Leave blank for regular discount" 
+              class="w-full px-3.5 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563FF] transition"
+            >
+            <p class="text-[10px] text-slate-400">e.g. 4 for "Buy 3 Get 1 Free" (groups of 4).</p>
+          </div>
+        </div>
+
+        <!-- Buy X Get Y Free Helper Table & Presets -->
+        <div class="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-3">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <span class="text-xs font-black text-emerald-900">Buy X Get Y Free Quick Presets</span>
+            </div>
+            <span class="text-[11px] text-emerald-700 font-semibold">Click a preset below to auto-fill formula:</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button 
+              type="button" 
+              @click="applyPreset(4, 25, 'BUY 3 GET 1 FREE')" 
+              class="p-2.5 rounded-xl bg-white border border-emerald-300 text-left hover:border-emerald-600 hover:shadow-xs transition cursor-pointer"
+            >
+              <div class="text-xs font-black text-slate-900">Buy 3 Get 1 Free</div>
+              <div class="text-[10px] text-emerald-700 font-bold mt-0.5">Step: 4 &bull; 25.00% Off</div>
+            </button>
+
+            <button 
+              type="button" 
+              @click="applyPreset(2, 50, 'BUY 1 GET 1 FREE')" 
+              class="p-2.5 rounded-xl bg-white border border-emerald-300 text-left hover:border-emerald-600 hover:shadow-xs transition cursor-pointer"
+            >
+              <div class="text-xs font-black text-slate-900">Buy 1 Get 1 Free</div>
+              <div class="text-[10px] text-emerald-700 font-bold mt-0.5">Step: 2 &bull; 50.00% Off</div>
+            </button>
+
+            <button 
+              type="button" 
+              @click="applyPreset(3, 33.3333, 'BUY 2 GET 1 FREE')" 
+              class="p-2.5 rounded-xl bg-white border border-emerald-300 text-left hover:border-emerald-600 hover:shadow-xs transition cursor-pointer"
+            >
+              <div class="text-xs font-black text-slate-900">Buy 2 Get 1 Free</div>
+              <div class="text-[10px] text-emerald-700 font-bold mt-0.5">Step: 3 &bull; 33.33% Off</div>
+            </button>
+
+            <button 
+              type="button" 
+              @click="applyPreset(5, 20, 'BUY 4 GET 1 FREE')" 
+              class="p-2.5 rounded-xl bg-white border border-emerald-300 text-left hover:border-emerald-600 hover:shadow-xs transition cursor-pointer"
+            >
+              <div class="text-xs font-black text-slate-900">Buy 4 Get 1 Free</div>
+              <div class="text-[10px] text-emerald-700 font-bold mt-0.5">Step: 5 &bull; 20.00% Off</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Free Service / Free Shipping & Rules Stacking -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2 border-t border-slate-100">
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Free Service / Free Shipping Grant</label>
+            <select 
+              x-model="form.free_shipping" 
+              class="w-full px-3.5 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563FF] transition cursor-pointer"
+            >
+              <option value="no">No Free Service</option>
+              <option value="matching_items">Free Service / Fitting for Matching Items Only</option>
+              <option value="shipment">Free Service / Fitting for Entire Order</option>
+            </select>
+            <p class="text-[11px] text-slate-400">e.g. Free wheel alignment granted on qualifying tyres.</p>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Discard Subsequent Rules</label>
+            <div class="flex items-center gap-3 pt-2">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" x-model="form.discard_subsequent_rules" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563FF]"></div>
+              </label>
+              <span class="text-xs font-bold text-slate-800" x-text="form.discard_subsequent_rules ? 'Stop lower priority rules from applying' : 'Allow other discounts to stack'"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Tyre Fields Criteria Builder (Matches Image Reference!) -->
+      <div class="bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-6">
+        <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
+              <span>Tyre Item Targeting Criteria</span>
+              <span class="px-2 py-0.5 text-[10px] font-black uppercase rounded bg-blue-50 text-[#2563FF] border border-blue-200">Catalog Matcher</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">Filter exactly which tyres qualify for this promotion using the product catalogue attributes shown in the card reference.</p>
+          </div>
+          <button 
+            type="button" 
+            @click="resetTyreCriteria()" 
+            class="text-xs font-bold text-slate-400 hover:text-slate-700 transition"
+          >
+            Clear Filters (All Tyres)
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Brand -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Tyre Brand</label>
+            <select 
+              x-model="itemCriteria.brand_id" 
+              class="w-full px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition cursor-pointer"
+            >
+              <option value="">All Brands</option>
+              {% for b in lookups.brands %}
+              <option value="{{ b.id }}">{{ b.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Tyre Size -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Tyre Size Spec</label>
+            <input 
+              type="text" 
+              x-model="itemCriteria.tire_size_label" 
+              list="tyreSizeList"
+              placeholder="e.g. 165/70 R14 or 165/65 R13" 
+              class="w-full px-3.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition"
+            >
+            <datalist id="tyreSizeList">
+              {% for s in lookups.tyre_sizes %}
+              <option value="{{ s }}"></option>
+              {% endfor %}
+            </datalist>
+          </div>
+
+          <!-- Pattern -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Tyre Model / Pattern</label>
+            <input 
+              type="text" 
+              x-model="itemCriteria.tire_pattern" 
+              list="patternList"
+              placeholder="e.g. Romero or Kinergy Eco2 K435" 
+              class="w-full px-3.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition"
+            >
+            <datalist id="patternList">
+              {% for pat in lookups.patterns %}
+              <option value="{{ pat }}"></option>
+              {% endfor %}
+            </datalist>
+          </div>
+
+          <!-- Country of Origin -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Country of Origin</label>
+            <input 
+              type="text" 
+              x-model="itemCriteria.country_of_origin" 
+              placeholder="e.g. Thailand or South Korea" 
+              class="w-full px-3.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition"
+            >
+          </div>
+
+          <!-- Manufacturing Year -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Manufacturing Year</label>
+            <input 
+              type="number" 
+              x-model="itemCriteria.year" 
+              placeholder="e.g. 2024 or 2025" 
+              class="w-full px-3.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition"
+            >
+          </div>
+
+          <!-- Warranty Months -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Warranty (Months)</label>
+            <select 
+              x-model="itemCriteria.warranty_months" 
+              class="w-full px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition cursor-pointer"
+            >
+              <option value="">Any Warranty</option>
+              <option value="12">12 Months (1 Year)</option>
+              <option value="24">24 Months (2 Years)</option>
+              <option value="36">36 Months (3 Years)</option>
+              <option value="60">60 Months (5 Years)</option>
+            </select>
+          </div>
+
+          <!-- Vehicle Type -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Vehicle Type</label>
+            <select 
+              x-model="itemCriteria.vehicle_type" 
+              class="w-full px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition cursor-pointer"
+            >
+              <option value="">All Vehicles</option>
+              <option value="car">Passenger Car</option>
+              <option value="suv">SUV</option>
+              <option value="4x4">4x4 / Off-Road</option>
+              <option value="van">Commercial Van</option>
+              <option value="ev">Electric Vehicle (EV)</option>
+            </select>
+          </div>
+
+          <!-- Run Flat -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">Run-Flat Tyres</label>
+            <select 
+              x-model="itemCriteria.run_flat" 
+              class="w-full px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition cursor-pointer"
+            >
+              <option value="">All (Run-Flat &amp; Standard)</option>
+              <option value="1">Run-Flat Tyres Only</option>
+              <option value="0">Standard Tyres Only</option>
+            </select>
+          </div>
+
+          <!-- EV Rated -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">EV Rated Tyres</label>
+            <select 
+              x-model="itemCriteria.ev_rated" 
+              class="w-full px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition cursor-pointer"
+            >
+              <option value="">All (EV &amp; Combustion)</option>
+              <option value="1">EV Dedicated Tyres Only</option>
+              <option value="0">Standard Combustion Tyres Only</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Summary of applied item targeting -->
+        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3">
+          <svg class="w-4 h-4 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <p class="text-xs font-bold text-slate-700" x-text="getCriteriaSummary()"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- TAB 4: MANAGE COUPON CODES (EDIT MODE ONLY)                          -->
+    <!-- ==================================================================== -->
+    <template x-if="mode === 'edit' && form.coupon_type === 'SPECIFIC_COUPON'">
+      <div x-show="activeTab === 'coupons'" x-cloak class="space-y-6">
+        
+        <!-- Bulk Generator Panel -->
+        <div class="bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h2 class="text-base font-black text-slate-900">Bulk Coupon Code Generator</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Generate up to 5,000 unique single-use or multi-use promo voucher codes for this rule.</p>
+            </div>
+            <button 
+              type="button" 
+              @click="showGenPanel = !showGenPanel" 
+              class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+              x-text="showGenPanel ? 'Hide Generator' : 'Open Generator'"
+            ></button>
+          </div>
+
+          <div x-show="showGenPanel" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Quantity</label>
+              <input type="number" min="1" max="5000" x-model.number="genOptions.quantity" class="w-full px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Code Length</label>
+              <input type="number" min="4" max="32" x-model.number="genOptions.length" class="w-full px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Prefix</label>
+              <input type="text" x-model="genOptions.prefix" placeholder="e.g. SUMMER" class="w-full px-3 py-2 text-xs font-mono font-bold uppercase bg-slate-50 border border-slate-200 rounded-xl">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Usage Limit Per Code</label>
+              <input type="number" min="1" x-model.number="genOptions.usage_limit" placeholder="1 for single-use" class="w-full px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl">
+            </div>
+            <div class="sm:col-span-2 lg:col-span-4 flex items-center justify-end pt-2">
+              <button 
+                type="button" 
+                @click="executeGenerateCoupons()" 
+                :disabled="generating"
+                class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-50"
+              >
+                <span x-text="generating ? 'Generating codes...' : 'Generate Codes Now'"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coupons Table -->
+        <div class="bg-white rounded-3xl border border-[#E8EDE4] shadow-xs overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+              <input 
+                type="text" 
+                x-model="couponSearch" 
+                @input.debounce.350ms="loadCoupons()" 
+                placeholder="Search codes..." 
+                class="px-3.5 py-1.5 text-xs font-mono font-bold uppercase bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none"
+              >
+            </div>
+            <a 
+              :href="'/visionadmin/api/cart-price-rules/' + ruleId + '/coupons/export'" 
+              class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Export CSV</span>
+            </a>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider text-[10px] border-b border-slate-100">
+                <tr>
+                  <th class="py-3 px-4">Coupon Code</th>
+                  <th class="py-3 px-4">Usage Limit</th>
+                  <th class="py-3 px-4">Used Count</th>
+                  <th class="py-3 px-4">Type</th>
+                  <th class="py-3 px-4">Created At</th>
+                  <th class="py-3 px-4 text-right">Delete</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                <template x-for="c in coupons" :key="c.id">
+                  <tr class="hover:bg-slate-50/50">
+                    <td class="py-2.5 px-4 font-mono font-black text-slate-900" x-text="c.code"></td>
+                    <td class="py-2.5 px-4" x-text="c.usage_limit || 'Unlimited'"></td>
+                    <td class="py-2.5 px-4 font-bold" :class="c.used_count > 0 ? 'text-emerald-600' : 'text-slate-400'" x-text="c.used_count"></td>
+                    <td class="py-2.5 px-4">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold" :class="c.is_primary ? 'bg-blue-50 text-blue-700 font-black' : 'bg-slate-100 text-slate-600'" x-text="c.is_primary ? 'Primary' : 'Generated'"></span>
+                    </td>
+                    <td class="py-2.5 px-4 text-[11px] text-slate-400" x-text="c.created_at"></td>
+                    <td class="py-2.5 px-4 text-right">
+                      <template x-if="!c.is_primary && c.used_count == 0">
+                        <button type="button" @click="deleteCoupon(c.id)" class="text-rose-500 hover:text-rose-700 p-1 transition cursor-pointer">
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                      </template>
+                      <template x-if="c.is_primary || c.used_count > 0">
+                        <span class="text-slate-300 text-xs">&mdash;</span>
+                      </template>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </template>
+
+  </form>
+
+</div>
+
+<script>
+function cartPriceRuleFormApp(mode) {
+  let existingRule = {};
+  const el = document.getElementById('cart-rule-initial-data');
+  if (el && el.textContent) {
+    try {
+      existingRule = JSON.parse(el.textContent) || {};
+    } catch (e) {
+      console.error('Failed to parse cart rule initial data:', e);
+    }
+  }
+
+  return {
+    mode: mode,
+    ruleId: existingRule?.id || null,
+    activeTab: 'info',
+    saving: false,
+    generating: false,
+    showGenPanel: false,
+
+    form: {
+      name: existingRule?.name || '',
+      label_default: existingRule?.label_default || '',
+      description: existingRule?.description || '',
+      is_active: existingRule?.is_active == 1 || existingRule?.is_active === true,
+      coupon_type: existingRule?.coupon_type || 'NO_COUPON',
+      coupon_code: existingRule?.primary_coupon_code || '',
+      uses_per_customer: existingRule?.uses_per_customer || null,
+      priority: existingRule?.priority !== undefined ? existingRule.priority : 0,
+      from_date: existingRule?.from_date || '',
+      to_date: existingRule?.to_date || '',
+      customer_group_ids: existingRule?.customer_group_ids || [],
+      discount_type: existingRule?.discount_type || 'percent_of_original',
+      discount_amount: existingRule?.discount_amount !== undefined ? existingRule.discount_amount : 25,
+      discount_qty_step: existingRule?.discount_qty_step || null,
+      max_discount_qty: existingRule?.max_discount_qty || null,
+      apply_to_shipping: existingRule?.apply_to_shipping == 1,
+      free_shipping: existingRule?.free_shipping || 'no',
+      discard_subsequent_rules: existingRule?.discard_subsequent_rules == 1,
+    },
+
+    cartConditions: {
+      min_subtotal: null,
+      min_qty: null,
+      min_weight: null
+    },
+
+    itemCriteria: {
+      brand_id: '',
+      tire_size_label: '',
+      tire_pattern: '',
+      country_of_origin: '',
+      year: '',
+      warranty_months: '',
+      vehicle_type: '',
+      run_flat: '',
+      ev_rated: ''
+    },
+
+    // Coupons sub-panel
+    coupons: [],
+    couponSearch: '',
+    genOptions: {
+      quantity: 50,
+      length: 8,
+      prefix: '',
+      usage_limit: 1
+    },
+
+    initForm() {
+      // Hydrate cart conditions from JSON
+      if (existingRule?.conditions_json) {
+        const c = existingRule.conditions_json;
+        if (c.conditions) {
+          for (let cond of c.conditions) {
+            if (cond.attribute === 'cart.subtotal') this.cartConditions.min_subtotal = cond.value;
+            if (cond.attribute === 'cart.item_qty') this.cartConditions.min_qty = cond.value;
+            if (cond.attribute === 'cart.weight') this.cartConditions.min_weight = cond.value;
+          }
+        }
+      }
+
+      // Hydrate item criteria from JSON
+      if (existingRule?.item_conditions_json) {
+        const ic = existingRule.item_conditions_json;
+        if (ic.conditions) {
+          for (let cond of ic.conditions) {
+            if (cond.attribute === 'item.brand_id') this.itemCriteria.brand_id = cond.value;
+            if (cond.attribute === 'field:tyre_size' || cond.attribute === 'item.tire_size_label') this.itemCriteria.tire_size_label = cond.value;
+            if (cond.attribute === 'field:pattern' || cond.attribute === 'item.tire_pattern') this.itemCriteria.tire_pattern = cond.value;
+            if (cond.attribute === 'field:origin' || cond.attribute === 'item.country_of_origin') this.itemCriteria.country_of_origin = cond.value;
+            if (cond.attribute === 'field:year' || cond.attribute === 'item.year') this.itemCriteria.year = cond.value;
+            if (cond.attribute === 'field:warranty_period' || cond.attribute === 'item.warranty_months') this.itemCriteria.warranty_months = cond.value;
+            if (cond.attribute === 'item.vehicle_type') this.itemCriteria.vehicle_type = cond.value;
+            if (cond.attribute === 'field:run_flat' || cond.attribute === 'item.run_flat') this.itemCriteria.run_flat = cond.value;
+            if (cond.attribute === 'field:ev_tyre' || cond.attribute === 'item.ev_rated') this.itemCriteria.ev_rated = cond.value;
+          }
+        }
+      }
+    },
+
+    applyPreset(step, discountPct, label) {
+      this.form.discount_type = 'percent_of_original';
+      this.form.discount_qty_step = step;
+      this.form.discount_amount = discountPct;
+      if (!this.form.label_default) {
+        this.form.label_default = label;
+      }
+    },
+
+    resetTyreCriteria() {
+      this.itemCriteria = {
+        brand_id: '',
+        tire_size_label: '',
+        tire_pattern: '',
+        country_of_origin: '',
+        year: '',
+        warranty_months: '',
+        vehicle_type: '',
+        run_flat: '',
+        ev_rated: ''
+      };
+    },
+
+    getCriteriaSummary() {
+      let active = [];
+      if (this.itemCriteria.brand_id) active.push('Brand');
+      if (this.itemCriteria.tire_size_label) active.push(`Size (${this.itemCriteria.tire_size_label})`);
+      if (this.itemCriteria.tire_pattern) active.push(`Pattern (${this.itemCriteria.tire_pattern})`);
+      if (this.itemCriteria.country_of_origin) active.push(`Origin (${this.itemCriteria.country_of_origin})`);
+      if (this.itemCriteria.year) active.push(`Year (${this.itemCriteria.year})`);
+      if (this.itemCriteria.warranty_months) active.push(`Warranty (${this.itemCriteria.warranty_months}M)`);
+      if (this.itemCriteria.vehicle_type) active.push(`Vehicle (${this.itemCriteria.vehicle_type})`);
+      if (this.itemCriteria.run_flat !== '') active.push('Run-Flat');
+      if (this.itemCriteria.ev_rated !== '') active.push('EV');
+
+      if (active.length === 0) {
+        return 'Applies to ALL products in catalogue (No tyre attribute filters applied).';
+      }
+      return `Restricted to tyres matching: ${active.join(', ')}.`;
+    },
+
+    buildConditionsJson() {
+      let conds = [];
+      if (this.cartConditions.min_subtotal) {
+        conds.push({ attribute: 'cart.subtotal', operator: '>=', value: parseFloat(this.cartConditions.min_subtotal) });
+      }
+      if (this.cartConditions.min_qty) {
+        conds.push({ attribute: 'cart.item_qty', operator: '>=', value: parseInt(this.cartConditions.min_qty) });
+      }
+      if (this.cartConditions.min_weight) {
+        conds.push({ attribute: 'cart.weight', operator: '>=', value: parseFloat(this.cartConditions.min_weight) });
+      }
+      if (conds.length === 0) return null;
+      return { type: 'group', operator: 'ALL', conditions: conds };
+    },
+
+    buildItemConditionsJson() {
+      let conds = [];
+      if (this.itemCriteria.brand_id) {
+        conds.push({ attribute: 'item.brand_id', operator: '==', value: parseInt(this.itemCriteria.brand_id) });
+      }
+      if (this.itemCriteria.tire_size_label) {
+        conds.push({ attribute: 'item.tire_size_label', operator: '==', value: this.itemCriteria.tire_size_label.trim() });
+      }
+      if (this.itemCriteria.tire_pattern) {
+        conds.push({ attribute: 'item.tire_pattern', operator: '==', value: this.itemCriteria.tire_pattern.trim() });
+      }
+      if (this.itemCriteria.country_of_origin) {
+        conds.push({ attribute: 'item.country_of_origin', operator: '==', value: this.itemCriteria.country_of_origin.trim() });
+      }
+      if (this.itemCriteria.year) {
+        conds.push({ attribute: 'item.year', operator: '==', value: parseInt(this.itemCriteria.year) });
+      }
+      if (this.itemCriteria.warranty_months) {
+        conds.push({ attribute: 'item.warranty_months', operator: '==', value: parseInt(this.itemCriteria.warranty_months) });
+      }
+      if (this.itemCriteria.vehicle_type) {
+        conds.push({ attribute: 'item.vehicle_type', operator: '==', value: this.itemCriteria.vehicle_type });
+      }
+      if (this.itemCriteria.run_flat !== '') {
+        conds.push({ attribute: 'item.run_flat', operator: '==', value: parseInt(this.itemCriteria.run_flat) });
+      }
+      if (this.itemCriteria.ev_rated !== '') {
+        conds.push({ attribute: 'item.ev_rated', operator: '==', value: parseInt(this.itemCriteria.ev_rated) });
+      }
+
+      if (conds.length === 0) return null;
+      return { type: 'group', operator: 'ALL', conditions: conds };
+    },
+
+    async saveRule() {
+      if (!this.form.name.trim()) {
+        alert('Please enter a rule name.');
+        this.activeTab = 'info';
+        return;
+      }
+      if (this.form.coupon_type === 'SPECIFIC_COUPON' && !this.form.coupon_code.trim()) {
+        alert('Primary coupon code is required when Coupon Type is Specific Coupon.');
+        this.activeTab = 'info';
+        return;
+      }
+      if (!this.form.customer_group_ids || this.form.customer_group_ids.length === 0) {
+        alert('Please select at least one customer group.');
+        this.activeTab = 'info';
+        return;
+      }
+
+      this.saving = true;
+      try {
+        const payload = {
+          ...this.form,
+          conditions_json: this.buildConditionsJson(),
+          item_conditions_json: this.buildItemConditionsJson()
+        };
+
+        const url = this.mode === 'edit'
+          ? `/visionadmin/api/cart-price-rules/${this.ruleId}`
+          : '/visionadmin/api/cart-price-rules';
+
+        const method = this.mode === 'edit' ? 'POST' : 'POST';
+
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+        if (json.success) {
+          window.location.href = json.redirect || '/visionadmin/marketing/cart-price-rules';
+        } else {
+          alert(json.error || 'Failed to save rule.');
+        }
+      } catch (err) {
+        alert('Error saving rule: ' + err.message);
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    async loadCoupons() {
+      if (!this.ruleId) return;
+      try {
+        const res = await fetch(`/visionadmin/api/cart-price-rules/${this.ruleId}/coupons/data?search=${encodeURIComponent(this.couponSearch)}`);
+        const json = await res.json();
+        this.coupons = json.data || [];
+      } catch (err) {
+        console.error('Failed to load coupons:', err);
+      }
+    },
+
+    async executeGenerateCoupons() {
+      if (!this.ruleId) return;
+      this.generating = true;
+      try {
+        const res = await fetch(`/visionadmin/api/cart-price-rules/${this.ruleId}/coupons/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.genOptions)
+        });
+        const json = await res.json();
+        if (json.success) {
+          this.loadCoupons();
+          alert(json.message || 'Coupons generated.');
+        } else {
+          alert(json.error || 'Failed to generate coupons.');
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        this.generating = false;
+      }
+    },
+
+    async deleteCoupon(couponId) {
+      if (!confirm('Are you sure you want to delete this coupon code?')) return;
+      try {
+        const res = await fetch(`/visionadmin/api/cart-price-rules/${this.ruleId}/coupons/${couponId}`, {
+          method: 'DELETE'
+        });
+        const json = await res.json();
+        if (json.success) {
+          this.loadCoupons();
+        } else {
+          alert(json.error || 'Failed to delete coupon.');
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+  };
+}
+</script>
+{% endblock %}
