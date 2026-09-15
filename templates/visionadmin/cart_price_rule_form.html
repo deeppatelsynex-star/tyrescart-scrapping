@@ -203,6 +203,22 @@
           </div>
         </div>
 
+        <!-- Websites (Storefront Channels) -->
+        <div class="space-y-2 pt-2 border-t border-slate-100">
+          <label class="block text-xs font-bold text-slate-700">Websites <span class="text-rose-500">*</span></label>
+          <div class="flex flex-wrap gap-2 pt-1">
+            {% for w in lookups.websites %}
+            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border cursor-pointer transition select-none text-xs font-bold"
+                   :class="form.website_ids.includes({{ w.id }}) ? 'bg-blue-50 border-[#2563FF] text-[#2563FF]' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
+              <input type="checkbox" :value="{{ w.id }}" x-model="form.website_ids" class="rounded text-[#2563FF] focus:ring-0">
+              <span>{{ w.name }}</span>
+              {% if w.is_default %}<span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 font-extrabold uppercase">Default</span>{% endif %}
+            </label>
+            {% endfor %}
+          </div>
+          <p class="text-[11px] text-slate-400">Select which website storefronts this promotion applies to.</p>
+        </div>
+
         <!-- Customer Groups -->
         <div class="space-y-2 pt-2 border-t border-slate-100">
           <label class="block text-xs font-bold text-slate-700">Eligible Customer Groups <span class="text-rose-500">*</span></label>
@@ -769,6 +785,7 @@ function cartPriceRuleFormApp(mode) {
       priority: existingRule?.priority !== undefined ? existingRule.priority : 0,
       from_date: existingRule?.from_date || '',
       to_date: existingRule?.to_date || '',
+      website_ids: existingRule?.website_ids || [1],
       customer_group_ids: existingRule?.customer_group_ids || [],
       discount_type: existingRule?.discount_type || 'percent_of_original',
       discount_amount: existingRule?.discount_amount !== undefined ? existingRule.discount_amount : 25,
@@ -937,6 +954,11 @@ function cartPriceRuleFormApp(mode) {
       }
       if (this.form.coupon_type === 'SPECIFIC_COUPON' && !this.form.coupon_code.trim()) {
         alert('Primary coupon code is required when Coupon Type is Specific Coupon.');
+        this.activeTab = 'info';
+        return;
+      }
+      if (!this.form.website_ids || this.form.website_ids.length === 0) {
+        alert('Please select at least one website.');
         this.activeTab = 'info';
         return;
       }

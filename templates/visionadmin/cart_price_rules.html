@@ -72,7 +72,7 @@
 
   <!-- Filter & Search Bar -->
   <div class="bg-white p-5 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-4">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
       <!-- Search -->
       <div class="relative">
         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -85,6 +85,20 @@
           placeholder="Search rule name or promo label..." 
           class="w-full pl-10 pr-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563FF] transition"
         >
+      </div>
+
+      <!-- Web Site Filter (Matches Image & Scope) -->
+      <div>
+        <select 
+          x-model="filters.website_id" 
+          @change="applyFilters()" 
+          class="w-full px-3.5 py-2.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#2563FF] transition cursor-pointer"
+        >
+          <option value="">All Web Sites</option>
+          {% for w in websites %}
+          <option value="{{ w.id }}">{{ w.name }}{% if w.is_default %} (Default){% endif %}</option>
+          {% endfor %}
+        </select>
       </div>
 
       <!-- Status -->
@@ -150,29 +164,41 @@
             </th>
             <th class="py-3.5 px-4 cursor-pointer hover:text-slate-900" @click="sort('name')">
               <div class="flex items-center gap-1.5">
-                <span>Rule Name &amp; Promo Banner</span>
+                <span>Rule</span>
                 <span x-show="sortBy === 'name'" x-text="sortDir === 'asc' ? '↑' : '↓'"></span>
               </div>
             </th>
-            <th class="py-3.5 px-4">Customer Groups</th>
             <th class="py-3.5 px-4 cursor-pointer hover:text-slate-900" @click="sort('coupon_type')">
               <div class="flex items-center gap-1.5">
-                <span>Type / Code</span>
+                <span>Coupon Code</span>
                 <span x-show="sortBy === 'coupon_type'" x-text="sortDir === 'asc' ? '↑' : '↓'"></span>
               </div>
             </th>
-            <th class="py-3.5 px-4">Discount &amp; Benefits</th>
-            <th class="py-3.5 px-4 cursor-pointer hover:text-slate-900" @click="sort('priority')">
+            <th class="py-3.5 px-4 cursor-pointer hover:text-slate-900" @click="sort('from_date')">
               <div class="flex items-center gap-1.5">
-                <span>Priority</span>
-                <span x-show="sortBy === 'priority'" x-text="sortDir === 'asc' ? '↑' : '↓'"></span>
+                <span>Start</span>
+                <span x-show="sortBy === 'from_date'" x-text="sortDir === 'asc' ? '↑' : '↓'"></span>
               </div>
             </th>
-            <th class="py-3.5 px-4">Validity</th>
+            <th class="py-3.5 px-4 cursor-pointer hover:text-slate-900" @click="sort('to_date')">
+              <div class="flex items-center gap-1.5">
+                <span>End</span>
+                <span x-show="sortBy === 'to_date'" x-text="sortDir === 'asc' ? '↑' : '↓'"></span>
+              </div>
+            </th>
             <th class="py-3.5 px-4 cursor-pointer hover:text-slate-900" @click="sort('is_active')">
               <div class="flex items-center gap-1.5">
                 <span>Status</span>
                 <span x-show="sortBy === 'is_active'" x-text="sortDir === 'asc' ? '↑' : '↓'"></span>
+              </div>
+            </th>
+            <th class="py-3.5 px-4">
+              <span>Web Site</span>
+            </th>
+            <th class="py-3.5 px-4 cursor-pointer hover:text-slate-900" @click="sort('priority')">
+              <div class="flex items-center gap-1.5">
+                <span>Priority</span>
+                <span x-show="sortBy === 'priority'" x-text="sortDir === 'asc' ? '↑' : '↓'"></span>
               </div>
             </th>
             <th class="py-3.5 px-4 text-right">Actions</th>
@@ -184,7 +210,7 @@
               <!-- ID -->
               <td class="py-3.5 px-4 font-mono font-bold text-slate-400" x-text="'#' + r.id"></td>
 
-              <!-- Name & Promo Banner -->
+              <!-- Rule (Rule Name & Promo Banner) -->
               <td class="py-3.5 px-4 max-w-xs">
                 <div class="flex flex-col gap-1">
                   <a :href="'/visionadmin/marketing/cart-price-rules/' + r.id + '/edit'" class="font-extrabold text-slate-900 hover:text-[#2563FF] transition truncate" x-text="r.name"></a>
@@ -197,65 +223,32 @@
                     </span>
                   </template>
 
-                  <template x-if="r.description">
-                    <p class="text-[11px] text-slate-400 line-clamp-1" x-text="r.description"></p>
-                  </template>
+                  <div class="flex items-center gap-2 text-[11px] text-slate-400">
+                    <span class="font-semibold text-slate-600" x-text="formatDiscount(r)"></span>
+                    <template x-if="r.customer_groups && r.customer_groups.length > 0">
+                      <span>&bull; <span x-text="r.customer_groups.map(g => g.name).join(', ')"></span></span>
+                    </template>
+                  </div>
                 </div>
               </td>
 
-              <!-- Customer Groups -->
-              <td class="py-3.5 px-4">
-                <div class="flex flex-wrap gap-1">
-                  <template x-for="g in r.customer_groups" :key="g.id">
-                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-600" x-text="g.name"></span>
-                  </template>
-                  <template x-if="!r.customer_groups || r.customer_groups.length === 0">
-                    <span class="text-slate-400 text-[11px]">All Groups</span>
-                  </template>
-                </div>
-              </td>
-
-              <!-- Coupon Type -->
+              <!-- Coupon Code -->
               <td class="py-3.5 px-4">
                 <template x-if="r.coupon_type === 'SPECIFIC_COUPON'">
-                  <div class="flex flex-col gap-0.5">
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 text-[10px] font-extrabold border border-purple-200 self-start">
-                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                      <span>Coupon Required</span>
-                    </span>
-                    <span class="font-mono font-bold text-slate-800 text-[11px]" x-text="r.primary_coupon_code || 'Manage in edit'"></span>
-                  </div>
+                  <span class="font-mono font-black text-purple-700 bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-lg text-xs" x-text="r.primary_coupon_code || 'Manage'"></span>
                 </template>
                 <template x-if="r.coupon_type !== 'SPECIFIC_COUPON'">
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-extrabold border border-blue-200">
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                    <span>Auto-Apply</span>
-                  </span>
+                  <span class="text-slate-400 font-semibold text-xs italic">Auto (No Code)</span>
                 </template>
               </td>
 
-              <!-- Discount Details -->
-              <td class="py-3.5 px-4">
-                <div class="flex flex-col gap-0.5">
-                  <span class="font-bold text-slate-800" x-text="formatDiscount(r)"></span>
-                  <template x-if="r.free_shipping && r.free_shipping !== 'no'">
-                    <span class="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                      <span x-text="r.free_shipping === 'matching_items' ? 'Free Service on Matching' : 'Free Entire Shipment'"></span>
-                    </span>
-                  </template>
-                </div>
-              </td>
+              <!-- Start -->
+              <td class="py-3.5 px-4 text-xs font-semibold text-slate-600 whitespace-nowrap" x-text="r.from_date || '—'"></td>
 
-              <!-- Priority -->
-              <td class="py-3.5 px-4 font-bold text-slate-600" x-text="r.priority"></td>
+              <!-- End -->
+              <td class="py-3.5 px-4 text-xs font-semibold text-slate-600 whitespace-nowrap" x-text="r.to_date || '—'"></td>
 
-              <!-- Validity Dates -->
-              <td class="py-3.5 px-4 text-[11px] text-slate-500 whitespace-nowrap">
-                <div x-text="formatDates(r.from_date, r.to_date)"></div>
-              </td>
-
-              <!-- Status Badge -->
+              <!-- Status -->
               <td class="py-3.5 px-4">
                 <template x-if="r.is_active == 1">
                   <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -271,13 +264,28 @@
                 </template>
               </td>
 
+              <!-- Web Site -->
+              <td class="py-3.5 px-4">
+                <div class="flex flex-wrap gap-1">
+                  <template x-for="w in r.websites" :key="w.id">
+                    <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-blue-50 text-blue-700 border border-blue-100" x-text="w.name"></span>
+                  </template>
+                  <template x-if="!r.websites || r.websites.length === 0">
+                    <span class="text-slate-400 text-xs italic">All Websites</span>
+                  </template>
+                </div>
+              </td>
+
+              <!-- Priority -->
+              <td class="py-3.5 px-4 font-black text-slate-700 text-xs" x-text="r.priority"></td>
+
               <!-- Actions -->
               <td class="py-3.5 px-4 text-right whitespace-nowrap">
                 <div class="inline-flex items-center gap-1">
-                  <a :href="'/visionadmin/marketing/cart-price-rules/' + r.id + '/edit'" class="p-1.5 text-slate-400 hover:text-[#2563FF] hover:bg-blue-50 rounded-lg transition" title="Edit Rule">
+                  <a :href="'/visionadmin/marketing/cart-price-rules/' + r.id + '/edit'" class="p-1.5 text-slate-400 hover:text-[#2563FF] hover:bg-blue-50 rounded-lg transition cursor-pointer" title="Edit Rule">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   </a>
-                  <button type="button" @click="confirmDelete(r)" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Delete Rule">
+                  <button type="button" @click="confirmDelete(r)" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer" title="Delete Rule">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   </button>
                 </div>
@@ -383,6 +391,7 @@ function cartPriceRulesApp() {
     sortDir: 'asc',
     filters: {
       search: '',
+      website_id: '',
       status: '',
       coupon_type: '',
       customer_group_id: ''
@@ -402,6 +411,7 @@ function cartPriceRulesApp() {
           sort_by: this.sortBy,
           sort_dir: this.sortDir,
           search: this.filters.search,
+          website_id: this.filters.website_id,
           status: this.filters.status,
           coupon_type: this.filters.coupon_type,
           customer_group_id: this.filters.customer_group_id

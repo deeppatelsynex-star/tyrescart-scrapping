@@ -564,7 +564,8 @@ def register_visionadmin_routes(app):
             page='cart_price_rules',
             section='marketing',
             counts=counts,
-            customer_groups=lookups.get('customer_groups', [])
+            customer_groups=lookups.get('customer_groups', []),
+            websites=lookups.get('websites', [])
         )
 
     @app.route('/visionadmin/api/cart-price-rules/data', methods=['GET'])
@@ -574,6 +575,11 @@ def register_visionadmin_routes(app):
         status = request.args.get('status')
         coupon_type = request.args.get('coupon_type')
         customer_group_id = request.args.get('customer_group_id')
+        website_id = request.args.get('website_id')
+        if not website_id:
+            active_scope = session.get('active_scope') or {}
+            website_id = active_scope.get('website_id')
+
         sort_by = request.args.get('sort_by', 'priority')
         sort_dir = request.args.get('sort_dir', 'asc')
         page = int(request.args.get('page', 1))
@@ -584,6 +590,7 @@ def register_visionadmin_routes(app):
             status=status,
             coupon_type=coupon_type,
             customer_group_id=customer_group_id,
+            website_id=website_id,
             sort_by=sort_by,
             sort_dir=sort_dir,
             page=page,

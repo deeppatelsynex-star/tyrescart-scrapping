@@ -60,8 +60,8 @@ class CartPriceRuleService:
             conn.close()
 
     @staticmethod
-    def get_rules(search=None, status=None, coupon_type=None, customer_group_id=None, sort_by='priority', sort_dir='asc', page=1, per_page=25):
-        """Fetches paginated cart price rules with customer groups and primary coupon."""
+    def get_rules(search=None, status=None, coupon_type=None, customer_group_id=None, website_id=None, sort_by='priority', sort_dir='asc', page=1, per_page=25):
+        """Fetches paginated cart price rules with customer groups, websites, and primary coupon."""
         conn = db.get_connection()
         try:
             with conn.cursor() as cur:
@@ -85,6 +85,10 @@ class CartPriceRuleService:
                 if customer_group_id:
                     conditions.append("EXISTS (SELECT 1 FROM cart_price_rule_customer_groups cg WHERE cg.cart_price_rule_id = r.id AND cg.customer_group_id = %s)")
                     params.append(int(customer_group_id))
+
+                if website_id:
+                    conditions.append("EXISTS (SELECT 1 FROM cart_price_rule_websites cw WHERE cw.cart_price_rule_id = r.id AND cw.website_id = %s)")
+                    params.append(int(website_id))
 
                 where_clause = " WHERE " + " AND ".join(conditions)
 
@@ -121,9 +125,10 @@ class CartPriceRuleService:
                 cur.execute(query, params + [int(per_page), offset])
                 raw_rules = cur.fetchall()
 
-                # Eager-load customer groups for the fetched rules
+                # Eager-load customer groups & websites for the fetched rules
                 rule_ids = [r['id'] for r in raw_rules]
                 groups_map = {}
+                websites_map = {}
                 if rule_ids:
                     format_ids = ','.join(['%s'] * len(rule_ids))
                     cur.execute(f"""
@@ -136,10 +141,22 @@ class CartPriceRuleService:
                         rid = row['cart_price_rule_id']
                         groups_map.setdefault(rid, []).append({'id': row['id'], 'name': row['name'], 'code': row['code']})
 
+                    cur.execute(f"""
+                        SELECT cw.cart_price_rule_id, w.id, w.name, w.code, w.is_default
+                        FROM cart_price_rule_websites cw
+                        JOIN websites w ON w.id = cw.website_id
+                        WHERE cw.cart_price_rule_id IN ({format_ids})
+                    """, rule_ids)
+                    for row in cur.fetchall():
+                        rid = row['cart_price_rule_id']
+                        websites_map.setdefault(rid, []).append({'id': row['id'], 'name': row['name'], 'code': row['code'], 'is_default': bool(row.get('is_default'))})
+
                 rules = []
                 for r in raw_rules:
                     item = _serialize_row(r)
                     item['customer_groups'] = groups_map.get(r['id'], [])
+                    item['websites'] = websites_map.get(r['id'], [])
+                    item['website_ids'] = [w['id'] for w in item['websites']]
                     if isinstance(item.get('conditions_json'), str):
                         try:
                             item['conditions_json'] = json.loads(item['conditions_json'])
@@ -194,9 +211,20 @@ class CartPriceRuleService:
                 """, (rule_id,))
                 groups = cur.fetchall()
 
+                # Load websites
+                cur.execute("""
+                    SELECT w.id, w.name, w.code, w.is_default
+                    FROM cart_price_rule_websites cw
+                    JOIN websites w ON w.id = cw.website_id
+                    WHERE cw.cart_price_rule_id = %s
+                """, (rule_id,))
+                websites = cur.fetchall()
+
                 item = _serialize_row(rule)
                 item['customer_groups'] = groups
                 item['customer_group_ids'] = [g['id'] for g in groups]
+                item['websites'] = websites
+                item['website_ids'] = [w['id'] for w in websites]
 
                 # Parse JSON fields
                 for field in ('conditions_json', 'item_conditions_json'):
@@ -290,6 +318,19 @@ class CartPriceRuleService:
                         VALUES (%s, %s)
                     """, (rule_id, gid))
 
+                # Sync websites
+                web_ids = data.get('website_ids') or []
+                if isinstance(web_ids, str):
+                    web_ids = [int(x.strip()) for x in web_ids.split(',') if x.strip().isdigit()]
+                elif isinstance(web_ids, list):
+                    web_ids = [int(x) for x in web_ids if str(x).isdigit()]
+
+                for wid in web_ids:
+                    cur.execute("""
+                        INSERT IGNORE INTO cart_price_rule_websites (cart_price_rule_id, website_id)
+                        VALUES (%s, %s)
+                    """, (rule_id, wid))
+
                 # Handle Primary Coupon Code if SPECIFIC_COUPON
                 if coupon_type == 'SPECIFIC_COUPON' and data.get('coupon_code'):
                     code = str(data['coupon_code']).strip().upper()
@@ -380,6 +421,20 @@ class CartPriceRuleService:
                         INSERT INTO cart_price_rule_customer_groups (cart_price_rule_id, customer_group_id)
                         VALUES (%s, %s)
                     """, (rule_id, gid))
+
+                # Sync websites
+                web_ids = data.get('website_ids')
+                if web_ids is not None:
+                    if isinstance(web_ids, str):
+                        web_ids = [int(x.strip()) for x in web_ids.split(',') if x.strip().isdigit()]
+                    elif isinstance(web_ids, list):
+                        web_ids = [int(x) for x in web_ids if str(x).isdigit()]
+                    cur.execute("DELETE FROM cart_price_rule_websites WHERE cart_price_rule_id = %s", (rule_id,))
+                    for wid in web_ids:
+                        cur.execute("""
+                            INSERT INTO cart_price_rule_websites (cart_price_rule_id, website_id)
+                            VALUES (%s, %s)
+                        """, (rule_id, wid))
 
                 # Handle Primary Coupon
                 if coupon_type == 'SPECIFIC_COUPON':
@@ -595,8 +650,13 @@ class CartPriceRuleService:
                 cur.execute("SELECT DISTINCT tire_pattern FROM products WHERE tire_pattern IS NOT NULL AND tire_pattern != '' ORDER BY tire_pattern ASC LIMIT 100")
                 patterns = [r['tire_pattern'] for r in cur.fetchall()]
 
+                # Get websites
+                cur.execute("SELECT id, name, code, is_default FROM websites WHERE deleted_at IS NULL ORDER BY sort_order ASC, id ASC")
+                websites = cur.fetchall()
+
                 return {
                     'customer_groups': customer_groups,
+                    'websites': websites,
                     'brands': brands,
                     'categories': categories,
                     'tyre_sizes': sizes,
