@@ -354,34 +354,38 @@
   border-color: var(--tv-blue-brand);
 }
 
-/* 5. PRODUCT CARDS GRID (8-COLUMN SINGLE ROW) */
+/* 5. PRODUCT CARDS GRID (5-COLUMN SINGLE ROW) */
 .tv-products-grid {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
 }
 
-@media(max-width: 1560px) {
-  .tv-products-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-}
-
-@media(max-width: 1240px) {
+@media(max-width: 1400px) {
   .tv-products-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
   }
 }
 
-@media(max-width: 820px) {
+@media(max-width: 1100px) {
+  .tv-products-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media(max-width: 768px) {
   .tv-products-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 }
 
 @media(max-width: 480px) {
   .tv-products-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 
@@ -390,7 +394,7 @@
   background: #ffffff;
   border: 1px solid #EDF2F7;
   border-radius: 14px;
-  padding: 10px 8px 12px 8px;
+  padding: 14px 12px 14px 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -423,7 +427,7 @@
   pointer-events: none;
   border-color: #EDF2F7;
   background: #ffffff;
-  min-height: 290px;
+  min-height: 330px;
 }
 
 .tv-skeleton-badge {
@@ -433,22 +437,22 @@
 }
 
 .tv-skeleton-img {
-  width: 72px;
-  height: 72px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
-  margin: 6px auto;
+  margin: 8px auto;
 }
 
 .tv-skeleton-brand {
-  width: 50px;
-  height: 12px;
-  margin: 4px auto 6px auto;
+  width: 54px;
+  height: 14px;
+  margin: 6px auto 8px auto;
 }
 
 .tv-skeleton-title {
   width: 90%;
-  height: 13px;
-  margin-bottom: 4px;
+  height: 14px;
+  margin-bottom: 5px;
 }
 
 .tv-skeleton-size {
@@ -534,16 +538,16 @@
 
 /* Image */
 .tv-card-img-wrap {
-  height: 88px;
+  height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 4px 0 6px 0;
+  margin: 6px 0 8px 0;
   overflow: hidden;
 }
 
 .tv-product-img {
-  max-height: 84px;
+  max-height: 112px;
   max-width: 100%;
   object-fit: contain;
   transition: transform 0.25s ease;
@@ -555,20 +559,20 @@
 
 /* Brand Logo */
 .tv-card-brand-logo {
-  height: 16px;
-  max-width: 68px;
+  height: 20px;
+  max-width: 80px;
   object-fit: contain;
-  margin: 0 auto 5px auto;
+  margin: 0 auto 6px auto;
   display: block;
 }
 
 /* Title & Size */
 .tv-product-model-name {
-  font-size: 0.82rem;
-  font-weight: 800;
+  font-size: 0.92rem;
+  font-weight: 700;
   color: var(--tv-dark-navy);
-  margin: 0 0 2px 0;
-  line-height: 1.2;
+  margin: 0 0 3px 0;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -576,10 +580,10 @@
 }
 
 .tv-product-size-label {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: #64748B;
   font-weight: 500;
-  margin: 0 0 4px 0;
+  margin: 0 0 6px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1026,7 +1030,7 @@
           {% if total_count == 0 %}
           Showing 0 tyres
           {% else %}
-          Showing {{ ((current_page or 1) - 1) * (per_page or 32) + 1 }}&ndash;{{ [((current_page or 1) - 1) * (per_page or 32) + products|length, total_count]|min }} of {{ "{:,}".format(total_count) }} tyres
+          Showing {{ ((current_page or 1) - 1) * (per_page or 20) + 1 }}&ndash;{{ [((current_page or 1) - 1) * (per_page or 20) + products|length, total_count]|min }} of {{ "{:,}".format(total_count) }} tyres
           {% endif %}
         </div>
         <div class="tv-pagination-controls" id="pagination-controls">
@@ -1052,7 +1056,7 @@
    Live filter, size search, price slider, sort, add to cart & dynamic pagination
    ============================================================================= */
 
-const PER_PAGE = 32;
+const PER_PAGE = 20;
 let currentPage = {{ current_page or 1 }};
 let totalPages = {{ total_pages or 1 }};
 let totalCount = {{ total_count or 0 }};
