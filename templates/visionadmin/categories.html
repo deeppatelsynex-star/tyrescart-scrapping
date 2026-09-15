@@ -32,42 +32,193 @@
     </div>
   </div>
 
-  <!-- Status Filter Tabs -->
-  <div class="flex flex-wrap items-center gap-2">
-    <button 
-      type="button" 
-      @click="statusFilter = 'all'; loadCategories(1)" 
-      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
-      :class="statusFilter === 'all' ? 'bg-[#2563FF] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
-    >
-      All Categories
-    </button>
-    <button 
-      type="button" 
-      @click="statusFilter = 'active'; loadCategories(1)" 
-      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
-      :class="statusFilter === 'active' ? 'bg-[#2563FF] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
-    >
-      Active
-    </button>
-    <button 
-      type="button" 
-      @click="statusFilter = 'inactive'; loadCategories(1)" 
-      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
-      :class="statusFilter === 'inactive' ? 'bg-[#2563FF] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
-    >
-      Inactive
-    </button>
-    <button 
-      type="button" 
-      @click="statusFilter = 'trash'; loadCategories(1)" 
-      class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-1.5"
-      :class="statusFilter === 'trash' ? 'bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3] shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
-    >
-      <span>🗑️ Trash</span>
-      <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="statusFilter === 'trash' ? 'bg-[#FFE4E6] text-[#E11D48]' : 'bg-slate-100 text-slate-600'" x-text="trashCount"></span>
-    </button>
+  <!-- Status Filter & View Mode Switcher -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <!-- Status Filter Tabs -->
+    <div class="flex flex-wrap items-center gap-2">
+      <button 
+        type="button" 
+        @click="statusFilter = 'all'; loadCategories(1)" 
+        class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
+        :class="statusFilter === 'all' ? 'bg-[#2563FF] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
+      >
+        All Categories
+      </button>
+      <button 
+        type="button" 
+        @click="statusFilter = 'active'; loadCategories(1)" 
+        class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
+        :class="statusFilter === 'active' ? 'bg-[#2563FF] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
+      >
+        Active
+      </button>
+      <button 
+        type="button" 
+        @click="statusFilter = 'inactive'; loadCategories(1)" 
+        class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer"
+        :class="statusFilter === 'inactive' ? 'bg-[#2563FF] text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
+      >
+        Inactive
+      </button>
+      <button 
+        type="button" 
+        @click="statusFilter = 'trash'; loadCategories(1)" 
+        class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer flex items-center gap-1.5"
+        :class="statusFilter === 'trash' ? 'bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3] shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'"
+      >
+        <span>🗑️ Trash</span>
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-black" :class="statusFilter === 'trash' ? 'bg-[#FFE4E6] text-[#E11D48]' : 'bg-slate-100 text-slate-600'" x-text="trashCount"></span>
+      </button>
+    </div>
+
+    <!-- View Mode Switcher -->
+    <div class="inline-flex items-center p-1 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-bold shrink-0">
+      <button 
+        type="button" 
+        @click="viewMode = 'tree'" 
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl transition cursor-pointer"
+        :class="viewMode === 'tree' ? 'bg-white text-[#2563FF] shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v18"/><path d="M12 9h7"/><path d="M12 15h7"/><path d="M5 3h14"/></svg>
+        <span>Tree Hierarchy</span>
+      </button>
+      <button 
+        type="button" 
+        @click="viewMode = 'table'" 
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl transition cursor-pointer"
+        :class="viewMode === 'table' ? 'bg-white text-[#2563FF] shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>
+        <span>Table View</span>
+      </button>
+    </div>
+  <!-- TREE HIERARCHY VIEW (Magento Style) -->
+  <div x-show="viewMode === 'tree'" x-cloak class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
+      <div class="flex items-center gap-3">
+        <span class="w-3 h-3 rounded-full bg-[#2563FF]"></span>
+        <div>
+          <h2 class="text-base font-black text-slate-900">Hierarchical Category Tree</h2>
+          <p class="text-xs text-slate-500 font-medium">Visual parent-child category tree with rolled-up product totals</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Expand All / Collapse Buttons -->
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-600">
+          <button type="button" @click="expandAllTree(true)" class="hover:text-[#2563FF] transition cursor-pointer">Expand All</button>
+          <span class="text-slate-300">/</span>
+          <button type="button" @click="expandAllTree(false)" class="hover:text-[#2563FF] transition cursor-pointer">Collapse</button>
+        </div>
+
+        <button 
+          type="button" 
+          @click="loadTree()" 
+          class="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+          title="Refresh Tree"
+        >
+          <svg class="w-4 h-4" :class="treeLoading ? 'animate-spin text-[#2563FF]' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tree Search Input -->
+    <div class="relative">
+      <input 
+        type="text" 
+        x-model="treeSearch" 
+        placeholder="Filter categories in tree by name, slug, or ID..." 
+        class="w-full pl-4 pr-10 py-2.5 text-xs sm:text-sm font-medium border border-slate-200 rounded-xl focus:outline-none focus:border-[#2563FF] focus:ring-2 focus:ring-[#2563FF]/15 transition"
+      />
+      <button 
+        type="button" 
+        x-show="treeSearch" 
+        @click="treeSearch = ''" 
+        class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
+      >&times;</button>
+    </div>
+
+    <!-- Tree Container with Classic Magento Hierarchy Styling -->
+    <div class="rounded-2xl border border-slate-200/70 bg-[#FAFCF8] p-4 min-h-[300px] max-h-[750px] overflow-y-auto font-sans">
+      <template x-if="treeLoading">
+        <div class="py-12 text-center text-slate-400 font-semibold">
+          <div class="inline-flex items-center gap-2">
+            <svg class="animate-spin h-5 w-5 text-[#2563FF]" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+            <span>Loading category hierarchy...</span>
+          </div>
+        </div>
+      </template>
+
+      <template x-if="!treeLoading && visibleFlatTreeNodes.length === 0">
+        <div class="py-12 text-center text-slate-400 font-medium text-xs">
+          No categories found in tree.
+        </div>
+      </template>
+
+      <!-- Dotted Hierarchy Tree List -->
+      <div class="space-y-0.5" x-show="!treeLoading">
+        <template x-for="node in visibleFlatTreeNodes" :key="node.id">
+          <div 
+            class="group flex items-center justify-between py-1.5 px-2 rounded-xl transition cursor-pointer hover:bg-white border border-transparent hover:border-slate-200/70 relative select-none"
+            :style="'padding-left: ' + (node.depth * 22 + 8) + 'px'"
+          >
+            <!-- Left: Toggle + Folder + Label -->
+            <div class="flex items-center gap-2 min-w-0">
+              <!-- Expand/Collapse Triangle -->
+              <button 
+                type="button" 
+                x-show="node.has_children"
+                @click.stop="toggleNode(node)"
+                class="w-4 h-4 flex items-center justify-center text-slate-500 hover:text-slate-900 transition cursor-pointer shrink-0"
+              >
+                <svg class="w-3 h-3 transition-transform duration-150" :class="node._expanded ? 'rotate-90 text-slate-700' : 'text-slate-400'" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </button>
+              <span x-show="!node.has_children" class="w-4 h-4 flex items-center justify-center text-slate-300 text-xs shrink-0">&bull;</span>
+
+              <!-- Manila Dual Folder Icon -->
+              <span class="shrink-0">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="#E4B854" stroke="#B88A24" stroke-width="1.2">
+                  <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                </svg>
+              </span>
+
+              <!-- Name & ID & Product Count: Default Category (ID: 2) (17663) -->
+              <a 
+                :href="'/visionadmin/categories/' + node.id + '/edit'" 
+                class="inline-flex items-center gap-1.5 min-w-0 hover:underline cursor-pointer"
+              >
+                <span class="font-bold text-xs text-slate-900 group-hover:text-[#1D4ED8] transition-colors truncate" x-text="node.name_en || node.name"></span>
+                <span class="text-[11px] font-medium text-slate-400" x-text="'(ID: ' + node.id + ')'"></span>
+                <span class="text-[11px] font-black text-[#1D4ED8]" x-text="'(' + (node.product_count || 0) + ')'"></span>
+              </a>
+            </div>
+
+            <!-- Right: Status & Quick Actions -->
+            <div class="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <template x-if="node.status === 'active'">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-[#2563FF] border border-blue-100">Active</span>
+              </template>
+              <template x-if="node.status !== 'active'">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">Inactive</span>
+              </template>
+
+              <a 
+                :href="'/visionadmin/categories/' + node.id + '/edit'" 
+                class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-[#EFF6FF] text-slate-600 hover:text-[#1D4ED8] font-bold text-[11px] transition"
+              >
+                Edit
+              </a>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
   </div>
+
+  <!-- TABLE VIEW WRAPPER -->
+  <div x-show="viewMode === 'table'" class="space-y-6">
 
   <!-- Search & Filter Bar -->
   <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-3">
@@ -282,6 +433,7 @@
       </div>
     </div>
   </div>
+  </div> <!-- /TABLE VIEW WRAPPER -->
 
   <!-- CSV Import Modal -->
   <div 
@@ -300,7 +452,7 @@
           </div>
           <div>
             <h2 class="text-base font-black text-slate-900">Import Categories from CSV</h2>
-            <p class="text-xs text-slate-500 font-medium">Upload a CSV spreadsheet with category names, hierarchy, and SEO.</p>
+            <p class="text-xs text-slate-500 font-medium">Upload Magento-style category paths or product spreadsheets</p>
           </div>
         </div>
         <button type="button" @click="csvModalOpen = false" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 text-xl font-bold cursor-pointer">&times;</button>
@@ -310,7 +462,7 @@
         <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#EFF6FF]/60 border border-[#BFDBFE]">
           <div>
             <span class="text-xs font-bold text-[#1D4ED8] block">Need a template?</span>
-            <span class="text-[11px] text-slate-600">Download the pre-formatted CSV template with example rows.</span>
+            <span class="text-[11px] text-slate-600">Download the pre-formatted CSV template with Magento category paths.</span>
           </div>
           <a 
             href="/visionadmin/api/categories/sample-csv" 
@@ -332,8 +484,56 @@
           />
         </div>
 
+        <!-- Comprehensive Import Result Report (Rule 20) -->
         <template x-if="csvResult">
-          <div class="p-3.5 rounded-xl text-xs font-semibold" :class="csvResult.success ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-rose-50 text-rose-700 border border-rose-200'" x-text="csvResult.message"></div>
+          <div class="space-y-3">
+            <div class="p-4 rounded-2xl text-xs" :class="csvResult.success ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-rose-50 text-rose-900 border border-rose-200'">
+              <div class="font-extrabold flex items-center gap-2 mb-1.5">
+                <span x-show="csvResult.success">✓ Import Completed</span>
+                <span x-show="!csvResult.success">✕ Import Failed</span>
+              </div>
+              <p class="font-medium text-[11px] mb-3" x-text="csvResult.message || csvResult.error"></p>
+
+              <!-- Statistics Breakdown Grid -->
+              <template x-if="csvResult.total_rows !== undefined">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] pt-3 border-t border-slate-200/60 font-semibold">
+                  <div class="bg-white/90 p-2.5 rounded-xl border border-slate-200/70">
+                    <span class="text-slate-400 block text-[10px] uppercase font-bold">Total Rows</span>
+                    <span class="text-slate-900 font-black text-sm" x-text="csvResult.total_rows || 0"></span>
+                  </div>
+                  <div class="bg-white/90 p-2.5 rounded-xl border border-slate-200/70">
+                    <span class="text-slate-400 block text-[10px] uppercase font-bold">Unique Paths</span>
+                    <span class="text-slate-900 font-black text-sm" x-text="csvResult.unique_paths_count || 0"></span>
+                  </div>
+                  <div class="bg-white/90 p-2.5 rounded-xl border border-slate-200/70">
+                    <span class="text-slate-400 block text-[10px] uppercase font-bold">Total Categories</span>
+                    <span class="text-slate-900 font-black text-sm" x-text="csvResult.unique_categories_count || 0"></span>
+                  </div>
+                  <div class="bg-white/90 p-2.5 rounded-xl border border-emerald-200">
+                    <span class="text-emerald-600 block text-[10px] uppercase font-bold">Newly Created</span>
+                    <span class="text-emerald-700 font-black text-sm" x-text="csvResult.created_categories_count || 0"></span>
+                  </div>
+                  <div class="bg-white/90 p-2.5 rounded-xl border border-blue-200">
+                    <span class="text-blue-600 block text-[10px] uppercase font-bold">Reused Existing</span>
+                    <span class="text-blue-700 font-black text-sm" x-text="csvResult.existing_categories_count || 0"></span>
+                  </div>
+                  <div class="bg-white/90 p-2.5 rounded-xl border border-indigo-200">
+                    <span class="text-indigo-600 block text-[10px] uppercase font-bold">Products Mapped</span>
+                    <span class="text-indigo-700 font-black text-sm" x-text="csvResult.products_mapped_count || 0"></span>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Failed Rows / Errors -->
+              <template x-if="csvResult.errors && csvResult.errors.length > 0">
+                <div class="mt-3 pt-2.5 border-t border-rose-200/60 text-rose-700 max-h-28 overflow-y-auto space-y-1 text-[11px] font-mono">
+                  <template x-for="(err, idx) in csvResult.errors" :key="idx">
+                    <div x-text="'• ' + err"></div>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </div>
         </template>
       </div>
 

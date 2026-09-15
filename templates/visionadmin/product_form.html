@@ -3,12 +3,11 @@
 {% block title %}{% if initial_view == 'edit' %}Edit Product - VisionAdmin{% else %}New Product - VisionAdmin{% endif %}{% endblock %}
 
 {% block extra_head %}
-<script src="/static/visionadmin/catalog-products.js?v={{ range(10000, 99999) | random }}"></script>
 <script src="/static/visionadmin/products.js?v={{ range(10000, 99999) | random }}"></script>
 {% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="visionProductsApp('{{ initial_view | default('new', true) }}', {{ initial_product_id | default('null', true) }})" x-init="initData()">
+<div class="space-y-6" x-data="visionProductsApp('{{ initial_view | default('new', true) }}', {{ initial_product_id | default('null', true) }})" x-init='attributeSets = {{ (attribute_sets or []) | tojson }}; initData()'>
   <!-- FULL PAGE: MAGENTO 2 ADMIN CATALOG PRODUCT STUDIO                         -->
   <!-- ========================================================================= -->
   <!-- Top Action Bar (Full Page Header) -->
@@ -118,71 +117,98 @@
       <!-- Scrollable Form Body -->
       <div class="p-6 sm:p-8 space-y-6 text-xs">
 
-        <!-- Card: Main Product Attributes -->
-        <div class="bg-white border border-slate-200 rounded-xs p-6 sm:p-8 shadow-2xs space-y-2">
-          
-          <!-- 1. Enable Product Row -->
-          <div class="flex flex-col sm:flex-row sm:items-center py-2 border-b border-transparent">
-            <div class="w-full sm:w-60 text-left sm:text-right pr-6 shrink-0">
-              <label class="text-xs font-semibold text-[#303030]">Enable Product</label>
-              <span class="block text-[10px] text-slate-400 font-normal">[store view]</span>
+        <!-- Global Attribute Set Selector Card (Always visible at the top of Product Form) -->
+        <div class="bg-white border border-slate-200 rounded-xs shadow-2xs">
+          <div class="p-5 sm:px-8 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1">
+              <div class="w-full sm:w-60 text-left sm:text-right pr-2 shrink-0">
+                <label class="text-xs font-bold text-[#303030]">
+                  Attribute Set <span class="text-rose-600 font-bold">*</span>
+                </label>
+                <span class="block text-[10px] text-slate-400 font-normal mt-0.5">[global]</span>
+              </div>
+              <div class="flex-1 max-w-xl flex items-center gap-3">
+                <select 
+                  x-model="form.attribute_set_id" 
+                  @change="onAttributeSetChange(form.attribute_set_id, isEditMode ? form.id : null)" 
+                  class="w-full px-3 py-2 rounded-xs border border-[#adadad] focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] text-xs font-bold text-slate-800 bg-white shadow-2xs outline-hidden cursor-pointer"
+                >
+                  {% for s in attribute_sets %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                  {% endfor %}
+                  <template x-if="!{{ (attribute_sets or []) | length }}">
+                    <template x-for="s in attributeSets" :key="s.id">
+                      <option :value="s.id" x-text="s.name" :selected="s.id == form.attribute_set_id"></option>
+                    </template>
+                  </template>
+                </select>
+                <a 
+                  :href="'/visionadmin/catalog/attribute-sets/' + form.attribute_set_id + '/builder'" 
+                  target="_blank"
+                  class="text-[11px] text-[#2563FF] hover:underline font-semibold whitespace-nowrap shrink-0 flex items-center gap-1"
+                  title="Open Attribute Set Builder in new tab"
+                >
+                  <span>Edit Set</span>
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              </div>
             </div>
-            <div class="flex-1 max-w-3xl mt-1 sm:mt-0 flex items-center gap-3">
-              <button 
-                type="button" 
-                @click="form.status = (form.status === 'active' ? 'inactive' : 'active')" 
-                class="w-11 h-5 rounded-full relative transition-colors duration-200 cursor-pointer flex items-center"
-                :class="form.status === 'active' ? 'bg-[#2563FF]' : 'bg-slate-300'"
+            <div class="text-[11px] text-slate-400 hidden lg:block text-right">
+              Switching attribute set automatically updates all attribute groups below.
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading indicator while switching attribute set -->
+        <div x-show="form.loadingSchema" class="bg-white border border-slate-200 rounded-xs p-8 shadow-2xs flex items-center justify-center gap-2 text-slate-400 font-medium">
+          <svg class="w-4 h-4 animate-spin text-[#2563FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+          <span>Loading attribute set specifications...</span>
+        </div>
+
+        <!-- Dynamic Attribute Group Accordions (Magento-style collapsible cards) -->
+        <div x-show="!form.loadingSchema" class="space-y-4">
+          <!-- Expand / Collapse All helper when multiple groups exist -->
+          <template x-if="form.attribute_groups && form.attribute_groups.length > 1">
+            <div class="flex items-center justify-end gap-2 px-1 text-xs">
+              <button type="button" @click="expandAllGroups()" class="text-[#2563FF] hover:underline font-semibold cursor-pointer">Expand All Groups</button>
+              <span class="text-slate-300">|</span>
+              <button type="button" @click="collapseAllGroups()" class="text-slate-500 hover:text-slate-800 hover:underline font-semibold cursor-pointer">Collapse All Groups</button>
+            </div>
+          </template>
+
+          <template x-for="(group, gIdx) in (form.attribute_groups || []).filter(g => !['content', 'images', 'search_engine_optimization', 'autosettings', 'subscriptions_by_stripe'].includes(g.code))" :key="group.id || gIdx">
+            <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden transition">
+              
+              <!-- Accordion Header -->
+              <div 
+                @click="toggleGroupAccordion(group.id)" 
+                class="w-full py-3.5 px-6 flex items-center justify-between border-b border-slate-100 hover:bg-slate-50/75 cursor-pointer transition select-none"
               >
-                <div 
-                  class="w-4 h-4 rounded-full bg-white shadow-xs absolute transition-transform duration-200"
-                  :class="form.status === 'active' ? 'translate-x-6' : 'translate-x-0.5'"
-                ></div>
-              </button>
-              <span class="text-xs font-medium text-slate-700 select-none" x-text="form.status === 'active' ? 'Yes' : 'No'"></span>
-            </div>
-          </div>
+                <div class="flex items-center gap-2.5">
+                  <span class="w-2 h-2 rounded-full bg-[#2563FF]"></span>
+                  <span class="text-xs sm:text-sm font-bold text-[#303030] uppercase tracking-wide" x-text="formatGroupName(group)"></span>
+                  <span class="text-[11px] text-slate-400 font-semibold px-2 py-0.5 rounded-full bg-slate-100" x-text="(group.attributes ? group.attributes.filter(a => a.code !== 'attribute_set_id' && a.code !== 'category_ids' && a.code !== 'display_name').length : 0) + ' attributes'"></span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-slate-400 font-medium hidden sm:inline" x-text="isGroupAccordionOpen(group.id, gIdx) ? 'Collapse' : 'Expand'"></span>
+                  <div class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-slate-500">
+                    <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="isGroupAccordionOpen(group.id, gIdx) ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+              </div>
 
-          <!-- 2. Attribute Set Row -->
-          <div class="flex flex-col sm:flex-row sm:items-center py-2 border-b border-transparent">
-            <div class="w-full sm:w-60 text-left sm:text-right pr-6 shrink-0">
-              <label class="text-xs font-semibold text-[#303030]">Attribute Set</label>
-              <span class="block text-[10px] text-slate-400 font-normal">[global]</span>
-            </div>
-            <div class="flex-1 max-w-3xl mt-1 sm:mt-0">
-              <select 
-                x-model="form.attribute_set_id" 
-                @change="onAttributeSetChange(form.attribute_set_id, isEditMode ? form.id : null)" 
-                class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] text-xs font-medium text-slate-800 bg-white shadow-2xs outline-hidden"
-              >
-                <template x-for="s in attributeSets" :key="s.id">
-                  <option :value="s.id" x-text="s.name" :selected="s.id == form.attribute_set_id"></option>
-                </template>
-              </select>
-            </div>
-          </div>
-
-          <!-- Loading indicator while switching attribute set -->
-          <div x-show="form.loadingSchema" class="py-6 flex items-center justify-center gap-2 text-slate-400 font-medium">
-            <svg class="w-4 h-4 animate-spin text-[#2563FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-            <span>Loading attribute set specifications...</span>
-          </div>
-
-          <!-- Dynamic Attributes List for Selected Attribute Set -->
-          <div x-show="!form.loadingSchema" class="space-y-1">
-            <template x-for="group in form.attribute_groups" :key="group.id">
-              <div>
-                <!-- Display group heading only if multiple distinct groups exist -->
-                <template x-if="form.attribute_groups.length > 1 && group.code !== 'general' && group.code !== 'product_details'">
-                  <div class="pt-5 pb-2 border-b border-slate-200 mb-3 flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-[#2563FF]"></span>
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600" x-text="formatGroupName(group)"></h3>
+              <!-- Accordion Body (Attribute Inputs) -->
+              <div x-show="isGroupAccordionOpen(group.id, gIdx)" class="p-6 sm:p-8 space-y-2 border-t border-slate-100">
+                <template x-if="!group.attributes || group.attributes.length === 0">
+                  <div class="py-6 text-center text-xs text-slate-400 font-medium italic">
+                    No attributes assigned to this group.
                   </div>
                 </template>
 
                 <!-- Attribute rows in this group -->
-                <template x-for="attr in (group.attributes || [])" :key="attr.id">
-                  <div class="flex flex-col sm:flex-row sm:items-start py-2 border-b border-transparent">
+                <template x-for="(attr, aIdx) in (group.attributes || []).filter(a => a.code !== 'attribute_set_id' && a.code !== 'category_ids' && a.code !== 'display_name')" :key="attr.id || attr.code">
+                  <div class="flex flex-col sm:flex-row sm:items-start py-2">
                     
                     <!-- Left Column: Label + Scope -->
                     <div class="w-full sm:w-60 text-left sm:text-right pr-6 pt-1.5 shrink-0">
@@ -196,8 +222,238 @@
                     <!-- Right Column: Input Control -->
                     <div class="flex-1 max-w-3xl mt-1 sm:mt-0">
                       
-                      <!-- Boolean Toggle -->
-                      <template x-if="attr.type === 'boolean'">
+                      <!-- 1. SKU Field -->
+                      <template x-if="attr.code === 'sku'">
+                        <input 
+                          type="text" 
+                          :value="form.sku || form.dynamic_attributes['sku'] || ''"
+                          @input="form.sku = $event.target.value; form.dynamic_attributes['sku'] = $event.target.value; syncDynamicField('sku', $event.target.value)"
+                          placeholder="" 
+                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                          required
+                        />
+                      </template>
+
+                      <!-- 2. Brand Select Specialization -->
+                      <template x-if="attr.code === 'brand'">
+                        <select 
+                          :value="form.brand_id || form.dynamic_attributes['brand'] || ''"
+                          @change="form.brand_id = $event.target.value; form.dynamic_attributes['brand'] = $event.target.value; syncDynamicField('brand', $event.target.value)"
+                          :required="attr.is_required"
+                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                        >
+                          <option value="">-- Please Select --</option>
+                          <template x-for="b in brands" :key="b.id">
+                            <option :value="b.id" x-text="b.name" :selected="form.brand_id == b.id || form.dynamic_attributes['brand'] == b.name || form.dynamic_attributes['brand'] == b.id"></option>
+                          </template>
+                        </select>
+                      </template>
+
+                      <!-- 3. Enable Product (status) Row -->
+                      <template x-if="attr.code === 'status'">
+                        <div class="flex items-center gap-3 pt-1">
+                          <button 
+                            type="button" 
+                            @click="form.status = (form.status === 'active' ? 'inactive' : 'active'); form.dynamic_attributes['status'] = form.status; syncDynamicField('status', form.status)" 
+                            class="w-11 h-5 rounded-full relative transition-colors duration-200 cursor-pointer flex items-center"
+                            :class="form.status === 'active' ? 'bg-[#2563FF]' : 'bg-slate-300'"
+                          >
+                            <div 
+                              class="w-4 h-4 rounded-full bg-white shadow-xs absolute transition-transform duration-200"
+                              :class="form.status === 'active' ? 'translate-x-6' : 'translate-x-0.5'"
+                            ></div>
+                          </button>
+                          <span class="text-xs font-medium text-slate-700 select-none" x-text="form.status === 'active' ? 'Yes' : 'No'"></span>
+                        </div>
+                      </template>
+
+                      <!-- 5. Product Name Row -->
+                      <template x-if="attr.code === 'product_name' || attr.code === 'name'">
+                        <input 
+                          type="text" 
+                          :value="form.display_name || form.dynamic_attributes['product_name'] || form.dynamic_attributes['name'] || ''"
+                          @input="onProductNameInput($event.target.value)"
+                          placeholder="" 
+                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                          required
+                        />
+                      </template>
+
+                      <!-- 6. URL Key Row with Redirect Checkbox -->
+                      <template x-if="attr.code === 'url_key'">
+                        <div class="w-full max-w-2xl space-y-1.5">
+                          <input 
+                            type="text" 
+                            :value="form.slug || form.dynamic_attributes['url_key'] || ''"
+                            @input="form.slug = $event.target.value; form.dynamic_attributes['url_key'] = $event.target.value; syncDynamicField('url_key', $event.target.value)"
+                            placeholder="" 
+                            class="w-full px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                          />
+                          <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" x-model="form.create_redirect" class="w-3.5 h-3.5 rounded-xs text-[#2563FF] focus:ring-[#2563FF] border-slate-300" checked />
+                            <span class="text-xs text-slate-600">Create Permanent Redirect for old URL</span>
+                          </label>
+                        </div>
+                      </template>
+
+                      <!-- 7. Price & Price Per Item / Advanced Pricing -->
+                      <template x-if="['price', 'price_per_item', 'special_price', 'cost', 'tier_price', 'msrp'].includes(attr.code)">
+                        <div>
+                          <div class="flex items-center w-full max-w-[220px] rounded-xs border border-[#adadad] bg-white overflow-hidden shadow-2xs focus-within:border-[#2563FF]">
+                            <span class="px-3 py-1.5 bg-slate-100 border-r border-[#adadad] text-xs font-semibold text-slate-600 select-none">AED</span>
+                            <input 
+                              type="number" 
+                              step="0.01" 
+                              :value="form.dynamic_attributes[attr.code] !== undefined && form.dynamic_attributes[attr.code] !== null && form.dynamic_attributes[attr.code] !== '' ? form.dynamic_attributes[attr.code] : (attr.code === 'price' ? form.price : (attr.code === 'cost' ? form.cost_price : ''))"
+                              @input="form.dynamic_attributes[attr.code] = $event.target.value; if (attr.code === 'price') form.price = $event.target.value; if (attr.code === 'cost') form.cost_price = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
+                              placeholder="0.00" 
+                              class="w-full px-2.5 py-1.5 text-xs font-medium text-slate-800 outline-hidden"
+                              :required="attr.is_required"
+                            />
+                          </div>
+                          <template x-if="attr.code === 'price'">
+                            <button type="button" @click="toggleAccordion('sources')" class="text-[11px] text-sky-600 hover:text-sky-800 hover:underline mt-1 block font-normal cursor-pointer">Advanced Pricing</button>
+                          </template>
+                        </div>
+                      </template>
+
+                      <!-- 8. Categories Component (Multi-Select Tag Pills matching Magento 2) -->
+                      <template x-if="attr.code === 'categories' || attr.code === 'category_ids'">
+                        <div class="w-full max-w-3xl flex items-center gap-2 relative" @click.outside="categoryDropdownOpen = false">
+                          <!-- Rectangular Magento category select box -->
+                          <div 
+                            id="category-select-trigger"
+                            @click="categoryDropdownOpen = !categoryDropdownOpen" 
+                            class="flex-1 min-h-[34px] px-2 py-1 rounded-xs border border-[#adadad] bg-white hover:border-slate-500 focus-within:border-[#2563FF] cursor-pointer flex items-center justify-between gap-2 transition select-none shadow-2xs"
+                          >
+                            <!-- Selected categories list or placeholder -->
+                            <div class="flex flex-wrap items-center gap-1.5 py-0.5 max-w-[calc(100%-32px)]">
+                              <template x-if="!form.category_ids || form.category_ids.length === 0">
+                                <span class="text-xs text-slate-400 font-normal">Select categories...</span>
+                              </template>
+                              <template x-for="cid in (form.category_ids || [])" :key="cid">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[#e1e1e1] hover:bg-[#d8d8d8] text-[#303030] text-xs rounded-xs border border-[#c4c4c4] select-none">
+                                  <span x-text="getCategoryName(cid)"></span>
+                                  <button 
+                                    type="button" 
+                                    @click.stop="removeCategory(cid)" 
+                                    class="text-[#606060] hover:text-rose-600 font-bold ml-1 text-sm leading-none transition cursor-pointer"
+                                    title="Remove category"
+                                  >&times;</button>
+                                </span>
+                              </template>
+                            </div>
+
+                            <!-- Dropdown indicator arrow -->
+                            <div class="shrink-0 flex items-center justify-center w-6 h-6 text-[#555] border-l border-slate-200 pl-1">
+                              <svg class="w-3.5 h-3.5 text-slate-600 transition-transform duration-200" :class="categoryDropdownOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                              </svg>
+                            </div>
+                          </div>
+
+                          <!-- New Category Button -->
+                          <button 
+                            type="button" 
+                            @click="openNewCategoryModal()" 
+                            class="px-3.5 py-1.5 rounded-xs bg-[#41362f] hover:bg-[#302823] text-white font-bold text-xs tracking-wide transition whitespace-nowrap cursor-pointer shrink-0 shadow-2xs"
+                          >
+                            New Category
+                          </button>
+
+                          <!-- Dropdown Menu Popover -->
+                          <div 
+                            x-show="categoryDropdownOpen" 
+                            x-transition:enter="transition ease-out duration-150"
+                            x-transition:enter-start="opacity-0 translate-y-1 scale-98"
+                            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                            x-transition:leave="transition ease-in duration-100"
+                            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                            x-transition:leave-end="opacity-0 translate-y-1 scale-98"
+                            class="absolute left-0 top-full mt-1.5 w-full max-w-xl bg-white border border-slate-300 rounded-xs shadow-xl p-3 z-50"
+                            style="display: none;"
+                            @click.stop
+                          >
+                            <div class="relative mb-2">
+                              <input 
+                                type="text" 
+                                x-model="categorySearch" 
+                                placeholder="Search categories..." 
+                                class="w-full pl-8 pr-3 py-1.5 text-xs rounded-xs border border-[#adadad] focus:border-[#2563FF] outline-none" 
+                              />
+                              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                              </svg>
+                            </div>
+
+                            <div class="max-h-64 overflow-y-auto space-y-1 pr-1">
+                              <template x-for="cat in getFilteredCategories()" :key="cat.id">
+                                <label 
+                                  class="flex items-center justify-between px-2.5 py-1.5 rounded-xs hover:bg-slate-50 cursor-pointer text-xs transition select-none"
+                                  :class="isCategorySelected(cat.id) ? 'bg-[#f0f4ff] font-semibold' : ''"
+                                >
+                                  <div class="flex items-center gap-2.5">
+                                    <input 
+                                      type="checkbox" 
+                                      :value="cat.id" 
+                                      :checked="isCategorySelected(cat.id)" 
+                                      @change="toggleCategory(cat.id)" 
+                                      class="rounded-xs text-[#2563FF] focus:ring-[#2563FF] w-4 h-4 cursor-pointer accent-[#2563FF]" 
+                                    />
+                                    <span 
+                                      :class="isCategorySelected(cat.id) ? 'font-bold text-slate-900' : 'font-medium text-slate-700'" 
+                                      x-text="getCategoryName(cat.id)"
+                                    ></span>
+                                  </div>
+                                  <span class="text-[10px] text-slate-400" x-text="'ID: ' + cat.id"></span>
+                                </label>
+                              </template>
+                              <div x-show="getFilteredCategories().length === 0" class="text-center py-4 text-xs text-slate-400">
+                                No categories found
+                              </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-2.5 mt-2 border-t border-slate-200 text-xs">
+                              <div class="flex items-center gap-3">
+                                <button type="button" @click="selectAllCategories()" class="text-[#2563FF] font-semibold hover:underline cursor-pointer">Select All</button>
+                                <button type="button" @click="clearCategories()" class="text-slate-500 hover:text-rose-600 font-medium cursor-pointer">Clear</button>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                <span class="text-[11px] text-slate-500" x-text="(form.category_ids ? form.category_ids.length : 0) + ' selected'"></span>
+                                <button 
+                                  type="button" 
+                                  @click="categoryDropdownOpen = false" 
+                                  class="px-3 py-1 rounded-xs bg-[#41362f] hover:bg-[#302823] text-white font-semibold text-xs cursor-pointer shadow-xs transition"
+                                >
+                                  Done
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+
+                      <!-- 9. Multiselect listbox (e.g. OEM Tyres) -->
+                      <template x-if="attr.type === 'multiselect' && attr.code !== 'categories'">
+                        <select 
+                          multiple 
+                          size="5"
+                          @change="handleMultiselectChange(attr.code, $event)"
+                          :required="attr.is_required"
+                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                        >
+                          <template x-for="opt in (attr.options || [])" :key="opt.id || opt.value">
+                            <option 
+                              :value="opt.value" 
+                              x-text="typeof opt.label === 'object' ? (opt.label.en || opt.value) : (opt.label || opt.value)" 
+                              :selected="isMultiselectSelected(attr.code, opt.value)"
+                            ></option>
+                          </template>
+                        </select>
+                      </template>
+
+                      <!-- 10. Boolean Toggle (e.g. Tabby Payment) -->
+                      <template x-if="attr.type === 'boolean' && attr.code !== 'status'">
                         <div class="flex items-center gap-3 pt-1">
                           <button 
                             type="button" 
@@ -214,91 +470,54 @@
                         </div>
                       </template>
 
-                      <!-- Select Dropdown -->
-                      <template x-if="attr.type === 'select' && attr.code !== 'brand' && attr.code !== 'category_id'">
+                      <!-- 11. Select Dropdowns (Pattern, Tyre Marking, Width, Height, Rim, Origin, EV Tyre, Runflat, Year, Warranty Period, Promotion, Tyre Type, etc.) -->
+                      <template x-if="attr.type === 'select' && attr.code !== 'brand' && attr.code !== 'attribute_set_id' && attr.code !== 'category_id' && (attr.options && attr.options.length > 0)">
                         <select 
-                          :value="form.dynamic_attributes[attr.code] || ''"
+                          :value="form.dynamic_attributes[attr.code] !== undefined && form.dynamic_attributes[attr.code] !== null ? String(form.dynamic_attributes[attr.code]) : ''"
                           @change="form.dynamic_attributes[attr.code] = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
-                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                          :required="attr.is_required"
+                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden cursor-pointer"
                         >
                           <option value="">-- Please Select --</option>
-                          <template x-for="opt in (attr.options || [])" :key="opt.id || opt.value">
-                            <option :value="opt.value" x-text="typeof opt.label === 'object' ? (opt.label.en || opt.value) : (opt.label || opt.value)" :selected="form.dynamic_attributes[attr.code] == opt.value"></option>
+                          <template x-for="opt in attr.options" :key="opt.id || opt.value">
+                            <option :value="opt.value" x-text="typeof opt.label === 'object' ? (opt.label.en || opt.value) : (opt.label || opt.value)" :selected="isSelectOptionSelected(attr.code, opt.value)"></option>
                           </template>
                         </select>
                       </template>
 
-                      <!-- Brand Select Specialization -->
-                      <template x-if="attr.code === 'brand'">
-                        <select 
-                          :value="form.brand_id || form.dynamic_attributes['brand'] || ''"
-                          @change="form.brand_id = $event.target.value; form.dynamic_attributes['brand'] = $event.target.value; syncDynamicField('brand', $event.target.value)"
-                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
-                        >
-                          <option value="">-- Please Select Brand --</option>
-                          <template x-for="b in brands" :key="b.id">
-                            <option :value="b.id" x-text="b.name" :selected="form.brand_id == b.id || form.dynamic_attributes['brand'] == b.name"></option>
-                          </template>
-                        </select>
+                      <!-- Select fallback if attribute has no options configured in database (render clean input instead of empty dropdown) -->
+                      <template x-if="attr.type === 'select' && attr.code !== 'brand' && attr.code !== 'attribute_set_id' && attr.code !== 'category_id' && (!attr.options || attr.options.length === 0)">
+                        <input 
+                          type="text" 
+                          :value="form.dynamic_attributes[attr.code] !== undefined && form.dynamic_attributes[attr.code] !== null ? form.dynamic_attributes[attr.code] : ''"
+                          @input="form.dynamic_attributes[attr.code] = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
+                          :placeholder="'Enter ' + formatAttrName(attr)" 
+                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                          :required="attr.is_required"
+                        />
                       </template>
 
-                      <!-- Multiselect listbox (e.g. OEM Tyres) -->
-                      <template x-if="attr.type === 'multiselect'">
-                        <select 
-                          multiple 
-                          size="5"
-                          @change="handleMultiselectChange(attr.code, $event)"
-                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
-                        >
-                          <template x-for="opt in (attr.options || [])" :key="opt.id || opt.value">
-                            <option :value="opt.value" x-text="typeof opt.label === 'object' ? (opt.label.en || opt.value) : (opt.label || opt.value)"></option>
-                          </template>
-                        </select>
-                      </template>
-
-                      <!-- Price Field (AED prefix & Advanced Pricing) -->
-                      <template x-if="attr.code === 'price' || attr.code === 'price_per_item'">
-                        <div>
-                          <div class="flex items-center w-full max-w-[220px] rounded-xs border border-[#adadad] bg-white overflow-hidden shadow-2xs focus-within:border-[#2563FF]">
-                            <span class="px-3 py-1.5 bg-slate-100 border-r border-[#adadad] text-xs font-semibold text-slate-600 select-none">AED</span>
-                            <input 
-                              type="number" 
-                              step="0.01" 
-                              :value="form.dynamic_attributes[attr.code] !== undefined ? form.dynamic_attributes[attr.code] : (attr.code === 'price' ? form.price : '')"
-                              @input="form.dynamic_attributes[attr.code] = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
-                              placeholder="0.00" 
-                              class="w-full px-2.5 py-1.5 text-xs font-medium text-slate-800 outline-hidden"
-                              :required="attr.is_required"
-                            />
-                          </div>
-                          <button type="button" @click="toggleAccordion('sources')" class="text-[11px] text-sky-600 hover:text-sky-800 hover:underline mt-1 block font-normal cursor-pointer">Advanced Pricing</button>
-                        </div>
-                      </template>
-
-                      <!-- Weight Field (with unit selector) -->
+                      <!-- 12. Weight Field -->
                       <template x-if="attr.code === 'weight'">
                         <div class="flex items-center gap-2 w-full max-w-2xl">
                           <input 
                             type="number" 
                             step="0.01" 
                             :value="form.dynamic_attributes['weight'] !== undefined ? form.dynamic_attributes['weight'] : form.weight"
-                            @input="form.dynamic_attributes['weight'] = $event.target.value; syncDynamicField('weight', $event.target.value)"
+                            @input="form.dynamic_attributes['weight'] = $event.target.value; form.weight = $event.target.value; syncDynamicField('weight', $event.target.value)"
                             placeholder="0.0" 
-                            class="w-24 px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                            class="w-32 px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                            :required="attr.is_required"
                           />
-                          <span class="text-xs text-slate-600 font-medium">lbs</span>
-                          <select class="px-2.5 py-1.5 rounded-xs border border-[#adadad] text-xs bg-white text-slate-700 outline-hidden">
-                            <option>This item has weight</option>
-                            <option>This item has no weight</option>
-                          </select>
+                          <span class="text-xs text-slate-600 font-medium">kg</span>
                         </div>
                       </template>
 
-                      <!-- Regular Text Input -->
-                      <template x-if="attr.type === 'text' && attr.code !== 'price' && attr.code !== 'price_per_item' && attr.code !== 'weight'">
+                      <!-- 13. Regular Text Input (Item Code, Display Name, Load/Speed Index, etc.) -->
+                      <template x-if="(attr.type === 'text' || attr.type === 'string' || attr.type === 'varchar') && attr.code !== 'sku' && attr.code !== 'product_name' && attr.code !== 'url_key' && attr.code !== 'price' && attr.code !== 'price_per_item' && attr.code !== 'weight'">
                         <input 
                           type="text" 
-                          :value="form.dynamic_attributes[attr.code] !== undefined ? form.dynamic_attributes[attr.code] : (attr.code === 'sku' ? form.sku : (attr.code === 'product_name' || attr.code === 'display_name' ? form.display_name : ''))"
+                          :value="form.dynamic_attributes[attr.code] !== undefined && form.dynamic_attributes[attr.code] !== null ? form.dynamic_attributes[attr.code] : (attr.code === 'display_name' ? form.display_name : '')"
                           @input="form.dynamic_attributes[attr.code] = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
                           :placeholder="attr.default_value || ''" 
                           class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
@@ -306,12 +525,12 @@
                         />
                       </template>
 
-                      <!-- Regular Number Input -->
-                      <template x-if="attr.type === 'number' && attr.code !== 'price' && attr.code !== 'price_per_item' && attr.code !== 'weight'">
+                      <!-- 14. Regular Number / Decimal / Float Input -->
+                      <template x-if="(attr.type === 'number' || attr.type === 'decimal' || attr.type === 'integer' || attr.type === 'float') && attr.code !== 'price' && attr.code !== 'price_per_item' && attr.code !== 'weight'">
                         <input 
                           type="number" 
-                          step="any" 
-                          :value="form.dynamic_attributes[attr.code] !== undefined ? form.dynamic_attributes[attr.code] : ''"
+                          :step="attr.type === 'decimal' || attr.type === 'float' ? '0.01' : 'any'" 
+                          :value="form.dynamic_attributes[attr.code] !== undefined && form.dynamic_attributes[attr.code] !== null ? form.dynamic_attributes[attr.code] : ''"
                           @input="form.dynamic_attributes[attr.code] = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
                           :placeholder="attr.default_value || ''" 
                           class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
@@ -319,162 +538,71 @@
                         />
                       </template>
 
-                      <!-- Textarea Input -->
+                      <!-- 15. Textarea Input -->
                       <template x-if="attr.type === 'textarea'">
                         <textarea 
                           rows="3" 
                           :value="form.dynamic_attributes[attr.code] || ''"
                           @input="form.dynamic_attributes[attr.code] = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
+                          :required="attr.is_required"
                           class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
                         ></textarea>
+                      </template>
+
+                      <!-- 16. Date Input -->
+                      <template x-if="attr.type === 'date'">
+                        <input 
+                          type="date" 
+                          :value="form.dynamic_attributes[attr.code] || ''"
+                          @input="form.dynamic_attributes[attr.code] = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
+                          :required="attr.is_required"
+                          class="w-full max-w-xs px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                        />
+                      </template>
+
+                      <!-- 17. File / Image Input -->
+                      <template x-if="attr.type === 'file'">
+                        <div class="space-y-2">
+                          <div class="flex items-center gap-2 max-w-2xl">
+                            <input 
+                              type="text" 
+                              :value="form.dynamic_attributes[attr.code] || (attr.code === 'image' || attr.code === 'small_image' ? form.image_path : '')"
+                              @input="form.dynamic_attributes[attr.code] = $event.target.value; if (attr.code === 'image' || attr.code === 'small_image') form.image_path = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
+                              placeholder="Image URL or upload path"
+                              class="w-full px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                              :required="attr.is_required"
+                            />
+                            <label class="px-3 py-1.5 rounded-xs bg-[#514943] hover:bg-[#3d3732] text-white text-xs font-semibold cursor-pointer shadow-xs transition select-none whitespace-nowrap shrink-0">
+                              <span>Browse</span>
+                              <input type="file" @change="uploadImage($event); form.dynamic_attributes[attr.code] = form.image_path" accept="image/*" class="hidden" />
+                            </label>
+                          </div>
+                          <template x-if="form.dynamic_attributes[attr.code] || (attr.code === 'image' && form.image_path)">
+                            <div class="w-16 h-16 border border-slate-200 rounded-xs bg-white p-1 relative flex items-center justify-center">
+                              <img :src="form.dynamic_attributes[attr.code] || form.image_path" alt="Preview" class="max-w-full max-h-full object-contain" />
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+
+                      <!-- 18. Fallback Generic Textbox Input (for any other attribute type) -->
+                      <template x-if="!['sku', 'brand', 'status', 'attribute_set_id', 'product_name', 'name', 'url_key', 'price', 'price_per_item', 'categories', 'category_ids', 'weight'].includes(attr.code) && !['text', 'string', 'varchar', 'number', 'decimal', 'integer', 'float', 'textarea', 'select', 'multiselect', 'boolean', 'date', 'file'].includes(attr.type)">
+                        <input 
+                          type="text" 
+                          :value="form.dynamic_attributes[attr.code] !== undefined && form.dynamic_attributes[attr.code] !== null ? form.dynamic_attributes[attr.code] : ''"
+                          @input="form.dynamic_attributes[attr.code] = $event.target.value; syncDynamicField(attr.code, $event.target.value)"
+                          :placeholder="attr.default_value || ''" 
+                          class="w-full max-w-2xl px-3 py-1.5 rounded-xs border border-[#adadad] focus:border-[#2563FF] focus:ring-1 focus:ring-[#2563FF] text-xs font-normal text-slate-800 bg-white shadow-2xs outline-hidden"
+                          :required="attr.is_required"
+                        />
                       </template>
 
                     </div>
                   </div>
                 </template>
               </div>
-            </template>
-          </div>
-
-          <!-- Categories Row (Multi-Select Pill Dropdown matching Magento) -->
-          <div class="flex flex-col sm:flex-row sm:items-center py-2 border-b border-transparent relative" @click.outside="categoryDropdownOpen = false">
-            <div class="w-full sm:w-60 text-left sm:text-right pr-6 shrink-0">
-              <label class="text-xs font-semibold text-[#303030]">Categories</label>
-              <span class="block text-[10px] text-slate-400 font-normal">[global]</span>
             </div>
-            <div class="flex-1 max-w-3xl mt-1 sm:mt-0 flex items-center gap-2 relative">
-              <!-- Pill-shaped trigger box -->
-              <div 
-                id="category-select-trigger"
-                @click="categoryDropdownOpen = !categoryDropdownOpen" 
-                class="flex-1 min-h-[38px] px-4 py-1.5 rounded-full border border-[#2563FF] bg-white hover:border-[#4ca315] focus-within:ring-2 focus-within:ring-[#2563FF]/30 cursor-pointer flex items-center justify-between gap-2 transition select-none shadow-2xs"
-              >
-                <!-- Selected categories list or placeholder -->
-                <div class="flex flex-wrap items-center gap-2 py-0.5 max-w-[calc(100%-28px)]">
-                  <template x-if="!form.category_ids || form.category_ids.length === 0">
-                    <span class="text-xs text-slate-400 font-normal">Select categories...</span>
-                  </template>
-                  <template x-for="cid in (form.category_ids || [])" :key="cid">
-                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#303030]">
-                      <span class="w-2 h-2 rounded-full bg-[#2563FF] shrink-0"></span>
-                      <span x-text="getCategoryName(cid)"></span>
-                      <button 
-                        type="button" 
-                        @click.stop="removeCategory(cid)" 
-                        class="text-slate-400 hover:text-rose-600 font-bold ml-0.5 text-sm transition cursor-pointer leading-none"
-                        title="Remove category"
-                      >&times;</button>
-                      <span class="text-slate-300 ml-1 select-none" x-show="form.category_ids.indexOf(cid) < form.category_ids.length - 1">,</span>
-                    </span>
-                  </template>
-                </div>
-
-                <!-- Dropdown indicator arrow -->
-                <div class="shrink-0 text-[#2563FF] transition-transform duration-200 pr-1" :class="categoryDropdownOpen ? 'rotate-180' : ''">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                  </svg>
-                </div>
-              </div>
-
-              <!-- New Category Button -->
-              <a 
-                href="/visionadmin/categories" 
-                target="_blank" 
-                class="px-4 py-2 rounded-xs bg-[#514943] hover:bg-[#3d3732] text-white font-semibold text-xs transition whitespace-nowrap cursor-pointer shrink-0 shadow-2xs"
-              >
-                New Category
-              </a>
-
-              <!-- Dropdown Menu Popover -->
-              <div 
-                x-show="categoryDropdownOpen" 
-                x-transition:enter="transition ease-out duration-150"
-                x-transition:enter-start="opacity-0 translate-y-1 scale-98"
-                x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                x-transition:leave="transition ease-in duration-100"
-                x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                x-transition:leave-end="opacity-0 translate-y-1 scale-98"
-                class="absolute left-0 top-full mt-1.5 w-full max-w-xl bg-white border border-slate-200 rounded-lg shadow-xl p-3 z-50"
-                style="display: none;"
-                @click.stop
-              >
-                <!-- Search box -->
-                <div class="relative mb-2">
-                  <input 
-                    type="text" 
-                    x-model="categorySearch" 
-                    placeholder="Search categories..." 
-                    class="w-full pl-8 pr-3 py-1.5 text-xs rounded border border-slate-200 focus:border-[#2563FF] outline-none" 
-                  />
-                  <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                  </svg>
-                </div>
-
-                <!-- Categories Checkbox List -->
-                <div class="max-h-60 overflow-y-auto space-y-1 pr-1">
-                  <template x-for="cat in getFilteredCategories()" :key="cat.id">
-                    <label 
-                      class="flex items-center justify-between px-2.5 py-1.5 rounded hover:bg-slate-50 cursor-pointer text-xs transition select-none"
-                      :class="isCategorySelected(cat.id) ? 'bg-[#2563FF]/10 font-semibold' : ''"
-                    >
-                      <div class="flex items-center gap-2.5">
-                        <input 
-                          type="checkbox" 
-                          :value="cat.id" 
-                          :checked="isCategorySelected(cat.id)" 
-                          @change="toggleCategory(cat.id)" 
-                          class="rounded text-[#2563FF] focus:ring-[#2563FF] w-4 h-4 cursor-pointer accent-[#2563FF]" 
-                        />
-                        <span class="w-2 h-2 rounded-full bg-[#2563FF]" x-show="isCategorySelected(cat.id)"></span>
-                        <span 
-                          :class="isCategorySelected(cat.id) ? 'font-bold text-slate-900' : 'font-medium text-slate-700'" 
-                          x-text="cat.name_en || (typeof cat.name === 'object' ? (cat.name.en || cat.name.ar) : cat.name)"
-                        ></span>
-                      </div>
-                      <span class="text-[10px] text-slate-400" x-text="'ID: ' + cat.id"></span>
-                    </label>
-                  </template>
-                  <div x-show="getFilteredCategories().length === 0" class="text-center py-4 text-xs text-slate-400">
-                    No categories found
-                  </div>
-                </div>
-
-                <!-- Footer / Quick Actions -->
-                <div class="flex items-center justify-between pt-2.5 mt-2 border-t border-slate-100 text-xs">
-                  <div class="flex items-center gap-3">
-                    <button type="button" @click="selectAllCategories()" class="text-[#2563FF] font-semibold hover:underline cursor-pointer">Select All</button>
-                    <button type="button" @click="clearCategories()" class="text-slate-500 hover:text-rose-600 font-medium cursor-pointer">Clear</button>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="text-[11px] text-slate-500" x-text="(form.category_ids ? form.category_ids.length : 0) + ' selected'"></span>
-                    <button 
-                      type="button" 
-                      @click="categoryDropdownOpen = false" 
-                      class="px-3 py-1 rounded bg-[#2563FF] hover:bg-[#4ca315] text-white font-semibold text-xs cursor-pointer shadow-xs transition"
-                    >
-                      Done
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Set Product as New From (as in Magento Image 0) -->
-          <div class="flex flex-col sm:flex-row sm:items-center py-2 border-b border-transparent">
-            <div class="w-full sm:w-60 text-left sm:text-right pr-6 shrink-0">
-              <label class="text-xs font-semibold text-[#303030]">Set Product as New From</label>
-              <span class="block text-[10px] text-slate-400 font-normal">[website]</span>
-            </div>
-            <div class="flex-1 max-w-3xl mt-1 sm:mt-0 flex items-center gap-2 flex-wrap">
-              <input type="date" class="px-2.5 py-1.5 rounded-xs border border-[#adadad] text-xs text-slate-700 bg-white shadow-2xs outline-hidden" />
-              <span class="text-xs text-slate-500 font-medium">To</span>
-              <input type="date" class="px-2.5 py-1.5 rounded-xs border border-[#adadad] text-xs text-slate-700 bg-white shadow-2xs outline-hidden" />
-            </div>
-          </div>
-
+          </template>
         </div>
 
         <!-- =================================================================== -->
@@ -543,64 +671,8 @@
           </div>
         </div>
 
-        <!-- 3. Configurations -->
-        <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden">
-          <div 
-            @click="toggleAccordion('configurations')" 
-            class="w-full py-3 px-6 flex items-center justify-between border-b border-slate-100 hover:bg-slate-50/50 cursor-pointer transition select-none"
-          >
-            <span class="text-xs sm:text-sm font-semibold text-[#303030]">Configurations</span>
-            <div class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-slate-500">
-              <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="accordions.configurations ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-          </div>
 
-          <div x-show="accordions.configurations" class="p-6 border-t border-slate-100 flex items-center justify-between flex-wrap gap-4">
-            <p class="text-xs text-slate-600 max-w-3xl">Configurable products allow customers to choose options (Ex: tyre size or speed index). You need to create a simple product for each configuration.</p>
-            <button type="button" class="px-4 py-2 bg-[#514943] hover:bg-[#3d3732] text-white text-xs font-semibold rounded-xs transition">Create Configurations</button>
-          </div>
-        </div>
-
-        <!-- 4. Subscriptions by Stripe -->
-        <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden">
-          <div 
-            @click="toggleAccordion('subscriptions')" 
-            class="w-full py-3 px-6 flex items-center justify-between border-b border-slate-100 hover:bg-slate-50/50 cursor-pointer transition select-none"
-          >
-            <span class="text-xs sm:text-sm font-semibold text-[#303030]">Subscriptions by Stripe</span>
-            <div class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-slate-500">
-              <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="accordions.subscriptions ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-          </div>
-
-          <div x-show="accordions.subscriptions" class="p-6 border-t border-slate-100 space-y-3">
-            <div class="flex flex-col sm:flex-row sm:items-center py-1">
-              <div class="w-full sm:w-60 text-left sm:text-right pr-6 shrink-0">
-                <label class="text-xs font-semibold text-[#303030]">Subscription Enabled</label>
-                <span class="block text-[10px] text-slate-400 font-normal">[global]</span>
-              </div>
-              <div class="flex items-center gap-3">
-                <button type="button" class="w-11 h-5 rounded-full bg-slate-300 relative flex items-center">
-                  <div class="w-4 h-4 rounded-full bg-white shadow-xs absolute translate-x-0.5"></div>
-                </button>
-                <span class="text-xs font-medium text-slate-700">No</span>
-              </div>
-            </div>
-            <div class="flex flex-col sm:flex-row sm:items-center py-1">
-              <div class="w-full sm:w-60 text-left sm:text-right pr-6 shrink-0">
-                <label class="text-xs font-semibold text-[#303030]">Frequency</label>
-                <span class="block text-[10px] text-slate-400 font-normal">[global]</span>
-              </div>
-              <select class="px-3 py-1.5 rounded-xs border border-[#adadad] text-xs bg-white text-slate-800">
-                <option>Months</option>
-                <option>Weeks</option>
-                <option>Days</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- 5. Images And Videos -->
+        <!-- 3. Images And Videos -->
         <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden">
           <div 
             @click="toggleAccordion('media')" 
@@ -627,7 +699,7 @@
               <!-- Image preview if present -->
               <template x-if="form.image_path">
                 <div class="w-36 h-36 border border-slate-200 rounded-xs bg-white p-2 relative group flex items-center justify-center">
-                  <img :src="form.image_path || '/static/assets/images/online-tyres-shop-dubai.png'" alt="Product Image" class="max-w-full max-h-full object-contain" onerror="this.src='/static/assets/images/online-tyres-shop-dubai.png'" />
+                  <img :src="resolveProductImage(form.image_path)" alt="Product Image" class="max-w-full max-h-full object-contain" onerror="this.src='/static/assets/images/no-image-available.svg'; this.onerror=null;" />
                   <button 
                     type="button" 
                     @click="form.image_path = ''" 
@@ -647,7 +719,7 @@
           </div>
         </div>
 
-        <!-- 6. Search Engine Optimization (SEO) -->
+        <!-- 4. Search Engine Optimization (SEO) -->
         <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden">
           <div 
             @click="toggleAccordion('seo')" 
@@ -692,7 +764,7 @@
           </div>
         </div>
 
-        <!-- 7. Product in Websites -->
+        <!-- 5. Product in Websites -->
         <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden">
           <div 
             @click="toggleAccordion('websites')" 
@@ -733,94 +805,6 @@
           </div>
         </div>
 
-        <!-- 8. Related Products, Up-Sells, and Cross-Sells -->
-        <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden">
-          <div 
-            @click="toggleAccordion('related')" 
-            class="w-full py-3 px-6 flex items-center justify-between border-b border-slate-100 hover:bg-slate-50/50 cursor-pointer transition select-none"
-          >
-            <span class="text-xs sm:text-sm font-semibold text-[#303030]">Related Products, Up-Sells, and Cross-Sells</span>
-            <div class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-slate-500">
-              <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="accordions.related ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-          </div>
-          <div x-show="accordions.related" class="p-6 border-t border-slate-100 text-xs text-slate-500">
-            Link complementary tyre sizes, valves, tyre fitting packages, and wheel alignments for checkout up-sells.
-          </div>
-        </div>
-
-        <!-- 9. Customizable Options -->
-        <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden">
-          <div 
-            @click="toggleAccordion('custom_options')" 
-            class="w-full py-3 px-6 flex items-center justify-between border-b border-slate-100 hover:bg-slate-50/50 cursor-pointer transition select-none"
-          >
-            <span class="text-xs sm:text-sm font-semibold text-[#303030]">Customizable Options</span>
-            <div class="flex items-center gap-2">
-              <button type="button" @click.stop class="px-3 py-1 text-[11px] font-semibold text-[#303030] bg-white border border-[#adadad] rounded-xs hover:bg-slate-100">Import Options</button>
-              <button type="button" @click.stop class="px-3 py-1 text-[11px] font-semibold text-white bg-[#514943] hover:bg-[#3d3732] rounded-xs">Add Option</button>
-              <div class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-slate-500 ml-2">
-                <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="accordions.custom_options ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-              </div>
-            </div>
-          </div>
-          <div x-show="accordions.custom_options" class="p-6 border-t border-slate-100 text-xs text-slate-500">
-            Custom options let customers choose variations (e.g. mobile tyre installation, disposal of old tyres).
-          </div>
-        </div>
-
-        <!-- Additional Collapsible Sections matching Magento Screenshot -->
-        <!-- Design -->
-        <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden">
-          <div @click="toggleAccordion('design')" class="w-full py-3 px-6 flex items-center justify-between border-b border-slate-100 hover:bg-slate-50/50 cursor-pointer transition select-none">
-            <span class="text-xs sm:text-sm font-semibold text-[#303030]">Design</span>
-            <div class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-slate-500">
-              <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="accordions.design ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-          </div>
-          <div x-show="accordions.design" class="p-6 border-t border-slate-100 text-xs text-slate-500">
-            Layout XML updates and custom page theme overrides for this product.
-          </div>
-        </div>
-
-        <!-- Schedule Design Update -->
-        <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden">
-          <div @click="toggleAccordion('schedule')" class="w-full py-3 px-6 flex items-center justify-between border-b border-slate-100 hover:bg-slate-50/50 cursor-pointer transition select-none">
-            <span class="text-xs sm:text-sm font-semibold text-[#303030]">Schedule Design Update</span>
-            <div class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-slate-500">
-              <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="accordions.schedule ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-          </div>
-          <div x-show="accordions.schedule" class="p-6 border-t border-slate-100 text-xs text-slate-500">
-            Schedule seasonal promotional themes or banners.
-          </div>
-        </div>
-
-        <!-- Gift Options -->
-        <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden">
-          <div @click="toggleAccordion('gift')" class="w-full py-3 px-6 flex items-center justify-between border-b border-slate-100 hover:bg-slate-50/50 cursor-pointer transition select-none">
-            <span class="text-xs sm:text-sm font-semibold text-[#303030]">Gift Options</span>
-            <div class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-slate-500">
-              <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="accordions.gift ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-          </div>
-          <div x-show="accordions.gift" class="p-6 border-t border-slate-100 text-xs text-slate-500">
-            Allow gift message at checkout: Use system configuration.
-          </div>
-        </div>
-
-        <!-- Downloadable Information -->
-        <div class="bg-white border border-slate-200 rounded-xs shadow-2xs overflow-hidden">
-          <div @click="toggleAccordion('downloadable')" class="w-full py-3 px-6 flex items-center justify-between border-b border-slate-100 hover:bg-slate-50/50 cursor-pointer transition select-none">
-            <span class="text-xs sm:text-sm font-semibold text-[#303030]">Downloadable Information</span>
-            <div class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-slate-500">
-              <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="accordions.downloadable ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-          </div>
-          <div x-show="accordions.downloadable" class="p-6 border-t border-slate-100 text-xs text-slate-500">
-            Downloadable safety sheets, technical PDF certificates, warranty manuals.
-          </div>
-        </div>
 
       </div>
 
@@ -854,9 +838,62 @@
       </div>
     </div>
 
+  <!-- Modal: Quick Create Category -->
+  <div 
+    x-show="newCategoryModalOpen" 
+    x-cloak 
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+    @click.self="newCategoryModalOpen = false"
+  >
+    <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-bold text-slate-900">Create New Category</h3>
+        <button type="button" @click="newCategoryModalOpen = false" class="text-slate-400 hover:text-slate-600 text-lg leading-none cursor-pointer">&times;</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Category Name <span class="text-rose-600">*</span></label>
+          <input 
+            type="text" 
+            x-model="newCategoryForm.name" 
+            placeholder="e.g. Run Flat, Summer 2026, 255/35 R20" 
+            class="w-full px-3 py-2 rounded-xs border border-[#adadad] focus:border-[#2563FF] outline-none text-xs" 
+            @keydown.enter.prevent="quickCreateCategory()"
+          />
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Parent Category</label>
+          <select 
+            x-model="newCategoryForm.parent_id" 
+            class="w-full px-3 py-2 rounded-xs border border-[#adadad] focus:border-[#2563FF] outline-none text-xs bg-white"
+          >
+            <template x-for="cat in categories" :key="cat.id">
+              <option :value="cat.id" x-text="getCategoryName(cat.id)" :selected="cat.id == newCategoryForm.parent_id"></option>
+            </template>
+          </select>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+        <button 
+          type="button" 
+          @click="newCategoryModalOpen = false" 
+          class="px-4 py-2 rounded-xs border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium text-xs cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          @click="quickCreateCategory()" 
+          class="px-4 py-2 rounded-xs bg-[#41362f] hover:bg-[#302823] text-white font-bold text-xs cursor-pointer shadow-xs"
+        >
+          Save &amp; Assign
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/visionadmin/catalog-products.js?v={{ range(10000, 99999) | random }}"></script>
 {% endblock %}

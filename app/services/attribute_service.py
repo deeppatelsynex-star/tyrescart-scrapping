@@ -84,6 +84,13 @@ class AttributeService:
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                cursor.execute("SELECT id, code, is_required, is_system FROM attributes WHERE id = %s", (attr_id,))
+                attr = cursor.fetchone()
+                if not attr:
+                    return False
+                if attr.get('is_required') or attr.get('is_system') or attr.get('code') in ('sku', 'price', 'name', 'product_name', 'status', 'display_name', 'tire_size_label', 'load_index', 'speed_rating'):
+                    raise ValueError(f"Required attribute '{attr['code']}' cannot be deleted or purged.")
+
                 cursor.execute("DELETE FROM attribute_options WHERE attribute_id = %s", (attr_id,))
                 cursor.execute("DELETE FROM attribute_group_attributes WHERE attribute_id = %s", (attr_id,))
                 cursor.execute("DELETE FROM product_attribute_values WHERE attribute_id = %s", (attr_id,))
@@ -209,10 +216,60 @@ class AttributeService:
 
                     g['attributes'] = attrs
 
+                # Ensure core attributes (product_name, sku, price, etc.) exist in every set
+                all_assigned_codes = set()
+                for g in groups:
+                    for a in g.get('attributes', []):
+                        all_assigned_codes.add(a.get('code'))
+
+                if 'sku' not in all_assigned_codes or ('product_name' not in all_assigned_codes and 'name' not in all_assigned_codes):
+                    cursor.execute("""
+                        SELECT * FROM attributes
+                        WHERE code IN ('status', 'product_name', 'sku', 'price', 'categories', 'tax_class', 'visibility', 'tabby_payment')
+                          AND deleted_at IS NULL
+                        ORDER BY FIELD(code, 'status', 'product_name', 'sku', 'price', 'categories', 'tax_class', 'visibility', 'tabby_payment')
+                    """)
+                    core_attrs = cursor.fetchall()
+                    for a in core_attrs:
+                        if a.get('name') and isinstance(a['name'], str):
+                            try:
+                                a['name'] = json.loads(a['name'])
+                            except Exception:
+                                pass
+                        if a.get('type') in ('select', 'multiselect'):
+                            a['options'] = AttributeService.get_attribute_options(a['id'])
+                        else:
+                            a['options'] = []
+
+                    general_group = {
+                        'id': f"general_{attribute_set_id}",
+                        'attribute_set_id': attribute_set_id,
+                        'name': {'en': 'General Attributes', 'ar': 'الخصائص العامة'},
+                        'code': 'general',
+                        'sort_order': 0,
+                        'attributes': [a for a in core_attrs if a['code'] not in all_assigned_codes]
+                    }
+                    groups.insert(0, general_group)
+
                 attr_set['groups'] = groups
                 return attr_set
         finally:
             conn.close()
+
+    @staticmethod
+    def _normalize_group_name_json(name):
+        if isinstance(name, dict):
+            return json.dumps(name)
+        if isinstance(name, str):
+            trimmed = name.strip()
+            if (trimmed.startswith('{') and trimmed.endswith('}')) or (trimmed.startswith('"') and trimmed.endswith('"')):
+                try:
+                    json.loads(trimmed)
+                    return trimmed
+                except Exception:
+                    pass
+            return json.dumps({'en': name})
+        return json.dumps({'en': str(name or 'Group')})
 
     @staticmethod
     def add_group_to_set(attribute_set_id, name, code=None, sort_order=10, user_id=None):
@@ -223,7 +280,7 @@ class AttributeService:
                     clean_code = re.sub(r'[^a-z0-9_]+', '_', (name.get('en') if isinstance(name, dict) else str(name)).lower()).strip('_')
                 else:
                     clean_code = code
-                name_val = json.dumps(name) if isinstance(name, dict) else str(name)
+                name_val = AttributeService._normalize_group_name_json(name)
                 cursor.execute("""
                     INSERT INTO attribute_groups (attribute_set_id, name, code, sort_order, created_by, updated_by)
                     VALUES (%s, %s, %s, %s, %s, %s)
@@ -273,6 +330,120 @@ class AttributeService:
                 return True
         finally:
             conn.close()
+
+    @staticmethod
+    def rename_group(group_id, name, user_id=None):
+        """Renames an attribute group."""
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                name_val = AttributeService._normalize_group_name_json(name)
+                cursor.execute("""
+                    UPDATE attribute_groups
+                    SET name = %s, updated_by = %s, updated_at = NOW()
+                    WHERE id = %s
+                """, (name_val, user_id, group_id))
+                conn.commit()
+                return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    @staticmethod
+    def save_full_set_schema(attribute_set_id, set_name, groups_data, user_id=None):
+        """
+        Atomically saves:
+        - Attribute set name
+        - Groups (create new, rename existing, delete removed non-system groups)
+        - Group attribute mappings (with sort order, preventing deletion of required attributes!)
+        """
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                # 1. Update set name
+                if set_name:
+                    cursor.execute("""
+                        UPDATE attribute_sets SET name = %s, updated_by = %s, updated_at = NOW()
+                        WHERE id = %s
+                    """, (set_name.strip(), user_id, attribute_set_id))
+
+                # 2. Get existing groups for this set
+                cursor.execute("SELECT id, name FROM attribute_groups WHERE attribute_set_id = %s", (attribute_set_id,))
+                existing_groups = {row['id']: row for row in cursor.fetchall()}
+
+                # 3. Get all required attributes across the system
+                cursor.execute("SELECT id, code FROM attributes WHERE is_required = 1 OR is_system = 1 OR code IN ('sku', 'name', 'price', 'status', 'product_name')")
+                required_attrs = {row['id']: row['code'] for row in cursor.fetchall()}
+
+                # Process groups in groups_data
+                seen_group_ids = set()
+                first_group_id = None
+
+                for g_idx, g in enumerate(groups_data):
+                    g_id = g.get('id')
+                    g_name = g.get('name') or 'General'
+                    g_name_val = AttributeService._normalize_group_name_json(g_name)
+                    clean_str = g_name.get('en') if isinstance(g_name, dict) else str(g_name)
+                    g_code = re.sub(r'[^a-z0-9_]+', '_', clean_str.lower()).strip('_') or f"group_{g_idx+1}"
+
+                    if g_id and g_id in existing_groups:
+                        # Update group name and sort order
+                        cursor.execute("""
+                            UPDATE attribute_groups SET name = %s, sort_order = %s, updated_by = %s
+                            WHERE id = %s
+                        """, (g_name_val, g_idx * 10, user_id, g_id))
+                        target_group_id = g_id
+                    else:
+                        # Insert new group
+                        cursor.execute("""
+                            INSERT INTO attribute_groups (attribute_set_id, name, code, sort_order, created_by, updated_by)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                        """, (attribute_set_id, g_name_val, g_code, g_idx * 10, user_id, user_id))
+                        target_group_id = cursor.lastrowid
+
+                    seen_group_ids.add(target_group_id)
+                    if first_group_id is None:
+                        first_group_id = target_group_id
+
+                    # Clear existing mappings for this group to replace with new order
+                    cursor.execute("DELETE FROM attribute_group_attributes WHERE attribute_group_id = %s", (target_group_id,))
+
+                    # Re-insert attributes for this group
+                    attrs = g.get('attributes') or []
+                    for a_idx, attr in enumerate(attrs):
+                        attr_id = attr.get('id') if isinstance(attr, dict) else attr
+                        if attr_id:
+                            cursor.execute("""
+                                INSERT INTO attribute_group_attributes (attribute_group_id, attribute_id, sort_order, created_by, updated_by)
+                                VALUES (%s, %s, %s, %s, %s)
+                            """, (target_group_id, attr_id, a_idx * 10, user_id, user_id))
+
+                # Delete groups that were removed (not in seen_group_ids)
+                for old_gid in existing_groups.keys():
+                    if old_gid not in seen_group_ids:
+                        cursor.execute("DELETE FROM attribute_group_attributes WHERE attribute_group_id = %s", (old_gid,))
+                        cursor.execute("DELETE FROM attribute_groups WHERE id = %s", (old_gid,))
+
+                # 4. Critical requirement check: ensure all required attributes are preserved in the set!
+                cursor.execute("""
+                    SELECT DISTINCT attribute_id FROM attribute_group_attributes aga
+                    JOIN attribute_groups ag ON aga.attribute_group_id = ag.id
+                    WHERE ag.attribute_set_id = %s
+                """, (attribute_set_id,))
+                assigned_attr_ids = {row['attribute_id'] for row in cursor.fetchall()}
+
+                if first_group_id:
+                    for req_id in required_attrs.keys():
+                        if req_id not in assigned_attr_ids:
+                            cursor.execute("""
+                                INSERT INTO attribute_group_attributes (attribute_group_id, attribute_id, sort_order, created_by, updated_by)
+                                VALUES (%s, %s, 999, %s, %s)
+                            """, (first_group_id, req_id, user_id, user_id))
+
+                conn.commit()
+                return True
+        finally:
+            conn.close()
+
 
     @staticmethod
     def get_product_scoped_attributes(product_id, website_id=None, store_id=None, store_view_id=None):
@@ -406,13 +577,32 @@ class AttributeService:
                 if attr_type in ('number', 'decimal') and value not in (None, ''):
                     val_number = float(value)
                 elif attr_type == 'boolean' and value not in (None, ''):
-                    val_boolean = 1 if value in (True, 1, '1', 'true', 'True') else 0
+                    val_boolean = 1 if str(value).strip().lower() in ('true', '1', 'yes', 'y') or value is True else 0
                 elif attr_type == 'date' and value not in (None, ''):
                     val_date = str(value)
                 elif attr_type in ('json', 'multiselect') and value not in (None, ''):
                     val_json = json.dumps(value) if isinstance(value, (dict, list)) else str(value)
                 elif value is not None:
                     val_text = str(value)
+
+                if attr_type == 'select' and option_id is None and value not in (None, ''):
+                    clean_opt_val = str(value).strip()
+                    if clean_opt_val:
+                        cursor.execute("""
+                            SELECT id FROM attribute_options 
+                            WHERE attribute_id = %s AND (LOWER(value) = LOWER(%s) OR JSON_UNQUOTE(JSON_EXTRACT(label, '$.en')) = %s)
+                            LIMIT 1
+                        """, (attribute_id, clean_opt_val, clean_opt_val))
+                        opt_row = cursor.fetchone()
+                        if opt_row:
+                            option_id = opt_row['id']
+                        else:
+                            lbl_json = json.dumps({'en': clean_opt_val, 'ar': clean_opt_val}, ensure_ascii=False)
+                            cursor.execute("""
+                                INSERT INTO attribute_options (attribute_id, value, label, created_by, updated_by, created_at, updated_at)
+                                VALUES (%s, %s, %s, %s, %s, NOW(), NOW())
+                            """, (attribute_id, clean_opt_val, lbl_json, user_id, user_id))
+                            option_id = cursor.lastrowid
 
                 # Scoped match condition
                 scope_cond = "website_id IS NULL AND store_id IS NULL AND store_view_id IS NULL"
@@ -501,16 +691,64 @@ class AttributeService:
 
                 # Fallback to products.attributes_json
                 if (c_val is None or c_val == '') and prod_data.get('attributes_json') and isinstance(prod_data['attributes_json'], dict):
-                    c_val = prod_data['attributes_json'].get(code)
+                    attrs_j = prod_data['attributes_json']
+                    c_val = attrs_j.get(code)
+                    if c_val is None or c_val == '':
+                        if code == 'tire_size':
+                            c_val = attrs_j.get('tyre_size') or attrs_j.get('tire_size_label')
+                        elif code == 'load_speed_index':
+                            c_val = attrs_j.get('load_speed_index') or attrs_j.get('load_index')
+                            sr = attrs_j.get('tire_speed_rating') or prod_data.get('tire_speed_rating')
+                            if c_val and sr and not any(ch.isalpha() for ch in str(c_val)):
+                                c_val = f"{c_val}{sr}".strip()
+                        elif code == 'origin':
+                            c_val = attrs_j.get('country') or attrs_j.get('country_of_origin')
+                        elif code == 'tax_class':
+                            c_val = attrs_j.get('tax_class_name')
+                        elif code == 'promotion':
+                            c_val = attrs_j.get('offers') or 'None'
 
                 # Fallback to direct columns in products table
                 if (c_val is None or c_val == '') and prod_data:
-                    if code in ('product_name', 'name'):
+                    if code == 'url_key':
+                        c_val = prod_data.get('slug')
+                    elif code == 'attribute_set_id':
+                        c_val = prod_data.get('attribute_set_id') or attribute_set_id
+                    elif code == 'status':
+                        c_val = prod_data.get('status', 'active')
+                    elif code == 'brand' and prod_data.get('brand_id'):
+                        c_val = prod_data.get('brand_id')
+                    elif code == 'price_per_item':
+                        c_val = prod_data.get('price')
+                    elif code == 'tabby_payment':
+                        c_val = bool(prod_data.get('pay_later_eligible', True))
+                    elif code in ('product_name', 'name'):
                         c_val = prod_data.get('display_name') or prod_data.get('name')
                     elif code == 'display_name':
                         c_val = prod_data.get('display_name')
+                    elif code == 'tire_size':
+                        c_val = prod_data.get('tire_size_label')
+                    elif code == 'origin':
+                        c_val = prod_data.get('country_of_origin')
+                    elif code == 'load_speed_index':
+                        li = prod_data.get('tire_load_index') or ''
+                        sr = prod_data.get('tire_speed_rating') or ''
+                        c_val = f"{li}{sr}".strip() or None
+                    elif code == 'promotion':
+                        c_val = 'None'
                     elif code in prod_data and prod_data.get(code) is not None:
                         c_val = prod_data.get(code)
+
+                # Format numeric strings for select options like width/height/rim (e.g. 185.0 -> 185)
+                if code in ('width', 'height', 'rim') and c_val is not None:
+                    try:
+                        f_val = float(c_val)
+                        if f_val.is_integer():
+                            c_val = str(int(f_val))
+                        else:
+                            c_val = str(f_val)
+                    except Exception:
+                        c_val = str(c_val)
 
                 if c_val is None:
                     c_val = attr.get('default_value')

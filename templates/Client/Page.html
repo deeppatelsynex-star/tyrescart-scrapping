@@ -1,54 +1,78 @@
 {% extends 'Client/layout.html' %}
 
-{% block title %}
-  {{ page.title if page else _('About Us') }} | {{ _('TyresVision') }}
-{% endblock %}
+{% set _raw_seo_title = (page.get_seo_title(locale) if page else '') %}
+{% set page_title = _raw_seo_title or ((page.get_title(locale) if page else (slug | replace('-', ' ') | title)) + ' | TyresVision UAE') %}
+{% set page_desc = (page.get_meta_desc(locale) if page else '') or "TyresVision UAE — 60+ genuine tyre brands with upfront pricing and free fitting across Dubai, Abu Dhabi and all Emirates." %}
+{% set page_h1 = (page.get_title(locale) if page else '') or (slug | replace('-', ' ') | title) %}
+{% set page_body = page.get_content(locale) if page else '' %}
 
-{% block meta_description %}{{ page.meta_description if page else 'TyresVision Dubai — professional tyre replacement, balancing, and mobile fitting.' }}{% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block meta_description %}{{ page_desc }}{% endblock %}
+
+{% block canonical_url %}https://www.tyresvision.com/{{ slug or (page.slug if page else '') }}{% endblock %}
+
+{% block extra_head %}
+<!-- GSAP & ScrollTrigger for Antigravity Motion -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<!-- Structured Data: BreadcrumbList -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://www.tyresvision.com/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ page_h1 | escape }}",
+      "item": "https://www.tyresvision.com/{{ slug }}"
+    }
+  ]
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <span id="top"></span>
 
-<section style="padding-top:36px; padding-bottom:64px;">
-  <div class="wrap">
-    <div style="max-width:840px; margin:0 auto;">
-      
-      <!-- Breadcrumb -->
-      <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-        <a href="/">{{ _('Home') }}</a>
-        <span class="sep">&rsaquo;</span>
-        <span class="current">{{ page.title if page and page.title else (slug | replace('-', ' ') | title) }}</span>
-      </nav>
-
-      <div style="margin-top:20px; margin-bottom:32px;">
-        <span class="eyebrow">
-          {{ _('TyresVision UAE') }}
-        </span>
-        <h1 style="font-size:clamp(2rem, 3.8vw, 2.8rem); font-weight:800; line-height:1.2; color:var(--ink); margin-top:8px;">
-          {{ page.title if page else _('About TyresVision') }}
-        </h1>
+<!-- Full CKEditor Super-Design Section Renderer -->
+<div class="tv-sections-page-wrapper" id="tv-page-content-root" {% if page and page.banner_image %}style="--tv-hero-custom-bg: url('{{ page.banner_image }}');"{% endif %}>
+  {% if page_body %}
+    {{ page_body | safe }}
+  {% else %}
+    <article class="tv-cms-page">
+      <div class="wrap">
+        <div class="tv-page-inner">
+          <header class="tv-page-header">
+            <span class="eyebrow">{{ _('TyresVision UAE') }}</span>
+            <h1 class="tv-page-h1">{{ page_h1 }}</h1>
+          </header>
+          <div class="tv-page-content article-prose">
+            <p>{{ _("TyresVision is the UAE's premier tyre fitting and ecommerce platform, providing access to 60+ global tyre brands with transparent pricing and free doorstep mobile fitting across Dubai, Abu Dhabi, and Sharjah.") }}</p>
+          </div>
+        </div>
       </div>
+    </article>
+  {% endif %}
+</div>
 
-      <div class="article-prose" style="font-size:1.06rem; line-height:1.8; color:var(--ink);">
-        {% if page and page.content %}
-          {{ page.content | safe }}
-        {% else %}
-          <p>
-            {{ _("TyresVision is the UAE's premier tyre fitting and ecommerce platform, providing access to 60+ global tyre brands with transparent pricing and free doorstep mobile fitting across Dubai, Abu Dhabi, and Sharjah.") }}
-          </p>
-        {% endif %}
-      </div>
+{% endblock %}
 
-      <div style="margin-top:40px; padding-top:24px; border-top:1px solid var(--line); display:flex; gap:16px; flex-wrap:wrap;">
-        <a href="/blog" class="btn btn-white">
-          &larr; {{ _('Browse Tyre Blog') }}
-        </a>
-        <a href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%20have%20an%20inquiry." target="_blank" rel="noopener" class="btn btn-wa">
-          {{ _('WhatsApp Us') }}
-        </a>
-      </div>
-
-    </div>
-  </div>
-</section>
+{% block extra_scripts %}
+<script>
+// Auto-initialize FAQ accordions, quote triggers, and interactive widgets on Page.html
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof window.initTvPageComponents === 'function') {
+    window.initTvPageComponents();
+  }
+});
+</script>
 {% endblock %}

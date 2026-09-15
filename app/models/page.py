@@ -222,23 +222,24 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
         return json.dumps(val, ensure_ascii=False)
 
     # -------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # Localized Property Accessors
     # -------------------------------------------------------------------------
     def get_title(self, locale: str = None) -> str:
         """Returns the localized title string for any dynamic language."""
-        from i18n import localize_value
-        return localize_value(self.title, locale)
+        from i18n import get_translated_value
+        return get_translated_value(self.title, language_code=locale)
 
     def get_content(self, locale: str = None) -> str:
         """Returns the localized HTML body content for any dynamic language."""
-        from i18n import localize_value
-        return localize_value(self.content, locale)
+        from i18n import get_translated_value
+        return get_translated_value(self.content, language_code=locale)
 
     def get_seo_title(self, locale: str = None) -> str:
         """Returns the localized SEO title (defaults to title if not specified)."""
-        from i18n import localize_value
+        from i18n import get_translated_value
         if isinstance(self.seo_title, dict) and self.seo_title:
-            loc_seo = localize_value(self.seo_title, locale)
+            loc_seo = get_translated_value(self.seo_title, language_code=locale)
             if loc_seo:
                 return loc_seo
         return self.get_title(locale)
@@ -249,12 +250,14 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
 
     def get_meta_desc(self, locale: str = None) -> str:
         """Returns the localized meta description for any dynamic language."""
-        from i18n import localize_value
-        return localize_value(self.meta_description, locale)
+        from i18n import get_translated_value
+        return get_translated_value(self.meta_description, language_code=locale)
 
     def to_dict(self, locale: str = None) -> dict:
         """Serializes page record for API responses or template context."""
-        base = {
+        from services.store_context import StoreContext
+        loc = locale or StoreContext.get_current_language()
+        return {
             'id': self.id,
             'slug': self.slug,
             'banner_image': self.banner_image,
@@ -264,22 +267,16 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None,
+            'display_title': self.get_title(loc),
+            'title_raw': self.title,
+            'content_raw': self.content,
+            'seo_title_raw': self.seo_title,
+            'meta_description_raw': self.meta_description,
+            'title': self.get_title(loc) if locale else self.title,
+            'content': self.get_content(loc) if locale else self.content,
+            'seo_title': self.get_seo_title(loc) if locale else self.seo_title,
+            'meta_description': self.get_meta_desc(loc) if locale else self.meta_description,
         }
-        if locale:
-            base.update({
-                'title': self.get_title(locale),
-                'content': self.get_content(locale),
-                'seo_title': self.get_seo_title(locale),
-                'meta_description': self.get_meta_desc(locale),
-            })
-        else:
-            base.update({
-                'title': self.title,
-                'content': self.content,
-                'seo_title': self.seo_title,
-                'meta_description': self.meta_description,
-            })
-        return base
 
     # -------------------------------------------------------------------------
     # Query Helpers
@@ -342,16 +339,41 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
     @classmethod
     def create(cls, **kwargs):
         """Creates and inserts a new Page row into MySQL."""
+        from services.store_context import StoreContext
+        curr_lang = StoreContext.get_current_language()
+
         slug = kwargs.get('slug')
         if not slug and kwargs.get('title'):
             t = kwargs['title']
-            raw_title = t.get('en') if isinstance(t, dict) else str(t)
+            raw_title = t.get(curr_lang) or t.get('en') if isinstance(t, dict) else str(t)
             slug = cls.slugify(raw_title)
 
-        title_json = cls._dump_json(kwargs.get('title', {"en": ""}))
-        content_json = cls._dump_json(kwargs.get('content', {"en": "", "ar": ""}))
-        seo_title_json = cls._dump_json(kwargs.get('seo_title'))
-        meta_desc_json = cls._dump_json(kwargs.get('meta_description'))
+        def _prepare_multilingual_dict(raw_val, default_empty=""):
+            if isinstance(raw_val, dict):
+                d = dict(raw_val)
+            elif isinstance(raw_val, str) and raw_val.strip().startswith('{'):
+                try:
+                    p = json.loads(raw_val.strip())
+                    d = dict(p) if isinstance(p, dict) else {curr_lang: raw_val.strip()}
+                except Exception:
+                    d = {curr_lang: raw_val.strip()}
+            elif raw_val is not None:
+                d = {curr_lang: str(raw_val).strip()}
+            else:
+                d = {}
+            if default_empty and curr_lang not in d:
+                d[curr_lang] = default_empty
+            return d
+
+        title_dict = _prepare_multilingual_dict(kwargs.get('title'), default_empty="")
+        content_dict = _prepare_multilingual_dict(kwargs.get('content'), default_empty="")
+        seo_title_dict = _prepare_multilingual_dict(kwargs.get('seo_title'))
+        meta_desc_dict = _prepare_multilingual_dict(kwargs.get('meta_description'))
+
+        title_json = cls._dump_json(title_dict)
+        content_json = cls._dump_json(content_dict)
+        seo_title_json = cls._dump_json(seo_title_dict) if seo_title_dict else None
+        meta_desc_json = cls._dump_json(meta_desc_dict) if meta_desc_dict else None
         is_active = 1 if kwargs.get('is_active', True) else 0
 
         conn = get_connection()
@@ -385,28 +407,51 @@ class Page(SlugMixin, SoftDeleteMixin, SearchableMixin):
             conn.close()
 
     def update(self, **kwargs) -> bool:
-        """Updates fields of this Page instance in MySQL."""
+        """Updates fields of this Page instance in MySQL, merging multilingual fields safely."""
+        from services.store_context import StoreContext
+        curr_lang = StoreContext.get_current_language()
+
         updates = []
         params = []
 
-        if 'title' in kwargs:
-            updates.append("title = %s")
-            params.append(self._dump_json(kwargs['title']))
+        multilingual_fields = [
+            ('title', 'title'),
+            ('content', 'content'),
+            ('seo_title', 'seo_title'),
+            ('meta_description', 'meta_description')
+        ]
+
+        for fld, attr in multilingual_fields:
+            if fld in kwargs:
+                input_val = kwargs[fld]
+                existing_dict = dict(getattr(self, attr) or {})
+                if isinstance(input_val, dict):
+                    existing_dict.update(input_val)
+                elif isinstance(input_val, str):
+                    s = input_val.strip()
+                    if s.startswith('{'):
+                        try:
+                            p = json.loads(s)
+                            if isinstance(p, dict):
+                                existing_dict.update(p)
+                            else:
+                                existing_dict[curr_lang] = s
+                        except Exception:
+                            existing_dict[curr_lang] = s
+                    else:
+                        existing_dict[curr_lang] = input_val.strip()
+                elif input_val is None:
+                    existing_dict = {}
+
+                updates.append(f"{fld} = %s")
+                params.append(self._dump_json(existing_dict))
+
         if 'slug' in kwargs:
             updates.append("slug = %s")
             params.append(kwargs['slug'])
-        if 'content' in kwargs:
-            updates.append("content = %s")
-            params.append(self._dump_json(kwargs['content']))
         if 'banner_image' in kwargs:
             updates.append("banner_image = %s")
             params.append(kwargs['banner_image'])
-        if 'seo_title' in kwargs:
-            updates.append("seo_title = %s")
-            params.append(self._dump_json(kwargs['seo_title']))
-        if 'meta_description' in kwargs:
-            updates.append("meta_description = %s")
-            params.append(self._dump_json(kwargs['meta_description']))
         if 'is_active' in kwargs:
             updates.append("is_active = %s")
             params.append(1 if kwargs['is_active'] else 0)

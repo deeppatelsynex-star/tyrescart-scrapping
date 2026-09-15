@@ -10,6 +10,13 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
     products: [],
     brands: [],
     categories: [],
+    categoryDropdownOpen: false,
+    categorySearch: '',
+    newCategoryModalOpen: false,
+    newCategoryForm: {
+      name: '',
+      parent_id: 3
+    },
     counts: { total: 0, in_stock: 0, out_of_stock: 0, inactive: 0, trash: 0 },
     loading: false,
     isSubmitting: false,
@@ -34,20 +41,57 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
     csvUploading: false,
     csvResult: null,
 
+    resolveProductImage(img) {
+      if (!img || !img.toString().trim()) {
+        return '/static/assets/images/no-image-available.svg';
+      }
+      let s = img.toString().trim().replace(/\\/g, '/');
+      if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:')) {
+        return s;
+      }
+      if (!s.startsWith('/')) {
+        s = '/' + s;
+      }
+      return s;
+    },
+
     accordions: {
       sources: true,
       content: false,
-      configurations: false,
-      subscriptions: false,
       media: false,
       seo: false,
-      websites: false,
-      related: false,
-      custom_options: false,
-      design: false,
-      schedule: false,
-      gift: false,
-      downloadable: false
+      websites: false
+    },
+
+    groupAccordions: {},
+
+    toggleGroupAccordion(groupId) {
+      const key = String(groupId);
+      if (this.groupAccordions[key] === undefined) {
+        this.groupAccordions[key] = false;
+      } else {
+        this.groupAccordions[key] = !this.groupAccordions[key];
+      }
+    },
+
+    isGroupAccordionOpen(groupId, gIdx) {
+      const key = String(groupId);
+      if (this.groupAccordions[key] !== undefined) {
+        return this.groupAccordions[key];
+      }
+      return true;
+    },
+
+    expandAllGroups() {
+      (this.form.attribute_groups || []).forEach(g => {
+        this.groupAccordions[String(g.id)] = true;
+      });
+    },
+
+    collapseAllGroups() {
+      (this.form.attribute_groups || []).forEach(g => {
+        this.groupAccordions[String(g.id)] = false;
+      });
     },
 
     toggleAccordion(key) {
@@ -68,6 +112,42 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       this.syncDynamicField(code, this.form.dynamic_attributes[code]);
     },
 
+    isSelectOptionSelected(code, val) {
+      const cur = this.form.dynamic_attributes ? this.form.dynamic_attributes[code] : undefined;
+      if (cur === undefined || cur === null || cur === '') return false;
+      if (String(cur) === String(val)) return true;
+      if (typeof cur === 'number' || (!isNaN(parseFloat(cur)) && !isNaN(parseFloat(val)))) {
+        return parseFloat(cur) === parseFloat(val);
+      }
+      return false;
+    },
+
+    isMultiselectSelected(code, val) {
+      const cur = this.form.dynamic_attributes ? this.form.dynamic_attributes[code] : undefined;
+      if (cur === undefined || cur === null || cur === '') return false;
+      if (Array.isArray(cur)) {
+        return cur.some(item => String(item) === String(val));
+      }
+      const parts = String(cur).split(',').map(s => s.trim());
+      return parts.includes(String(val));
+    },
+
+    onProductNameInput(val) {
+      if (!this.form.dynamic_attributes) this.form.dynamic_attributes = {};
+      this.form.dynamic_attributes['product_name'] = val;
+      this.form.display_name = val;
+      if (!this.isEditMode || !this.form.slug_manually_edited) {
+        const slug = String(val || '')
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/[\s_-]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        this.form.slug = slug;
+        this.form.dynamic_attributes['url_key'] = slug;
+      }
+    },
+
     openAddAttributeModal() {
       window.open('/visionadmin/attributes', '_blank');
     },
@@ -80,8 +160,17 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         if (val || !this.form.display_name) this.form.display_name = val || '';
       } else if (code === 'sku') {
         if (val || !this.form.sku) this.form.sku = val || '';
+      } else if (code === 'url_key') {
+        this.form.slug = val;
+        this.form.slug_manually_edited = true;
+      } else if (code === 'status') {
+        this.form.status = (val === 'active' || val === true || val === 1) ? 'active' : 'inactive';
+      } else if (code === 'attribute_set_id') {
+        this.form.attribute_set_id = Number(val);
       } else if (code === 'price') {
         if ((val !== undefined && val !== null && val !== '') || !this.form.price) this.form.price = val;
+      } else if (code === 'price_per_item') {
+        this.form.dynamic_attributes['price_per_item'] = val;
       } else if (code === 'sale_price' || code === 'promotion') {
         if ((val !== undefined && val !== null && val !== '') || !this.form.sale_price) this.form.sale_price = val;
       } else if (code === 'weight') {
@@ -134,16 +223,24 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       attribute_set_id: ''
     },
 
+    formDragAttr: null,
+    formDragFromGroupId: null,
+    formDragOverAttrId: null,
+    formDragOverPosition: null,
+    isSavingOrder: false,
+
     form: {
       id: null,
       attribute_set_id: 2,
       dynamic_attributes: {},
       attribute_groups: [],
+      attributesReordered: false,
       loadingSchema: false,
       sku: '',
       display_name: '',
       brand_id: '',
       category_id: '',
+      category_ids: [],
       vehicle_type: 'car',
       short_desc_en: '',
       description_en: '',
@@ -336,6 +433,120 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       }
     },
 
+    getCategoryName(id) {
+      if (!id) return '';
+      const numId = Number(id);
+      const found = (this.categories || []).find(c => Number(c.id) === numId);
+      if (!found) return 'Category #' + id;
+      if (found.name_en) return found.name_en;
+      if (typeof found.name === 'object' && found.name !== null) {
+        return found.name.en || found.name.ar || Object.values(found.name)[0] || ('Category #' + id);
+      }
+      return String(found.name || ('Category #' + id));
+    },
+
+    isCategorySelected(id) {
+      if (!this.form || !this.form.category_ids) return false;
+      return this.form.category_ids.map(Number).includes(Number(id));
+    },
+
+    toggleCategory(id) {
+      const numId = Number(id);
+      if (!this.form.category_ids) this.form.category_ids = [];
+      const idx = this.form.category_ids.map(Number).indexOf(numId);
+      if (idx > -1) {
+        this.form.category_ids.splice(idx, 1);
+      } else {
+        this.form.category_ids.push(numId);
+      }
+      this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
+    },
+
+    removeCategory(id) {
+      const numId = Number(id);
+      if (!this.form || !this.form.category_ids) return;
+      const idx = this.form.category_ids.map(Number).indexOf(numId);
+      if (idx > -1) {
+        this.form.category_ids.splice(idx, 1);
+      }
+      this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
+    },
+
+    selectAllCategories() {
+      const filtered = this.getFilteredCategories();
+      if (!this.form.category_ids) this.form.category_ids = [];
+      const current = new Set(this.form.category_ids.map(Number));
+      filtered.forEach(c => current.add(Number(c.id)));
+      this.form.category_ids = Array.from(current);
+      this.form.category_id = this.form.category_ids.length ? this.form.category_ids[0] : '';
+    },
+
+    clearCategories() {
+      this.form.category_ids = [];
+      this.form.category_id = '';
+    },
+
+    getFilteredCategories() {
+      if (!this.categories) return [];
+      const q = (this.categorySearch || '').toLowerCase().trim();
+      if (!q) return this.categories;
+      return this.categories.filter(c => {
+        const name = this.getCategoryName(c.id).toLowerCase();
+        const slug = (c.slug || '').toLowerCase();
+        return name.includes(q) || slug.includes(q) || String(c.id) === q;
+      });
+    },
+
+    openNewCategoryModal() {
+      this.newCategoryForm = {
+        name: '',
+        parent_id: 3 // Default parent Tyres
+      };
+      this.newCategoryModalOpen = true;
+    },
+
+    async quickCreateCategory() {
+      const name = (this.newCategoryForm.name || '').trim();
+      if (!name) {
+        this.showToast('Please enter category name.', 'error');
+        return;
+      }
+      try {
+        const res = await fetch('/visionadmin/api/categories', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          },
+          body: JSON.stringify({
+            name_en: name,
+            parent_id: this.newCategoryForm.parent_id || 2,
+            status: 'active',
+            include_in_menu: 1,
+            is_anchor: 1
+          })
+        });
+        const data = await res.json();
+        if (data && (data.success || data.id || data.category_id)) {
+          const newCatId = Number(data.id || data.category_id);
+          this.showToast('Category created successfully!', 'success');
+          await this.fetchCategories();
+          if (!this.form.category_ids) this.form.category_ids = [];
+          if (!this.form.category_ids.map(Number).includes(newCatId)) {
+            this.form.category_ids.push(newCatId);
+          }
+          this.form.category_id = this.form.category_ids[0];
+          this.newCategoryModalOpen = false;
+          this.newCategoryForm.name = '';
+        } else {
+          this.showToast(data.error || 'Failed to create category.', 'error');
+        }
+      } catch (err) {
+        console.error('Error creating category:', err);
+        this.showToast('Error creating category.', 'error');
+      }
+    },
+
     async onAttributeSetChange(setId, productId = null) {
       if (!setId) return;
       this.form.loadingSchema = true;
@@ -345,6 +556,7 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         const data = await res.json();
         if (data.schema && data.schema.groups) {
           this.form.attribute_groups = data.schema.groups || [];
+          this.groupAccordions = {};
           // Initialize dynamic attributes mapping if not already set
           this.form.attribute_groups.forEach(group => {
             (group.attributes || []).forEach(attr => {
@@ -495,18 +707,23 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
 
     openCreateModal(push = true) {
       this.isEditMode = false;
-      const defaultSet = (this.attributeSets || []).find(s => s.slug === 'default' || (s.name && s.name.toLowerCase() === 'default'));
-      const defaultSetId = defaultSet ? defaultSet.id : 2;
+      const defaultSet = (this.attributeSets || []).find(s => s.slug === 'tyres' || (s.name && s.name.toLowerCase() === 'tyres')) || (this.attributeSets || [])[0];
+      const defaultSetId = defaultSet ? defaultSet.id : 1;
       this.form = {
         id: null,
         attribute_set_id: defaultSetId,
-        dynamic_attributes: {},
+        dynamic_attributes: { status: 'active' },
         attribute_groups: [],
         loadingSchema: false,
         sku: '',
+        slug: '',
+        url_key: '',
+        slug_manually_edited: false,
+        create_redirect: true,
         display_name: '',
         brand_id: '',
         category_id: '',
+        category_ids: [],
         vehicle_type: 'car',
         short_desc_en: '',
         description_en: '',
@@ -593,7 +810,10 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       if (p.sku && !dynAttrs.sku) dynAttrs.sku = p.sku;
       if ((p.display_name || p.name_en) && !dynAttrs.product_name) dynAttrs.product_name = p.display_name || p.name_en;
       if ((p.display_name || p.name_en) && !dynAttrs.display_name) dynAttrs.display_name = p.display_name || p.name_en;
+      if (p.slug && !dynAttrs.url_key) dynAttrs.url_key = p.slug;
+      if (p.status && !dynAttrs.status) dynAttrs.status = p.status;
       if (p.price != null && dynAttrs.price === undefined) dynAttrs.price = p.price;
+      if (p.price != null && dynAttrs.price_per_item === undefined) dynAttrs.price_per_item = p.price;
       if (p.sale_price != null && dynAttrs.sale_price === undefined) dynAttrs.sale_price = p.sale_price;
       if (p.tire_size_label && !dynAttrs.tire_size_label) dynAttrs.tire_size_label = p.tire_size_label;
       if (p.tire_pattern && !dynAttrs.tire_pattern) dynAttrs.tire_pattern = p.tire_pattern;
@@ -601,6 +821,7 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       if (p.country_of_origin && !dynAttrs.country_of_origin) dynAttrs.country_of_origin = p.country_of_origin;
       if (p.run_flat !== undefined && dynAttrs.run_flat === undefined) dynAttrs.run_flat = Boolean(p.run_flat);
       if (p.ev_rated !== undefined && dynAttrs.ev_rated === undefined) dynAttrs.ev_rated = Boolean(p.ev_rated);
+      if (p.width && !dynAttrs.width) dynAttrs.width = String(parseInt(p.width, 10));
 
       this.form = {
         id: p.id,
@@ -609,6 +830,10 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         attribute_groups: [],
         loadingSchema: false,
         sku: p.sku || '',
+        slug: p.slug || '',
+        url_key: p.slug || '',
+        slug_manually_edited: true,
+        create_redirect: true,
         display_name: p.display_name || p.name_en || '',
         brand_id: p.brand_id || '',
         category_id: p.category_id || '',
@@ -645,6 +870,7 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         meta_title_en: metaTitleEn,
         meta_desc_en: metaDescEn,
         canonical_url: p.canonical_url || '',
+        category_ids: (p.category_ids && p.category_ids.length) ? p.category_ids.map(Number) : (p.category_id ? [Number(p.category_id)] : []),
         website_ids: p.website_ids && p.website_ids.length ? p.website_ids.map(Number) : (p.website_id ? [Number(p.website_id)] : [1])
       };
       this.modalOpen = true;
@@ -721,7 +947,15 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         this.form.sku = this.form.dynamic_attributes.sku;
       }
       if (!this.form.display_name && this.form.dynamic_attributes) {
-        this.form.display_name = this.form.dynamic_attributes.product_name || this.form.dynamic_attributes.display_name || '';
+        this.form.display_name = this.form.dynamic_attributes.product_name || this.form.dynamic_attributes.name || this.form.dynamic_attributes.display_name || '';
+      }
+      if ((!this.form.category_ids || this.form.category_ids.length === 0) && this.form.dynamic_attributes && this.form.dynamic_attributes.category_ids) {
+        const cids = this.form.dynamic_attributes.category_ids;
+        if (Array.isArray(cids)) {
+          this.form.category_ids = cids.map(Number);
+        } else if (typeof cids === 'string') {
+          this.form.category_ids = cids.split(',').map(s => parseInt(s.trim(), 10)).filter(Boolean);
+        }
       }
       if ((!this.form.price || isNaN(parseFloat(this.form.price))) && this.form.dynamic_attributes && this.form.dynamic_attributes.price) {
         this.form.price = this.form.dynamic_attributes.price;
@@ -738,6 +972,24 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       if (!this.form.price || isNaN(parseFloat(this.form.price))) {
         this.showToast('Please enter a valid regular price.', 'error');
         return;
+      }
+
+      // Validate all required attributes configured in the active attribute set
+      for (const group of (this.form.attribute_groups || [])) {
+        for (const attr of (group.attributes || [])) {
+          if (attr.is_required) {
+            const code = attr.code;
+            const dynVal = this.form.dynamic_attributes ? this.form.dynamic_attributes[code] : undefined;
+            const formVal = this.form[code];
+            const hasVal = (dynVal !== undefined && dynVal !== null && String(dynVal).trim() !== '') ||
+                           (formVal !== undefined && formVal !== null && String(formVal).trim() !== '');
+            if (!hasVal) {
+              const label = attr.frontend_label || (typeof attr.name === 'object' ? (attr.name.en || attr.name.ar) : attr.name) || code;
+              this.showToast(`Please fill in required field: ${label}`, 'error');
+              return;
+            }
+          }
+        }
       }
 
       this.isSubmitting = true;
@@ -759,9 +1011,24 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         if (this.form.dynamic_attributes && this.form.dynamic_attributes.tire_size_label) {
           payload.tire_size_label = this.form.dynamic_attributes.tire_size_label;
         }
+        if (this.form.dynamic_attributes && this.form.dynamic_attributes.url_key) {
+          payload.url_key = this.form.dynamic_attributes.url_key;
+          payload.slug = this.form.dynamic_attributes.url_key;
+        } else if (this.form.slug) {
+          payload.url_key = this.form.slug;
+          payload.slug = this.form.slug;
+        }
+        if (this.form.dynamic_attributes && this.form.dynamic_attributes.status) {
+          payload.status = this.form.dynamic_attributes.status;
+        }
+        if (this.form.dynamic_attributes && this.form.dynamic_attributes.price) {
+          payload.price = this.form.dynamic_attributes.price;
+        }
 
         payload.website_ids = this.form.website_ids || [1];
         payload.website_id = (this.form.website_ids && this.form.website_ids.length ? this.form.website_ids[0] : 1);
+        payload.category_ids = Array.isArray(this.form.category_ids) ? this.form.category_ids.map(Number) : [];
+        payload.category_id = (payload.category_ids.length ? payload.category_ids[0] : (this.form.category_id || null));
 
         const res = await fetch(url, {
           method: method,

@@ -62,14 +62,23 @@ def get_locale() -> str:
     """
     Determines the current request locale dynamically.
     Checks:
-      1. Query param: ?locale=... or ?lang=...
-      2. Flask session: session['site_locale']
-      3. Cookie: request.cookies.get('site_locale')
-      4. Default fallback ('en')
+      1. Store Context active language (Store View / Scope)
+      2. Query param: ?locale=... or ?lang=...
+      3. Flask session: session['site_locale']
+      4. Cookie: request.cookies.get('site_locale')
+      5. Default fallback ('en')
     Accepts any valid language code matching LOCALE_REGEX.
     """
     if not has_request_context():
         return DEFAULT_LOCALE
+
+    try:
+        from services.store_context import StoreContext
+        ctx_lang = StoreContext.get_current_language(fallback="")
+        if ctx_lang and LOCALE_REGEX.match(ctx_lang):
+            return ctx_lang
+    except Exception:
+        pass
 
     req_locale = (request.args.get('locale') or request.args.get('lang') or '').strip().lower()
     if req_locale and LOCALE_REGEX.match(req_locale):
@@ -125,41 +134,65 @@ def dump_json_dict(val):
     return json.dumps(val, ensure_ascii=False)
 
 
-def localize_value(val, locale: str = None, default_locale: str = DEFAULT_LOCALE) -> str:
+def get_translated_value(value, language_code: str = None, fallback: str = DEFAULT_LOCALE) -> str:
     """
-    Extracts the localized string from a JSON dict or string.
-    Works dynamically for any language (en, de, ar, fr, etc.):
-      1. Returns val[locale] if present and non-empty.
-      2. Returns val[default_locale] if present and non-empty.
-      3. Returns the first available non-empty string in val.
-      4. Falls back to empty string.
+    Central Translation Helper for VisionAdmin and storefront.
+    Safely retrieves the translated string from a multilingual field (JSON dict, JSON string, or scalar).
+    
+    Fallback Order:
+      1. Target language: language_code, or StoreContext.get_current_language(fallback).
+      2. Fallback language (default 'en').
+      3. First available non-empty translation in the dict.
+      4. Empty string ("") if no translation exists.
     """
-    if val is None:
-        return ""
-    target_locale = (locale or get_locale()).strip().lower()
-
-    if isinstance(val, dict):
-        if target_locale in val and val[target_locale]:
-            return str(val[target_locale])
-        if default_locale in val and val[default_locale]:
-            return str(val[default_locale])
-        for v in val.values():
-            if isinstance(v, str) and v.strip():
-                return v
+    if value is None:
         return ""
 
-    if isinstance(val, str):
-        s = val.strip()
-        if s.startswith('{'):
+    fb_lang = (fallback or DEFAULT_LOCALE).strip().lower()
+
+    # Determine target language code
+    if not language_code:
+        try:
+            from services.store_context import StoreContext
+            target_lang = StoreContext.get_current_language(fallback=fb_lang)
+        except Exception:
+            target_lang = get_locale()
+    else:
+        target_lang = str(language_code).strip().lower()
+
+    # If it's a dict (e.g. {"en": "Tire", "ar": "إطار"})
+    if isinstance(value, dict):
+        if target_lang in value and value[target_lang] is not None and str(value[target_lang]).strip() != "":
+            return str(value[target_lang])
+        if fb_lang in value and value[fb_lang] is not None and str(value[fb_lang]).strip() != "":
+            return str(value[fb_lang])
+        # First non-empty value
+        for v in value.values():
+            if v is not None and str(v).strip() != "":
+                return str(v)
+        return ""
+
+    # If it's a string, attempt JSON parse if it looks like JSON
+    if isinstance(value, str):
+        s = value.strip()
+        if (s.startswith('{') and s.endswith('}')) or (s.startswith('[') and s.endswith(']')):
             try:
                 parsed = json.loads(s)
                 if isinstance(parsed, dict):
-                    return localize_value(parsed, target_locale, default_locale)
+                    return get_translated_value(parsed, language_code=target_lang, fallback=fb_lang)
             except Exception:
                 pass
-        return val
+        return value
 
-    return str(val)
+    # Scalars (int, float, bool)
+    return str(value)
+
+
+def localize_value(val, locale: str = None, default_locale: str = DEFAULT_LOCALE) -> str:
+    """
+    Wrapper for get_translated_value to maintain full backward compatibility across all modules.
+    """
+    return get_translated_value(val, language_code=locale, fallback=default_locale)
 
 
 def translate(text: str, locale: str = None) -> str:

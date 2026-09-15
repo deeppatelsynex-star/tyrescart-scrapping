@@ -197,6 +197,10 @@ class Product:
     def to_dict(cls, row):
         if not row:
             return None
+        from services.store_context import StoreContext
+        from i18n import get_translated_value
+        loc = StoreContext.get_current_language()
+
         d = dict(row)
         # Parse JSON fields safely
         for k in ['name', 'description', 'short_desc', 'meta_title', 'meta_desc', 'gallery_json', 'make_ids', 'price_included', 'attributes_json']:
@@ -205,14 +209,24 @@ class Product:
 
         # Resolve display name string
         if isinstance(d.get('name'), dict):
-            d['display_name'] = localize_value(d['name'])
-            d['name_en'] = localize_value(d['name'], 'en') or d['display_name']
+            d['display_name'] = get_translated_value(d['name'], loc)
+            d['name_en'] = get_translated_value(d['name'], 'en') or d['display_name']
         elif isinstance(d.get('name'), str):
             d['display_name'] = d['name']
             d['name_en'] = d['name']
         else:
             d['display_name'] = d.get('display_name') or ''
             d['name_en'] = d.get('display_name') or ''
+
+        # Localized description / short_desc / meta
+        if isinstance(d.get('description'), dict):
+            d['description_display'] = get_translated_value(d['description'], loc)
+        if isinstance(d.get('short_desc'), dict):
+            d['short_desc_display'] = get_translated_value(d['short_desc'], loc)
+        if isinstance(d.get('meta_title'), dict):
+            d['meta_title_display'] = get_translated_value(d['meta_title'], loc)
+        if isinstance(d.get('meta_desc'), dict):
+            d['meta_desc_display'] = get_translated_value(d['meta_desc'], loc)
 
         # Resolve category name if JSON
         if d.get('category_name'):
@@ -223,7 +237,8 @@ class Product:
                 except Exception:
                     pass
             if isinstance(d['category_name'], dict):
-                d['category_name_display'] = localize_value(d['category_name'])
+                d['category_name_display'] = get_translated_value(d['category_name'], loc)
+                d['category_name'] = d['category_name_display']
             else:
                 d['category_name_display'] = str(d['category_name'])
 
@@ -231,6 +246,28 @@ class Product:
         for k in ['price', 'list_price', 'sale_price', 'cost_price', 'weight']:
             if k in d and d[k] is not None:
                 d[k] = float(d[k])
+
+        # Resolve category_ids
+        if 'category_ids_str' in d:
+            raw_cids = d.pop('category_ids_str')
+            if raw_cids:
+                d['category_ids'] = [int(x) for x in str(raw_cids).split(',') if x.strip().isdigit()]
+            else:
+                d['category_ids'] = [d['category_id']] if d.get('category_id') else []
+        elif 'category_ids' not in d and d.get('category_id'):
+            d['category_ids'] = [d['category_id']]
+
+        # Normalize image paths
+        for img_k in ['image_path', 'small_image']:
+            val = d.get(img_k)
+            if val and str(val).strip():
+                s = str(val).strip().replace('\\', '/')
+                if not (s.startswith('http://') or s.startswith('https://') or s.startswith('data:')):
+                    if not s.startswith('/'):
+                        s = '/' + s
+                d[img_k] = s
+            else:
+                d[img_k] = '/static/assets/images/no-image-available.svg'
 
         # Date / Timestamp formatting
         for k in ['created_at', 'updated_at', 'deleted_at', 'sale_start_date', 'sale_end_date']:
@@ -340,7 +377,8 @@ class Product:
                            b.logo as brand_logo,
                            c.name as category_name,
                            s.name as attribute_set_name,
-                           s.slug as attribute_set_slug
+                           s.slug as attribute_set_slug,
+                           (SELECT GROUP_CONCAT(pc.category_id ORDER BY pc.position ASC, pc.id ASC) FROM product_categories pc WHERE pc.product_id = p.id) as category_ids_str
                     FROM products p
                     LEFT JOIN brands b ON b.id = p.brand_id
                     LEFT JOIN categories c ON c.id = p.category_id
@@ -390,6 +428,7 @@ class Product:
                 row = cursor.fetchone()
                 res = cls.to_dict(row) if row else None
                 if res:
+                    res['url_key'] = res.get('slug')
                     try:
                         res['scoped_attributes'] = AttributeService.get_product_scoped_attributes(product_id)
                     except Exception:
@@ -449,17 +488,26 @@ class Product:
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                from services.store_context import StoreContext
+                from i18n import parse_json_dict, get_translated_value
+                curr_lang = StoreContext.get_current_language()
+                now = datetime.now(timezone.utc)
+
                 sku = str(data.get('sku') or '').strip().upper()
                 name_val = data.get('name') or data.get('name_en') or data.get('display_name') or ''
                 if isinstance(name_val, dict):
-                    name_json = name_val
-                    display_name = name_val.get('en') or ''
+                    name_json = dict(name_val)
+                elif isinstance(name_val, str) and name_val.strip().startswith('{'):
+                    parsed = parse_json_dict(name_val)
+                    name_json = dict(parsed) if isinstance(parsed, dict) else {curr_lang: name_val.strip()}
                 else:
                     name_str = str(name_val).strip()
-                    name_json = {'en': name_str, 'ar': name_str}
-                    display_name = name_str
+                    name_json = {curr_lang: name_str}
+                if 'en' not in name_json and name_json:
+                    name_json['en'] = next(iter(name_json.values()), '')
+                display_name = get_translated_value(name_json, 'en') or get_translated_value(name_json)
 
-                slug_candidate = data.get('slug') or display_name or sku
+                slug_candidate = data.get('url_key') or data.get('slug') or display_name or sku
                 slug = cls.slugify(slug_candidate)
 
                 # Ensure slug uniqueness
@@ -504,8 +552,22 @@ class Product:
                 image_alt = (data.get('image_alt') or display_name).strip() or None
                 gallery_json = json.dumps(data.get('gallery_json') or [])
 
-                description = json.dumps(data.get('description') or {'en': data.get('description_en', ''), 'ar': ''})
-                short_desc = json.dumps(data.get('short_desc') or {'en': data.get('short_desc_en', ''), 'ar': ''})
+                def _prepare_multilingual_field(val, def_en=""):
+                    if isinstance(val, dict):
+                        d = dict(val)
+                    elif isinstance(val, str) and val.strip().startswith('{'):
+                        parsed = parse_json_dict(val)
+                        d = dict(parsed) if isinstance(parsed, dict) else {curr_lang: val.strip()}
+                    elif val is not None and str(val).strip():
+                        d = {curr_lang: str(val).strip()}
+                    else:
+                        d = {}
+                    if def_en and 'en' not in d:
+                        d['en'] = def_en
+                    return d
+
+                description = json.dumps(_prepare_multilingual_field(data.get('description'), data.get('description_en', '')), ensure_ascii=False)
+                short_desc = json.dumps(_prepare_multilingual_field(data.get('short_desc'), data.get('short_desc_en', '')), ensure_ascii=False)
 
                 weight = cls._safe_decimal(data.get('weight'))
                 country_of_origin = (data.get('country_of_origin') or '').strip() or None
@@ -517,8 +579,8 @@ class Product:
                 visibility = cls._safe_visibility(data.get('visibility'), 'visible')
                 pay_later_eligible = 1 if data.get('pay_later_eligible', True) else 0
 
-                meta_title = json.dumps(data.get('meta_title') or {'en': data.get('meta_title_en', display_name), 'ar': ''})
-                meta_desc = json.dumps(data.get('meta_desc') or {'en': data.get('meta_desc_en', ''), 'ar': ''})
+                meta_title = json.dumps(_prepare_multilingual_field(data.get('meta_title'), data.get('meta_title_en', display_name)), ensure_ascii=False)
+                meta_desc = json.dumps(_prepare_multilingual_field(data.get('meta_desc'), data.get('meta_desc_en', '')), ensure_ascii=False)
                 canonical_url = (data.get('canonical_url') or '').strip() or None
 
                 attribute_set_id = cls._safe_int(data.get('attribute_set_id'), 1)
@@ -534,42 +596,89 @@ class Product:
                 if not tire_size_label and dyn_attrs.get('tire_size_label'):
                     tire_size_label = str(dyn_attrs['tire_size_label']).strip()
 
-                now = datetime.now(timezone.utc)
+                website_id = cls._safe_int(data.get('website_id'), 1)
+                item_code = (data.get('item_code') or '').strip() or None
+                parts_category = (data.get('parts_category') or '').strip() or None
+                tyres_category = (data.get('tyres_category') or '').strip() or None
+                if tyres_category:
+                    tc_l = tyres_category.lower()
+                    if tc_l == 'budget':
+                        tyres_category = 'Budget'
+                    elif tc_l == 'quality':
+                        tyres_category = 'Quality'
+                    elif tc_l == 'premium':
+                        tyres_category = 'Premium'
+                    else:
+                        tyres_category = None
+
+                raw_year = data.get('year')
+                year = None
+                if raw_year:
+                    try:
+                        y_int = int(str(raw_year).strip())
+                        if 1901 <= y_int <= 2155:
+                            year = y_int
+                    except (ValueError, TypeError):
+                        year = None
+
+                make_ids = data.get('make_ids')
+                if make_ids is not None and not isinstance(make_ids, str):
+                    make_ids = json.dumps(make_ids)
+                elif isinstance(make_ids, str) and not make_ids.strip():
+                    make_ids = None
+
+                price_included = data.get('price_included') or data.get('price_included_text')
+                if price_included:
+                    if isinstance(price_included, dict):
+                        price_included = json.dumps(price_included, ensure_ascii=False)
+                    elif isinstance(price_included, str):
+                        if price_included.strip().startswith('{'):
+                            price_included = price_included.strip()
+                        else:
+                            price_included = json.dumps({'en': price_included.strip()}, ensure_ascii=False)
+                else:
+                    price_included = None
+
+                small_image = (data.get('small_image') or image_path or '').strip() or None
+                small_image_alt = (data.get('small_image_alt') or image_alt or display_name or '').strip() or None
 
                 cursor.execute("""
                     INSERT INTO products (
-                        attribute_set_id, attributes_json,
-                        sku, display_name, slug, name, description, short_desc,
+                        website_id, attribute_set_id, attributes_json,
+                        sku, item_code, parts_category, tyres_category, year, make_ids, price_included,
+                        display_name, slug, name, description, short_desc,
                         price, list_price, sale_price, cost_price, currency,
                         stock_qty, stock_status, manage_stock, min_order_qty, max_order_qty,
                         tire_size_label, tire_speed_rating, tire_load_index, tire_type, tire_pattern,
                         run_flat, ev_rated, oem_approved, oem_brand, vehicle_type,
-                        brand_id, category_id, image_path, image_alt, gallery_json,
+                        brand_id, category_id, image_path, image_alt, small_image, small_image_alt, gallery_json,
                         weight, country_of_origin, warranty_months,
                         is_featured, is_new, sort_order, status, visibility, pay_later_eligible,
                         canonical_url, meta_title, meta_desc,
                         created_by, created_at, updated_at
                     ) VALUES (
-                        %s, %s,
-                        %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s,
                         %s, %s, %s, %s, %s, %s,
                         %s, %s, %s,
                         %s, %s, %s
                     )
                 """, (
-                    attribute_set_id, attributes_json,
-                    sku, display_name, slug, json.dumps(name_json), description, short_desc,
+                    website_id, attribute_set_id, attributes_json,
+                    sku, item_code, parts_category, tyres_category, year, make_ids, price_included,
+                    display_name, slug, json.dumps(name_json), description, short_desc,
                     price, list_price, sale_price, cost_price, 'AED',
                     stock_qty, stock_status, manage_stock, min_order_qty, max_order_qty,
                     tire_size_label, tire_speed_rating, tire_load_index, tire_type, tire_pattern,
                     run_flat, ev_rated, oem_approved, oem_brand, vehicle_type,
-                    brand_id, category_id, image_path, image_alt, gallery_json,
+                    brand_id, category_id, image_path, image_alt, small_image, small_image_alt, gallery_json,
                     weight, country_of_origin, warranty_months,
                     is_featured, is_new, sort_order, status, visibility, pay_later_eligible,
                     canonical_url, meta_title, meta_desc,
@@ -659,19 +768,48 @@ class Product:
                     fields.append("sku = %s")
                     params.append(str(data['sku']).strip().upper())
 
+                from services.store_context import StoreContext
+                from i18n import parse_json_dict, get_translated_value
+                curr_lang = StoreContext.get_current_language()
+
                 if 'display_name' in data or 'name_en' in data or 'name' in data:
                     name_val = data.get('name') or data.get('name_en') or data.get('display_name')
+                    existing_name = parse_json_dict(existing.get('name')) if existing.get('name') else {}
+                    if not isinstance(existing_name, dict):
+                        existing_name = {}
                     if isinstance(name_val, dict):
-                        display_name = name_val.get('en') or ''
-                        name_json = name_val
-                    else:
-                        display_name = str(name_val).strip()
-                        name_json = {'en': display_name, 'ar': display_name}
+                        existing_name.update(name_val)
+                    elif isinstance(name_val, str):
+                        s = name_val.strip()
+                        if s.startswith('{'):
+                            try:
+                                p = json.loads(s)
+                                if isinstance(p, dict):
+                                    existing_name.update(p)
+                                else:
+                                    existing_name[curr_lang] = s
+                            except Exception:
+                                existing_name[curr_lang] = s
+                        else:
+                            existing_name[curr_lang] = s
+                    if data.get('name_en'):
+                        existing_name['en'] = str(data['name_en']).strip()
+                    display_name = get_translated_value(existing_name, 'en') or get_translated_value(existing_name)
                     fields.extend(["display_name = %s", "name = %s"])
-                    params.extend([display_name, json.dumps(name_json)])
+                    params.extend([display_name, json.dumps(existing_name, ensure_ascii=False)])
 
-                if 'slug' in data and data['slug']:
-                    clean_slug = cls.slugify(data['slug'])
+                dyn_attrs = data.get('dynamic_attributes') or data.get('attributes_json') or {}
+                if isinstance(dyn_attrs, str):
+                    try:
+                        dyn_attrs = json.loads(dyn_attrs)
+                    except Exception:
+                        dyn_attrs = {}
+
+                slug_candidate = data.get('slug') or data.get('url_key')
+                if not slug_candidate and dyn_attrs:
+                    slug_candidate = dyn_attrs.get('url_key')
+                if slug_candidate:
+                    clean_slug = cls.slugify(slug_candidate)
                     fields.append("slug = %s")
                     params.append(clean_slug)
 
@@ -737,26 +875,103 @@ class Product:
                         fields.append(f"{fk_col} = %s")
                         params.append(val)
 
-                for str_col in ['image_path', 'image_alt', 'canonical_url']:
+                for str_col in ['image_path', 'image_alt', 'small_image', 'small_image_alt', 'canonical_url', 'item_code', 'parts_category']:
                     if str_col in data:
                         fields.append(f"{str_col} = %s")
-                        params.append(data[str_col] or None)
+                        params.append((str(data[str_col]).strip()) if data[str_col] else None)
+
+                if 'website_id' in data:
+                    fields.append("website_id = %s")
+                    params.append(cls._safe_int(data['website_id'], 1))
+
+                if 'tyres_category' in data:
+                    tc = (str(data['tyres_category']).strip()) if data['tyres_category'] else None
+                    if tc:
+                        tc_l = tc.lower()
+                        if tc_l == 'budget':
+                            tc = 'Budget'
+                        elif tc_l == 'quality':
+                            tc = 'Quality'
+                        elif tc_l == 'premium':
+                            tc = 'Premium'
+                        else:
+                            tc = None
+                    fields.append("tyres_category = %s")
+                    params.append(tc)
+
+                if 'year' in data:
+                    raw_y = data['year']
+                    y_val = None
+                    if raw_y:
+                        try:
+                            y_int = int(str(raw_y).strip())
+                            if 1901 <= y_int <= 2155:
+                                y_val = y_int
+                        except (ValueError, TypeError):
+                            y_val = None
+                    fields.append("year = %s")
+                    params.append(y_val)
+
+                if 'make_ids' in data:
+                    m_ids = data['make_ids']
+                    if m_ids is not None and not isinstance(m_ids, str):
+                        m_ids = json.dumps(m_ids)
+                    elif isinstance(m_ids, str) and not m_ids.strip():
+                        m_ids = None
+                    fields.append("make_ids = %s")
+                    params.append(m_ids)
+
+                if 'price_included' in data or 'price_included_text' in data:
+                    pi = data.get('price_included') or data.get('price_included_text')
+                    if pi:
+                        if isinstance(pi, dict):
+                            pi = json.dumps(pi, ensure_ascii=False)
+                        elif isinstance(pi, str):
+                            if pi.strip().startswith('{'):
+                                pi = pi.strip()
+                            else:
+                                pi = json.dumps({'en': pi.strip()}, ensure_ascii=False)
+                    else:
+                        pi = None
+                    fields.append("price_included = %s")
+                    params.append(pi)
 
                 if 'gallery_json' in data:
                     fields.append("gallery_json = %s")
                     params.append(json.dumps(data['gallery_json'] or []))
 
-                if 'description' in data:
-                    fields.append("description = %s")
-                    params.append(json.dumps(data['description'] or {}))
-
-                if 'short_desc' in data:
-                    fields.append("short_desc = %s")
-                    params.append(json.dumps(data['short_desc'] or {}))
-
-                if 'meta_title' in data:
-                    fields.append("meta_title = %s")
-                    params.append(json.dumps(data['meta_title'] or {}))
+                for fld, col in [('description', 'description'), ('short_desc', 'short_desc'), ('meta_title', 'meta_title'), ('meta_desc', 'meta_desc')]:
+                    fld_en = f'{fld}_en'
+                    has_plain = fld in data
+                    has_en = fld_en in data
+                    if has_plain or has_en:
+                        val = data.get(fld) if has_plain else None
+                        exist_d = parse_json_dict(existing.get(col)) if existing.get(col) else {}
+                        if not isinstance(exist_d, dict):
+                            exist_d = {}
+                        if isinstance(val, dict):
+                            exist_d.update(val)
+                        elif isinstance(val, str):
+                            s = val.strip()
+                            if s.startswith('{'):
+                                try:
+                                    p = json.loads(s)
+                                    if isinstance(p, dict):
+                                        exist_d.update(p)
+                                    else:
+                                        exist_d[curr_lang] = s
+                                except Exception:
+                                    exist_d[curr_lang] = s
+                            else:
+                                exist_d[curr_lang] = s
+                        elif val is None and not has_en:
+                            exist_d = {}
+                        if has_en:
+                            en_val = data.get(fld_en)
+                            if en_val is not None and str(en_val).strip():
+                                exist_d['en'] = str(en_val).strip()
+                        fields.append(f"{col} = %s")
+                        params.append(json.dumps(exist_d, ensure_ascii=False))
 
                 if 'attribute_set_id' in data and data['attribute_set_id']:
                     fields.append("attribute_set_id = %s")

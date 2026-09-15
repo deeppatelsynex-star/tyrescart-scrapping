@@ -57,10 +57,10 @@ from models.page_section import PageSection
 from models.product import Product
 from models.brand import Brand
 from models.category import Category
-from i18n import get_locale, localize_value, translate, is_rtl
+from services.store_context import StoreContext
+from i18n import get_locale, localize_value, translate, is_rtl, get_translated_value
 from services.audit_service import log_activity, get_activity_logs, get_current_admin_user_id
 from services.attribute_service import AttributeService
-from services.store_context import StoreContext
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 # This file is app/api.py, so the project root (where scrapers/ and tmp/
@@ -1493,7 +1493,7 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/pages', methods=['GET'])
     @app.route('/visionadmin/api/v1/pages', methods=['GET'])
     def visionadmin_get_pages():
-        locale = request.args.get('locale')
+        locale = request.args.get('locale') or request.args.get('lang') or StoreContext.get_current_language()
         include_deleted = request.args.get('trash') == '1'
         status_filter = request.args.get('status')
         query = (request.args.get('q') or '').strip()
@@ -1514,8 +1514,8 @@ def register_visionadmin_api_routes(app):
             q_lower = query.lower()
             pages = [
                 p for p in pages
-                if q_lower in p.get_title('en').lower()
-                or q_lower in p.get_title('ar').lower()
+                if q_lower in p.get_title(locale).lower()
+                or q_lower in p.get_title('en').lower()
                 or q_lower in (p.slug or '').lower()
             ]
 
@@ -1546,27 +1546,37 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/v1/pages', methods=['POST'])
     def visionadmin_create_page():
         data = request.get_json(silent=True) or {}
+        curr_lang = StoreContext.get_current_language()
 
         # Validation
         title = data.get('title') or {}
-        en_title = (title.get('en') if isinstance(title, dict) else str(title)).strip()
-        if not en_title:
-            return jsonify({'error': 'English Page Title is required.'}), 400
+        if isinstance(title, dict):
+            page_title = (title.get(curr_lang) or title.get('en') or next((v for v in title.values() if v), '')).strip()
+        else:
+            page_title = str(title).strip()
+            title = {curr_lang: page_title}
+
+        if not page_title:
+            return jsonify({'error': 'Page Title is required.'}), 400
 
         slug = (data.get('slug') or '').strip()
         if not slug:
-            slug = Page.slugify(en_title)
+            slug = Page.slugify(page_title)
         else:
             slug = Page.slugify(slug)
 
         if not Page.is_slug_available(slug):
             return jsonify({'error': f'The slug "{slug}" is already in use. Please choose a different slug.'}), 409
 
+        content = data.get('content') or {}
+        if not isinstance(content, dict):
+            content = {curr_lang: str(content)}
+
         try:
             page = Page.create(
-                title=title if isinstance(title, dict) else {"en": en_title, "ar": ""},
+                title=title,
                 slug=slug,
-                content=data.get('content') or {"en": "", "ar": ""},
+                content=content,
                 banner_image=data.get('banner_image'),
                 seo_title=data.get('seo_title'),
                 meta_description=data.get('meta_description'),
@@ -1664,7 +1674,7 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/blogs', methods=['GET'])
     @app.route('/visionadmin/api/v1/blogs', methods=['GET'])
     def visionadmin_get_blogs():
-        locale = request.args.get('locale')
+        locale = request.args.get('locale') or request.args.get('lang') or StoreContext.get_current_language()
         include_deleted = request.args.get('trash') == '1'
         status_filter = request.args.get('status')
         query = (request.args.get('q') or '').strip()
@@ -1683,10 +1693,10 @@ def register_visionadmin_api_routes(app):
             q_lower = query.lower()
             blogs = [
                 b for b in blogs
-                if q_lower in b.get_title('en').lower()
-                or q_lower in b.get_title('ar').lower()
+                if q_lower in b.get_title(locale).lower()
+                or q_lower in b.get_title('en').lower()
                 or q_lower in (b.slug or '').lower()
-                or q_lower in b.get_short_desc('en').lower()
+                or q_lower in b.get_short_desc(locale).lower()
                 or q_lower in (b.category_name or '').lower()
             ]
 
@@ -1718,27 +1728,41 @@ def register_visionadmin_api_routes(app):
     @app.route('/visionadmin/api/v1/blogs', methods=['POST'])
     def visionadmin_create_blog():
         data = request.get_json(silent=True) or {}
+        curr_lang = StoreContext.get_current_language()
 
         title = data.get('title') or {}
-        en_title = (title.get('en') if isinstance(title, dict) else str(title)).strip()
-        if not en_title:
-            return jsonify({'error': 'English Blog Title is required.'}), 400
+        if isinstance(title, dict):
+            blog_title = (title.get(curr_lang) or title.get('en') or next((v for v in title.values() if v), '')).strip()
+        else:
+            blog_title = str(title).strip()
+            title = {curr_lang: blog_title}
+
+        if not blog_title:
+            return jsonify({'error': 'Blog Title is required.'}), 400
 
         slug = (data.get('slug') or '').strip()
         if not slug:
-            slug = Blog.slugify(en_title)
+            slug = Blog.slugify(blog_title)
         else:
             slug = Blog.slugify(slug)
 
         if not Blog.is_slug_available(slug):
             return jsonify({'error': f'The slug "{slug}" is already in use. Please choose a unique slug.'}), 409
 
+        content = data.get('content') or {}
+        if not isinstance(content, dict):
+            content = {curr_lang: str(content)}
+
+        short_desc = data.get('short_description') or {}
+        if not isinstance(short_desc, dict):
+            short_desc = {curr_lang: str(short_desc)}
+
         try:
             blog = Blog.create(
-                title=title if isinstance(title, dict) else {"en": en_title, "ar": ""},
+                title=title,
                 slug=slug,
-                content=data.get('content') or {"en": "", "ar": ""},
-                short_description=data.get('short_description') or {"en": "", "ar": ""},
+                content=content,
+                short_description=short_desc,
                 image=data.get('image'),
                 category_id=data.get('category_id') or data.get('blog_category_id'),
                 category_name=(data.get('category_name') or data.get('category') or '').strip() or None,
@@ -1819,33 +1843,47 @@ def register_visionadmin_api_routes(app):
             'message': 'Blog article restored successfully.'
         })
 
+    @app.route('/visionadmin/api/blog-categories/<int:cat_id>', methods=['GET'])
+    @app.route('/visionadmin/api/v1/blog-categories/<int:cat_id>', methods=['GET'])
+    def visionadmin_get_blog_category(cat_id):
+        """Returns details for a single blog category."""
+        category = Blog.get_category_by_id(cat_id)
+        if not category:
+            return jsonify({'error': 'Blog category not found.'}), 404
+        return jsonify({
+            'success': True,
+            'category': category
+        })
+
     @app.route('/visionadmin/api/blog-categories', methods=['POST'])
+    @app.route('/visionadmin/api/v1/blog-categories', methods=['POST'])
     def visionadmin_create_blog_category():
-        """Creates or retrieves a blog category in blog_categories table."""
+        """Creates a blog category in blog_categories table."""
         data = request.get_json(silent=True) or {}
-        name_val = data.get('name') or data.get('name_en')
+        name_val = data.get('name') or data.get('title') or data.get('name_en')
         if isinstance(name_val, dict):
             display_name = localize_value(name_val)
         else:
             display_name = str(name_val or '').strip()
 
         if not display_name:
-            return jsonify({'error': 'Category name is required.'}), 400
+            return jsonify({'error': 'Category title is required.'}), 400
 
         user_id = session.get('user_id')
-        cat = Blog.get_or_create_category(name_val, user_id=user_id, **data)
+        cat = Blog.create_category(data, user_id=user_id)
         log_activity('create', 'blog_category', cat['id'], None, {'name': cat.get('name'), 'slug': cat.get('slug')}, user_id=user_id)
         return jsonify({
             'success': True,
             'category': cat,
-            'message': f"Category '{display_name}' saved successfully."
+            'message': f"Category '{display_name}' created successfully."
         }), 201
 
     @app.route('/visionadmin/api/blog-categories/<int:cat_id>', methods=['PUT'])
+    @app.route('/visionadmin/api/v1/blog-categories/<int:cat_id>', methods=['PUT'])
     def visionadmin_update_blog_category(cat_id):
         """Updates an existing category in blog_categories table."""
         data = request.get_json(silent=True) or {}
-        name_val = data.get('name') or data.get('name_en')
+        name_val = data.get('name') or data.get('title') or data.get('name_en')
         if isinstance(name_val, dict):
             display_name = localize_value(name_val)
         else:
@@ -1854,9 +1892,10 @@ def register_visionadmin_api_routes(app):
         user_id = session.get('user_id')
 
         if not display_name:
-            return jsonify({'error': 'Category name is required.'}), 400
+            return jsonify({'error': 'Category title is required.'}), 400
 
-        cat = Blog.update_category(cat_id, name_val, slug=slug, user_id=user_id, **data)
+        update_kwargs = {k: v for k, v in data.items() if k not in ('name', 'slug')}
+        cat = Blog.update_category(cat_id, name_val, slug=slug, user_id=user_id, **update_kwargs)
         if not cat:
             return jsonify({'error': 'Category not found.'}), 404
 
@@ -3639,6 +3678,10 @@ def register_visionadmin_api_routes(app):
                 if not attr:
                     return jsonify({'error': 'Attribute not found.'}), 404
 
+                # CRITICAL RULE: Required and system attributes CANNOT be deleted by anyone!
+                if attr.get('is_required') or attr.get('is_system') or attr.get('code') in ('sku', 'price', 'name', 'product_name', 'status', 'display_name', 'tire_size_label', 'load_index', 'speed_rating'):
+                    return jsonify({'error': f"Required attribute '{attr['code']}' cannot be deleted by anyone."}), 403
+
                 cursor.execute("""
                     UPDATE attributes 
                     SET deleted_at = NOW(), deleted_by = %s
@@ -3665,6 +3708,20 @@ def register_visionadmin_api_routes(app):
     def visionadmin_api_purge_attribute(attr_id):
         """Permanently deletes an attribute and its options from the database."""
         user_id = get_current_admin_user_id()
+        conn = get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM attributes WHERE id = %s", (attr_id,))
+                attr = cursor.fetchone()
+                if not attr:
+                    return jsonify({'error': 'Attribute not found.'}), 404
+
+                # CRITICAL RULE: Required and system attributes CANNOT be purged or deleted!
+                if attr.get('is_required') or attr.get('is_system') or attr.get('code') in ('sku', 'price', 'name', 'product_name', 'status', 'display_name', 'tire_size_label', 'load_index', 'speed_rating'):
+                    return jsonify({'error': f"Required attribute '{attr['code']}' cannot be deleted or purged by anyone."}), 403
+        finally:
+            conn.close()
+
         success = AttributeService.purge_attribute(attr_id)
         if not success:
             return jsonify({'error': 'Attribute not found.'}), 404
@@ -4005,6 +4062,30 @@ def register_visionadmin_api_routes(app):
         log_activity('delete', 'attribute_group', group_id, None, {'deleted': True}, user_id=user_id)
         return jsonify({'success': True, 'message': 'Group deleted successfully.'}), 200
 
+    @app.route('/visionadmin/api/attribute-groups/<int:group_id>', methods=['PUT'])
+    def visionadmin_api_rename_attribute_group(group_id):
+        """Renames an attribute group."""
+        data = request.get_json() or {}
+        name = data.get('name')
+        if not name:
+            return jsonify({'error': 'Group name is required.'}), 400
+        user_id = get_current_admin_user_id()
+        AttributeService.rename_group(group_id, name, user_id=user_id)
+        return jsonify({'success': True, 'message': 'Group renamed successfully.'}), 200
+
+    @app.route('/visionadmin/api/attribute-sets/<int:set_id>/save-schema', methods=['POST', 'PUT'])
+    def visionadmin_api_save_attribute_set_full_schema(set_id):
+        """Saves attribute set name, groups, and assigned attributes hierarchy atomically."""
+        try:
+            data = request.get_json(force=True) or {}
+            set_name = data.get('name')
+            groups = data.get('groups') or []
+            user_id = get_current_admin_user_id()
+            AttributeService.save_full_set_schema(set_id, set_name, groups, user_id=user_id)
+            return jsonify({'success': True, 'message': 'Attribute set schema saved successfully!'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     @app.route('/visionadmin/api/catalog/form-schema/<int:set_id>', methods=['GET'])
     def visionadmin_api_get_product_form_schema(set_id):
         """Returns reactive Alpine.js form schema with scoped values & fallback flags."""
@@ -4253,6 +4334,16 @@ def register_visionadmin_api_routes(app):
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 500
 
+    @app.route('/visionadmin/api/categories/tree', methods=['GET'])
+    @app.route('/visionadmin/api/catalog/categories/tree', methods=['GET'])
+    def visionadmin_api_categories_tree():
+        """Returns the category tree hierarchy with product counts."""
+        try:
+            tree_data = Category.get_category_tree()
+            return jsonify({'success': True, **tree_data})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     @app.route('/visionadmin/api/categories/<int:cat_id>', methods=['GET'])
     @app.route('/visionadmin/api/catalog/categories/<int:cat_id>', methods=['GET'])
     def visionadmin_api_get_category(cat_id):
@@ -4261,6 +4352,52 @@ def register_visionadmin_api_routes(app):
         if not category:
             return jsonify({'success': False, 'error': 'Category not found'}), 404
         return jsonify({'success': True, 'category': category})
+
+    @app.route('/visionadmin/api/categories/<int:cat_id>/products', methods=['GET'])
+    @app.route('/visionadmin/api/catalog/categories/<int:cat_id>/products', methods=['GET'])
+    def visionadmin_api_get_category_products(cat_id):
+        """Fetch products for category with assignment status and position."""
+        try:
+            search = request.args.get('search') or request.args.get('q') or None
+            assigned = request.args.get('assigned', 'all')
+            stock_status = request.args.get('stock_status') or None
+            page = max(1, int(request.args.get('page', 1)))
+            per_page = max(1, min(200, int(request.args.get('per_page', 20))))
+            res = Category.get_category_products(
+                cat_id=cat_id,
+                search=search,
+                assigned=assigned,
+                page=page,
+                per_page=per_page,
+                stock_status=stock_status
+            )
+            return jsonify({'success': True, **res})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/categories/<int:cat_id>/products', methods=['POST'])
+    @app.route('/visionadmin/api/catalog/categories/<int:cat_id>/products', methods=['POST'])
+    def visionadmin_api_save_category_products(cat_id):
+        """Save product category assignments and positions."""
+        try:
+            data = request.get_json(force=True) or {}
+            assignments = data.get('assignments') or []
+            if not assignments and 'assigned_ids' in data:
+                assigned_ids = set(data.get('assigned_ids', []))
+                positions = data.get('positions', {})
+                all_ids = set(assigned_ids) | set(int(k) for k in positions.keys())
+                assignments = []
+                for pid in all_ids:
+                    assignments.append({
+                        'product_id': pid,
+                        'assigned': pid in assigned_ids,
+                        'position': int(positions.get(str(pid), positions.get(pid, 0)))
+                    })
+
+            success = Category.save_category_products(cat_id, assignments)
+            return jsonify({'success': bool(success), 'message': 'Category products updated successfully!'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
 
     @app.route('/visionadmin/api/categories', methods=['POST'])
     def visionadmin_api_create_category():
@@ -4366,17 +4503,16 @@ def register_visionadmin_api_routes(app):
     def visionadmin_api_sample_categories_csv():
         """Return downloadable sample CSV template for categories."""
         import io
-        csv_text = "name_en,slug,sort_order,status,description_en,meta_title_en,meta_desc_en\n" \
-                   "Passenger Car Tyres,passenger-car-tyres,1,active,\"High-durability tyres designed for sedans, coupes, and city hatchbacks.\",Buy Car Tyres Online UAE,Wide range of passenger car tyres in Dubai\n" \
-                   "SUV & 4x4 Tyres,suv-4x4-tyres,2,active,\"All-terrain and highway tyres for crossovers and heavy-duty 4x4 SUVs.\",Buy SUV Tyres UAE,Best SUV 4x4 tyres for sand and highway\n"
+        csv_text = "sku,name,categories,price,stock_qty\n" \
+                   "TYRE-BR-1856515,Bridgestone Ecopia 185/65 R15,\"Default Category/Tyres,Default Category/Tyres/Brand/Bridgestone,Default Category/Tyres/Tyre Size/185\\/65 R15,Default Category/Tyres/Cars\",320.00,24\n" \
+                   "TYRE-MI-2056515,Michelin Pilot 205/65 R15,\"Default Category/Tyres,Default Category/Tyres/Brand/Michelin,Default Category/Tyres/Tyre Size/205\\/65 R15,Default Category/Tyres/Cars\",450.00,16\n" \
+                   "TYRE-GY-2156016,Goodyear Eagle 215/60 R16,\"Default Category/Tyres,Default Category/Tyres/Brand/Goodyear,Default Category/Tyres/Tyre Size/215\\/60 R16\",380.00,12\n"
         output = io.BytesIO(csv_text.encode('utf-8'))
         return send_file(output, mimetype='text/csv', as_attachment=True, download_name='categories_sample.csv')
 
     @app.route('/visionadmin/api/categories/import-csv', methods=['POST'])
     def visionadmin_api_import_categories_csv():
-        """Import multiple categories from CSV file."""
-        import csv
-        import io
+        """Import hierarchical categories from CSV file supporting Magento category paths."""
         try:
             if 'file' not in request.files:
                 return jsonify({'success': False, 'error': 'No file uploaded'}), 400
@@ -4384,58 +4520,11 @@ def register_visionadmin_api_routes(app):
             if not file or not file.filename:
                 return jsonify({'success': False, 'error': 'No file selected'}), 400
 
-            stream = io.StringIO(file.stream.read().decode('utf-8', errors='ignore'))
-            reader = csv.DictReader(stream)
-
-            user_id = session.get('user_id')
-            imported = 0
-
-            for row in reader:
-                clean_row = {k.strip().lower(): v.strip() for k, v in row.items() if k}
-                name_en = clean_row.get('name_en') or clean_row.get('name') or clean_row.get('category_name') or ''
-                if not name_en:
-                    continue
-
-                slug = clean_row.get('slug') or Category.slugify(name_en)
-                image = clean_row.get('image') or None
-                sort_order = int(clean_row.get('sort_order') or imported + 1)
-                status = clean_row.get('status') or 'active'
-                desc = clean_row.get('description_en') or clean_row.get('description') or None
-                meta_title = clean_row.get('meta_title_en') or clean_row.get('meta_title') or None
-                meta_desc = clean_row.get('meta_desc_en') or clean_row.get('meta_desc') or None
-
-                existing = Category.find_by_slug(slug)
-                if existing:
-                    Category.update(existing['id'], {
-                        'name_en': name_en,
-                        'slug': slug,
-                        'parent_id': existing.get('parent_id'),
-                        'image': image or existing.get('image'),
-                        'sort_order': sort_order,
-                        'status': status,
-                        'description_en': desc or existing.get('description_en'),
-                        'meta_title_en': meta_title or existing.get('meta_title_en'),
-                        'meta_desc_en': meta_desc or existing.get('meta_desc_en')
-                    }, user_id=user_id)
-                else:
-                    Category.create({
-                        'name_en': name_en,
-                        'slug': slug,
-                        'parent_id': None,
-                        'image': image,
-                        'sort_order': sort_order,
-                        'status': status,
-                        'description_en': desc,
-                        'meta_title_en': meta_title,
-                        'meta_desc_en': meta_desc
-                    }, user_id=user_id)
-                imported += 1
-
-            return jsonify({
-                'success': True,
-                'imported': imported,
-                'message': f'Successfully imported {imported} categories from CSV!'
-            })
+            from services.category_importer import CategoryImporter
+            user_id = session.get('user_id') or session.get('admin_user_id')
+            result = CategoryImporter.import_csv(file.stream, user_id=user_id)
+            status_code = 200 if result.get('success') else 400
+            return jsonify(result), status_code
         except Exception as e:
             return jsonify({'success': False, 'error': f'Failed to process CSV: {str(e)}'}), 500
 
@@ -4474,9 +4563,7 @@ def register_visionadmin_api_routes(app):
 
     @app.route('/visionadmin/api/products/import-csv', methods=['POST'])
     def visionadmin_api_import_products_csv():
-        """Import multiple products from CSV file."""
-        import csv
-        import io
+        """Import multiple products and hierarchical categories from CSV file."""
         try:
             if 'file' not in request.files:
                 return jsonify({'success': False, 'error': 'No file uploaded'}), 400
@@ -4484,102 +4571,23 @@ def register_visionadmin_api_routes(app):
             if not file or not file.filename:
                 return jsonify({'success': False, 'error': 'No file selected'}), 400
 
-            stream = io.StringIO(file.stream.read().decode('utf-8', errors='ignore'))
-            reader = csv.DictReader(stream)
+            from services.product_importer import ProductImporter
+            user_id = session.get('admin_user_id') or session.get('user_id') or 1
+            res = ProductImporter.import_csv(file.stream.read(), user_id=user_id)
 
-            user_id = session.get('user_id')
-            imported = 0
-
-            for row in reader:
-                clean_row = {k.strip().lower(): v.strip() for k, v in row.items() if k}
-                name = clean_row.get('name') or clean_row.get('display_name') or clean_row.get('product_name') or ''
-                sku = (clean_row.get('sku') or '').strip().upper()
-                if not name and not sku:
-                    continue
-
-                if not sku:
-                    sku = f"SKU-{secrets.token_hex(4).upper()}"
-                if not name:
-                    name = sku
-
-                # Brand lookup or creation
-                brand_name = clean_row.get('brand') or clean_row.get('brand_name') or ''
-                brand_id = None
-                if brand_name:
-                    b_slug = Brand.slugify(brand_name)
-                    existing_b = Brand.find_by_slug(b_slug)
-                    if existing_b:
-                        brand_id = existing_b['id']
-                    else:
-                        brand_id = Brand.create({'name': brand_name, 'slug': b_slug, 'status': 'active'}, user_id=user_id)
-
-                # Category lookup or creation
-                cat_name = clean_row.get('category') or clean_row.get('category_name') or ''
-                category_id = None
-                if cat_name:
-                    c_slug = Category.slugify(cat_name)
-                    existing_c = Category.find_by_slug(c_slug)
-                    if existing_c:
-                        category_id = existing_c['id']
-                    else:
-                        category_id = Category.create({'name_en': cat_name, 'slug': c_slug, 'status': 'active'}, user_id=user_id)
-
-                price = clean_row.get('price') or '0'
-                sale_price = clean_row.get('sale_price') or None
-                stock_qty = int(clean_row.get('stock_qty') or 10)
-                tire_size = clean_row.get('tire_size_label') or clean_row.get('tire_size') or ''
-                tire_speed = clean_row.get('tire_speed_rating') or None
-                tire_load = clean_row.get('tire_load_index') or None
-                tire_pattern = clean_row.get('tire_pattern') or None
-                vehicle_type = clean_row.get('vehicle_type') or 'car'
-                origin = clean_row.get('country_of_origin') or None
-
-                existing_p = Product.find_by_sku(sku)
-                if existing_p:
-                    Product.update(existing_p['id'], {
-                        'sku': sku,
-                        'display_name': name,
-                        'name_en': name,
-                        'brand_id': brand_id or existing_p.get('brand_id'),
-                        'category_id': category_id or existing_p.get('category_id'),
-                        'price': price,
-                        'sale_price': sale_price,
-                        'stock_qty': stock_qty,
-                        'stock_status': 'in_stock' if stock_qty > 0 else 'out_of_stock',
-                        'tire_size_label': tire_size or existing_p.get('tire_size_label'),
-                        'tire_speed_rating': tire_speed or existing_p.get('tire_speed_rating'),
-                        'tire_load_index': tire_load or existing_p.get('tire_load_index'),
-                        'tire_pattern': tire_pattern or existing_p.get('tire_pattern'),
-                        'vehicle_type': vehicle_type or existing_p.get('vehicle_type'),
-                        'country_of_origin': origin or existing_p.get('country_of_origin')
-                    }, user_id=user_id)
-                else:
-                    Product.create({
-                        'sku': sku,
-                        'display_name': name,
-                        'name_en': name,
-                        'brand_id': brand_id,
-                        'category_id': category_id,
-                        'price': price,
-                        'sale_price': sale_price,
-                        'stock_qty': stock_qty,
-                        'stock_status': 'in_stock' if stock_qty > 0 else 'out_of_stock',
-                        'tire_size_label': tire_size,
-                        'tire_speed_rating': tire_speed,
-                        'tire_load_index': tire_load,
-                        'tire_pattern': tire_pattern,
-                        'vehicle_type': vehicle_type,
-                        'country_of_origin': origin,
-                        'status': 'active'
-                    }, user_id=user_id)
-                imported += 1
+            if not res.get('success'):
+                return jsonify({'success': False, 'error': res.get('error', 'Import failed')}), 400
 
             return jsonify({
                 'success': True,
-                'imported': imported,
-                'message': f'Successfully imported {imported} products from CSV!'
+                'imported': res.get('imported', 0),
+                'updated': res.get('updated', 0),
+                'total_rows': res.get('total_rows', 0),
+                'errors': res.get('errors', []),
+                'message': f"Successfully imported {res.get('imported', 0)} products (updated {res.get('updated', 0)})!"
             })
         except Exception as e:
+            app.logger.exception(f"Error importing CSV: {e}")
             return jsonify({'success': False, 'error': f'Failed to process CSV: {str(e)}'}), 500
 
     @app.route('/visionadmin/api/products', methods=['GET'])

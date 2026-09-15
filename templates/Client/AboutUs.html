@@ -1,20 +1,25 @@
 {% extends 'Client/layout.html' %}
 
+{% set _page_title = (page.get_title(locale) if page else '') %}
+{% set _page_meta_desc = (page.get_meta_desc(locale) if page else '') %}
+
 {% block title %}
-  {% if page and page.title %}
-    {{ page.title }} | {{ _('TyresVision UAE') }}
+  {% if _page_title %}
+    {{ _page_title }} | {{ _('TyresVision UAE') }}
   {% else %}
     {{ _('About Us | TyresVision UAE — Driven by Confidence, Built for the Road') }}
   {% endif %}
 {% endblock %}
 
 {% block meta_description %}
-  {% if page and page.meta_description %}
-    {{ page.meta_description }}
+  {% if _page_meta_desc %}
+    {{ _page_meta_desc }}
   {% else %}
     {{ _('At TyresVision, we deliver premium tyres that combine cutting-edge technology, superior performance, and lasting reliability across the UAE.') }}
   {% endif %}
 {% endblock %}
+
+{% block canonical_url %}https://www.tyresvision.com/{{ slug or (page.slug if page else '') }}{% endblock %}
 
 {% block extra_head %}
 <style>

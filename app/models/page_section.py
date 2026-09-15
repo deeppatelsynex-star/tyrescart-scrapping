@@ -97,40 +97,57 @@ class PageSection:
 
     @classmethod
     def update(cls, section_id: int, data: dict):
-        """Updates an existing page section."""
+        """Updates an existing page section, merging multilingual fields safely."""
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM page_sections WHERE id = %s AND deleted_at IS NULL", (section_id,))
+                existing = cursor.fetchone()
+                if not existing:
+                    return None
+
+                from services.store_context import StoreContext
+                curr_lang = StoreContext.get_current_language()
+
                 fields = []
                 params = []
 
                 if "section_type" in data:
                     fields.append("section_type = %s")
                     params.append(data["section_type"])
-                if "section_title" in data:
-                    fields.append("section_title = %s")
-                    params.append(cls._dump_json(data["section_title"]))
-                if "section_subtitle" in data:
-                    fields.append("section_subtitle = %s")
-                    params.append(cls._dump_json(data["section_subtitle"]))
-                if "meta_title" in data:
-                    fields.append("meta_title = %s")
-                    params.append(cls._dump_json(data["meta_title"]))
-                if "meta_description" in data:
-                    fields.append("meta_description = %s")
-                    params.append(cls._dump_json(data["meta_description"]))
-                if "content" in data:
-                    fields.append("content = %s")
-                    params.append(cls._dump_json(data["content"]))
+
+                for fld in ["section_title", "section_subtitle", "meta_title", "meta_description", "content", "button_text"]:
+                    if fld in data:
+                        val = data[fld]
+                        exist_d = cls._parse_json(existing.get(fld)) if existing.get(fld) else {}
+                        if not isinstance(exist_d, dict):
+                            exist_d = {}
+                        if isinstance(val, dict):
+                            exist_d.update(val)
+                        elif isinstance(val, str):
+                            s = val.strip()
+                            if s.startswith('{'):
+                                try:
+                                    p = json.loads(s)
+                                    if isinstance(p, dict):
+                                        exist_d.update(p)
+                                    else:
+                                        exist_d[curr_lang] = s
+                                except Exception:
+                                    exist_d[curr_lang] = s
+                            else:
+                                exist_d[curr_lang] = s
+                        elif val is None:
+                            exist_d = {}
+                        fields.append(f"{fld} = %s")
+                        params.append(cls._dump_json(exist_d))
+
                 if "image" in data:
                     fields.append("image = %s")
                     params.append(data["image"])
                 if "image_position" in data:
                     fields.append("image_position = %s")
                     params.append(data["image_position"])
-                if "button_text" in data:
-                    fields.append("button_text = %s")
-                    params.append(cls._dump_json(data["button_text"]))
                 if "button_url" in data:
                     fields.append("button_url = %s")
                     params.append(data["button_url"])
