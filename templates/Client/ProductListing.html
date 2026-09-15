@@ -382,17 +382,17 @@
   }
 }
 
-/* 6. INDIVIDUAL PRODUCT CARD */
+/* 6. INDIVIDUAL PRODUCT CARD (Exact Match to Reference Design) */
 .tv-product-card {
   background: #ffffff;
-  border: 1px solid #EDF2F7;
-  border-radius: 14px;
-  padding: 16px 14px 16px 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   min-width: 0;
 }
@@ -400,7 +400,8 @@
 .tv-product-card:hover {
   transform: translateY(-3px);
   border-color: #CBD5E1;
-  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.09);
+  cursor: pointer;
 }
 
 /* SKELETON LOADING SHIMMER ANIMATION */
@@ -420,56 +421,13 @@
   pointer-events: none;
   border-color: #EDF2F7;
   background: #ffffff;
-  min-height: 350px;
+  min-height: 380px;
 }
 
-.tv-skeleton-badge {
-  width: 48px;
-  height: 16px;
-  border-radius: 100px;
-}
-
-.tv-skeleton-img {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  margin: 8px auto;
-}
-
-.tv-skeleton-brand {
-  width: 60px;
-  height: 16px;
-  margin: 6px auto 8px auto;
-}
-
-.tv-skeleton-title {
-  width: 90%;
-  height: 28px;
-  margin: 4px auto 6px auto;
-}
-
-.tv-skeleton-size {
-  width: 60%;
-  height: 11px;
-  margin-bottom: 6px;
-}
-
-.tv-skeleton-meta {
-  width: 75%;
-  height: 10px;
-  margin-bottom: 8px;
-}
-
-.tv-skeleton-price {
-  width: 55%;
-  height: 16px;
-  margin-bottom: 8px;
-}
-
-.tv-skeleton-btn {
-  width: 100%;
-  height: 28px;
-  border-radius: 100px;
+.tv-skeleton-banner {
+  height: 32px;
+  background: #E2E8F0;
+  animation: tvShimmer 1.4s ease-in-out infinite;
 }
 
 .tv-page-ellipsis {
@@ -483,203 +441,329 @@
   font-size: 14px;
 }
 
-.tv-card-top-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 20px;
-  margin-bottom: 2px;
-}
-
-/* Badges */
-.tv-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 100px;
+/* Top Offer Banner */
+.tv-card-top-banner {
+  background: #072e87;
   color: #ffffff;
-  display: inline-block;
+  font-weight: 800;
+  font-size: 0.86rem;
+  text-align: center;
+  padding: 7px 8px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   line-height: 1.25;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.tv-badge.badge-blue { background: #2563EB; }
-.tv-badge.badge-red { background: #EF4444; }
-.tv-badge.badge-green { background: #10B981; }
-.tv-badge.badge-orange { background: #F59E0B; }
-.tv-badge.badge-emerald { background: #059669; }
-
-.tv-btn-wishlist {
-  background: none;
-  border: none;
-  color: #94A3B8;
-  cursor: pointer;
-  padding: 2px;
-  transition: color 0.15s ease, transform 0.15s ease;
-  margin-left: auto;
+/* Card Body */
+.tv-card-body {
+  padding: 10px 14px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  position: relative;
 }
 
-.tv-btn-wishlist:hover {
-  color: #EF4444;
-  transform: scale(1.15);
-}
-
-.tv-btn-wishlist.active {
-  color: #EF4444;
-  fill: #EF4444;
-}
-
-/* Image */
-.tv-card-img-wrap {
-  height: 135px;
+/* Quick View Eye Button */
+.tv-btn-quickview {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #E2E8F0;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 6px 0 10px 0;
+  color: #64748B;
+  cursor: pointer;
+  z-index: 2;
+  transition: all 0.15s ease;
+  padding: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.tv-btn-quickview:hover {
+  border-color: #008738;
+  color: #008738;
+  transform: scale(1.08);
+}
+
+/* Tyre Image */
+.tv-card-img-wrap {
+  height: 145px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 6px 0;
   overflow: hidden;
 }
 
 .tv-product-img {
-  max-height: 125px;
+  max-height: 140px;
   max-width: 100%;
   object-fit: contain;
   transition: transform 0.25s ease;
 }
 
 .tv-product-card:hover .tv-product-img {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
-/* Brand Logo */
-.tv-card-brand-logo {
-  height: 22px;
-  max-width: 86px;
-  object-fit: contain;
-  margin: 0 auto 6px auto;
-  display: block;
-}
-
-/* Title & Size */
-.tv-product-model-name {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--tv-dark-navy);
-  margin: 0 0 4px 0;
-  line-height: 1.35;
-  white-space: normal;
-  word-break: break-word;
-  text-align: center;
-  min-height: 2.7em;
+/* Sub-badges Row (Warranty + Vehicle Icon) */
+.tv-card-subbadges-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-}
-
-.tv-product-size-label {
-  font-size: 0.82rem;
-  color: #64748B;
-  font-weight: 500;
-  margin: 0 0 6px 0;
-  white-space: normal;
-  word-break: break-word;
-  text-align: center;
-}
-
-/* Metadata tag row */
-.tv-product-meta-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  font-size: 0.68rem;
-  color: #64748B;
-  margin-bottom: 4px;
-}
-
-.tv-meta-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.tv-meta-tag svg {
-  color: #94A3B8;
-  width: 12px;
-  height: 12px;
-}
-
-/* Ratings */
-.tv-product-rating-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  font-size: 0.72rem;
-  margin-bottom: 6px;
-}
-
-.tv-star-icon {
-  color: #F59E0B;
-}
-
-.tv-rating-num {
-  font-weight: 700;
-  color: var(--tv-dark-navy);
-}
-
-.tv-reviews-count {
-  color: #94A3B8;
-}
-
-/* Price */
-.tv-product-price-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 5px;
+  justify-content: space-between;
   margin-bottom: 8px;
 }
 
-.tv-price-curr {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--tv-dark-navy);
-}
-
-.tv-price-curr.sale {
-  color: #EF4444;
-}
-
-.tv-price-list {
+.tv-warranty-badge {
+  background: #F4FBF7;
+  color: #0D7A5F;
   font-size: 0.72rem;
-  color: #94A3B8;
-  text-decoration: line-through;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
 }
 
-/* Add to cart pill */
-.tv-btn-add-cart {
-  width: 100%;
-  padding: 6px 8px;
-  background: var(--tv-blue-brand);
-  color: #ffffff;
-  border: none;
-  border-radius: 100px;
-  font-size: 0.76rem;
-  font-weight: 700;
+.tv-vehicle-silhouette {
+  color: #000000;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Brand Logo + Tyre Size Row */
+.tv-card-brand-size-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 5px;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
-  transition: all 0.2s ease;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tv-card-brand-wrap {
+  display: flex;
+  align-items: center;
+  max-width: 105px;
+  height: 24px;
+}
+
+.tv-card-brand-img {
+  max-height: 24px;
+  max-width: 100px;
+  object-fit: contain;
+  display: block;
+}
+
+.tv-card-brand-fallback {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #0F172A;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tv-card-size-spec {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #000000;
+  text-align: right;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+/* Pattern / Model Name */
+.tv-card-pattern-title {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #000000;
+  margin: 0 0 6px 0;
+  line-height: 1.25;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.tv-btn-add-cart:hover {
-  background: var(--tv-blue-hover);
+/* Year & Country of Origin Row */
+.tv-card-year-origin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #000000;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.tv-card-year {
+  color: #000000;
+}
+
+.tv-card-origin {
+  color: #000000;
+  text-align: right;
+}
+
+/* Price & Action Section */
+.tv-card-price-action-section {
+  margin-top: auto;
+}
+
+.tv-card-fitted-label {
+  font-size: 0.73rem;
+  color: #64748B;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-bottom: 3px;
+}
+
+.tv-card-price-controls-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.tv-card-price-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.tv-card-main-price {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #000000;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.tv-curr-glyph {
+  font-weight: 900;
+  font-size: 1.15rem;
+}
+
+.tv-card-set-label {
+  font-size: 0.72rem;
+  color: #64748B;
+  font-weight: 500;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+.tv-curr-glyph-sub {
+  font-weight: 700;
+  font-size: 0.7rem;
+  color: #000000;
+}
+
+.tv-card-set-label strong {
+  color: #000000;
+  font-weight: 700;
+}
+
+.tv-card-action-col {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.tv-qty-select {
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #111827;
+  background-color: #ffffff;
+  cursor: pointer;
+  outline: none;
+  height: 32px;
+}
+
+.tv-qty-select:focus {
+  border-color: #008738;
+}
+
+.tv-btn-card-add {
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  height: 32px;
+  white-space: nowrap;
+}
+
+.tv-btn-card-add:hover {
+  background: #262626;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+/* Bottom Installment Strip */
+.tv-card-installments-strip {
+  background: linear-gradient(90deg, #FDF2F8 0%, #FFF7ED 100%);
+  border-top: 1px solid #F1F5F9;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tv-installments-title {
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tv-badge-tabby {
+  background: #2DE8C8;
+  color: #023830;
+  font-weight: 900;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: -0.01em;
+  display: inline-block;
+  line-height: 1.25;
+}
+
+.tv-badge-tamara {
+  background: linear-gradient(135deg, #FFB088 0%, #E395FA 50%, #76A5FF 100%);
+  color: #1E1B4B;
+  font-weight: 900;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: -0.01em;
+  display: inline-block;
+  line-height: 1.25;
 }
 
 /* 7. PAGINATION */
@@ -951,69 +1035,96 @@
              data-rating="{{ p.rating|float }}"
              data-order="{{ p.sort_order or loop.index }}">
           
-          <!-- Card Top Row: Badge & Wishlist -->
-          <div class="tv-card-top-row">
-            {% if p.badge %}
-            <span class="tv-badge {{ p.badge_class or 'badge-blue' }}">{{ p.badge }}</span>
-            {% else %}
-            <span></span>
-            {% endif %}
-            <button class="tv-btn-wishlist" onclick="toggleWishlist(this)" title="Save to wishlist" type="button">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          <!-- Top Offer Banner -->
+          <div class="tv-card-top-banner">
+            {{ p.offer_banner or 'FREE WHEEL ALIGNMENT' }}
+          </div>
+
+          <div class="tv-card-body">
+            <!-- Quick-view Eye Button -->
+            <button class="tv-btn-quickview" onclick="openQuickView(this)" title="Quick view" type="button">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
             </button>
+
+            <!-- Centered Tyre Image -->
+            <div class="tv-card-img-wrap">
+              <img src="{{ p.image_path or '/static/assets/images/no-image-available.svg' }}" 
+                   alt="{{ p.pattern_name or p.display_name }}" 
+                   class="tv-product-img" 
+                   loading="lazy" 
+                   onerror="this.src='/static/assets/images/no-image-available.svg'; this.onerror=null;">
+            </div>
+
+            <!-- Sub-badges Row (Warranty & Vehicle Silhouette) -->
+            <div class="tv-card-subbadges-row">
+              <span class="tv-warranty-badge">{{ p.warranty or '3 Years Warranty' }}</span>
+              <span class="tv-vehicle-silhouette" title="{{ (p.vehicle_type or 'car')|capitalize }}">
+                {% if p.vehicle_type == 'suv' %}
+                <svg width="28" height="13" viewBox="0 0 40 18" fill="currentColor"><path d="M38.5 12.5c-.3-2-1.5-3.5-3.5-4l-3.5-.8-2.5-5.2C28.2 1.3 27 1 25.5 1H8C6.5 1 5.2 1.9 4.6 3.2L1.5 10C.5 10.7 0 11.8 0 13c0 1.5 1 2.6 2.5 2.8h1.2c.5-2 2.3-3.5 4.5-3.5s4 1.5 4.5 3.5h14.6c.5-2 2.3-3.5 4.5-3.5s4 1.5 4.5 3.5h2.2c.8 0 1.5-.7 1.5-1.5 0-1.1-.6-2-1.5-2.3zM6.8 4.2c.2-.5.7-.9 1.3-.9h17c.8 0 1.5.5 1.8 1.2l2 4.2H5.2l1.6-4.5zm1.4 13.3c-1.4 0-2.5-1.1-2.5-2.5s1.1-2.5 2.5-2.5 2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5zm23.6 0c-1.4 0-2.5-1.1-2.5-2.5s1.1-2.5 2.5-2.5 2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5z"/></svg>
+                {% else %}
+                <svg width="28" height="13" viewBox="0 0 40 18" fill="currentColor"><path d="M37.5 10.5c-.3-1.8-1.5-3.2-3.8-3.5l-4.2-.6-3.8-3.9C24.8 1.6 23.6 1 22.3 1H10.5C9 1 7.7 1.8 7 3.1L3.8 9.5C1.8 10 0 11.2 0 13.2c0 1.2.9 2.1 2.1 2.2h1.4c.5-1.8 2.2-3.2 4.2-3.2s3.7 1.4 4.2 3.2h16.2c.5-1.8 2.2-3.2 4.2-3.2s3.7 1.4 4.2 3.2h2.2c.8 0 1.5-.7 1.5-1.5 0-1.8-1.1-2.9-2.5-3.3zM9.5 3.5c.3-.6.9-1 1.6-1h10.8c.7 0 1.4.4 1.8.9l3.2 3.3H8.2l1.3-3.2zm-1.8 13c-1.2 0-2.2-1-2.2-2.2s1-2.2 2.2-2.2 2.2 1 2.2 2.2-1 2.2-2.2 2.2zm24.6 0c-1.2 0-2.2-1-2.2-2.2s1-2.2 2.2-2.2 2.2 1 2.2 2.2-1 2.2-2.2 2.2z"/></svg>
+                {% endif %}
+              </span>
+            </div>
+
+            <!-- Brand Logo & Tyre Size Row -->
+            <div class="tv-card-brand-size-row">
+              <div class="tv-card-brand-wrap">
+                {% if p.brand_logo %}
+                <img src="{{ p.brand_logo }}" alt="{{ p.brand_name }}" class="tv-card-brand-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                <span class="tv-card-brand-fallback" style="display:none;">{{ p.brand_name }}</span>
+                {% else %}
+                <span class="tv-card-brand-fallback">{{ p.brand_name }}</span>
+                {% endif %}
+              </div>
+              <div class="tv-card-size-spec">{{ p.full_size_spec }}</div>
+            </div>
+
+            <!-- Pattern / Model Name -->
+            <h3 class="tv-card-pattern-title" title="{{ p.pattern_name or p.display_name }}">{{ p.pattern_name or p.display_name }}</h3>
+
+            <!-- Year & Country of Origin Row -->
+            <div class="tv-card-year-origin-row">
+              <span class="tv-card-year">{{ p.year or '2024' }}</span>
+              <span class="tv-card-origin">{{ p.country_of_origin or 'China' }}</span>
+            </div>
+
+            <!-- Price & Action Section -->
+            <div class="tv-card-price-action-section">
+              <div class="tv-card-fitted-label">
+                <span>Fitted Price</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              </div>
+              <div class="tv-card-price-controls-row">
+                <div class="tv-card-price-col">
+                  <div class="tv-card-main-price"><span class="tv-curr-glyph">&#272;</span> {{ "%.2f"|format(p.price) }}</div>
+                  <div class="tv-card-set-label">Set of 4: <span class="tv-curr-glyph-sub">&#272;</span> <strong>{{ "%.2f"|format(p.price * 4) }}</strong></div>
+                </div>
+                <div class="tv-card-action-col">
+                  <select class="tv-qty-select" onchange="updateCardQty(this, {{ p.price }})" aria-label="Quantity">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4" selected>4</option>
+                  </select>
+                  <button type="button" class="tv-btn-card-add" onclick="addToCartWithCard(this, '{{ p.brand_name }} {{ p.pattern_name or p.display_name }}', {{ p.price }})">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                    <span>Add</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Tyre Image -->
-          <div class="tv-card-img-wrap">
-            <img src="{{ p.image_path or '/static/assets/images/no-image-available.svg' }}" 
-                 alt="{{ p.display_name }}" 
-                 class="tv-product-img" 
-                 loading="lazy" 
-                 onerror="this.src='/static/assets/images/no-image-available.svg'; this.onerror=null;">
+          <!-- Bottom Installment Strip -->
+          <div class="tv-card-installments-strip">
+            <span class="tv-installments-title">Pay In Installments</span>
+            <span class="tv-badge-tabby">tabby</span>
+            <span class="tv-badge-tamara">tamara</span>
           </div>
-
-          <!-- Brand Logo -->
-          <img src="{{ p.brand_logo }}" alt="{{ p.brand_name }}" class="tv-card-brand-logo" loading="lazy">
-
-          <!-- Model Name -->
-          <h3 class="tv-product-model-name">{{ p.display_name }}</h3>
-
-          <!-- Size Spec -->
-          <div class="tv-product-size-label">{{ p.tire_size_label }}</div>
-
-          <!-- Metadata Icons Row -->
-          <div class="tv-product-meta-row">
-            <span class="tv-meta-tag">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-              <span>{{ (p.vehicle_type or 'car')|capitalize }}</span>
-            </span>
-            <span>&bull;</span>
-            <span class="tv-meta-tag">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-              <span>{{ p.season or 'Summer' }}</span>
-            </span>
-          </div>
-
-          <!-- Rating -->
-          <div class="tv-product-rating-row">
-            <span class="tv-star-icon">&#9733;</span>
-            <span class="tv-rating-num">{{ p.rating }}</span>
-            <span class="tv-reviews-count">({{ p.reviews }})</span>
-          </div>
-
-          <!-- Price Row -->
-          <div class="tv-product-price-row">
-            <span class="tv-price-curr {% if p.list_price %}sale{% endif %}">AED {{ p.price|int }}</span>
-            {% if p.list_price %}
-            <span class="tv-price-list">AED {{ p.list_price|int }}</span>
-            {% endif %}
-          </div>
-
-          <!-- Add to Cart Pill Button -->
-          <button type="button" class="tv-btn-add-cart" onclick="addToCart(this, '{{ p.brand_name }} {{ p.display_name }}', {{ p.price|int }})">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-            <span>Add to cart</span>
-          </button>
 
         </div>
         {% endfor %}
@@ -1080,18 +1191,28 @@ function renderSkeletons(count = PER_PAGE) {
   for (let i = 0; i < count; i++) {
     html += `
       <div class="tv-product-card tv-card-skeleton" aria-hidden="true">
-        <div class="tv-card-top-row">
-          <div class="tv-skeleton-box tv-skeleton-badge"></div>
+        <div class="tv-skeleton-banner"></div>
+        <div class="tv-card-body">
+          <div class="tv-skeleton-box" style="height: 135px; margin-bottom: 8px;"></div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <div class="tv-skeleton-box" style="width: 75px; height: 16px;"></div>
+            <div class="tv-skeleton-box" style="width: 25px; height: 16px;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <div class="tv-skeleton-box" style="width: 60px; height: 18px;"></div>
+            <div class="tv-skeleton-box" style="width: 80px; height: 18px;"></div>
+          </div>
+          <div class="tv-skeleton-box" style="width: 70%; height: 18px; margin-bottom: 8px;"></div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <div class="tv-skeleton-box" style="width: 40px; height: 14px;"></div>
+            <div class="tv-skeleton-box" style="width: 50px; height: 14px;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+            <div class="tv-skeleton-box" style="width: 80px; height: 26px;"></div>
+            <div class="tv-skeleton-box" style="width: 85px; height: 32px; border-radius: 8px;"></div>
+          </div>
         </div>
-        <div class="tv-card-img-wrap">
-          <div class="tv-skeleton-box tv-skeleton-img"></div>
-        </div>
-        <div class="tv-skeleton-box tv-skeleton-brand"></div>
-        <div class="tv-skeleton-box tv-skeleton-title"></div>
-        <div class="tv-skeleton-box tv-skeleton-size"></div>
-        <div class="tv-skeleton-box tv-skeleton-meta"></div>
-        <div class="tv-skeleton-box tv-skeleton-price"></div>
-        <div class="tv-skeleton-box tv-skeleton-btn"></div>
+        <div class="tv-skeleton-box" style="height: 28px; border-radius: 0;"></div>
       </div>
     `;
   }
@@ -1099,10 +1220,24 @@ function renderSkeletons(count = PER_PAGE) {
 }
 
 function createProductCardHTML(p) {
-  const badgeHTML = p.badge ? `<span class="tv-badge ${p.badge_class || 'badge-blue'}">${escapeHtml(p.badge)}</span>` : '<span></span>';
-  const listPriceHTML = p.list_price ? `<span class="tv-price-list">AED ${Math.round(p.list_price)}</span>` : '';
-  const saleCls = p.list_price ? 'sale' : '';
-  const priceVal = Math.round(p.price || 0);
+  const offerBanner = escapeHtml(p.offer_banner || 'FREE WHEEL ALIGNMENT');
+  const warrantyText = escapeHtml(p.warranty || '3 Years Warranty');
+  const patternTitle = escapeHtml(p.pattern_name || p.display_name || 'Tyre');
+  const sizeSpec = escapeHtml(p.full_size_spec || p.tire_size_label || 'Standard Fit');
+  const yearVal = escapeHtml(p.year || '2024');
+  const originVal = escapeHtml(p.country_of_origin || 'China');
+  const priceVal = typeof p.price === 'number' ? p.price : parseFloat(p.price || 0);
+  const priceFormatted = priceVal.toFixed(2);
+  const setOf4Price = (priceVal * 4).toFixed(2);
+  const brandName = escapeHtml(p.brand_name || '');
+  const brandLogo = p.brand_logo ? `<img src="${p.brand_logo}" alt="${brandName}" class="tv-card-brand-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"><span class="tv-card-brand-fallback" style="display:none;">${brandName}</span>` : `<span class="tv-card-brand-fallback">${brandName}</span>`;
+  const vehicleType = (p.vehicle_type || 'car').toLowerCase();
+  const vehicleSvg = vehicleType === 'suv' 
+    ? `<svg width="28" height="13" viewBox="0 0 40 18" fill="currentColor"><path d="M38.5 12.5c-.3-2-1.5-3.5-3.5-4l-3.5-.8-2.5-5.2C28.2 1.3 27 1 25.5 1H8C6.5 1 5.2 1.9 4.6 3.2L1.5 10C.5 10.7 0 11.8 0 13c0 1.5 1 2.6 2.5 2.8h1.2c.5-2 2.3-3.5 4.5-3.5s4 1.5 4.5 3.5h14.6c.5-2 2.3-3.5 4.5-3.5s4 1.5 4.5 3.5h2.2c.8 0 1.5-.7 1.5-1.5 0-1.1-.6-2-1.5-2.3zM6.8 4.2c.2-.5.7-.9 1.3-.9h17c.8 0 1.5.5 1.8 1.2l2 4.2H5.2l1.6-4.5zm1.4 13.3c-1.4 0-2.5-1.1-2.5-2.5s1.1-2.5 2.5-2.5 2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5zm23.6 0c-1.4 0-2.5-1.1-2.5-2.5s1.1-2.5 2.5-2.5 2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5z"/></svg>`
+    : `<svg width="28" height="13" viewBox="0 0 40 18" fill="currentColor"><path d="M37.5 10.5c-.3-1.8-1.5-3.2-3.8-3.5l-4.2-.6-3.8-3.9C24.8 1.6 23.6 1 22.3 1H10.5C9 1 7.7 1.8 7 3.1L3.8 9.5C1.8 10 0 11.2 0 13.2c0 1.2.9 2.1 2.1 2.2h1.4c.5-1.8 2.2-3.2 4.2-3.2s3.7 1.4 4.2 3.2h16.2c.5-1.8 2.2-3.2 4.2-3.2s3.7 1.4 4.2 3.2h2.2c.8 0 1.5-.7 1.5-1.5 0-1.8-1.1-2.9-2.5-3.3zM9.5 3.5c.3-.6.9-1 1.6-1h10.8c.7 0 1.4.4 1.8.9l3.2 3.3H8.2l1.3-3.2zm-1.8 13c-1.2 0-2.2-1-2.2-2.2s1-2.2 2.2-2.2 2.2 1 2.2 2.2-1 2.2-2.2 2.2zm24.6 0c-1.2 0-2.2-1-2.2-2.2s1-2.2 2.2-2.2 2.2 1 2.2 2.2-1 2.2-2.2 2.2z"/></svg>`;
+
+  const imgPath = p.image_path || '/static/assets/images/no-image-available.svg';
+  const cleanTitle = escapeHtml((brandName + ' ' + patternTitle).trim()).replace(/'/g, "\\'");
 
   return `
     <div class="tv-product-card"
@@ -1110,68 +1245,127 @@ function createProductCardHTML(p) {
          data-size="${escapeHtml(p.tire_size_label || '')}"
          data-vehicle="${escapeHtml(p.vehicle_type || 'car')}"
          data-type="${escapeHtml(p.season || 'summer')}"
-         data-price="${p.price || 0}">
+         data-price="${priceVal}">
       
-      <!-- Card Top Row: Badge & Wishlist -->
-      <div class="tv-card-top-row">
-        ${badgeHTML}
-        <button class="tv-btn-wishlist" onclick="toggleWishlist(this)" title="Save to wishlist" type="button">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+      <!-- Top Offer Banner -->
+      <div class="tv-card-top-banner">
+        ${offerBanner}
+      </div>
+
+      <div class="tv-card-body">
+        <!-- Quick-view Eye Button -->
+        <button class="tv-btn-quickview" onclick="openQuickView(this)" title="Quick view" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
         </button>
+
+        <!-- Centered Tyre Image -->
+        <div class="tv-card-img-wrap">
+          <img src="${imgPath}" 
+               alt="${patternTitle}" 
+               class="tv-product-img" 
+               loading="lazy" 
+               onerror="this.src='/static/assets/images/no-image-available.svg'; this.onerror=null;">
+        </div>
+
+        <!-- Sub-badges Row (Warranty & Vehicle Silhouette) -->
+        <div class="tv-card-subbadges-row">
+          <span class="tv-warranty-badge">${warrantyText}</span>
+          <span class="tv-vehicle-silhouette" title="${capitalize(vehicleType)}">
+            ${vehicleSvg}
+          </span>
+        </div>
+
+        <!-- Brand & Size Row -->
+        <div class="tv-card-brand-size-row">
+          <div class="tv-card-brand-wrap">
+            ${brandLogo}
+          </div>
+          <div class="tv-card-size-spec">${sizeSpec}</div>
+        </div>
+
+        <!-- Pattern / Model Name -->
+        <h3 class="tv-card-pattern-title" title="${patternTitle}">${patternTitle}</h3>
+
+        <!-- Year & Country of Origin -->
+        <div class="tv-card-year-origin-row">
+          <span class="tv-card-year">${yearVal}</span>
+          <span class="tv-card-origin">${originVal}</span>
+        </div>
+
+        <!-- Price & Action Section -->
+        <div class="tv-card-price-action-section">
+          <div class="tv-card-fitted-label">
+            <span>Fitted Price</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </div>
+          <div class="tv-card-price-controls-row">
+            <div class="tv-card-price-col">
+              <div class="tv-card-main-price"><span class="tv-curr-glyph">&#272;</span> ${priceFormatted}</div>
+              <div class="tv-card-set-label">Set of 4: <span class="tv-curr-glyph-sub">&#272;</span> <strong>${setOf4Price}</strong></div>
+            </div>
+            <div class="tv-card-action-col">
+              <select class="tv-qty-select" onchange="updateCardQty(this, ${priceVal})" aria-label="Quantity">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4" selected>4</option>
+              </select>
+              <button type="button" class="tv-btn-card-add" onclick="addToCartWithCard(this, '${cleanTitle}', ${priceVal})">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                <span>Add</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Tyre Image -->
-      <div class="tv-card-img-wrap">
-        <img src="${p.image_path || '/static/assets/images/no-image-available.svg'}" 
-             alt="${escapeHtml(p.display_name || '')}" 
-             class="tv-product-img" 
-             loading="lazy" 
-             onerror="this.src='/static/assets/images/no-image-available.svg'; this.onerror=null;">
+      <!-- Bottom Installment Strip -->
+      <div class="tv-card-installments-strip">
+        <span class="tv-installments-title">Pay In Installments</span>
+        <span class="tv-badge-tabby">tabby</span>
+        <span class="tv-badge-tamara">tamara</span>
       </div>
-
-      <!-- Brand Logo -->
-      <img src="${p.brand_logo}" alt="${escapeHtml(p.brand_name || '')}" class="tv-card-brand-logo" loading="lazy" onerror="this.style.display='none';">
-
-      <!-- Model Name -->
-      <h3 class="tv-product-model-name">${escapeHtml(p.display_name || '')}</h3>
-
-      <!-- Size Spec -->
-      <div class="tv-product-size-label">${escapeHtml(p.tire_size_label || '')}</div>
-
-      <!-- Metadata Icons Row -->
-      <div class="tv-product-meta-row">
-        <span class="tv-meta-tag">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-          <span>${capitalize(p.vehicle_type || 'car')}</span>
-        </span>
-        <span>&bull;</span>
-        <span class="tv-meta-tag">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-          <span>${escapeHtml(p.season || 'Summer')}</span>
-        </span>
-      </div>
-
-      <!-- Rating -->
-      <div class="tv-product-rating-row">
-        <span class="tv-star-icon">&#9733;</span>
-        <span class="tv-rating-num">${p.rating || 4.5}</span>
-        <span class="tv-reviews-count">(${p.reviews || 50})</span>
-      </div>
-
-      <!-- Price Row -->
-      <div class="tv-product-price-row">
-        <span class="tv-price-curr ${saleCls}">AED ${priceVal}</span>
-        ${listPriceHTML}
-      </div>
-
-      <!-- Add to Cart Pill Button -->
-      <button type="button" class="tv-btn-add-cart" onclick="addToCart(this, '${escapeHtml(p.display_name || '').replace(/'/g, "\\'")}', ${priceVal})">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-        <span>Add to cart</span>
-      </button>
 
     </div>
   `;
+}
+
+function updateCardQty(select, basePrice) {
+  const card = select.closest('.tv-product-card');
+  if (!card) return;
+  const qty = parseInt(select.value, 10) || 1;
+  const total = (basePrice * qty).toFixed(2);
+  const setLabel = card.querySelector('.tv-card-set-label');
+  if (setLabel) {
+    setLabel.innerHTML = `Set of ${qty}: <span class="tv-curr-glyph-sub">&#272;</span> <strong>${total}</strong>`;
+  }
+}
+
+function addToCartWithCard(btn, title, basePrice) {
+  const card = btn.closest('.tv-product-card');
+  const select = card ? card.querySelector('.tv-qty-select') : null;
+  const qty = select ? parseInt(select.value, 10) || 1 : 1;
+  const total = (basePrice * qty).toFixed(2);
+  
+  const originalHTML = btn.innerHTML;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>Added</span>';
+  btn.style.background = '#008738';
+  
+  showToast(`Added ${qty}x ${title} (&#272; ${total}) to fitting cart!`);
+  
+  setTimeout(() => {
+    btn.innerHTML = originalHTML;
+    btn.style.background = '';
+  }, 2000);
+}
+
+function openQuickView(btn) {
+  const card = btn.closest('.tv-product-card');
+  const title = card ? (card.querySelector('.tv-card-pattern-title')?.textContent || 'Tyre Details') : 'Tyre Details';
+  showToast(`Viewing ${title}`);
 }
 
 function renderPaginationControls(totalP, curP) {

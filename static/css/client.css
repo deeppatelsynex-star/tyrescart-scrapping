@@ -6926,9 +6926,9 @@ details summary span:last-child {
   padding: 16px 20px !important;
 }
 
-.faq-answer-inner {
+/* .faq-answer-inner {
   padding: 0 20px 16px 20px !important;
-}
+} */
 
 @media (max-width: 640px) {
   .faq-summary,
@@ -6936,8 +6936,8 @@ details summary span:last-child {
     padding: 14px 16px !important;
     font-size: 0.95rem !important;
   }
-  .faq-answer-inner {
+  /* .faq-answer-inner {
     padding: 0 16px 14px 16px !important;
-  }
+  } */
 }
-
+

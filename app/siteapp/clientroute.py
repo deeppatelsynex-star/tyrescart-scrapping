@@ -7,6 +7,7 @@
 import json
 import os
 import math
+import re
 from datetime import datetime, timedelta
 from flask import Blueprint, current_app, render_template, request, session, abort, redirect, make_response, send_from_directory, jsonify
 from models.blog import Blog
@@ -454,11 +455,33 @@ def _format_product_for_client(p, locale='en'):
         attr = {}
     p_dict['attr'] = attr
     p_dict['rating'] = float(attr.get('rating', 4.5))
-    raw_badge = attr.get('badge') or attr.get('promotion') or attr.get('offers') or ''
-    if str(raw_badge).strip().lower() in ('none', '0', ''):
-        raw_badge = ''
-    p_dict['badge'] = raw_badge
+
+    # Top Offer Banner (e.g. FREE WHEEL ALIGNMENT / BUY 3 GET 1 FREE / TOP SAVINGS)
+    raw_offer = attr.get('offers') or attr.get('promotion') or attr.get('badge') or ''
+    if not raw_offer or str(raw_offer).strip().lower() in ('none', '0', '', 'null'):
+        offer_banner = 'FREE WHEEL ALIGNMENT'
+    else:
+        offer_banner = str(raw_offer).strip().upper()
+    p_dict['offer_banner'] = offer_banner
+    p_dict['badge'] = offer_banner
     p_dict['badge_class'] = attr.get('badge_class', 'badge-blue')
+
+    # Warranty
+    warranty_val = str(attr.get('warranty_period') or attr.get('warranty') or '3 Years Warranty').strip()
+    if not warranty_val or warranty_val.lower() in ('none', '0', 'null'):
+        warranty_val = '3 Years Warranty'
+    p_dict['warranty'] = warranty_val
+
+    # Vehicle type normalization ('car', 'suv', 'van')
+    raw_veh = str(p_dict.get('vehicle_type') or attr.get('tyre_type') or 'car').strip().lower()
+    if any(k in raw_veh for k in ('suv', '4x4', '4wd', 'crossover')):
+        veh_type = 'suv'
+    elif any(k in raw_veh for k in ('van', 'truck', 'commercial')):
+        veh_type = 'van'
+    else:
+        veh_type = 'car'
+    p_dict['vehicle_type'] = veh_type
+
     p_dict['season'] = attr.get('season') or p_dict.get('tire_type') or 'Summer'
     
     b_slug = p_dict.get('brand_slug') or (p_dict.get('brand_name') or 'michelin').lower().replace(' ', '')
@@ -478,7 +501,10 @@ def _format_product_for_client(p, locale='en'):
         p_dict['image_path'] = '/static/assets/images/no-image-available.svg'
 
     # Price conversions
-    p_dict['price'] = float(p_dict.get('price') or 0)
+    price_val = float(p_dict.get('price') or 0)
+    p_dict['price'] = price_val
+    p_dict['price_formatted'] = f"{price_val:.2f}"
+    p_dict['price_set_of_4'] = f"{price_val * 4:.2f}"
     p_dict['list_price'] = float(p_dict['list_price']) if p_dict.get('list_price') else None
 
     # Ensure display_name is readable
@@ -495,8 +521,54 @@ def _format_product_for_client(p, locale='en'):
         else:
             p_dict['display_name'] = name_raw or p_dict.get('sku')
 
-    p_dict['tire_size_label'] = p_dict.get('tire_size_label') or ''
-    p_dict['vehicle_type'] = p_dict.get('vehicle_type') or 'car'
+    # Pattern / Model Name (e.g. "Atrezzo Eco")
+    pat = str(attr.get('pattern') or attr.get('pattern.1') or '').strip()
+    if not pat or pat.lower() in ('none', 'null', '0'):
+        pat = p_dict.get('display_name') or ''
+        b_name = p_dict.get('brand_name') or ''
+        if b_name and pat.lower().startswith(b_name.lower()):
+            pat = pat[len(b_name):].strip()
+    p_dict['pattern_name'] = pat or p_dict.get('display_name') or 'Tyre'
+
+    # Size spec with load/speed index (e.g. "165/65 R14 79T")
+    base_size = str(p_dict.get('tire_size_label') or attr.get('tire_size') or attr.get('tyre_size') or '').strip()
+    if not base_size:
+        w = attr.get('width')
+        h = attr.get('height')
+        r = attr.get('rim')
+        if w and r:
+            base_size = f"{w}/{h} R{r}" if h else f"{w} R{r}"
+    
+    load_speed = str(attr.get('load_speed_index') or '').strip()
+    if not load_speed:
+        l_idx = str(attr.get('tire_load_index') or attr.get('load_index') or '').strip()
+        s_rat = str(attr.get('tire_speed_rating') or '').strip()
+        if l_idx or s_rat:
+            load_speed = f"{l_idx}{s_rat}".strip()
+
+    if load_speed and load_speed.lower() not in base_size.lower():
+        full_size = f"{base_size} {load_speed}".strip()
+    else:
+        full_size = base_size
+
+    p_dict['tire_size_label'] = base_size
+    p_dict['full_size_spec'] = full_size or base_size or 'Standard Fit'
+
+    # Year (e.g. 2024 / 2025 / 2026)
+    yr_val = str(attr.get('year') or attr.get('dot') or '').strip()
+    if not yr_val or yr_val.lower() in ('none', 'null', '0'):
+        m_yr = re.search(r'\b(202[3-7])\b', str(p_dict.get('name') or '') + ' ' + str(p_dict.get('display_name') or ''))
+        yr_val = m_yr.group(1) if m_yr else '2024'
+    p_dict['year'] = yr_val
+
+    # Country of Origin (e.g. "China", "Japan", "Germany")
+    origin_val = str(attr.get('country_of_origin') or attr.get('origin') or attr.get('country') or '').strip()
+    if not origin_val or origin_val.lower() in ('none', 'null', '0'):
+        origin_val = 'China'
+    p_dict['country_of_origin'] = origin_val.title()
+
+    p_dict['fitted_text'] = attr.get('price_included_text') or 'Fitted Price'
+
     return p_dict
 
 
