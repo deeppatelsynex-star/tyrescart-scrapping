@@ -354,31 +354,24 @@
   border-color: var(--tv-blue-brand);
 }
 
-/* 5. PRODUCT CARDS GRID (5-COLUMN SINGLE ROW) */
+/* 5. PRODUCT CARDS GRID (4-COLUMN SINGLE ROW) */
 .tv-products-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
 }
 
-@media(max-width: 1400px) {
-  .tv-products-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px;
-  }
-}
-
-@media(max-width: 1100px) {
+@media(max-width: 1200px) {
   .tv-products-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    gap: 14px;
   }
 }
 
 @media(max-width: 768px) {
   .tv-products-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    gap: 12px;
   }
 }
 
@@ -394,7 +387,7 @@
   background: #ffffff;
   border: 1px solid #EDF2F7;
   border-radius: 14px;
-  padding: 14px 12px 14px 12px;
+  padding: 16px 14px 16px 14px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -427,32 +420,32 @@
   pointer-events: none;
   border-color: #EDF2F7;
   background: #ffffff;
-  min-height: 330px;
+  min-height: 350px;
 }
 
 .tv-skeleton-badge {
-  width: 44px;
-  height: 14px;
+  width: 48px;
+  height: 16px;
   border-radius: 100px;
 }
 
 .tv-skeleton-img {
-  width: 96px;
-  height: 96px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
   margin: 8px auto;
 }
 
 .tv-skeleton-brand {
-  width: 54px;
-  height: 14px;
+  width: 60px;
+  height: 16px;
   margin: 6px auto 8px auto;
 }
 
 .tv-skeleton-title {
   width: 90%;
-  height: 14px;
-  margin-bottom: 5px;
+  height: 28px;
+  margin: 4px auto 6px auto;
 }
 
 .tv-skeleton-size {
@@ -538,16 +531,16 @@
 
 /* Image */
 .tv-card-img-wrap {
-  height: 120px;
+  height: 135px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 6px 0 8px 0;
+  margin: 6px 0 10px 0;
   overflow: hidden;
 }
 
 .tv-product-img {
-  max-height: 112px;
+  max-height: 125px;
   max-width: 100%;
   object-fit: contain;
   transition: transform 0.25s ease;
@@ -559,8 +552,8 @@
 
 /* Brand Logo */
 .tv-card-brand-logo {
-  height: 20px;
-  max-width: 80px;
+  height: 22px;
+  max-width: 86px;
   object-fit: contain;
   margin: 0 auto 6px auto;
   display: block;
@@ -568,25 +561,27 @@
 
 /* Title & Size */
 .tv-product-model-name {
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--tv-dark-navy);
-  margin: 0 0 3px 0;
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0 0 4px 0;
+  line-height: 1.35;
+  white-space: normal;
+  word-break: break-word;
   text-align: center;
+  min-height: 2.7em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tv-product-size-label {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: #64748B;
   font-weight: 500;
   margin: 0 0 6px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
   text-align: center;
 }
 
@@ -1030,7 +1025,7 @@
           {% if total_count == 0 %}
           Showing 0 tyres
           {% else %}
-          Showing {{ ((current_page or 1) - 1) * (per_page or 20) + 1 }}&ndash;{{ [((current_page or 1) - 1) * (per_page or 20) + products|length, total_count]|min }} of {{ "{:,}".format(total_count) }} tyres
+          Showing {{ ((current_page or 1) - 1) * (per_page or 16) + 1 }}&ndash;{{ [((current_page or 1) - 1) * (per_page or 16) + products|length, total_count]|min }} of {{ "{:,}".format(total_count) }} tyres
           {% endif %}
         </div>
         <div class="tv-pagination-controls" id="pagination-controls">
@@ -1056,7 +1051,7 @@
    Live filter, size search, price slider, sort, add to cart & dynamic pagination
    ============================================================================= */
 
-const PER_PAGE = 20;
+const PER_PAGE = 16;
 let currentPage = {{ current_page or 1 }};
 let totalPages = {{ total_pages or 1 }};
 let totalCount = {{ total_count or 0 }};

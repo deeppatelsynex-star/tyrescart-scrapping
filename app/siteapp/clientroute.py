@@ -633,16 +633,16 @@ def _fetch_catalog_products(args, locale='en'):
             else:
                 order_sql = "ORDER BY p.sort_order ASC, p.id ASC"
 
-            # Pagination (default 20 for 4 rows of 5 cards on desktop)
+            # Pagination (default 16 for 4 rows of 4 cards on desktop)
             try:
                 page = max(1, int(args.get('page', 1)))
             except (ValueError, TypeError):
                 page = 1
 
             try:
-                per_page = max(1, min(100, int(args.get('per_page', 20))))
+                per_page = max(1, min(100, int(args.get('per_page', 16))))
             except (ValueError, TypeError):
-                per_page = 20
+                per_page = 16
 
             total_pages = max(1, math.ceil(total_count / per_page)) if total_count > 0 else 1
             if page > total_pages and total_count > 0:
