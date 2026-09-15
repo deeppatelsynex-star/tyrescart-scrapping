@@ -2,16 +2,120 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 
-  <!-- Home Page -->
+  <!-- 1. Home Page -->
   <url>
     <loc>https://www.tyresvision.com/</loc>
-    <lastmod>2026-09-01</lastmod>
+    <lastmod>2026-09-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://www.tyresvision.com/static/assets/images/tyresvision-logo.png</image:loc>
       <image:title>TyresVision - Buy tyres online, fitted locally across the UAE</image:title>
     </image:image>
+  </url>
+
+  <!-- 2. Mobile Tyre Fitting -->
+  <url>
+    <loc>https://www.tyresvision.com/mobile-tyre-fitting</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 3. EV Tyres -->
+  <url>
+    <loc>https://www.tyresvision.com/ev-tyres</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 4. Off-Road & 4x4 Tyres -->
+  <url>
+    <loc>https://www.tyresvision.com/off-road-4x4-tyres</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 5. Tyre Brands -->
+  <url>
+    <loc>https://www.tyresvision.com/tyre-brands</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 6. Tyre Sizes -->
+  <url>
+    <loc>https://www.tyresvision.com/tyre-sizes</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 7. Tyres by Car Model -->
+  <url>
+    <loc>https://www.tyresvision.com/tyres-by-car</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 8. Tyre Shop Dubai -->
+  <url>
+    <loc>https://www.tyresvision.com/tyre-shop-dubai</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 9. Tyre Shop Abu Dhabi -->
+  <url>
+    <loc>https://www.tyresvision.com/tyre-shop-abu-dhabi</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 10. Tyre Shop Sharjah -->
+  <url>
+    <loc>https://www.tyresvision.com/tyre-shop-sharjah</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 11. Tyre Shop Ajman -->
+  <url>
+    <loc>https://www.tyresvision.com/tyre-shop-ajman</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 12. Tyre Shop Ras Al Khaimah -->
+  <url>
+    <loc>https://www.tyresvision.com/tyre-shop-ras-al-khaimah</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 13. Tyre Shop Fujairah -->
+  <url>
+    <loc>https://www.tyresvision.com/tyre-shop-fujairah</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 14. Tyre Shop Umm Al Quwain -->
+  <url>
+    <loc>https://www.tyresvision.com/tyre-shop-umm-al-quwain</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
 
 </urlset>

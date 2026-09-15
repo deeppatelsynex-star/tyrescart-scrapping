@@ -406,6 +406,86 @@
   box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.08);
 }
 
+/* SKELETON LOADING SHIMMER ANIMATION */
+@keyframes tvShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.tv-skeleton-box {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: tvShimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.tv-product-card.tv-card-skeleton {
+  pointer-events: none;
+  border-color: #EDF2F7;
+  background: #ffffff;
+  min-height: 290px;
+}
+
+.tv-skeleton-badge {
+  width: 44px;
+  height: 14px;
+  border-radius: 100px;
+}
+
+.tv-skeleton-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  margin: 6px auto;
+}
+
+.tv-skeleton-brand {
+  width: 50px;
+  height: 12px;
+  margin: 4px auto 6px auto;
+}
+
+.tv-skeleton-title {
+  width: 90%;
+  height: 13px;
+  margin-bottom: 4px;
+}
+
+.tv-skeleton-size {
+  width: 60%;
+  height: 11px;
+  margin-bottom: 6px;
+}
+
+.tv-skeleton-meta {
+  width: 75%;
+  height: 10px;
+  margin-bottom: 8px;
+}
+
+.tv-skeleton-price {
+  width: 55%;
+  height: 16px;
+  margin-bottom: 8px;
+}
+
+.tv-skeleton-btn {
+  width: 100%;
+  height: 28px;
+  border-radius: 100px;
+}
+
+.tv-page-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 14px;
+}
+
 .tv-card-top-row {
   display: flex;
   justify-content: space-between;
@@ -840,7 +920,7 @@
     <div class="tv-catalog-main">
       <!-- Top Sort Bar -->
       <div class="tv-catalog-top-bar">
-        <h2 class="tv-catalog-count-heading" id="catalog-count-heading">{{ total_count or 16 }} Car Tyres</h2>
+        <h2 class="tv-catalog-count-heading" id="catalog-count-heading">{{ "{:,}".format(total_count or 0) }} Car Tyres</h2>
         <div class="tv-catalog-sort">
           <label for="sort-select">Sort by:</label>
           <select id="sort-select" class="tv-sort-select" onchange="sortProducts(this.value)">
@@ -943,7 +1023,11 @@
       <!-- 7. BOTTOM PAGINATION BAR -->
       <div class="tv-pagination-wrap">
         <div class="tv-pagination-info" id="pagination-info">
-          Showing 1&ndash;16 of 124 tyres
+          {% if total_count == 0 %}
+          Showing 0 tyres
+          {% else %}
+          Showing {{ ((current_page or 1) - 1) * (per_page or 32) + 1 }}&ndash;{{ [((current_page or 1) - 1) * (per_page or 32) + products|length, total_count]|min }} of {{ "{:,}".format(total_count) }} tyres
+          {% endif %}
         </div>
         <div class="tv-pagination-controls" id="pagination-controls">
           <!-- Rendered dynamically by JavaScript with working data -->
@@ -968,9 +1052,308 @@
    Live filter, size search, price slider, sort, add to cart & dynamic pagination
    ============================================================================= */
 
-const PER_PAGE = 16;
-let currentPage = 1;
-let currentFilteredCards = [];
+const PER_PAGE = 32;
+let currentPage = {{ current_page or 1 }};
+let totalPages = {{ total_pages or 1 }};
+let totalCount = {{ total_count or 0 }};
+let isFetching = false;
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function capitalize(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function renderSkeletons(count = PER_PAGE) {
+  const container = document.getElementById('products-grid-container');
+  if (!container) return;
+  
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    html += `
+      <div class="tv-product-card tv-card-skeleton" aria-hidden="true">
+        <div class="tv-card-top-row">
+          <div class="tv-skeleton-box tv-skeleton-badge"></div>
+        </div>
+        <div class="tv-card-img-wrap">
+          <div class="tv-skeleton-box tv-skeleton-img"></div>
+        </div>
+        <div class="tv-skeleton-box tv-skeleton-brand"></div>
+        <div class="tv-skeleton-box tv-skeleton-title"></div>
+        <div class="tv-skeleton-box tv-skeleton-size"></div>
+        <div class="tv-skeleton-box tv-skeleton-meta"></div>
+        <div class="tv-skeleton-box tv-skeleton-price"></div>
+        <div class="tv-skeleton-box tv-skeleton-btn"></div>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+}
+
+function createProductCardHTML(p) {
+  const badgeHTML = p.badge ? `<span class="tv-badge ${p.badge_class || 'badge-blue'}">${escapeHtml(p.badge)}</span>` : '<span></span>';
+  const listPriceHTML = p.list_price ? `<span class="tv-price-list">AED ${Math.round(p.list_price)}</span>` : '';
+  const saleCls = p.list_price ? 'sale' : '';
+  const priceVal = Math.round(p.price || 0);
+
+  return `
+    <div class="tv-product-card"
+         data-brand="${escapeHtml(p.brand_slug || '')}"
+         data-size="${escapeHtml(p.tire_size_label || '')}"
+         data-vehicle="${escapeHtml(p.vehicle_type || 'car')}"
+         data-type="${escapeHtml(p.season || 'summer')}"
+         data-price="${p.price || 0}">
+      
+      <!-- Card Top Row: Badge & Wishlist -->
+      <div class="tv-card-top-row">
+        ${badgeHTML}
+        <button class="tv-btn-wishlist" onclick="toggleWishlist(this)" title="Save to wishlist" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+        </button>
+      </div>
+
+      <!-- Tyre Image -->
+      <div class="tv-card-img-wrap">
+        <img src="${p.image_path || '/static/assets/images/no-image-available.svg'}" 
+             alt="${escapeHtml(p.display_name || '')}" 
+             class="tv-product-img" 
+             loading="lazy" 
+             onerror="this.src='/static/assets/images/no-image-available.svg'; this.onerror=null;">
+      </div>
+
+      <!-- Brand Logo -->
+      <img src="${p.brand_logo}" alt="${escapeHtml(p.brand_name || '')}" class="tv-card-brand-logo" loading="lazy" onerror="this.style.display='none';">
+
+      <!-- Model Name -->
+      <h3 class="tv-product-model-name">${escapeHtml(p.display_name || '')}</h3>
+
+      <!-- Size Spec -->
+      <div class="tv-product-size-label">${escapeHtml(p.tire_size_label || '')}</div>
+
+      <!-- Metadata Icons Row -->
+      <div class="tv-product-meta-row">
+        <span class="tv-meta-tag">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          <span>${capitalize(p.vehicle_type || 'car')}</span>
+        </span>
+        <span>&bull;</span>
+        <span class="tv-meta-tag">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <span>${escapeHtml(p.season || 'Summer')}</span>
+        </span>
+      </div>
+
+      <!-- Rating -->
+      <div class="tv-product-rating-row">
+        <span class="tv-star-icon">&#9733;</span>
+        <span class="tv-rating-num">${p.rating || 4.5}</span>
+        <span class="tv-reviews-count">(${p.reviews || 50})</span>
+      </div>
+
+      <!-- Price Row -->
+      <div class="tv-product-price-row">
+        <span class="tv-price-curr ${saleCls}">AED ${priceVal}</span>
+        ${listPriceHTML}
+      </div>
+
+      <!-- Add to Cart Pill Button -->
+      <button type="button" class="tv-btn-add-cart" onclick="addToCart(this, '${escapeHtml(p.display_name || '').replace(/'/g, "\\'")}', ${priceVal})">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span>Add to cart</span>
+      </button>
+
+    </div>
+  `;
+}
+
+function renderPaginationControls(totalP, curP) {
+  const controls = document.getElementById('pagination-controls');
+  if (!controls) return;
+
+  if (totalP <= 1) {
+    controls.style.display = 'none';
+    return;
+  }
+  controls.style.display = 'flex';
+
+  let html = '';
+  // Prev button
+  const prevDisabled = curP <= 1 ? 'disabled' : '';
+  html += `<button type="button" class="tv-page-btn" ${prevDisabled} onclick="goToPage(${curP - 1})" aria-label="Previous page">&lsaquo;</button>`;
+
+  // Smart page numbers
+  const pagesToShow = [];
+  if (totalP <= 7) {
+    for (let i = 1; i <= totalP; i++) pagesToShow.push(i);
+  } else {
+    pagesToShow.push(1);
+    if (curP > 3) pagesToShow.push('...');
+    const start = Math.max(2, curP - 1);
+    const end = Math.min(totalP - 1, curP + 1);
+    for (let i = start; i <= end; i++) {
+      if (!pagesToShow.includes(i)) pagesToShow.push(i);
+    }
+    if (curP < totalP - 2) pagesToShow.push('...');
+    if (!pagesToShow.includes(totalP)) pagesToShow.push(totalP);
+  }
+
+  pagesToShow.forEach(p => {
+    if (p === '...') {
+      html += `<span class="tv-page-ellipsis">&hellip;</span>`;
+    } else {
+      const activeCls = p === curP ? ' active' : '';
+      html += `<button type="button" class="tv-page-btn${activeCls}" onclick="goToPage(${p})">${p}</button>`;
+    }
+  });
+
+  // Next button
+  const nextDisabled = curP >= totalP ? 'disabled' : '';
+  html += `<button type="button" class="tv-page-btn" ${nextDisabled} onclick="goToPage(${curP + 1})" aria-label="Next page">&rsaquo;</button>`;
+
+  controls.innerHTML = html;
+}
+
+async function fetchProducts(page = 1, scrollUp = true) {
+  if (isFetching) return;
+  isFetching = true;
+
+  // 1. Immediately display 4 rows of animated shimmer skeletons
+  renderSkeletons(PER_PAGE);
+
+  // 2. Gather filter parameters
+  const selectedBrands = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(cb => cb.value.trim());
+  const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value.trim());
+  const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value.trim());
+  const selectedTypes = Array.from(document.querySelectorAll('input[name="tire_type"]:checked')).map(cb => cb.value.trim());
+  const maxPriceSlider = document.getElementById('max-price-slider');
+  const maxPrice = maxPriceSlider ? maxPriceSlider.value : '';
+  const sortSelect = document.getElementById('sort-select');
+  const sortVal = sortSelect ? sortSelect.value : 'popular';
+
+  const params = new URLSearchParams();
+  params.set('page', page);
+  params.set('per_page', PER_PAGE);
+  if (sortVal && sortVal !== 'popular') params.set('sort', sortVal);
+
+  selectedBrands.forEach(b => params.append('brand', b));
+  selectedVehicles.forEach(v => params.append('vehicle', v));
+  selectedSizes.forEach(s => params.append('size', s));
+  selectedTypes.forEach(t => params.append('type', t));
+  if (maxPrice && parseFloat(maxPrice) < parseFloat(maxPriceSlider?.max || 2000)) {
+    params.set('max_price', maxPrice);
+  }
+
+  // Update browser URL query params
+  const browserUrl = new URL(window.location);
+  browserUrl.search = params.toString();
+  window.history.pushState({}, '', browserUrl);
+
+  try {
+    const res = await fetch(`/api/products?${params.toString()}`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) throw new Error('Network error loading products');
+    const data = await res.json();
+
+    currentPage = data.page || 1;
+    totalPages = data.total_pages || 1;
+    totalCount = data.total || 0;
+
+    const container = document.getElementById('products-grid-container');
+    if (!container) return;
+
+    if (!data.products || data.products.length === 0) {
+      container.innerHTML = `
+        <div class="tv-empty-catalog" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: #fff; border-radius: 16px; border: 1px dashed #CBD5E1;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" style="margin: 0 auto 16px; display: block;"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: #0F172A; margin-bottom: 8px;">No Tyres Found Matching Your Criteria</h3>
+          <p style="color: #64748B; font-size: 0.95rem; max-width: 420px; margin: 0 auto 16px;">Try adjusting or clearing your sidebar filters to see more tyre options.</p>
+          <button type="button" class="tv-btn-clear-filters" onclick="clearAllFilters()" style="display: inline-block; width: auto; padding: 8px 20px;">Clear All Filters</button>
+        </div>
+      `;
+    } else {
+      let cardsHtml = '';
+      data.products.forEach(p => {
+        cardsHtml += createProductCardHTML(p);
+      });
+      container.innerHTML = cardsHtml;
+    }
+
+    // Update pagination info text
+    const infoEl = document.getElementById('pagination-info');
+    if (infoEl) {
+      if (totalCount === 0) {
+        infoEl.textContent = 'Showing 0 tyres';
+      } else {
+        const startIdx = (currentPage - 1) * PER_PAGE + 1;
+        const endIdx = Math.min((currentPage - 1) * PER_PAGE + data.products.length, totalCount);
+        infoEl.innerHTML = `Showing ${startIdx}&ndash;${endIdx} of ${totalCount.toLocaleString()} tyres`;
+      }
+    }
+
+    // Update catalog count heading
+    const heading = document.getElementById('catalog-count-heading');
+    if (heading) {
+      heading.textContent = `${totalCount.toLocaleString()} Car Tyres`;
+    }
+
+    // Update pagination controls
+    renderPaginationControls(totalPages, currentPage);
+
+    // Smooth scroll to top of catalog
+    if (scrollUp) {
+      const mainCol = document.querySelector('.tv-catalog-main');
+      if (mainCol) {
+        mainCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+  } catch (err) {
+    console.error('Error fetching products:', err);
+    showToast('Failed to load products. Please try again.');
+  } finally {
+    isFetching = false;
+  }
+}
+
+function goToPage(page) {
+  if (page < 1 || page > totalPages) return;
+  fetchProducts(page, true);
+}
+
+function filterProducts() {
+  fetchProducts(1, true);
+}
+
+function sortProducts(sortBy) {
+  fetchProducts(1, true);
+}
+
+function clearAllFilters() {
+  document.querySelectorAll('.tv-filter-sidebar input[type="checkbox"]').forEach(cb => {
+    cb.checked = false;
+  });
+  const searchBox = document.querySelector('.tv-search-size-box');
+  if (searchBox) {
+    searchBox.value = '';
+    searchFilterSizes('');
+  }
+  const slider = document.getElementById('max-price-slider');
+  if (slider) {
+    slider.value = slider.max;
+    document.getElementById('price-slider-val').textContent = '<= AED ' + parseInt(slider.max).toLocaleString();
+  }
+  fetchProducts(1, true);
+}
 
 function toggleFilterGroup(el) {
   el.classList.toggle('collapsed');
@@ -1022,180 +1405,7 @@ function searchFilterSizes(query) {
 
 function updatePriceFilter(val) {
   document.getElementById('price-slider-val').textContent = '<= AED ' + parseInt(val).toLocaleString();
-  filterProducts(true);
-}
-
-function initPagination() {
-  const container = document.getElementById('products-grid-container');
-  if (!container) return;
-  currentFilteredCards = Array.from(container.querySelectorAll('.tv-product-card'));
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const pageParam = parseInt(urlParams.get('page'));
-  if (pageParam && pageParam > 0) {
-    currentPage = pageParam;
-  } else {
-    currentPage = 1;
-  }
-
-  filterProducts(false);
-}
-
-function applyPagination() {
-  const total = currentFilteredCards.length;
-  const totalPages = Math.ceil(total / PER_PAGE) || 1;
-  if (currentPage > totalPages) currentPage = totalPages;
-  if (currentPage < 1) currentPage = 1;
-
-  const startIndex = (currentPage - 1) * PER_PAGE;
-  const endIndex = Math.min(startIndex + PER_PAGE, total);
-
-  // Hide all cards first
-  const allCards = document.querySelectorAll('.tv-product-card');
-  allCards.forEach(c => { c.style.display = 'none'; });
-
-  // Show only current page cards from currentFilteredCards
-  for (let i = startIndex; i < endIndex; i++) {
-    if (currentFilteredCards[i]) {
-      currentFilteredCards[i].style.display = 'flex';
-    }
-  }
-
-  // Update pagination info text: Showing 1–16 of 124 tyres
-  const infoEl = document.getElementById('pagination-info');
-  if (infoEl) {
-    if (total === 0) {
-      infoEl.textContent = 'Showing 0 tyres';
-    } else {
-      infoEl.innerHTML = `Showing ${startIndex + 1}&ndash;${endIndex} of ${total} tyres`;
-    }
-  }
-
-  // Update count heading
-  const heading = document.getElementById('catalog-count-heading');
-  if (heading) {
-    heading.textContent = `${total} Car Tyres`;
-  }
-
-  renderPaginationControls(totalPages);
-}
-
-function renderPaginationControls(totalPages) {
-  const controls = document.getElementById('pagination-controls');
-  if (!controls) return;
-
-  if (totalPages <= 1) {
-    controls.style.display = 'none';
-    return;
-  }
-  controls.style.display = 'flex';
-
-  let html = '';
-  // Prev button
-  const prevDisabled = currentPage <= 1 ? 'disabled' : '';
-  html += `<button type="button" class="tv-page-btn" ${prevDisabled} onclick="goToPage(${currentPage - 1})" aria-label="Previous page">&lsaquo;</button>`;
-
-  // Page numbers (1 to totalPages)
-  for (let i = 1; i <= totalPages; i++) {
-    const activeCls = i === currentPage ? ' active' : '';
-    html += `<button type="button" class="tv-page-btn${activeCls}" onclick="goToPage(${i})">${i}</button>`;
-  }
-
-  // Next button
-  const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
-  html += `<button type="button" class="tv-page-btn" ${nextDisabled} onclick="goToPage(${currentPage + 1})" aria-label="Next page">&rsaquo;</button>`;
-
-  controls.innerHTML = html;
-}
-
-function goToPage(page) {
-  const totalPages = Math.ceil(currentFilteredCards.length / PER_PAGE) || 1;
-  if (page < 1 || page > totalPages) return;
-  currentPage = page;
-
-  const url = new URL(window.location);
-  url.searchParams.set('page', page);
-  window.history.pushState({}, '', url);
-
-  applyPagination();
-
-  const mainCol = document.querySelector('.tv-catalog-main');
-  if (mainCol) {
-    mainCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-}
-
-function filterProducts(resetPage = true) {
-  const allCards = Array.from(document.querySelectorAll('.tv-product-card'));
-  const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value);
-  const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value);
-  const selectedBrands = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(cb => cb.value.toLowerCase());
-  const selectedTypes = Array.from(document.querySelectorAll('input[name="tire_type"]:checked')).map(cb => cb.value);
-  const maxPrice = parseFloat(document.getElementById('max-price-slider').value) || 2000;
-
-  currentFilteredCards = allCards.filter(card => {
-    const vType = card.getAttribute('data-vehicle');
-    const size = card.getAttribute('data-size');
-    const brand = (card.getAttribute('data-brand') || '').toLowerCase();
-    const tType = card.getAttribute('data-type');
-    const price = parseFloat(card.getAttribute('data-price')) || 0;
-
-    const matchVehicle = selectedVehicles.length === 0 || selectedVehicles.includes(vType);
-    const matchSize = selectedSizes.length === 0 || selectedSizes.includes(size);
-    const matchBrand = selectedBrands.length === 0 || selectedBrands.includes(brand);
-    const matchType = selectedTypes.length === 0 || selectedTypes.includes(tType);
-    const matchPrice = price <= maxPrice;
-
-    return matchVehicle && matchSize && matchBrand && matchType && matchPrice;
-  });
-
-  if (resetPage) {
-    currentPage = 1;
-    const url = new URL(window.location);
-    url.searchParams.delete('page');
-    window.history.pushState({}, '', url);
-  }
-
-  applyPagination();
-}
-
-function sortProducts(sortBy) {
-  const container = document.getElementById('products-grid-container');
-  const allCards = Array.from(container.querySelectorAll('.tv-product-card'));
-
-  allCards.sort((a, b) => {
-    if (sortBy === 'price-asc') {
-      return parseFloat(a.getAttribute('data-price')) - parseFloat(b.getAttribute('data-price'));
-    } else if (sortBy === 'price-desc') {
-      return parseFloat(b.getAttribute('data-price')) - parseFloat(a.getAttribute('data-price'));
-    } else if (sortBy === 'rating') {
-      return parseFloat(b.getAttribute('data-rating')) - parseFloat(a.getAttribute('data-rating'));
-    } else if (sortBy === 'newest') {
-      return parseInt(b.getAttribute('data-order')) - parseInt(a.getAttribute('data-order'));
-    } else {
-      return parseInt(a.getAttribute('data-order')) - parseInt(b.getAttribute('data-order'));
-    }
-  });
-
-  allCards.forEach(card => container.appendChild(card));
-  filterProducts(true);
-}
-
-function clearAllFilters() {
-  document.querySelectorAll('.tv-filter-sidebar input[type="checkbox"]').forEach(cb => {
-    cb.checked = false;
-  });
-  const searchBox = document.querySelector('.tv-search-size-box');
-  if (searchBox) {
-    searchBox.value = '';
-    searchFilterSizes('');
-  }
-  const slider = document.getElementById('max-price-slider');
-  if (slider) {
-    slider.value = slider.max;
-    document.getElementById('price-slider-val').textContent = '<= AED ' + parseInt(slider.max).toLocaleString();
-  }
-  filterProducts(true);
+  filterProducts();
 }
 
 function toggleWishlist(btn) {
@@ -1229,7 +1439,7 @@ function showToast(msg) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  initPagination();
+  renderPaginationControls(totalPages, currentPage);
 });
 </script>
 {% endblock %}
