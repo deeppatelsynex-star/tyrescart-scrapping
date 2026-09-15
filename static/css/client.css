@@ -943,13 +943,45 @@ header {
   }
 }
 
-.g3 {
-  grid-template-columns: repeat(2, 1fr)
+.g2 {
+  grid-template-columns: 1fr;
 }
 
-@media(min-width:980px) {
+@media(min-width: 640px) {
+  .g2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.g3 {
+  grid-template-columns: 1fr;
+}
+
+@media(min-width: 640px) {
   .g3 {
-    grid-template-columns: repeat(3, 1fr)
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media(min-width: 980px) {
+  .g3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.g4 {
+  grid-template-columns: 1fr;
+}
+
+@media(min-width: 640px) {
+  .g4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media(min-width: 992px) {
+  .g4 {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
@@ -5159,11 +5191,12 @@ details summary span:last-child {
     margin: 0 -4px;
   }
   .price-table-scroll {
-    overflow-x: hidden !important; /* Zero horizontal scrollbar! */
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
     width: 100% !important;
   }
   .price-table {
-    min-width: 0 !important;
+    min-width: 620px !important;
     width: 100% !important;
   }
   .price-table thead th {
@@ -5758,6 +5791,14 @@ details summary span:last-child {
   border: 1px solid rgba(56, 189, 248, 0.35);
 }
 
+.tv-hero-quote-box label,
+.tv-hero-quote-box .field label,
+.tv-hero-quote-box .field-row label {
+  color: #ffffff !important;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 /* Feature & Advice Cards with 3D hover & Brand Blue */
 .tv-feature-card,
 .tv-advice-card {
@@ -5970,11 +6011,18 @@ details summary span:last-child {
 
 @media(max-width: 991px) {
   .tv-4x4-hero {
+    background-image: linear-gradient(135deg, rgba(8, 22, 58, 0.88) 0%, rgba(15, 76, 196, 0.82) 100%), url('/static/assets/images/4x4/hero_banner_clean.jpg');
     background-position: 70% center;
   }
   .tv-4x4-hero-grid {
     grid-template-columns: 1fr;
     gap: 36px;
+  }
+}
+
+@media(max-width: 768px) {
+  .tv-4x4-hero {
+    background-image: linear-gradient(180deg, rgba(7, 18, 48, 0.92) 0%, rgba(10, 32, 84, 0.88) 100%), url('/static/assets/images/4x4/hero_banner_clean.jpg');
   }
 }
 
@@ -6273,17 +6321,12 @@ details summary span:last-child {
   border-radius: 12px;
   padding: 11px 16px;
   font-size: 0.88rem;
-  font-weight: 800;
+  font-weight: 700;
   text-align: center;
   border: 1px solid #BFDBFE;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 4px 14px rgba(37, 99, 255, 0.12);
   box-sizing: border-box;
-}
-
-.tv-terrain-card:hover .tv-terrain-pill-btn {
-  background: #2563FF;
-  color: #ffffff;
-  border-color: #2563FF;
+  cursor: default;
 }
 
 /* 3. 4x4 Table Header */
@@ -6329,7 +6372,15 @@ details summary span:last-child {
 
 @media(max-width: 991px) {
   .tv-4x4-knowledge-grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+  }
+  .tv-4x4-knowledge-content {
+    order: 1;
+  }
+  .tv-4x4-knowledge-img-wrap {
+    order: 2;
+    margin-top: 18px;
   }
 }
 
@@ -6356,13 +6407,13 @@ details summary span:last-child {
 
 .tv-4x4-knowledge-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 14px;
   margin-top: 24px;
   margin-bottom: 28px;
 }
 
-@media(max-width: 768px) {
+@media(max-width: 560px) {
   .tv-4x4-knowledge-cards {
     grid-template-columns: 1fr;
   }
@@ -6419,7 +6470,7 @@ details summary span:last-child {
 /* 5. Bottom 4x4 CTA Banner */
 .tv-4x4-bottom-cta {
   background-color: #08245b;
-  background-image: url('/static/assets/images/4x4/cta_banner_clean.jpg');
+  background-image: linear-gradient(rgba(8, 36, 91, 0.85), rgba(8, 36, 91, 0.85)), url('/static/assets/images/4x4/cta_banner_clean.jpg');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -6720,6 +6771,7 @@ details summary span:last-child {
 /* EV Table Custom Styling */
 .tv-ev-table {
   width: 100%;
+  min-width: 650px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -6805,6 +6857,13 @@ details summary span:last-child {
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
   display: flex;
   flex-direction: column;
+  height: 100%;
+}
+
+.tv-ev-advice-card h3 {
+  min-height: 58px;
+  display: flex;
+  align-items: flex-start;
 }
 
 .tv-ev-advice-card:hover {
@@ -6859,5 +6918,26 @@ details summary span:last-child {
 .tv-ev-bottom-badge-item svg {
   color: #38BDF8;
   flex-shrink: 0;
+}
+
+/* FAQ Padding Fix for Desktop & Mobile */
+.faq-summary,
+.faq-trigger {
+  padding: 16px 20px !important;
+}
+
+.faq-answer-inner {
+  padding: 0 20px 16px 20px !important;
+}
+
+@media (max-width: 640px) {
+  .faq-summary,
+  .faq-trigger {
+    padding: 14px 16px !important;
+    font-size: 0.95rem !important;
+  }
+  .faq-answer-inner {
+    padding: 0 16px 14px 16px !important;
+  }
 }
 

@@ -200,7 +200,7 @@ def build_page_brands():
       <p style="font-size:1.02rem; line-height:1.75; color:#334155; margin:0 0 16px 0;">
         Value brands allow vehicle owners to replace worn rubber legally and affordably. Brands like <strong>Laufenn</strong> (Hankook's sub-brand), <strong>Sumitomo</strong> (Japan), <strong>Giti</strong>, <strong>Zeetex</strong>, and <strong>Roadstone</strong> pass full GCC homologation and provide dependable traction for short urban commutes.
       </p>
-      <p style="font-size:0.96rem; line-height:1.7; color:#64748B; margin:0;">
+      <p style="font-size:1.02rem; line-height:1.75; color:#334155; margin:0;">
         The honest trade-off: Expect slightly higher road noise, softer sidewalls, and a lifespan of 30,000 to 40,000 km compared to the 60,000+ km of a premium Michelin or Bridgestone. If you do 30,000 km of highway commuting a year, a mid-range or premium set is cheaper per kilometre.
       </p>
     </div>
@@ -225,7 +225,7 @@ def build_page_brands():
           </span>
           <h3 style="font-size:1.45rem; font-weight:800; color:#0F172A; margin:0 0 12px 0;">Bridgestone and Michelin handle UAE summer heat better than any other tyre brand.</h3>
           <p style="font-size:1.02rem; line-height:1.7; color:#334155; margin:0 0 16px 0;">Both manufacturers formulate specialized GCC-specification compounds that resist thermal hardening and vulcanisation breakdown when road surfaces reach 55&deg;C to 60&deg;C in July and August.</p>
-          <p style="font-size:0.96rem; line-height:1.65; color:#64748B; margin:0;">Continental and Hankook follow closely behind with exceptional high-temperature silica polymers. For severe desert or heavy-towing applications, Bridgestone's high-tensile steel belts and reinforced beads provide the highest safety margin against high-speed thermal blowouts.</p>
+          <p style="font-size:1.02rem; line-height:1.7; color:#334155; margin:0;">Continental and Hankook follow closely behind with exceptional high-temperature silica polymers. For severe desert or heavy-towing applications, Bridgestone's high-tensile steel belts and reinforced beads provide the highest safety margin against high-speed thermal blowouts.</p>
         </div>
         <div class="tv-4x4-load-card">
           <div style="font-weight:800; color:#0F172A; font-size:1.05rem; margin-bottom:12px;">Temperature Grading &amp; Heat Rules</div>

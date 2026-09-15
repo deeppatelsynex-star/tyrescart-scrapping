@@ -451,7 +451,7 @@ def build_page_sharjah():
       <p class="lead">Certified partner garages strategically positioned across Sharjah's main residential and industrial districts.</p>
     </div>
 
-    <div class="grid g4" style="margin-top:28px;">
+    <div class="grid g2" style="margin-top:28px;">
       <div class="card" style="border:1px solid #E2E8F0; border-radius:14px; padding:20px;">
         <h3 style="font-size:1.1rem; font-weight:800; color:#0F172A; margin:0 0 8px 0;">Al Nahda &amp; Al Taawun</h3>
         <p style="font-size:0.86rem; color:#475569; margin:0;">Right on the border with Dubai, convenient for daily commuters.</p>
@@ -594,7 +594,7 @@ def build_page_ajman():
       <p class="lead">Fast delivery and professional fitting across all central Ajman districts.</p>
     </div>
 
-    <div class="grid g4" style="margin-top:28px;">
+    <div class="grid g2" style="margin-top:28px;">
       <div class="card" style="border:1px solid #E2E8F0; border-radius:14px; padding:20px;">
         <h3 style="font-size:1.1rem; font-weight:800; color:#0F172A; margin:0 0 8px 0;">Al Nuaimiya</h3>
         <p style="font-size:0.86rem; color:#475569; margin:0;">Fast access right near Kuwait Street and the Sharjah border.</p>
@@ -737,7 +737,7 @@ def build_page_rak():
       <p class="lead">Partner garages across RAK city, coastal resorts, and industrial hubs.</p>
     </div>
 
-    <div class="grid g4" style="margin-top:28px;">
+    <div class="grid g2" style="margin-top:28px;">
       <div class="card" style="border:1px solid #E2E8F0; border-radius:14px; padding:20px;">
         <h3 style="font-size:1.1rem; font-weight:800; color:#0F172A; margin:0 0 8px 0;">Al Nakheel &amp; Khuzam</h3>
         <p style="font-size:0.86rem; color:#475569; margin:0;">Central city workshops close to commercial districts and government offices.</p>
@@ -880,7 +880,7 @@ def build_page_fujairah():
       <p class="lead">Partner garages serving Fujairah City and key East Coast communities.</p>
     </div>
 
-    <div class="grid g4" style="margin-top:28px;">
+    <div class="grid g2" style="margin-top:28px;">
       <div class="card" style="border:1px solid #E2E8F0; border-radius:14px; padding:20px;">
         <h3 style="font-size:1.1rem; font-weight:800; color:#0F172A; margin:0 0 8px 0;">Fujairah City</h3>
         <p style="font-size:0.86rem; color:#475569; margin:0;">Central automotive hubs near Hamad Bin Abdulla Road.</p>
@@ -1023,7 +1023,7 @@ def build_page_uaq():
       <p class="lead">Convenient partner garages serving coastal communities and inland districts.</p>
     </div>
 
-    <div class="grid g4" style="margin-top:28px;">
+    <div class="grid g2" style="margin-top:28px;">
       <div class="card" style="border:1px solid #E2E8F0; border-radius:14px; padding:20px;">
         <h3 style="font-size:1.1rem; font-weight:800; color:#0F172A; margin:0 0 8px 0;">UAQ City &amp; Old Town</h3>
         <p style="font-size:0.86rem; color:#475569; margin:0;">Central city workshops serving residential and municipal areas.</p>

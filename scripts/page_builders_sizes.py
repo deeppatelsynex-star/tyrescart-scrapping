@@ -99,9 +99,9 @@ def build_page_sizes():
       </p>
     </div>
 
-    <div style="background:#F8FAFC; border:2px solid #E2E8F0; border-radius:20px; padding:32px; max-width:920px; margin:0 auto;">
+    <div style="background:#F8FAFC; border:2px solid #E2E8F0; border-radius:20px; padding:clamp(18px, 4vw, 32px); max-width:920px; margin:0 auto;">
       <div style="text-align:center; margin-bottom:24px;">
-        <span style="font-size:clamp(1.8rem, 4vw, 2.5rem); font-weight:900; color:#2563FF; letter-spacing:0.04em; font-family:monospace; background:#ffffff; padding:8px 24px; border-radius:12px; border:1px solid #CBD5E1; display:inline-block;">
+        <span style="font-size:clamp(1.15rem, 4.8vw, 2.3rem); font-weight:900; color:#2563FF; letter-spacing:0.04em; font-family:monospace; background:#ffffff; padding:8px clamp(10px, 3vw, 24px); border-radius:12px; border:1px solid #CBD5E1; display:inline-block; white-space:nowrap; max-width:100%; box-sizing:border-box;">
           235 / 55 R19 105W
         </span>
       </div>
@@ -224,21 +224,21 @@ def build_page_sizes():
       <div class="card" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:16px; padding:26px;">
         <h3 style="font-size:1.15rem; font-weight:800; color:#0F172A; margin:0 0 12px 0;">Common Load Indexes (kg per tyre)</h3>
         <table style="width:100%; font-size:0.9rem; border-collapse:collapse;">
-          <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:6px 0; font-weight:700;">88: 560 kg</td><td style="padding:6px 0; font-weight:700;">91: 615 kg</td><td style="padding:6px 0; font-weight:700;">94: 670 kg</td></tr>
-          <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:6px 0; font-weight:700;">98: 750 kg</td><td style="padding:6px 0; font-weight:700;">102: 850 kg</td><td style="padding:6px 0; font-weight:700;">105: 925 kg</td></tr>
-          <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:6px 0; font-weight:700;">111: 1,090 kg</td><td style="padding:6px 0; font-weight:700;">116: 1,250 kg</td><td style="padding:6px 0; font-weight:700;">121: 1,450 kg</td></tr>
+          <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:10px 8px; font-weight:700;">88: 560 kg</td><td style="padding:10px 8px; font-weight:700;">91: 615 kg</td><td style="padding:10px 8px; font-weight:700;">94: 670 kg</td></tr>
+          <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:10px 8px; font-weight:700;">98: 750 kg</td><td style="padding:10px 8px; font-weight:700;">102: 850 kg</td><td style="padding:10px 8px; font-weight:700;">105: 925 kg</td></tr>
+          <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:10px 8px; font-weight:700;">111: 1,090 kg</td><td style="padding:10px 8px; font-weight:700;">116: 1,250 kg</td><td style="padding:10px 8px; font-weight:700;">121: 1,450 kg</td></tr>
         </table>
-        <p style="font-size:0.85rem; color:#64748B; margin:12px 0 0 0;">Never drop below the load index specified on your door placard. Doing so causes sidewall failure under vehicle weight.</p>
+        <p style="font-size:0.92rem; font-weight:600; color:#1E293B; line-height:1.6; margin:14px 0 0 0;">Never drop below the load index specified on your door placard. Doing so causes sidewall failure under vehicle weight.</p>
       </div>
 
       <div class="card" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:16px; padding:26px;">
         <h3 style="font-size:1.15rem; font-weight:800; color:#0F172A; margin:0 0 12px 0;">Speed Ratings (Max km/h)</h3>
         <table style="width:100%; font-size:0.9rem; border-collapse:collapse;">
-          <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:6px 0; font-weight:700;">S: 180 km/h</td><td style="padding:6px 0; font-weight:700;">T: 190 km/h</td><td style="padding:6px 0; font-weight:700;">H: 210 km/h</td></tr>
-          <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:6px 0; font-weight:700;">V: 240 km/h</td><td style="padding:6px 0; font-weight:700;">W: 270 km/h</td><td style="padding:6px 0; font-weight:700;">Y: 300 km/h</td></tr>
-          <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:6px 0; font-weight:700;">(Y): 300+ km/h</td><td style="padding:6px 0; font-weight:700;">VR: 210+ km/h</td><td style="padding:6px 0; font-weight:700;">ZR: 240+ km/h</td></tr>
+          <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:10px 8px; font-weight:700;">S: 180 km/h</td><td style="padding:10px 8px; font-weight:700;">T: 190 km/h</td><td style="padding:10px 8px; font-weight:700;">H: 210 km/h</td></tr>
+          <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:10px 8px; font-weight:700;">V: 240 km/h</td><td style="padding:10px 8px; font-weight:700;">W: 270 km/h</td><td style="padding:10px 8px; font-weight:700;">Y: 300 km/h</td></tr>
+          <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:10px 8px; font-weight:700;">(Y): 300+ km/h</td><td style="padding:10px 8px; font-weight:700;">VR: 210+ km/h</td><td style="padding:10px 8px; font-weight:700;">ZR: 240+ km/h</td></tr>
         </table>
-        <p style="font-size:0.85rem; color:#64748B; margin:12px 0 0 0;">For UAE highway commuting at 120&ndash;140 km/h in summer heat, minimum ratings of V (240 km/h) or higher are strongly advised.</p>
+        <p style="font-size:0.92rem; font-weight:600; color:#1E293B; line-height:1.6; margin:14px 0 0 0;">For UAE highway commuting at 120&ndash;140 km/h in summer heat, minimum ratings of V (240 km/h) or higher are strongly advised.</p>
       </div>
     </div>
   </div>

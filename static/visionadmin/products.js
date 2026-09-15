@@ -114,8 +114,12 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
 
     isSelectOptionSelected(code, val) {
       const cur = this.form.dynamic_attributes ? this.form.dynamic_attributes[code] : undefined;
-      if (cur === undefined || cur === null || cur === '') return false;
+      if (cur === undefined || cur === null || cur === '') {
+        return val === 'None' || val === '';
+      }
       if (String(cur) === String(val)) return true;
+      if (String(cur).trim().toLowerCase() === String(val).trim().toLowerCase()) return true;
+      if (code === 'promotion' && (cur === '0' || cur === 0 || cur === 'None' || cur === '') && val === 'None') return true;
       if (typeof cur === 'number' || (!isNaN(parseFloat(cur)) && !isNaN(parseFloat(val)))) {
         return parseFloat(cur) === parseFloat(val);
       }

@@ -175,7 +175,7 @@ def build_page_cars():
       <p style="font-size:1.02rem; line-height:1.75; color:#334155; margin:0 0 16px 0;">
         For everyday sedans and hatchbacks, drivers should focus on ride comfort, low cabin noise, and fuel economy. The mid-range tyre tier (Hankook, Yokohama, Kumho, Dunlop) is usually the sweet spot &mdash; offering around 85% of premium European tyre durability and wet braking performance for roughly 60% of the price.
       </p>
-      <p style="font-size:0.96rem; line-height:1.7; color:#64748B; margin:0;">
+      <p style="font-size:1.02rem; line-height:1.75; color:#334155; margin:0;">
         If you commute between Sharjah and Dubai or cover high annual highway mileage, opting for a low-rolling-resistance silica compound pays dividends in lower fuel consumption and reduced tyre wear during summer tarmac conditions.
       </p>
     </div>
