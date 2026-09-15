@@ -218,42 +218,55 @@
 }
 
 /* ==========================================================================
-   1. HERO SECTION (DEEP BLUE GRADIENT + DUBAI SKYLINE HERO VAN)
+   1. HERO SECTION (SEAMLESS PANORAMIC DUBAI SKYLINE & TYRESVISION VAN)
    ========================================================================== */
 .mtf-hero {
-  background: linear-gradient(135deg, #061c3c 0%, #0b3168 45%, #144e94 85%, #08244d 100%);
+  position: relative;
+  background-color: #022859;
+  background-image: 
+    linear-gradient(to right, #001f54 0%, #01337d 28%, rgba(1, 51, 125, 0.92) 42%, rgba(1, 51, 125, 0.25) 58%, transparent 72%),
+    url('/static/assets/images/mobile-fitting-hero-panoramic.jpg');
+  background-position: 85% center;
+  background-size: cover;
+  background-repeat: no-repeat;
   color: #ffffff;
   padding-top: 24px;
-  padding-bottom: 76px;
-  position: relative;
+  padding-bottom: 74px;
   overflow: hidden;
+  min-height: 560px;
 }
 
-.mtf-hero::before {
+.mtf-hero .mtf-wrap {
+  max-width: 1360px;
+}
+
+/* Subtle decorative wave arc at bottom left */
+.mtf-hero::after {
   content: '';
   position: absolute;
-  top: -150px;
-  right: -100px;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, transparent 70%);
-  filter: blur(50px);
+  bottom: -60px;
+  left: -60px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(2, 132, 199, 0.35) 0%, transparent 70%);
   pointer-events: none;
+  z-index: 2;
 }
 
 .mtf-breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.84rem;
-  color: rgba(255, 255, 255, 0.72);
-  margin-bottom: 28px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.78);
+  margin-bottom: 24px;
   position: relative;
-  z-index: 2;
+  z-index: 5;
 }
 
 .mtf-breadcrumb a {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.88);
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -265,11 +278,11 @@
 
 .mtf-hero-grid {
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
+  grid-template-columns: minmax(480px, 580px) 1fr;
   gap: 40px;
-  align-items: center;
+  align-items: flex-start;
   position: relative;
-  z-index: 2;
+  z-index: 5;
 }
 
 .mtf-hero-badge {
@@ -281,30 +294,30 @@
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: #7dd3fc;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #ffffff;
   font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .mtf-hero-title {
   color: #ffffff;
-  font-size: clamp(2.3rem, 3.8vw, 3.35rem);
+  font-size: clamp(2.3rem, 3.8vw, 3.4rem);
   font-weight: 800;
-  line-height: 1.15;
+  line-height: 1.14;
   letter-spacing: -0.025em;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .mtf-hero-desc {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.04rem;
-  line-height: 1.7;
-  margin-bottom: 34px;
-  max-width: 540px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 1.02rem;
+  line-height: 1.68;
+  margin-bottom: 32px;
+  max-width: 530px;
 }
 
 .mtf-hero-actions {
@@ -312,29 +325,29 @@
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 38px;
+  margin-bottom: 36px;
 }
 
 .btn-hero-wa {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: var(--mtf-wa);
+  background: #00d664;
   color: #ffffff;
   font-size: 0.96rem;
   font-weight: 700;
   padding: 13px 26px;
   border-radius: 9999px;
   text-decoration: none;
-  box-shadow: 0 10px 24px -3px rgba(16, 185, 129, 0.45);
+  box-shadow: 0 10px 24px -3px rgba(0, 214, 100, 0.45);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform;
 }
 
 .btn-hero-wa:hover {
-  background: var(--mtf-wa-hover);
+  background: #05be5a;
   transform: translateY(-2px);
-  box-shadow: 0 14px 28px -3px rgba(16, 185, 129, 0.6);
+  box-shadow: 0 14px 28px -3px rgba(0, 214, 100, 0.6);
 }
 
 .btn-hero-call {
@@ -342,7 +355,7 @@
   align-items: center;
   gap: 10px;
   background: #ffffff;
-  color: var(--mtf-navy);
+  color: #0b2545;
   font-size: 0.96rem;
   font-weight: 700;
   padding: 13px 26px;
@@ -359,135 +372,119 @@
   box-shadow: 0 14px 28px -4px rgba(0, 0, 0, 0.25);
 }
 
+/* 4 Trust Badges in a single horizontal row */
 .mtf-hero-trust {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px 28px;
+  gap: 14px 22px;
 }
 
 .mtf-trust-pill {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 0.88rem;
+  gap: 8px;
+  color: #ffffff;
+  font-size: 0.84rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .mtf-trust-pill-icon {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  border: 1.5px solid rgba(56, 189, 248, 0.6);
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #38bdf8;
+  color: #ffffff;
   flex-shrink: 0;
 }
 
-/* Right: Hero Van Visual with script callout & vertical service badges */
-.mtf-hero-visual {
+/* Right Column: Floating script callout in sky & vertical glass service panel on far right */
+.mtf-hero-right-zone {
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.mtf-hero-visual-inner {
-  position: relative;
+  min-height: 440px;
   width: 100%;
-  max-width: 530px;
 }
 
-.mtf-hero-van-card {
-  position: relative;
-  width: 100%;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: var(--mtf-shadow-hero);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(15, 23, 42, 0.4);
-}
-
-.mtf-hero-van-img {
-  width: 100%;
-  height: auto;
-  display: block;
-  object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.mtf-hero-van-card:hover .mtf-hero-van-img {
-  transform: scale(1.02);
-}
-
-/* Handwritten callout above van */
-.mtf-callout-script {
+.mtf-hero-sky-callout {
   position: absolute;
-  top: -42px;
-  left: 24px;
+  top: 18px;
+  left: 14%;
   color: #ffffff;
   transform: rotate(-6deg);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
   pointer-events: none;
-  z-index: 10;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+  z-index: 6;
+  filter: drop-shadow(0 3px 10px rgba(0, 30, 80, 0.45));
 }
 
-.mtf-callout-script svg {
+.mtf-hero-sky-callout .mtf-script-font {
+  font-size: 2.35rem;
+  line-height: 1.05;
+  text-align: center;
+  color: #ffffff;
+}
+
+.mtf-hero-sky-callout svg {
+  color: #ffffff;
+  margin-top: -2px;
+  transform: scaleX(-1);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* 5 Services Frosted Glass Card on far right */
+.mtf-hero-services-panel {
+  position: absolute;
+  top: 15px;
+  right: -15px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 18px;
+  padding: 6px 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 36px rgba(0, 20, 60, 0.25);
+  width: 176px;
+  z-index: 6;
+}
+
+.mtf-service-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-size: 0.83rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.mtf-service-row:last-child {
+  border-bottom: none;
+}
+
+.mtf-service-row:hover {
+  transform: translateX(3px);
   color: #7dd3fc;
 }
 
-/* Vertical Service Pills on Hero Van */
-.mtf-hero-services-stack {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 15;
-}
-
-.mtf-service-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px 6px 8px;
-  border-radius: 9999px;
-  background: rgba(7, 26, 56, 0.82);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  color: #ffffff;
-  font-size: 0.78rem;
-  font-weight: 700;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-  transition: all 0.25s ease;
-  white-space: nowrap;
-  opacity: 1 !important;
-}
-
-.mtf-service-pill:hover {
-  background: rgba(2, 132, 199, 0.95);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateX(-4px);
-}
-
-.mtf-service-pill-icon {
-  width: 22px;
-  height: 22px;
+.mtf-service-circle-icon {
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7dd3fc;
+  color: #ffffff;
   flex-shrink: 0;
 }
 
@@ -1465,9 +1462,35 @@
    RESPONSIVE FLUID MEDIA QUERIES
    ========================================================================== */
 @media (max-width: 1024px) {
+  .mtf-hero {
+    background-image: 
+      linear-gradient(to bottom, #001f54 0%, rgba(1, 51, 125, 0.92) 50%, rgba(1, 51, 125, 0.85) 100%),
+      url('/static/assets/images/mobile-fitting-hero-panoramic.jpg');
+    background-position: center right;
+    min-height: auto;
+  }
   .mtf-hero-grid {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 32px;
+  }
+  .mtf-hero-right-zone {
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-top: 10px;
+  }
+  .mtf-hero-sky-callout {
+    position: static;
+    transform: rotate(-3deg);
+    margin-bottom: 8px;
+  }
+  .mtf-hero-services-panel {
+    position: static;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
   }
   .mtf-hero-visual {
     justify-content: center;
@@ -1508,8 +1531,9 @@
     font-size: 2rem;
   }
   .mtf-hero-trust {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
   .mtf-hero-actions {
     flex-direction: column;
@@ -1524,9 +1548,6 @@
   }
   .mtf-carry-items-grid {
     grid-template-columns: 1fr;
-  }
-  .mtf-hero-services-stack {
-    display: none;
   }
   .mtf-locations-2cols {
     grid-template-columns: 1fr;
@@ -1606,52 +1627,45 @@
           </div>
         </div>
 
-        <!-- Right Column: Hero Van Visual with script callout & 5 service pills -->
-        <div class="mtf-hero-visual">
-          <div class="mtf-hero-visual-inner">
-            <!-- Script callout -->
-            <div class="mtf-callout-script">
-              <span class="mtf-script-font">We come to you!</span>
-              <svg width="32" height="28" viewBox="0 0 32 28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 6 C12 2, 22 8, 26 22 M20 23 L27 23 L26 16"/></svg>
-            </div>
+        <!-- Right Zone: Floating callout in sky & vertical 5-service glass card on far right -->
+        <div class="mtf-hero-right-zone">
+          <!-- Cursive script callout in sky above van -->
+          <div class="mtf-hero-sky-callout">
+            <span class="mtf-script-font">We come<br>to you!</span>
+            <svg width="34" height="28" viewBox="0 0 34 28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4 C14 2, 26 8, 28 22 M22 22 L29 23 L28 16"/></svg>
+          </div>
 
-            <!-- Hero Van Photo Card -->
-            <div class="mtf-hero-van-card">
-              <img src="/static/assets/images/mobile-fitting-hero-van.jpg" alt="TyresVision Mobile Tyre Fitting Van with Dubai Skyline - Doorstep tyre service" class="mtf-hero-van-img">
+          <!-- Vertical 5-Service Glass Panel on far right -->
+          <div class="mtf-hero-services-panel">
+            <div class="mtf-service-row">
+              <span class="mtf-service-circle-icon">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></svg>
+              </span>
+              <span>Tyre Fitting</span>
             </div>
-
-            <!-- 5 Floating Service Badges Stack -->
-            <div class="mtf-hero-services-stack">
-              <div class="mtf-service-pill">
-                <span class="mtf-service-pill-icon">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v5M12 16v5M3 12h5M16 12h5"/></svg>
-                </span>
-                <span>Tyre Fitting</span>
-              </div>
-              <div class="mtf-service-pill">
-                <span class="mtf-service-pill-icon">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3"></circle></svg>
-                </span>
-                <span>Balancing</span>
-              </div>
-              <div class="mtf-service-pill">
-                <span class="mtf-service-pill-icon">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                </span>
-                <span>Puncture Repair</span>
-              </div>
-              <div class="mtf-service-pill">
-                <span class="mtf-service-pill-icon">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                </span>
-                <span>Tyre Replacement</span>
-              </div>
-              <div class="mtf-service-pill">
-                <span class="mtf-service-pill-icon">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
-                </span>
-                <span>On-Site Support</span>
-              </div>
+            <div class="mtf-service-row">
+              <span class="mtf-service-circle-icon">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+              </span>
+              <span>Balancing</span>
+            </div>
+            <div class="mtf-service-row">
+              <span class="mtf-service-circle-icon">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              </span>
+              <span>Puncture Repair</span>
+            </div>
+            <div class="mtf-service-row">
+              <span class="mtf-service-circle-icon">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+              </span>
+              <span>Tyre Replacement</span>
+            </div>
+            <div class="mtf-service-row">
+              <span class="mtf-service-circle-icon">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+              </span>
+              <span>On-Site Support</span>
             </div>
           </div>
         </div>
@@ -2286,8 +2300,8 @@ document.addEventListener('DOMContentLoaded', function () {
     gsap.from('.mtf-hero-desc', { opacity: 0, y: 20, duration: 0.8, delay: 0.2, ease: 'power3.out' });
     gsap.from('.mtf-hero-actions', { opacity: 0, y: 15, duration: 0.7, delay: 0.3, ease: 'power3.out' });
     gsap.from('.mtf-hero-trust .mtf-trust-pill', { opacity: 0, y: 12, duration: 0.5, delay: 0.4, stagger: 0.08, ease: 'power2.out' });
-    gsap.from('.mtf-hero-van-card', { opacity: 0, scale: 0.96, y: 20, duration: 1.0, delay: 0.15, ease: 'power3.out' });
-    gsap.from('.mtf-service-pill', { x: 16, duration: 0.5, delay: 0.2, stagger: 0.06, ease: 'power2.out', clearProps: 'all' });
+    gsap.from('.mtf-hero-sky-callout', { opacity: 0, y: -10, duration: 0.8, delay: 0.3, ease: 'power2.out', clearProps: 'all' });
+    gsap.from('.mtf-hero-services-panel', { opacity: 0, x: 20, duration: 0.7, delay: 0.25, ease: 'power2.out', clearProps: 'all' });
 
     // Stagger reveals when in view
     if (typeof ScrollTrigger !== 'undefined') {
