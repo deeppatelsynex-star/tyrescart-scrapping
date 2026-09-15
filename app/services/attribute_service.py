@@ -105,6 +105,45 @@ class AttributeService:
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
+                cursor.execute("SELECT code FROM attributes WHERE id = %s", (attribute_id,))
+                attr_row = cursor.fetchone()
+                if attr_row and attr_row.get('code') in ('promotion', 'offers'):
+                    cursor.execute("""
+                        SELECT id, name, label_default
+                        FROM cart_price_rules
+                        WHERE is_active = 1 AND deleted_at IS NULL
+                        ORDER BY priority ASC, id ASC
+                    """)
+                    rules = cursor.fetchall()
+                    options = [
+                        {
+                            'id': 'none',
+                            'attribute_id': attribute_id,
+                            'value': 'None',
+                            'label': {'en': 'None', 'ar': 'لا يوجد'},
+                            'swatch_value': None,
+                            'sort_order': 0,
+                            'is_default': 1
+                        }
+                    ]
+                    for idx, r in enumerate(rules, start=1):
+                        banner = (r.get('label_default') or '').strip()
+                        rule_name = (r.get('name') or '').strip()
+                        val = banner or rule_name
+                        display_text = f"{banner} ({rule_name})" if banner and rule_name and banner.lower() != rule_name.lower() else (banner or rule_name)
+                        lbl_dict = {'en': display_text, 'ar': display_text}
+
+                        options.append({
+                            'id': r['id'],
+                            'attribute_id': attribute_id,
+                            'value': val,
+                            'label': lbl_dict,
+                            'swatch_value': None,
+                            'sort_order': idx,
+                            'is_default': 0
+                        })
+                    return options
+
                 cursor.execute("""
                     SELECT id, attribute_id, value, label, swatch_value, sort_order, is_default
                     FROM attribute_options
@@ -706,7 +745,9 @@ class AttributeService:
                         elif code == 'tax_class':
                             c_val = attrs_j.get('tax_class_name')
                         elif code == 'promotion':
-                            c_val = attrs_j.get('offers') or 'None'
+                            c_val = attrs_j.get('promotion') or attrs_j.get('offers') or 'None'
+                            if str(c_val).strip() in ('0', ''):
+                                c_val = 'None'
 
                 # Fallback to direct columns in products table
                 if (c_val is None or c_val == '') and prod_data:

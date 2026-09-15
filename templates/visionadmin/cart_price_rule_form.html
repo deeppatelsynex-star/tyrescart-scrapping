@@ -81,7 +81,7 @@
       class="px-4 py-2 rounded-xl text-xs transition cursor-pointer whitespace-nowrap flex items-center gap-2"
     >
       <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      <span>3. Actions &amp; Tyre Criteria</span>
+      <span>3. Actions</span>
     </button>
 
     <template x-if="mode === 'edit' && form.coupon_type === 'SPECIFIC_COUPON'">
@@ -479,161 +479,6 @@
           </div>
         </div>
       </div>
-
-      <!-- 2. Tyre Fields Criteria Builder (Matches Image Reference!) -->
-      <div class="bg-white p-6 rounded-3xl border border-[#E8EDE4] shadow-xs space-y-6">
-        <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-3">
-          <div>
-            <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
-              <span>Tyre Item Targeting Criteria</span>
-              <span class="px-2 py-0.5 text-[10px] font-black uppercase rounded bg-blue-50 text-[#2563FF] border border-blue-200">Catalog Matcher</span>
-            </h2>
-            <p class="text-xs text-slate-500 mt-0.5">Filter exactly which tyres qualify for this promotion using the product catalogue attributes shown in the card reference.</p>
-          </div>
-          <button 
-            type="button" 
-            @click="resetTyreCriteria()" 
-            class="text-xs font-bold text-slate-400 hover:text-slate-700 transition"
-          >
-            Clear Filters (All Tyres)
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          <!-- Brand -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-700">Tyre Brand</label>
-            <select 
-              x-model="itemCriteria.brand_id" 
-              class="w-full px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition cursor-pointer"
-            >
-              <option value="">All Brands</option>
-              {% for b in lookups.brands %}
-              <option value="{{ b.id }}">{{ b.name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <!-- Tyre Size -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-700">Tyre Size Spec</label>
-            <input 
-              type="text" 
-              x-model="itemCriteria.tire_size_label" 
-              list="tyreSizeList"
-              placeholder="e.g. 165/70 R14 or 165/65 R13" 
-              class="w-full px-3.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition"
-            >
-            <datalist id="tyreSizeList">
-              {% for s in lookups.tyre_sizes %}
-              <option value="{{ s }}"></option>
-              {% endfor %}
-            </datalist>
-          </div>
-
-          <!-- Pattern -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-700">Tyre Model / Pattern</label>
-            <input 
-              type="text" 
-              x-model="itemCriteria.tire_pattern" 
-              list="patternList"
-              placeholder="e.g. Romero or Kinergy Eco2 K435" 
-              class="w-full px-3.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition"
-            >
-            <datalist id="patternList">
-              {% for pat in lookups.patterns %}
-              <option value="{{ pat }}"></option>
-              {% endfor %}
-            </datalist>
-          </div>
-
-          <!-- Country of Origin -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-700">Country of Origin</label>
-            <input 
-              type="text" 
-              x-model="itemCriteria.country_of_origin" 
-              placeholder="e.g. Thailand or South Korea" 
-              class="w-full px-3.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition"
-            >
-          </div>
-
-          <!-- Manufacturing Year -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-700">Manufacturing Year</label>
-            <input 
-              type="number" 
-              x-model="itemCriteria.year" 
-              placeholder="e.g. 2024 or 2025" 
-              class="w-full px-3.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition"
-            >
-          </div>
-
-          <!-- Warranty Months -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-700">Warranty (Months)</label>
-            <select 
-              x-model="itemCriteria.warranty_months" 
-              class="w-full px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition cursor-pointer"
-            >
-              <option value="">Any Warranty</option>
-              <option value="12">12 Months (1 Year)</option>
-              <option value="24">24 Months (2 Years)</option>
-              <option value="36">36 Months (3 Years)</option>
-              <option value="60">60 Months (5 Years)</option>
-            </select>
-          </div>
-
-          <!-- Vehicle Type -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-700">Vehicle Type</label>
-            <select 
-              x-model="itemCriteria.vehicle_type" 
-              class="w-full px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition cursor-pointer"
-            >
-              <option value="">All Vehicles</option>
-              <option value="car">Passenger Car</option>
-              <option value="suv">SUV</option>
-              <option value="4x4">4x4 / Off-Road</option>
-              <option value="van">Commercial Van</option>
-              <option value="ev">Electric Vehicle (EV)</option>
-            </select>
-          </div>
-
-          <!-- Run Flat -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-700">Run-Flat Tyres</label>
-            <select 
-              x-model="itemCriteria.run_flat" 
-              class="w-full px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition cursor-pointer"
-            >
-              <option value="">All (Run-Flat &amp; Standard)</option>
-              <option value="1">Run-Flat Tyres Only</option>
-              <option value="0">Standard Tyres Only</option>
-            </select>
-          </div>
-
-          <!-- EV Rated -->
-          <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-700">EV Rated Tyres</label>
-            <select 
-              x-model="itemCriteria.ev_rated" 
-              class="w-full px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#2563FF] transition cursor-pointer"
-            >
-              <option value="">All (EV &amp; Combustion)</option>
-              <option value="1">EV Dedicated Tyres Only</option>
-              <option value="0">Standard Combustion Tyres Only</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Summary of applied item targeting -->
-        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3">
-          <svg class="w-4 h-4 text-slate-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <p class="text-xs font-bold text-slate-700" x-text="getCriteriaSummary()"></p>
-        </div>
-      </div>
     </div>
 
     <!-- ==================================================================== -->
@@ -865,38 +710,6 @@ function cartPriceRuleFormApp(mode) {
       }
     },
 
-    resetTyreCriteria() {
-      this.itemCriteria = {
-        brand_id: '',
-        tire_size_label: '',
-        tire_pattern: '',
-        country_of_origin: '',
-        year: '',
-        warranty_months: '',
-        vehicle_type: '',
-        run_flat: '',
-        ev_rated: ''
-      };
-    },
-
-    getCriteriaSummary() {
-      let active = [];
-      if (this.itemCriteria.brand_id) active.push('Brand');
-      if (this.itemCriteria.tire_size_label) active.push(`Size (${this.itemCriteria.tire_size_label})`);
-      if (this.itemCriteria.tire_pattern) active.push(`Pattern (${this.itemCriteria.tire_pattern})`);
-      if (this.itemCriteria.country_of_origin) active.push(`Origin (${this.itemCriteria.country_of_origin})`);
-      if (this.itemCriteria.year) active.push(`Year (${this.itemCriteria.year})`);
-      if (this.itemCriteria.warranty_months) active.push(`Warranty (${this.itemCriteria.warranty_months}M)`);
-      if (this.itemCriteria.vehicle_type) active.push(`Vehicle (${this.itemCriteria.vehicle_type})`);
-      if (this.itemCriteria.run_flat !== '') active.push('Run-Flat');
-      if (this.itemCriteria.ev_rated !== '') active.push('EV');
-
-      if (active.length === 0) {
-        return 'Applies to ALL products in catalogue (No tyre attribute filters applied).';
-      }
-      return `Restricted to tyres matching: ${active.join(', ')}.`;
-    },
-
     buildConditionsJson() {
       let conds = [];
       if (this.cartConditions.min_subtotal) {
@@ -913,37 +726,7 @@ function cartPriceRuleFormApp(mode) {
     },
 
     buildItemConditionsJson() {
-      let conds = [];
-      if (this.itemCriteria.brand_id) {
-        conds.push({ attribute: 'item.brand_id', operator: '==', value: parseInt(this.itemCriteria.brand_id) });
-      }
-      if (this.itemCriteria.tire_size_label) {
-        conds.push({ attribute: 'item.tire_size_label', operator: '==', value: this.itemCriteria.tire_size_label.trim() });
-      }
-      if (this.itemCriteria.tire_pattern) {
-        conds.push({ attribute: 'item.tire_pattern', operator: '==', value: this.itemCriteria.tire_pattern.trim() });
-      }
-      if (this.itemCriteria.country_of_origin) {
-        conds.push({ attribute: 'item.country_of_origin', operator: '==', value: this.itemCriteria.country_of_origin.trim() });
-      }
-      if (this.itemCriteria.year) {
-        conds.push({ attribute: 'item.year', operator: '==', value: parseInt(this.itemCriteria.year) });
-      }
-      if (this.itemCriteria.warranty_months) {
-        conds.push({ attribute: 'item.warranty_months', operator: '==', value: parseInt(this.itemCriteria.warranty_months) });
-      }
-      if (this.itemCriteria.vehicle_type) {
-        conds.push({ attribute: 'item.vehicle_type', operator: '==', value: this.itemCriteria.vehicle_type });
-      }
-      if (this.itemCriteria.run_flat !== '') {
-        conds.push({ attribute: 'item.run_flat', operator: '==', value: parseInt(this.itemCriteria.run_flat) });
-      }
-      if (this.itemCriteria.ev_rated !== '') {
-        conds.push({ attribute: 'item.ev_rated', operator: '==', value: parseInt(this.itemCriteria.ev_rated) });
-      }
-
-      if (conds.length === 0) return null;
-      return { type: 'group', operator: 'ALL', conditions: conds };
+      return null;
     },
 
     async saveRule() {

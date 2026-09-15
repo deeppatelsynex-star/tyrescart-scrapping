@@ -454,8 +454,10 @@ def _format_product_for_client(p, locale='en'):
         attr = {}
     p_dict['attr'] = attr
     p_dict['rating'] = float(attr.get('rating', 4.5))
-    p_dict['reviews'] = int(attr.get('reviews', 50))
-    p_dict['badge'] = attr.get('badge') or ''
+    raw_badge = attr.get('badge') or attr.get('promotion') or attr.get('offers') or ''
+    if str(raw_badge).strip().lower() in ('none', '0', ''):
+        raw_badge = ''
+    p_dict['badge'] = raw_badge
     p_dict['badge_class'] = attr.get('badge_class', 'badge-blue')
     p_dict['season'] = attr.get('season') or p_dict.get('tire_type') or 'Summer'
     
@@ -556,9 +558,15 @@ def _fetch_catalog_products(args, locale='en'):
                         sizes.append(sp)
 
             if sizes:
-                s_placeholders = ', '.join(['%s'] * len(sizes))
-                where.append(f"p.tire_size_label IN ({s_placeholders})")
-                params.extend(sizes)
+                s_clauses = []
+                s_params = []
+                for sz in sizes:
+                    sz_clean = sz.strip()
+                    sz_hyphen = sz_clean.replace('/', '-').replace(' ', '-')
+                    s_clauses.append("(p.tire_size_label = %s OR REPLACE(REPLACE(p.tire_size_label, '/', '-'), ' ', '-') = %s)")
+                    s_params.extend([sz_clean, sz_hyphen])
+                where.append("(" + " OR ".join(s_clauses) + ")")
+                params.extend(s_params)
 
             # 4. Tyre Types / Seasons
             raw_types = args.getlist('type') or args.getlist('tire_type') or args.getlist('types')
@@ -672,20 +680,106 @@ def _fetch_catalog_products(args, locale='en'):
         conn.close()
 
 
-# --- PRODUCT CATALOG / CAR TYRES LISTING ---
-def _render_product_listing(locale):
+# # --- PRODUCT CATALOG / CAR TYRES LISTING ---
+def _parse_filter_path(filter_path):
+    """Parses clean SEO slug filter segments (e.g. /page-2-16/brand-pirelli/size-225-40-R18/max_price-5693) into request args."""
+    from werkzeug.datastructures import MultiDict
+    import re
+    args = MultiDict()
+    if not filter_path:
+        return args
+
+    segments = [s.strip() for s in filter_path.split('/') if s.strip()]
+    for seg in segments:
+        m_page = re.match(r'^page-(\d+)(?:-(\d+))?$', seg, re.IGNORECASE)
+        if m_page:
+            args.setlistdefault('page', []).append(m_page.group(1))
+            if m_page.group(2):
+                args.setlistdefault('per_page', []).append(m_page.group(2))
+            continue
+
+        m_brand = re.match(r'^brand-(.+)$', seg, re.IGNORECASE)
+        if m_brand:
+            for b in m_brand.group(1).split(','):
+                if b.strip():
+                    args.add('brand', b.strip())
+            continue
+
+        m_size = re.match(r'^size-(.+)$', seg, re.IGNORECASE)
+        if m_size:
+            for s in m_size.group(1).split(','):
+                if s.strip():
+                    args.add('size', s.strip())
+            continue
+
+        m_veh = re.match(r'^vehicle-(.+)$', seg, re.IGNORECASE)
+        if m_veh:
+            for v in m_veh.group(1).split(','):
+                if v.strip():
+                    args.add('vehicle', v.strip())
+            continue
+
+        m_type = re.match(r'^type-(.+)$', seg, re.IGNORECASE)
+        if m_type:
+            for t in m_type.group(1).split(','):
+                if t.strip():
+                    args.add('type', t.strip())
+            continue
+
+        m_max_p = re.match(r'^max_price-(\d+(?:\.\d+)?)$', seg, re.IGNORECASE)
+        if m_max_p:
+            args.setlistdefault('max_price', []).append(m_max_p.group(1))
+            continue
+
+        m_min_p = re.match(r'^min_price-(\d+(?:\.\d+)?)$', seg, re.IGNORECASE)
+        if m_min_p:
+            args.setlistdefault('min_price', []).append(m_min_p.group(1))
+            continue
+
+        m_sort = re.match(r'^sort-(.+)$', seg, re.IGNORECASE)
+        if m_sort:
+            args.setlistdefault('sort', []).append(m_sort.group(1))
+            continue
+
+        m_q = re.match(r'^(?:search|q)-(.+)$', seg, re.IGNORECASE)
+        if m_q:
+            args.setlistdefault('search', []).append(m_q.group(1))
+            continue
+
+    return args
+
+
+def _render_product_listing(locale, filter_path=None):
     """Renders the dedicated product listing catalog with data and sidebar filters from MySQL database."""
+    from werkzeug.datastructures import MultiDict
+    combined_args = MultiDict()
+    if filter_path:
+        combined_args.update(_parse_filter_path(filter_path))
+    for k, vals in request.args.lists():
+        combined_args.setlist(k, vals)
+
     # Check if client requested JSON via query param or header
-    if request.args.get('format') == 'json' or request.headers.get('Accept') == 'application/json':
-        data = _fetch_catalog_products(request.args, locale)
+    if combined_args.get('format') == 'json' or request.headers.get('Accept') == 'application/json':
+        data = _fetch_catalog_products(combined_args, locale)
         return jsonify(data)
 
-    catalog_data = _fetch_catalog_products(request.args, locale)
+    catalog_data = _fetch_catalog_products(combined_args, locale)
     products = catalog_data['products']
     total_count = catalog_data['total']
     current_page = catalog_data['page']
     per_page = catalog_data['per_page']
     total_pages = catalog_data['total_pages']
+
+    active_brands = [b.lower() for b in (combined_args.getlist('brand') or combined_args.getlist('brands'))]
+    active_vehicles = [v.lower() for v in (combined_args.getlist('vehicle') or combined_args.getlist('vehicle_type'))]
+    active_sizes = []
+    for s in (combined_args.getlist('size') or combined_args.getlist('sizes')):
+        active_sizes.append(s.strip())
+        active_sizes.append(s.strip().replace('/', '-').replace(' ', '-'))
+    active_types = [t.lower() for t in (combined_args.getlist('type') or combined_args.getlist('tire_type'))]
+    active_max_price = combined_args.get('max_price')
+    active_min_price = combined_args.get('min_price')
+    active_sort = combined_args.get('sort') or 'popular'
 
     from db import get_connection
     conn = get_connection()
@@ -725,7 +819,7 @@ def _render_product_listing(locale):
             filter_sizes = []
             seen_sizes = set()
             for r in cur.fetchall():
-                sz = r['size'].strip()
+                sz = r['size'].strip() if r.get('size') else ''
                 if sz and sz not in seen_sizes:
                     seen_sizes.add(sz)
                     filter_sizes.append({'size': sz, 'count': r['cnt']})
@@ -880,6 +974,13 @@ def _render_product_listing(locale):
                 filter_tyre_types=filter_tyre_types,
                 min_price=min_price,
                 max_price=max_price,
+                active_brands=active_brands,
+                active_vehicles=active_vehicles,
+                active_sizes=active_sizes,
+                active_types=active_types,
+                active_max_price=active_max_price,
+                active_min_price=active_min_price,
+                active_sort=active_sort,
                 locale=locale
             ))
             resp.set_cookie('site_locale', locale, max_age=31536000, path='/')
@@ -906,6 +1007,15 @@ def car_tyres_listing():
     return _render_product_listing(locale)
 
 
+@site_bp.route('/car-tyres/<path:filter_path>')
+@site_bp.route('/tyres/<path:filter_path>')
+@site_bp.route('/products/<path:filter_path>')
+def car_tyres_listing_slug(filter_path):
+    """Client storefront Car Tyres / Product Listing catalog with URL slug filters."""
+    locale = _get_locale()
+    return _render_product_listing(locale, filter_path=filter_path)
+
+
 @site_bp.route('/<string(length=2):lang_code>/car-tyres')
 @site_bp.route('/<string(length=2):lang_code>/tyres')
 @site_bp.route('/<string(length=2):lang_code>/products')
@@ -914,6 +1024,16 @@ def car_tyres_listing_locale(lang_code):
     code = lang_code.lower()
     session['site_locale'] = code
     return _render_product_listing(code)
+
+
+@site_bp.route('/<string(length=2):lang_code>/car-tyres/<path:filter_path>')
+@site_bp.route('/<string(length=2):lang_code>/tyres/<path:filter_path>')
+@site_bp.route('/<string(length=2):lang_code>/products/<path:filter_path>')
+def car_tyres_listing_locale_slug(lang_code, filter_path):
+    """Client storefront Car Tyres / Product Listing catalog with dynamic locale and URL slug filters."""
+    code = lang_code.lower()
+    session['site_locale'] = code
+    return _render_product_listing(code, filter_path=filter_path)
 
 
 @site_bp.route('/<string(length=2):lang_code>/page/<slug>')

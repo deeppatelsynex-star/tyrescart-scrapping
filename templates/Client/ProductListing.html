@@ -810,7 +810,7 @@
         <div class="tv-filter-list">
           {% for v in filter_vehicles %}
           <label class="tv-filter-item">
-            <input type="checkbox" name="vehicle_type" value="{{ v.key }}" onchange="filterProducts()">
+            <input type="checkbox" name="vehicle_type" value="{{ v.key }}" {% if active_vehicles and v.key in active_vehicles %}checked{% endif %} onchange="filterProducts()">
             <span>{{ v.label }}</span> <span class="tv-filter-count">({{ v.count }})</span>
           </label>
           {% endfor %}
@@ -830,15 +830,15 @@
           {% endif %}
           {% for s in filter_sizes[:6] %}
           <label class="tv-filter-item" data-size="{{ s.size }}">
-            <input type="checkbox" name="size" value="{{ s.size }}" onchange="filterProducts()">
+            <input type="checkbox" name="size" value="{{ s.size }}" {% if active_sizes and (s.size in active_sizes or (s.size|replace('/', '-')|replace(' ', '-')) in active_sizes) %}checked{% endif %} onchange="filterProducts()">
             <span>{{ s.size }}</span> <span class="tv-filter-count">({{ s.count }})</span>
           </label>
           {% endfor %}
           {% if filter_sizes|length > 6 %}
-          <div id="extra-sizes" style="display:none; flex-direction:column; gap:10px;">
+          <div id="extra-sizes" style="{% if active_sizes %}display:flex;{% else %}display:none;{% endif %} flex-direction:column; gap:10px;">
             {% for s in filter_sizes[6:] %}
             <label class="tv-filter-item" data-size="{{ s.size }}">
-              <input type="checkbox" name="size" value="{{ s.size }}" onchange="filterProducts()">
+              <input type="checkbox" name="size" value="{{ s.size }}" {% if active_sizes and (s.size in active_sizes or (s.size|replace('/', '-')|replace(' ', '-')) in active_sizes) %}checked{% endif %} onchange="filterProducts()">
               <span>{{ s.size }}</span> <span class="tv-filter-count">({{ s.count }})</span>
             </label>
             {% endfor %}
@@ -860,15 +860,15 @@
           {% endif %}
           {% for b in filter_brands[:6] %}
           <label class="tv-filter-item" data-brand="{{ b.slug }}">
-            <input type="checkbox" name="brand" value="{{ b.slug }}" onchange="filterProducts()">
+            <input type="checkbox" name="brand" value="{{ b.slug }}" {% if active_brands and (b.slug in active_brands or (b.name|lower) in active_brands) %}checked{% endif %} onchange="filterProducts()">
             <span>{{ b.name }}</span> <span class="tv-filter-count">({{ b.count }})</span>
           </label>
           {% endfor %}
           {% if filter_brands|length > 6 %}
-          <div id="extra-brands" style="display:none; flex-direction:column; gap:10px;">
+          <div id="extra-brands" style="{% if active_brands %}display:flex;{% else %}display:none;{% endif %} flex-direction:column; gap:10px;">
             {% for b in filter_brands[6:] %}
             <label class="tv-filter-item" data-brand="{{ b.slug }}">
-              <input type="checkbox" name="brand" value="{{ b.slug }}" onchange="filterProducts()">
+              <input type="checkbox" name="brand" value="{{ b.slug }}" {% if active_brands and (b.slug in active_brands or (b.name|lower) in active_brands) %}checked{% endif %} onchange="filterProducts()">
               <span>{{ b.name }}</span> <span class="tv-filter-count">({{ b.count }})</span>
             </label>
             {% endfor %}
@@ -886,11 +886,11 @@
         </div>
         <div class="tv-price-slider-wrap">
           <div class="tv-price-range-inputs">
-            <input type="range" class="tv-range-slider" min="{{ min_price }}" max="{{ max_price }}" step="25" value="{{ max_price }}" id="max-price-slider" oninput="updatePriceFilter(this.value)">
+            <input type="range" class="tv-range-slider" min="{{ min_price }}" max="{{ max_price }}" step="25" value="{{ active_max_price or max_price }}" id="max-price-slider" oninput="updatePriceFilter(this.value)">
           </div>
           <div class="tv-price-range-labels">
             <span>AED {{ min_price }}</span>
-            <span id="price-slider-val">&le; AED {{ max_price }}</span>
+            <span id="price-slider-val">&le; AED {{ (active_max_price or max_price)|int }}</span>
           </div>
         </div>
       </div>
@@ -904,7 +904,7 @@
         <div class="tv-filter-list">
           {% for t in filter_tyre_types %}
           <label class="tv-filter-item">
-            <input type="checkbox" name="tire_type" value="{{ t.key }}" onchange="filterProducts()">
+            <input type="checkbox" name="tire_type" value="{{ t.key }}" {% if active_types and t.key in active_types %}checked{% endif %} onchange="filterProducts()">
             <span>{{ t.label }}</span> <span class="tv-filter-count">({{ t.count }})</span>
           </label>
           {% endfor %}
@@ -923,11 +923,11 @@
         <div class="tv-catalog-sort">
           <label for="sort-select">Sort by:</label>
           <select id="sort-select" class="tv-sort-select" onchange="sortProducts(this.value)">
-            <option value="popular">Most Popular</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="rating">Customer Rating</option>
-            <option value="newest">Newest Arrivals</option>
+            <option value="popular" {% if active_sort == 'popular' %}selected{% endif %}>Most Popular</option>
+            <option value="price-asc" {% if active_sort == 'price-asc' %}selected{% endif %}>Price: Low to High</option>
+            <option value="price-desc" {% if active_sort == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
+            <option value="rating" {% if active_sort == 'rating' %}selected{% endif %}>Customer Rating</option>
+            <option value="newest" {% if active_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
           </select>
         </div>
       </div>
@@ -1221,6 +1221,64 @@ function renderPaginationControls(totalP, curP) {
   controls.innerHTML = html;
 }
 
+function buildFilterPath(page = 1) {
+  const selectedBrands = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(cb => cb.value.trim());
+  const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value.trim());
+  const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value.trim());
+  const selectedTypes = Array.from(document.querySelectorAll('input[name="tire_type"]:checked')).map(cb => cb.value.trim());
+  const maxPriceSlider = document.getElementById('max-price-slider');
+  const maxPrice = maxPriceSlider ? maxPriceSlider.value : '';
+  const sortSelect = document.getElementById('sort-select');
+  const sortVal = sortSelect ? sortSelect.value : 'popular';
+
+  let currentPath = window.location.pathname;
+  let basePath = '/tyres';
+  const pathParts = currentPath.split('/').filter(Boolean);
+  if (pathParts.length > 0 && ['ar', 'en', 'de', 'fr', 'es', 'ru', 'zh'].includes(pathParts[0].toLowerCase())) {
+    basePath = '/' + pathParts[0].toLowerCase() + '/tyres';
+  }
+
+  const segments = [];
+
+  // 1. Page segment: page-{page}-{per_page} (e.g. page-2-16)
+  if (page > 1) {
+    segments.push(`page-${page}-${PER_PAGE}`);
+  }
+
+  // 2. Brand segment: brand-pirelli
+  if (selectedBrands.length > 0) {
+    segments.push('brand-' + selectedBrands.map(b => encodeURIComponent(b.toLowerCase())).join(','));
+  }
+
+  // 3. Size segment: size-225-40-R18
+  if (selectedSizes.length > 0) {
+    const sizeSlugs = selectedSizes.map(s => encodeURIComponent(s.replace(/[\/\s]+/g, '-')));
+    segments.push('size-' + sizeSlugs.join(','));
+  }
+
+  // 4. Vehicle segment: vehicle-car
+  if (selectedVehicles.length > 0) {
+    segments.push('vehicle-' + selectedVehicles.map(v => encodeURIComponent(v.toLowerCase())).join(','));
+  }
+
+  // 5. Tyre Type segment: type-summer
+  if (selectedTypes.length > 0) {
+    segments.push('type-' + selectedTypes.map(t => encodeURIComponent(t.toLowerCase())).join(','));
+  }
+
+  // 6. Max Price segment: max_price-5693
+  if (maxPrice && parseFloat(maxPrice) < parseFloat(maxPriceSlider?.max || 2000)) {
+    segments.push('max_price-' + Math.round(parseFloat(maxPrice)));
+  }
+
+  // 7. Sort segment: sort-price-asc
+  if (sortVal && sortVal !== 'popular') {
+    segments.push('sort-' + encodeURIComponent(sortVal));
+  }
+
+  return segments.length > 0 ? `${basePath}/${segments.join('/')}` : basePath;
+}
+
 async function fetchProducts(page = 1, scrollUp = true) {
   if (isFetching) return;
   isFetching = true;
@@ -1251,10 +1309,9 @@ async function fetchProducts(page = 1, scrollUp = true) {
     params.set('max_price', maxPrice);
   }
 
-  // Update browser URL query params
-  const browserUrl = new URL(window.location);
-  browserUrl.search = params.toString();
-  window.history.pushState({}, '', browserUrl);
+  // Update browser URL to clean SEO slug format: e.g. /tyres/page-2-16/brand-pirelli/size-225-40-R18/max_price-5693
+  const newPath = buildFilterPath(page);
+  window.history.pushState({ page: page, path: newPath }, '', newPath);
 
   try {
     const res = await fetch(`/api/products?${params.toString()}`, {
@@ -1351,8 +1408,16 @@ function clearAllFilters() {
     slider.value = slider.max;
     document.getElementById('price-slider-val').textContent = '<= AED ' + parseInt(slider.max).toLocaleString();
   }
+  const sortSelect = document.getElementById('sort-select');
+  if (sortSelect) {
+    sortSelect.value = 'popular';
+  }
   fetchProducts(1, true);
 }
+
+window.addEventListener('popstate', () => {
+  window.location.reload();
+});
 
 function toggleFilterGroup(el) {
   el.classList.toggle('collapsed');
