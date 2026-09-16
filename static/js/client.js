@@ -644,6 +644,179 @@ window.initTvPageComponents = function() {
         window.initFaqAccordion();
     }
 
+    // 1b. DataTables Responsive Expand/Collapse Accordion for Mobile Tables
+    function initResponsiveDataTables() {
+        var tables = document.querySelectorAll('.price-table, .tv-4x4-table, .tv-ev-table, .tv-table');
+        tables.forEach(function(table) {
+            // Skip if already initialized or if child rows already present
+            if (table.dataset.dtrInitialized === 'true' || table.querySelector('.dtr-child-row')) {
+                return;
+            }
+
+            var thead = table.querySelector('thead');
+            var tbody = table.querySelector('tbody');
+            if (!thead || !tbody) return;
+
+            var headerRow = thead.querySelector('tr');
+            if (!headerRow) return;
+
+            var ths = headerRow.querySelectorAll('th');
+            var colCount = ths.length;
+            if (colCount < 3) return; // Only tables with collapsible intermediate columns
+
+            table.dataset.dtrInitialized = 'true';
+            table.classList.add('dtr-table');
+
+            // Mark intermediate headers as desktop-col (hidden on mobile)
+            for (var c = 1; c < colCount - 1; c++) {
+                ths[c].classList.add('desktop-col');
+            }
+
+            function getDetailIcon(title) {
+                var t = (title || '').toLowerCase();
+                if (t.indexOf('vehicle') !== -1 || t.indexOf('car') !== -1 || t.indexOf('model') !== -1) {
+                    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.1 10.7 2 11.1 2 11.5V16c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>';
+                }
+                if (t.indexOf('mid') !== -1 || t.indexOf('star') !== -1) {
+                    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+                }
+                if (t.indexOf('premium') !== -1 || t.indexOf('crown') !== -1) {
+                    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>';
+                }
+                if (t.indexOf('value') !== -1 || t.indexOf('price') !== -1 || t.indexOf('tier') !== -1) {
+                    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>';
+                }
+                if (t.indexOf('size') !== -1) {
+                    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>';
+                }
+                if (t.indexOf('brand') !== -1 || t.indexOf('choice') !== -1) {
+                    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>';
+                }
+                return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>';
+            }
+
+            var rows = Array.from(tbody.children);
+            rows.forEach(function(masterRow) {
+                if (masterRow.tagName !== 'TR' || masterRow.classList.contains('dtr-child-row')) return;
+
+                var cells = masterRow.children;
+                if (cells.length < colCount) return;
+
+                masterRow.classList.add('dtr-parent-row');
+
+                // 1. Control button in cell 0
+                var firstCell = cells[0];
+                var ctrlBtn = firstCell.querySelector('.dtr-control-btn');
+                if (!ctrlBtn) {
+                    ctrlBtn = document.createElement('button');
+                    ctrlBtn.type = 'button';
+                    ctrlBtn.className = 'dtr-control-btn';
+                    ctrlBtn.setAttribute('aria-expanded', 'false');
+                    ctrlBtn.setAttribute('aria-label', 'Toggle details');
+                    ctrlBtn.innerHTML = '<span class="dtr-icon">+</span>';
+
+                    var cellWrap = document.createElement('div');
+                    cellWrap.className = 'dtr-cell-content';
+                    cellWrap.appendChild(ctrlBtn);
+
+                    while (firstCell.firstChild) {
+                        cellWrap.appendChild(firstCell.firstChild);
+                    }
+                    firstCell.appendChild(cellWrap);
+                }
+
+                // 2. Mark intermediate cells for desktop display only
+                for (var c = 1; c < colCount - 1; c++) {
+                    cells[c].classList.add('desktop-col');
+                }
+
+                // 3. Create child details row
+                var childRow = document.createElement('tr');
+                childRow.className = 'dtr-child-row';
+                childRow.style.display = 'none';
+
+                var childTd = document.createElement('td');
+                childTd.className = 'dtr-child-td';
+                childTd.setAttribute('colspan', 100);
+
+                var childDetails = document.createElement('div');
+                childDetails.className = 'dtr-child-details';
+
+                for (var c = 1; c < colCount - 1; c++) {
+                    var hText = ths[c].textContent.trim();
+                    var cContent = cells[c].innerHTML.trim();
+                    if (!cContent) continue;
+
+                    var detailItem = document.createElement('div');
+                    detailItem.className = 'dtr-detail-item';
+
+                    var iconHtml = getDetailIcon(hText);
+                    detailItem.innerHTML =
+                        '<span class="dtr-detail-title">' + iconHtml + ' ' + hText + ':</span>' +
+                        '<span class="dtr-detail-value">' + cContent + '</span>';
+
+                    childDetails.appendChild(detailItem);
+                }
+
+                childTd.appendChild(childDetails);
+                childRow.appendChild(childTd);
+                masterRow.insertAdjacentElement('afterend', childRow);
+
+                // 4. Mobile Toggle Listener
+                masterRow.addEventListener('click', function(e) {
+                    // Ignore clicks on links or interactive buttons inside the row
+                    if (e.target.closest('a') || e.target.closest('button:not(.dtr-control-btn)') || e.target.closest('input')) {
+                        return;
+                    }
+                    if (window.innerWidth > 768) {
+                        return;
+                    }
+
+                    var isExpanded = masterRow.classList.contains('dtr-expanded');
+
+                    // Exclusive accordion: close any other expanded row in this table
+                    table.querySelectorAll('.dtr-parent-row.dtr-expanded').forEach(function(otherRow) {
+                        if (otherRow !== masterRow) {
+                            otherRow.classList.remove('dtr-expanded');
+                            var oBtn = otherRow.querySelector('.dtr-control-btn');
+                            if (oBtn) {
+                                oBtn.classList.remove('is-expanded');
+                                oBtn.setAttribute('aria-expanded', 'false');
+                                var oIcon = oBtn.querySelector('.dtr-icon');
+                                if (oIcon) oIcon.textContent = '+';
+                            }
+                            var oChild = otherRow.nextElementSibling;
+                            if (oChild && oChild.classList.contains('dtr-child-row')) {
+                                oChild.classList.remove('is-open');
+                                oChild.style.display = 'none';
+                            }
+                        }
+                    });
+
+                    if (!isExpanded) {
+                        masterRow.classList.add('dtr-expanded');
+                        ctrlBtn.classList.add('is-expanded');
+                        ctrlBtn.setAttribute('aria-expanded', 'true');
+                        var iconSpan = ctrlBtn.querySelector('.dtr-icon');
+                        if (iconSpan) iconSpan.textContent = '−';
+                        childRow.classList.add('is-open');
+                        childRow.style.display = 'table-row';
+                    } else {
+                        masterRow.classList.remove('dtr-expanded');
+                        ctrlBtn.classList.remove('is-expanded');
+                        ctrlBtn.setAttribute('aria-expanded', 'false');
+                        var iconSpan = ctrlBtn.querySelector('.dtr-icon');
+                        if (iconSpan) iconSpan.textContent = '+';
+                        childRow.classList.remove('is-open');
+                        childRow.style.display = 'none';
+                    }
+                });
+            });
+        });
+    }
+
+    initResponsiveDataTables();
+
     // 2. Standalone handler for legacy .tv-faq-item ONLY (never binds to .faq-item)
     var tvFaqItems = document.querySelectorAll('.tv-faq-item:not(.faq-item)');
     tvFaqItems.forEach(function(item) {
