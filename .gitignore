@@ -47,7 +47,19 @@ tmp/
 backups/
 *.log
 *.xlsx
+*.csv
+*.png
+*.jpg
+*.jpeg
 *scripts
+test_*.py
+test*.py
+.playwright/
+playwright-report/
+test-results/
+*.bak
+*.tmp
+
 # Postman collections
 *.postman_collection.json
 *.postman_environment.json

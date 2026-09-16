@@ -97,7 +97,29 @@
           </div>
         </div>
 
-        <!-- Brand -->
+        <!-- 2. Promotion / Special Offers (Synced with DB Cart Price Rules) -->
+        <div class="tv-filter-group tv-filter-group-promotion">
+          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+            <span style="display: inline-flex; align-items: center; gap: 6px;">
+              <span>Promotion</span>
+              <span style="font-size: 0.72rem; font-weight: 700; background: #ECFDF5; color: #008738; padding: 2px 6px; border-radius: 4px; border: 1px solid #A7F3D0;">Offers</span>
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="tv-filter-list" id="filter-promotion-list">
+            {% if filter_promotions|length == 0 %}
+            <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No promotions available</span>
+            {% endif %}
+            {% for pr in filter_promotions %}
+            <label class="tv-filter-item">
+              <input type="checkbox" name="promotion" value="{{ pr.key }}" {% if active_promotions and (pr.key in active_promotions or (pr.key|replace('_', '-')) in active_promotions) %}checked{% endif %} onchange="filterProducts()">
+              <span>{{ pr.label }}</span> <span class="tv-filter-count">({{ "{:,}".format(pr.count) }})</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- 3. Brand -->
         <div class="tv-filter-group">
           <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
             <span>Brand</span>
@@ -116,7 +138,7 @@
           </div>
         </div>
 
-        <!-- Price Range (Dual Range Slider) -->
+        <!-- 4. Price Range (Dual Range Slider) -->
         <div class="tv-filter-group">
           <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
             <span>Price Range</span>
@@ -147,27 +169,8 @@
             </div>
             <div class="tv-price-range-labels">
               <span id="min-price-display">AED {{ (active_min_price or min_price)|int }}</span>
-              <span id="price-slider-val">&le; AED {{ (active_max_price or max_price)|int }}</span>
+              <span id="price-slider-val">AED {{ (active_max_price or max_price)|int }}</span>
             </div>
-          </div>
-        </div>
-
-        <!-- Promotion / Special Offers -->
-        <div class="tv-filter-group">
-          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
-            <span>Promotion</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="tv-filter-list" id="filter-promotion-list">
-            {% if filter_promotions|length == 0 %}
-            <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No promotions available</span>
-            {% endif %}
-            {% for pr in filter_promotions %}
-            <label class="tv-filter-item">
-              <input type="checkbox" name="promotion" value="{{ pr.key }}" {% if active_promotions and (pr.key in active_promotions or (pr.key|replace('_', '-')) in active_promotions) %}checked{% endif %} onchange="filterProducts()">
-              <span>{{ pr.label }}</span> <span class="tv-filter-count">({{ "{:,}".format(pr.count) }})</span>
-            </label>
-            {% endfor %}
           </div>
         </div>
 
@@ -250,18 +253,38 @@
         {% for p in products %}
         <div class="tv-product-card"
              data-brand="{{ p.brand_slug or (p.brand_name|lower) }}"
+             data-brand-name="{{ p.brand_name }}"
+             data-brand-logo="{{ p.brand_logo or '' }}"
+             data-pattern="{{ p.pattern_name or p.display_name }}"
+             data-full-title="{{ p.full_title or (p.brand_name ~ ' ' ~ p.full_size_spec ~ ' ' ~ p.pattern_name ~ ' ' ~ (p.year or '2024')) }}"
              data-size="{{ p.tire_size_label }}"
+             data-full-spec="{{ p.full_size_spec }}"
+             data-width="{{ p.width or '155 mm' }}"
+             data-profile="{{ p.profile or 'None' }}"
+             data-rim="{{ p.rim_size or 'R16' }}"
+             data-load-speed="{{ p.load_speed or '86Q' }}"
+             data-year="{{ p.year or '2024' }}"
+             data-country="{{ p.country_of_origin or 'China' }}"
+             data-warranty="{{ p.warranty or '1 Year Warranty' }}"
+             data-sku="{{ p.sku or ('TCKL-' ~ p.id) }}"
+             data-image="{{ p.image_path or '/static/assets/images/no-image-available.svg' }}"
              data-vehicle="{{ p.vehicle_type or 'car' }}"
              data-type="{{ p.tire_type or 'summer' }}"
              data-price="{{ p.price|float }}"
+             data-price-set2="{{ "%.2f"|format(p.price * 2) }}"
+             data-price-set4="{{ "%.2f"|format(p.set_of_4_price or (p.price * 4)) }}"
              data-rating="{{ p.rating|float }}"
              data-order="{{ p.sort_order or loop.index }}"
              data-offer="{{ p.offer_banner or '' }}">
           
           <!-- Top Offer Banner -->
+          {% if p.offer_banner %}
           <div class="tv-card-top-banner">
-            {{ p.offer_banner or 'FREE WHEEL ALIGNMENT' }}
+            {{ p.offer_banner }}
           </div>
+          {% else %}
+          <div class="tv-card-top-banner tv-card-top-banner-empty" style="visibility: hidden;">&nbsp;</div>
+          {% endif %}
 
           <div class="tv-card-body">
             <!-- Quick-view Eye Button -->
@@ -273,12 +296,13 @@
             </button>
 
             <!-- Centered Tyre Image -->
-            <div class="tv-card-img-wrap">
+            <div class="tv-card-img-wrap tv-img-loading">
               <img src="{{ p.image_path or '/static/assets/images/no-image-available.svg' }}" 
                    alt="{{ p.pattern_name or p.display_name }}" 
                    class="tv-product-img" 
                    loading="lazy" 
-                   onerror="this.src='/static/assets/images/no-image-available.svg'; this.onerror=null;">
+                   onload="this.parentElement.classList.remove('tv-img-loading')"
+                   onerror="this.src='/static/assets/images/no-image-available.svg'; this.parentElement.classList.remove('tv-img-loading'); this.onerror=null;">
             </div>
 
             <!-- Sub-badges Row (Warranty & Vehicle Silhouette) -->
@@ -317,9 +341,11 @@
 
             <!-- Price & Action Section -->
             <div class="tv-card-price-action-section">
-              <div class="tv-card-fitted-label">
+              <div class="tv-card-fitted-label" onclick="openFittedPriceModal(event)" role="button" tabindex="0" title="Click to view what is included in Fitted Price">
                 <span>Fitted Price</span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <button type="button" class="tv-fitted-info-btn" onclick="openFittedPriceModal(event)" aria-label="Fitted Price details" title="View fitted price details">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </button>
               </div>
               <div class="tv-card-price-controls-row">
                 <div class="tv-card-price-col">
@@ -375,6 +401,398 @@
 <div id="tv-toast" class="tv-toast-notify" role="status" aria-live="polite">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
   <span id="tv-toast-msg">Added to your fitting cart!</span>
+</div>
+
+<!-- Fitted Price Full Screen / Bottom Drawer Modal (Exact match to reference mockup) -->
+<div id="tv-fitted-price-modal" class="tv-fitted-modal-overlay" onclick="handleFittedModalBackdrop(event)" role="dialog" aria-modal="true" aria-labelledby="tv-fitted-modal-title">
+  <div class="tv-fitted-modal-container" onclick="event.stopPropagation()">
+    <div class="tv-fitted-modal-card">
+      <div class="tv-fitted-modal-header">
+        <h2 id="tv-fitted-modal-title" class="tv-fitted-modal-title">Fully Fitted <span class="tv-text-green">Price per tyre</span></h2>
+        <button type="button" class="tv-fitted-modal-close" onclick="closeFittedPriceModal()" aria-label="Close modal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="tv-fitted-modal-body">
+        <p class="tv-fitted-highlight-note">There are NO EXTRAS to pay on the day of your visit - in relation to the tyre fitting.</p>
+        <h3 class="tv-fitted-included-heading">THE FOLLOWING IS INCLUDED IN THE PRICE,</h3>
+        <ul class="tv-fitted-features-list">
+          <li>
+            <span class="tv-check-icon-wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </span>
+            <span>VAT</span>
+          </li>
+          <li>
+            <span class="tv-check-icon-wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </span>
+            <span>Fitting (Bead lock wheel etc. excluded)</span>
+          </li>
+          <li>
+            <span class="tv-check-icon-wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </span>
+            <span>Balancing</span>
+          </li>
+          <li>
+            <span class="tv-check-icon-wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </span>
+            <span>New rubber valve (standard valve only)</span>
+          </li>
+          <li>
+            <span class="tv-check-icon-wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </span>
+            <span>Delivery to installer</span>
+          </li>
+          <li>
+            <span class="tv-check-icon-wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </span>
+            <span>Disposal of old tyres</span>
+          </li>
+          <li>
+            <span class="tv-check-icon-wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </span>
+            <span>On purchase of 4 tyres, 1 FREE scheduled instance of tyre rotation every 20,000kms per year</span>
+          </li>
+        </ul>
+        <div class="tv-fitted-modal-footer">
+          <button type="button" class="tv-btn-modal-done" onclick="closeFittedPriceModal()">
+            Got It
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick View Modal (Exact match to ChatGPT Image Sep 16, 2026, 05_17_09 PM.png - Full Width Bottom Drawer) -->
+<div id="tv-quickview-modal" class="tv-qv-modal-overlay" onclick="handleQuickViewBackdrop(event)" role="dialog" aria-modal="true" aria-labelledby="tv-qv-modal-title">
+  <div class="tv-qv-modal-container" onclick="event.stopPropagation()">
+    <div class="tv-qv-modal-card">
+
+      <!-- Modal Header Bar -->
+      <div class="tv-qv-modal-header">
+        <div class="tv-qv-header-title-wrap">
+          <h2 id="tv-qv-modal-title" class="tv-qv-modal-title">Quick View</h2>
+          <div class="tv-qv-title-bar"></div>
+        </div>
+        <button type="button" class="tv-qv-modal-close" onclick="closeQuickView()" aria-label="Close modal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="tv-qv-modal-body">
+        <div class="tv-qv-main-grid">
+
+          <!-- Left: Tyre Showcase Card & Sub-Badges -->
+          <div class="tv-qv-left-showcase">
+            <div class="tv-qv-img-showcase-card">
+              <!-- Top bar of Tyre Card: In Stock badge -->
+              <div class="tv-qv-showcase-top">
+                <span class="tv-qv-stock-badge">
+                  <span class="tv-qv-stock-dot"></span> In Stock
+                </span>
+              </div>
+
+              <!-- Center Stage with Radial Glow and Tyre Image (No arrows) -->
+              <div class="tv-qv-stage">
+                <div class="tv-qv-radial-glow"></div>
+                <img id="tv-qv-img" src="/static/assets/images/no-image-available.svg" alt="Tyre Image" class="tv-qv-img" loading="eager">
+              </div>
+            </div>
+
+            <!-- Bottom Sub-Features Strip (4 Badges: 1 Year Warranty, All Season, Light Truck / Van, Made in China) -->
+            <div class="tv-qv-subfeatures-grid">
+              <div class="tv-qv-subfeat-item">
+                <div class="tv-qv-subfeat-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+                </div>
+                <div class="tv-qv-subfeat-text">
+                  <span id="tv-qv-subfeat-warranty">1 Year Warranty</span>
+                </div>
+              </div>
+              <div class="tv-qv-subfeat-item">
+                <div class="tv-qv-subfeat-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                </div>
+                <div class="tv-qv-subfeat-text">
+                  <span id="tv-qv-subfeat-season">All Season</span>
+                </div>
+              </div>
+              <div class="tv-qv-subfeat-item">
+                <div class="tv-qv-subfeat-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                </div>
+                <div class="tv-qv-subfeat-text">
+                  <span id="tv-qv-subfeat-vehicle">Light Truck / Van</span>
+                </div>
+              </div>
+              <div class="tv-qv-subfeat-item">
+                <div class="tv-qv-subfeat-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                </div>
+                <div class="tv-qv-subfeat-text">
+                  <span id="tv-qv-subfeat-origin">Made in China</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Brand, Title, Subtitle, Specifications, Price, Trust, Tabs -->
+          <div class="tv-qv-right-col">
+            <!-- Top brand & action buttons (Wishlist & Share) -->
+            <div class="tv-qv-meta-top">
+              <div class="tv-qv-brand-main">
+                <img id="tv-qv-brand-logo" src="" alt="Brand Logo" class="tv-qv-brand-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                <span id="tv-qv-brand-fallback" class="tv-qv-brand-fallback" style="display:none;">WINDFORCE</span>
+              </div>
+              <div class="tv-qv-actions-top">
+                <button type="button" class="tv-qv-action-btn" onclick="toggleQuickViewWishlist(this)" id="tv-qv-wishlist-btn">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                  <span>Add to Wishlist</span>
+                </button>
+                <button type="button" class="tv-qv-action-btn" onclick="shareQuickViewProduct()">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                  <span>Share</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Product Title & Subtitle -->
+            <h3 id="tv-qv-title" class="tv-qv-product-title">Windforce 155 R12C 8GQ Mile Max 2025</h3>
+            <p class="tv-qv-product-subtitle" id="tv-qv-subtitle">Reliable performance for your daily drive. Built for durability and safety.</p>
+
+            <!-- 11 Specifications Grid (Exact 4 + 4 + 3 horizontal cards with solid blue circular icons) -->
+            <div class="tv-qv-spec-grid">
+              <!-- 1. WIDTH -->
+              <div class="tv-qv-spec-card">
+                <div class="tv-qv-spec-glyph tv-glyph-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3"></circle><path d="M12 3v3M12 18v3M3 12h3M18 12h3"></path></svg>
+                </div>
+                <div class="tv-qv-spec-meta">
+                  <span class="tv-qv-spec-key">WIDTH</span>
+                  <strong id="tv-qv-spec-width" class="tv-qv-spec-val">155 mm</strong>
+                </div>
+              </div>
+
+              <!-- 2. PROFILE -->
+              <div class="tv-qv-spec-card">
+                <div class="tv-qv-spec-glyph tv-glyph-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="7 10 12 5 17 10"></polyline><polyline points="7 14 12 19 17 14"></polyline></svg>
+                </div>
+                <div class="tv-qv-spec-meta">
+                  <span class="tv-qv-spec-key">PROFILE</span>
+                  <strong id="tv-qv-spec-profile" class="tv-qv-spec-val">None</strong>
+                </div>
+              </div>
+
+              <!-- 3. RIM SIZE -->
+              <div class="tv-qv-spec-card">
+                <div class="tv-qv-spec-glyph tv-glyph-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="3" x2="12" y2="8"></line><line x1="12" y1="16" x2="12" y2="21"></line><line x1="3" y1="12" x2="8" y2="12"></line><line x1="16" y1="12" x2="21" y2="12"></line></svg>
+                </div>
+                <div class="tv-qv-spec-meta">
+                  <span class="tv-qv-spec-key">RIM SIZE</span>
+                  <strong id="tv-qv-spec-rim" class="tv-qv-spec-val">R12C</strong>
+                </div>
+              </div>
+
+              <!-- 4. LOAD/SPEED -->
+              <div class="tv-qv-spec-card">
+                <div class="tv-qv-spec-glyph tv-glyph-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path><path d="M12 6v6l4 2"></path></svg>
+                </div>
+                <div class="tv-qv-spec-meta">
+                  <span class="tv-qv-spec-key">LOAD/SPEED</span>
+                  <strong id="tv-qv-spec-loadspeed" class="tv-qv-spec-val">86Q</strong>
+                </div>
+              </div>
+
+              <!-- 5. BRAND -->
+              <div class="tv-qv-spec-card">
+                <div class="tv-qv-spec-glyph tv-glyph-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><circle cx="7" cy="7" r="1.5"></circle></svg>
+                </div>
+                <div class="tv-qv-spec-meta">
+                  <span class="tv-qv-spec-key">BRAND</span>
+                  <strong id="tv-qv-spec-brand" class="tv-qv-spec-val">Windforce</strong>
+                </div>
+              </div>
+
+              <!-- 6. PATTERN -->
+              <div class="tv-qv-spec-card">
+                <div class="tv-qv-spec-glyph tv-glyph-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </div>
+                <div class="tv-qv-spec-meta">
+                  <span class="tv-qv-spec-key">PATTERN</span>
+                  <strong id="tv-qv-spec-pattern" class="tv-qv-spec-val">Mile Max</strong>
+                </div>
+              </div>
+
+              <!-- 7. SIZE (i) -->
+              <div class="tv-qv-spec-card">
+                <div class="tv-qv-spec-glyph tv-glyph-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                </div>
+                <div class="tv-qv-spec-meta">
+                  <span class="tv-qv-spec-key">SIZE <span class="tv-info-glyph" title="Tyre Size Information">ⓘ</span></span>
+                  <strong id="tv-qv-spec-size" class="tv-qv-spec-val">155 R12C 86Q</strong>
+                </div>
+              </div>
+
+              <!-- 8. YEAR -->
+              <div class="tv-qv-spec-card">
+                <div class="tv-qv-spec-glyph tv-glyph-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <div class="tv-qv-spec-meta">
+                  <span class="tv-qv-spec-key">YEAR</span>
+                  <strong id="tv-qv-spec-year" class="tv-qv-spec-val">2025</strong>
+                </div>
+              </div>
+
+              <!-- 9. COUNTRY -->
+              <div class="tv-qv-spec-card">
+                <div class="tv-qv-spec-glyph tv-glyph-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                </div>
+                <div class="tv-qv-spec-meta">
+                  <span class="tv-qv-spec-key">COUNTRY</span>
+                  <strong id="tv-qv-spec-country" class="tv-qv-spec-val">China</strong>
+                </div>
+              </div>
+
+              <!-- 10. WARRANTY -->
+              <div class="tv-qv-spec-card">
+                <div class="tv-qv-spec-glyph tv-glyph-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <div class="tv-qv-spec-meta">
+                  <span class="tv-qv-spec-key">WARRANTY</span>
+                  <strong id="tv-qv-spec-warranty" class="tv-qv-spec-val">1 Year Warranty</strong>
+                </div>
+              </div>
+
+              <!-- 11. SKU -->
+              <div class="tv-qv-spec-card">
+                <div class="tv-qv-spec-glyph tv-glyph-blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <div class="tv-qv-spec-meta">
+                  <span class="tv-qv-spec-key">SKU</span>
+                  <strong id="tv-qv-spec-sku" class="tv-qv-spec-val">TCKL-12726</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pricing, Sets, Stepper & CTAs Box -->
+            <div class="tv-qv-price-cta-box">
+              <div class="tv-qv-price-info">
+                <div class="tv-qv-fitted-label" onclick="openFittedPriceModal(event)" role="button" tabindex="0">
+                  <span>Fitted Price</span>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </div>
+                <div class="tv-qv-price-row">
+                  <div class="tv-qv-main-cost">
+                    <span class="tv-qv-curr-name">AED</span>
+                    <strong id="tv-qv-price" class="tv-qv-price-num">148.00</strong>
+                    <span class="tv-qv-unit">/ per pcs</span>
+                  </div>
+                </div>
+                <div class="tv-qv-sets-line">
+                  <span>Set of 2 : <strong id="tv-qv-set2">AED 296.00</strong></span>
+                  <span class="tv-qv-set-divider">|</span>
+                  <span>Set of 4 : <strong id="tv-qv-set4">AED 592.00</strong></span>
+                </div>
+              </div>
+
+              <!-- Controls on the right: Stepper + Add to Cart + Contact Us -->
+              <div class="tv-qv-cta-group">
+                <div class="tv-qv-cta-top-row">
+                  <div class="tv-qv-stepper">
+                    <button type="button" class="tv-qv-step-btn" onclick="stepQuickViewQty(-1)" aria-label="Decrease quantity">&minus;</button>
+                    <input type="text" id="tv-qv-qty-input" class="tv-qv-step-val" value="4" readonly aria-label="Quantity">
+                    <button type="button" class="tv-qv-step-btn" onclick="stepQuickViewQty(1)" aria-label="Increase quantity">&plus;</button>
+                  </div>
+                  <button type="button" class="tv-qv-add-cart-btn" id="tv-qv-add-cart-btn" onclick="addQuickViewToCart(this)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    <span>Add to Cart</span>
+                  </button>
+                </div>
+                <a href="/contact-us" id="tv-qv-contact-btn" class="tv-qv-contact-outline-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                  <span>Contact Us</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Trust Strip (Free Standard Installation, Free Wheel Balancing, Fast & Reliable Delivery) -->
+            <div class="tv-qv-trust-strip">
+              <div class="tv-qv-trust-col">
+                <div class="tv-qv-trust-icon-wrap tv-glyph-blue">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                </div>
+                <div class="tv-qv-trust-info">
+                  <strong>Free Standard Installation</strong>
+                  <p>At our partner garages across UAE</p>
+                </div>
+              </div>
+              <div class="tv-qv-trust-col">
+                <div class="tv-qv-trust-icon-wrap tv-glyph-blue">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="3" x2="12" y2="9"></line><line x1="12" y1="15" x2="12" y2="21"></line></svg>
+                </div>
+                <div class="tv-qv-trust-info">
+                  <strong>Free Wheel Balancing</strong>
+                  <p>With every tyre installation</p>
+                </div>
+              </div>
+              <div class="tv-qv-trust-col">
+                <div class="tv-qv-trust-icon-wrap tv-glyph-blue">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                </div>
+                <div class="tv-qv-trust-info">
+                  <strong>Fast &amp; Reliable Delivery</strong>
+                  <p>Across Dubai &amp; Abu Dhabi</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Tabs: Description | Specifications | Reviews (0) -->
+            <div class="tv-qv-tabs-container">
+              <div class="tv-qv-tabs-nav" role="tablist">
+                <button type="button" class="tv-qv-tab active" onclick="switchQuickViewTab('desc', this)" role="tab" aria-selected="true">Description</button>
+                <button type="button" class="tv-qv-tab" onclick="switchQuickViewTab('specs', this)" role="tab" aria-selected="false">Specifications</button>
+                <button type="button" class="tv-qv-tab" onclick="switchQuickViewTab('reviews', this)" role="tab" aria-selected="false">Reviews (0)</button>
+              </div>
+              <div class="tv-qv-tab-content" id="tv-qv-tab-desc">
+                <p id="tv-qv-desc-text">Windforce Mile Max 2025 is designed for reliable performance, durability and safety. Ideal for commercial vehicles and daily use, it offers excellent grip, long tread life and a comfortable driving experience.</p>
+              </div>
+              <div class="tv-qv-tab-content" id="tv-qv-tab-specs" style="display: none;">
+                <p id="tv-qv-specs-text">Full certified factory tyre specifications, speed ratings, and compound durability tested for UAE climatic conditions.</p>
+              </div>
+              <div class="tv-qv-tab-content" id="tv-qv-tab-reviews" style="display: none;">
+                <p>No customer reviews yet. Be the first verified buyer to leave feedback after installation.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
