@@ -39,139 +39,202 @@
 </section>
 
 <!-- 2. MAIN CATALOG WRAPPER -->
+<!-- Mobile Filter Backdrop Overlay -->
+<div class="tv-filter-backdrop" id="tv-filter-backdrop" onclick="closeMobileFilter()" aria-hidden="true"></div>
+
 <main class="tv-catalog-wrap">
   <div class="tv-catalog-layout">
     
-    <!-- LEFT SIDEBAR FILTERS -->
-    <aside class="tv-filter-sidebar" aria-label="Product Filters">
-      <!-- 1. Vehicle Type -->
-      <div class="tv-filter-group">
-        <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
-          <span>Vehicle Type</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    <!-- LEFT SIDEBAR FILTERS (Sticky Desktop & Off-Canvas Mobile Drawer) -->
+    <aside class="tv-filter-sidebar" id="tv-filter-sidebar" aria-label="Product Filters">
+      <!-- Mobile Drawer Header -->
+      <div class="tv-filter-drawer-header">
+        <div class="tv-filter-drawer-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <span>Filters</span>
+          <span class="tv-filter-badge" id="tv-drawer-badge" style="display:none;">0</span>
         </div>
-        <div class="tv-filter-list">
-          {% for v in filter_vehicles %}
-          <label class="tv-filter-item">
-            <input type="checkbox" name="vehicle_type" value="{{ v.key }}" {% if active_vehicles and v.key in active_vehicles %}checked{% endif %} onchange="filterProducts()">
-            <span>{{ v.label }}</span> <span class="tv-filter-count">({{ v.count }})</span>
-          </label>
-          {% endfor %}
+        <div class="tv-filter-drawer-actions">
+          <button type="button" class="tv-btn-drawer-reset" onclick="clearAllFilters()">Reset</button>
+          <button type="button" class="tv-btn-drawer-close" onclick="closeMobileFilter()" aria-label="Close filters">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
       </div>
 
-      <!-- 2. Tyre Size -->
-      <div class="tv-filter-group">
-        <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
-          <span>Tyre Size</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      <!-- Scrollable Drawer Body with Smooth Inner Scroll -->
+      <div class="tv-filter-drawer-body" id="tv-filter-drawer-body">
+        <!-- 1. Vehicle Type -->
+        <div class="tv-filter-group">
+          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+            <span>Vehicle Type</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="tv-filter-list">
+            {% for v in filter_vehicles %}
+            <label class="tv-filter-item">
+              <input type="checkbox" name="vehicle_type" value="{{ v.key }}" {% if active_vehicles and v.key in active_vehicles %}checked{% endif %} onchange="filterProducts()">
+              <span>{{ v.label }}</span> <span class="tv-filter-count">({{ v.count }})</span>
+            </label>
+            {% endfor %}
+          </div>
         </div>
-        <input type="text" class="tv-search-size-box" placeholder="Search size (e.g. 205/55 R16)" oninput="searchFilterSizes(this.value)">
-        <div class="tv-filter-list" id="filter-size-list">
-          {% if filter_sizes|length == 0 %}
-          <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No sizes available</span>
-          {% endif %}
-          {% for s in filter_sizes[:6] %}
-          <label class="tv-filter-item" data-size="{{ s.size }}">
-            <input type="checkbox" name="size" value="{{ s.size }}" {% if active_sizes and (s.size in active_sizes or (s.size|replace('/', '-')|replace(' ', '-')) in active_sizes) %}checked{% endif %} onchange="filterProducts()">
-            <span>{{ s.size }}</span> <span class="tv-filter-count">({{ s.count }})</span>
-          </label>
-          {% endfor %}
-          {% if filter_sizes|length > 6 %}
-          <div id="extra-sizes" style="{% if active_sizes %}display:flex;{% else %}display:none;{% endif %} flex-direction:column; gap:10px;">
-            {% for s in filter_sizes[6:] %}
+
+        <!-- 2. Tyre Size -->
+        <div class="tv-filter-group">
+          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+            <span>Tyre Size</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <input type="text" class="tv-search-size-box" placeholder="Search size (e.g. 205/55 R16)" oninput="searchFilterSizes(this.value)">
+          <div class="tv-filter-list" id="filter-size-list">
+            {% if filter_sizes|length == 0 %}
+            <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No sizes available</span>
+            {% endif %}
+            {% for s in filter_sizes[:6] %}
             <label class="tv-filter-item" data-size="{{ s.size }}">
               <input type="checkbox" name="size" value="{{ s.size }}" {% if active_sizes and (s.size in active_sizes or (s.size|replace('/', '-')|replace(' ', '-')) in active_sizes) %}checked{% endif %} onchange="filterProducts()">
               <span>{{ s.size }}</span> <span class="tv-filter-count">({{ s.count }})</span>
             </label>
             {% endfor %}
+            {% if filter_sizes|length > 6 %}
+            <div id="extra-sizes" style="{% if active_sizes %}display:flex;{% else %}display:none;{% endif %} flex-direction:column; gap:10px;">
+              {% for s in filter_sizes[6:] %}
+              <label class="tv-filter-item" data-size="{{ s.size }}">
+                <input type="checkbox" name="size" value="{{ s.size }}" {% if active_sizes and (s.size in active_sizes or (s.size|replace('/', '-')|replace(' ', '-')) in active_sizes) %}checked{% endif %} onchange="filterProducts()">
+                <span>{{ s.size }}</span> <span class="tv-filter-count">({{ s.count }})</span>
+              </label>
+              {% endfor %}
+            </div>
+            <span class="tv-filter-more-link" onclick="toggleExtraSizes(this)">Show more</span>
+            {% endif %}
           </div>
-          <span class="tv-filter-more-link" onclick="toggleExtraSizes(this)">Show more</span>
-          {% endif %}
         </div>
-      </div>
 
-      <!-- 3. Brand -->
-      <div class="tv-filter-group">
-        <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
-          <span>Brand</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </div>
-        <div class="tv-filter-list" id="filter-brand-list">
-          {% if filter_brands|length == 0 %}
-          <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No brands available</span>
-          {% endif %}
-          {% for b in filter_brands[:6] %}
-          <label class="tv-filter-item" data-brand="{{ b.slug }}">
-            <input type="checkbox" name="brand" value="{{ b.slug }}" {% if active_brands and (b.slug in active_brands or (b.name|lower) in active_brands) %}checked{% endif %} onchange="filterProducts()">
-            <span>{{ b.name }}</span> <span class="tv-filter-count">({{ b.count }})</span>
-          </label>
-          {% endfor %}
-          {% if filter_brands|length > 6 %}
-          <div id="extra-brands" style="{% if active_brands %}display:flex;{% else %}display:none;{% endif %} flex-direction:column; gap:10px;">
-            {% for b in filter_brands[6:] %}
+        <!-- 3. Brand -->
+        <div class="tv-filter-group">
+          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+            <span>Brand</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="tv-filter-list" id="filter-brand-list">
+            {% if filter_brands|length == 0 %}
+            <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No brands available</span>
+            {% endif %}
+            {% for b in filter_brands[:6] %}
             <label class="tv-filter-item" data-brand="{{ b.slug }}">
               <input type="checkbox" name="brand" value="{{ b.slug }}" {% if active_brands and (b.slug in active_brands or (b.name|lower) in active_brands) %}checked{% endif %} onchange="filterProducts()">
               <span>{{ b.name }}</span> <span class="tv-filter-count">({{ b.count }})</span>
             </label>
             {% endfor %}
-          </div>
-          <span class="tv-filter-more-link" onclick="toggleExtraBrands(this)">Show more</span>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- 4. Price Range -->
-      <div class="tv-filter-group">
-        <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
-          <span>Price Range</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </div>
-        <div class="tv-price-slider-wrap">
-          <div class="tv-price-range-inputs">
-            <input type="range" class="tv-range-slider" min="{{ min_price }}" max="{{ max_price }}" step="25" value="{{ active_max_price or max_price }}" id="max-price-slider" oninput="updatePriceFilter(this.value)">
-          </div>
-          <div class="tv-price-range-labels">
-            <span>AED {{ min_price }}</span>
-            <span id="price-slider-val">&le; AED {{ (active_max_price or max_price)|int }}</span>
+            {% if filter_brands|length > 6 %}
+            <div id="extra-brands" style="{% if active_brands %}display:flex;{% else %}display:none;{% endif %} flex-direction:column; gap:10px;">
+              {% for b in filter_brands[6:] %}
+              <label class="tv-filter-item" data-brand="{{ b.slug }}">
+                <input type="checkbox" name="brand" value="{{ b.slug }}" {% if active_brands and (b.slug in active_brands or (b.name|lower) in active_brands) %}checked{% endif %} onchange="filterProducts()">
+                <span>{{ b.name }}</span> <span class="tv-filter-count">({{ b.count }})</span>
+              </label>
+              {% endfor %}
+            </div>
+            <span class="tv-filter-more-link" onclick="toggleExtraBrands(this)">Show more</span>
+            {% endif %}
           </div>
         </div>
+
+        <!-- 4. Price Range -->
+        <div class="tv-filter-group">
+          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+            <span>Price Range</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="tv-price-slider-wrap">
+            <div class="tv-price-range-inputs">
+              <input type="range" class="tv-range-slider" min="{{ min_price }}" max="{{ max_price }}" step="25" value="{{ active_max_price or max_price }}" id="max-price-slider" oninput="updatePriceFilter(this.value)">
+            </div>
+            <div class="tv-price-range-labels">
+              <span>AED {{ min_price }}</span>
+              <span id="price-slider-val">&le; AED {{ (active_max_price or max_price)|int }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Tyre Type -->
+        <div class="tv-filter-group">
+          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+            <span>Tyre Type</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="tv-filter-list">
+            {% for t in filter_tyre_types %}
+            <label class="tv-filter-item">
+              <input type="checkbox" name="tire_type" value="{{ t.key }}" {% if active_types and t.key in active_types %}checked{% endif %} onchange="filterProducts()">
+              <span>{{ t.label }}</span> <span class="tv-filter-count">({{ t.count }})</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Clear all filters button (desktop view) -->
+        <button type="button" class="tv-btn-clear-filters tv-btn-clear-desktop" onclick="clearAllFilters()">Clear all filters</button>
       </div>
 
-      <!-- 5. Tyre Type -->
-      <div class="tv-filter-group">
-        <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
-          <span>Tyre Type</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </div>
-        <div class="tv-filter-list">
-          {% for t in filter_tyre_types %}
-          <label class="tv-filter-item">
-            <input type="checkbox" name="tire_type" value="{{ t.key }}" {% if active_types and t.key in active_types %}checked{% endif %} onchange="filterProducts()">
-            <span>{{ t.label }}</span> <span class="tv-filter-count">({{ t.count }})</span>
-          </label>
-          {% endfor %}
-        </div>
+      <!-- Mobile Drawer Footer with Apply Button -->
+      <div class="tv-filter-drawer-footer">
+        <button type="button" class="tv-btn-apply-filters" onclick="applyMobileFilter()">
+          <span>Show Tyres</span>
+          <span class="tv-apply-count" id="tv-apply-count">({{ "{:,}".format(total_count or 0) }})</span>
+        </button>
       </div>
-
-      <!-- Clear all filters button -->
-      <button type="button" class="tv-btn-clear-filters" onclick="clearAllFilters()">Clear all filters</button>
     </aside>
 
     <!-- RIGHT MAIN CATALOG COLUMN -->
     <div class="tv-catalog-main">
       <!-- Top Sort Bar -->
       <div class="tv-catalog-top-bar">
-        <h2 class="tv-catalog-count-heading" id="catalog-count-heading">{{ "{:,}".format(total_count or 0) }} Car Tyres</h2>
-        <div class="tv-catalog-sort">
-          <label for="sort-select">Sort by:</label>
-          <select id="sort-select" class="tv-sort-select" onchange="sortProducts(this.value)">
-            <option value="popular" {% if active_sort == 'popular' %}selected{% endif %}>Most Popular</option>
-            <option value="price-asc" {% if active_sort == 'price-asc' %}selected{% endif %}>Price: Low to High</option>
-            <option value="price-desc" {% if active_sort == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
-            <option value="rating" {% if active_sort == 'rating' %}selected{% endif %}>Customer Rating</option>
-            <option value="newest" {% if active_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
-          </select>
+        <div class="tv-topbar-left">
+          <h2 class="tv-catalog-count-heading" id="catalog-count-heading">{{ "{:,}".format(total_count or 0) }} Car Tyres</h2>
+        </div>
+        <div class="tv-topbar-right">
+          <!-- Mobile Filter Button (Visible on mobile/tablet) -->
+          <button type="button" class="tv-mobile-filter-btn" onclick="openMobileFilter()" aria-label="Open Filters">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="21" x2="4" y2="14"></line>
+              <line x1="4" y1="10" x2="4" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12" y2="3"></line>
+              <line x1="20" y1="21" x2="20" y2="16"></line>
+              <line x1="20" y1="12" x2="20" y2="3"></line>
+              <line x1="1" y1="14" x2="7" y2="14"></line>
+              <line x1="9" y1="8" x2="15" y2="8"></line>
+              <line x1="17" y1="16" x2="23" y2="16"></line>
+            </svg>
+            <span>Filters</span>
+            <span class="tv-filter-badge" id="tv-filter-badge" style="display:none;">0</span>
+          </button>
+
+          <div class="tv-catalog-sort">
+            <label for="sort-select" class="tv-sort-label">Sort by:</label>
+            <select id="sort-select" class="tv-sort-select" onchange="sortProducts(this.value)">
+              <option value="popular" {% if active_sort == 'popular' %}selected{% endif %}>Most Popular</option>
+              <option value="price-asc" {% if active_sort == 'price-asc' %}selected{% endif %}>Price: Low to High</option>
+              <option value="price-desc" {% if active_sort == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
+              <option value="rating" {% if active_sort == 'rating' %}selected{% endif %}>Customer Rating</option>
+              <option value="newest" {% if active_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+            </select>
+          </div>
         </div>
       </div>
 

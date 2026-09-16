@@ -1398,6 +1398,7 @@ async function fetchProducts(page = 1, scrollUp = true) {
 
     // Update pagination controls
     renderPaginationControls(window.totalPages, window.currentPage);
+    updateActiveFilterBadges();
 
     // Smooth scroll to top of catalog
     if (scrollUp) {
@@ -1421,6 +1422,7 @@ function goToPage(page) {
 }
 
 function filterProducts() {
+  updateActiveFilterBadges();
   fetchProducts(1, true);
 }
 
@@ -1447,6 +1449,7 @@ function clearAllFilters() {
   if (sortSelect) {
     sortSelect.value = 'popular';
   }
+  updateActiveFilterBadges();
   fetchProducts(1, true);
 }
 
@@ -1544,6 +1547,74 @@ window.addEventListener('popstate', function() {
   }
 });
 
+function openMobileFilter() {
+  const sidebar = document.getElementById('tv-filter-sidebar');
+  const backdrop = document.getElementById('tv-filter-backdrop');
+  if (sidebar) sidebar.classList.add('open');
+  if (backdrop) backdrop.classList.add('active');
+  document.body.classList.add('filter-open');
+  updateActiveFilterBadges();
+}
+
+function closeMobileFilter() {
+  const sidebar = document.getElementById('tv-filter-sidebar');
+  const backdrop = document.getElementById('tv-filter-backdrop');
+  if (sidebar) sidebar.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('active');
+  document.body.classList.remove('filter-open');
+}
+
+function applyMobileFilter() {
+  closeMobileFilter();
+  const mainCol = document.querySelector('.tv-catalog-main');
+  if (mainCol) {
+    mainCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function updateActiveFilterBadges() {
+  const selectedBrands = document.querySelectorAll('input[name="brand"]:checked').length;
+  const selectedVehicles = document.querySelectorAll('input[name="vehicle_type"]:checked').length;
+  const selectedSizes = document.querySelectorAll('input[name="size"]:checked').length;
+  const selectedTypes = document.querySelectorAll('input[name="tire_type"]:checked').length;
+  const slider = document.getElementById('max-price-slider');
+  let priceActive = 0;
+  if (slider && parseFloat(slider.value) < parseFloat(slider.max || 2000)) {
+    priceActive = 1;
+  }
+  const totalActive = selectedBrands + selectedVehicles + selectedSizes + selectedTypes + priceActive;
+
+  const btnBadge = document.getElementById('tv-filter-badge');
+  const drawerBadge = document.getElementById('tv-drawer-badge');
+  const applyCount = document.getElementById('tv-apply-count');
+
+  [btnBadge, drawerBadge].forEach(b => {
+    if (!b) return;
+    if (totalActive > 0) {
+      b.textContent = totalActive;
+      b.style.display = 'inline-flex';
+    } else {
+      b.style.display = 'none';
+    }
+  });
+
+  if (applyCount && typeof window.totalCount !== 'undefined') {
+    applyCount.textContent = `(${window.totalCount.toLocaleString()})`;
+  }
+}
+
+window.addEventListener('resize', function() {
+  if (window.innerWidth > 1024 && document.body.classList.contains('filter-open')) {
+    closeMobileFilter();
+  }
+});
+
+window.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.body.classList.contains('filter-open')) {
+    closeMobileFilter();
+  }
+});
+
 function initProductCatalog(config) {
   if (config) {
     if (typeof config.currentPage !== 'undefined') window.currentPage = parseInt(config.currentPage, 10) || 1;
@@ -1553,6 +1624,7 @@ function initProductCatalog(config) {
   }
   function initControls() {
     renderPaginationControls(window.totalPages, window.currentPage);
+    updateActiveFilterBadges();
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initControls);
@@ -1584,4 +1656,8 @@ window.updatePriceFilter = updatePriceFilter;
 window.toggleWishlist = toggleWishlist;
 window.addToCart = addToCart;
 window.showToast = showToast;
+window.openMobileFilter = openMobileFilter;
+window.closeMobileFilter = closeMobileFilter;
+window.applyMobileFilter = applyMobileFilter;
+window.updateActiveFilterBadges = updateActiveFilterBadges;
 window.initProductCatalog = initProductCatalog;
