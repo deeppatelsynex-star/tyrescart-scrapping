@@ -6742,7 +6742,7 @@ details summary span:last-child {
 .tv-ev-hero {
   position: relative;
   background-color: #071738;
-  background-image: linear-gradient(90deg, rgba(5, 18, 48, 0.98) 0%, rgba(5, 18, 48, 0.92) 34%, rgba(5, 18, 48, 0.45) 50%, rgba(5, 18, 48, 0.05) 66%, rgba(5, 18, 48, 0) 100%), url('/static/assets/images/ev/hero_ev_car_skyline_hd.png');
+  background-image: linear-gradient(90deg, rgba(5, 18, 48, 0.98) 0%, rgba(5, 18, 48, 0.92) 34%, rgba(5, 18, 48, 0.45) 50%, rgba(5, 18, 48, 0.05) 66%, rgba(5, 18, 48, 0) 100%), url('/static/assets/images/ev/hero_ev_car_skyline_hd.jpg');
   background-size: cover;
   background-position: center right;
   background-repeat: no-repeat;
@@ -6781,6 +6781,20 @@ details summary span:last-child {
   margin: 0;
   max-width: 580px;
   text-shadow: 0 1px 4px rgba(5, 18, 48, 0.4);
+}
+
+/* Mobile: the left-to-right fade leaves the right side of the image too
+   light for white text once content stacks full-width, so switch to a
+   uniform dark overlay across the whole banner. */
+@media (max-width: 768px) {
+  .tv-ev-hero {
+    background-image: linear-gradient(rgba(5, 18, 48, 0.82), rgba(5, 18, 48, 0.82)), url('/static/assets/images/ev/hero_ev_car_skyline_hd.jpg');
+    background-position: center;
+  }
+
+  .tv-ev-hero-content {
+    max-width: 100%;
+  }
 }
 
 .tv-ev-drive-clean-badge {
@@ -7017,7 +7031,7 @@ details summary span:last-child {
 .tv-ev-bottom-cta {
   position: relative;
   background-color: #041638;
-  background-image: linear-gradient(90deg, #041638 0%, rgba(4, 22, 56, 0.98) 32%, rgba(4, 22, 56, 0.5) 46%, rgba(4, 22, 56, 0.05) 58%, rgba(4, 22, 56, 0) 70%), url('/static/assets/images/ev/cta_ev_wheel_skyline_hd.png');
+  background-image: linear-gradient(90deg, #041638 0%, rgba(4, 22, 56, 0.98) 32%, rgba(4, 22, 56, 0.5) 46%, rgba(4, 22, 56, 0.05) 58%, rgba(4, 22, 56, 0) 70%), url('/static/assets/images/ev/cta_ev_wheel_skyline_hd.jpg');
   background-size: cover;
   background-position: center right;
   background-repeat: no-repeat;
@@ -7029,6 +7043,20 @@ details summary span:last-child {
 .tv-ev-bottom-cta .wrap {
   position: relative;
   z-index: 2;
+}
+
+/* Mobile: the left-to-right fade leaves the right side of the image too
+   light for white text once content stacks full-width, so switch to a
+   uniform dark overlay across the whole banner. */
+@media (max-width: 768px) {
+  .tv-ev-bottom-cta {
+    background-image: linear-gradient(rgba(4, 22, 56, 0.82), rgba(4, 22, 56, 0.82)), url('/static/assets/images/ev/cta_ev_wheel_skyline_hd.jpg');
+    background-position: center;
+  }
+
+  .tv-ev-bottom-grid {
+    max-width: 100%;
+  }
 }
 
 .tv-ev-bottom-grid {
