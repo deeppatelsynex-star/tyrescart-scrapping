@@ -1051,7 +1051,12 @@ header {
   position: relative;
   overflow: hidden;
 }
-
+@font-face {
+    font-family: UAEDirham;
+    src: url(static/fonts/UAE-dirham.woff) format("woff"),url(static/fonts/UAE-dirham.ttf) format("truetype");
+    font-weight: 400;
+    font-style: normal
+}
 /* 4 Guarantee / Value Cards */
 .price-guarantees-grid {
   display: grid;
@@ -5084,7 +5089,8 @@ details summary span:last-child {
   box-shadow: 0 2px 6px rgba(37, 99, 255, 0.35);
   transition: transform 0.2s ease, background-color 0.2s ease;
   user-select: none;
-  pointer-events: none; /* Allows row click to handle toggle seamlessly */
+  pointer-events: auto;
+  cursor: pointer;
   flex-shrink: 0;
 }
 
@@ -5165,14 +5171,24 @@ details summary span:last-child {
 /* Desktop vs Mobile Rules */
 @media (min-width: 769px) {
   .dtr-control-btn,
-  .dtr-child-row {
+  .dtr-child-row,
+  .dtr-child-row.is-open {
     display: none !important;
   }
   .desktop-col {
     display: table-cell !important;
   }
+  .dtr-cell-content {
+    display: inline !important;
+  }
+  .dtr-parent-row {
+    cursor: default !important;
+  }
   .price-table {
     min-width: 720px;
+  }
+  .tv-ev-table {
+    min-width: 650px;
   }
   .price-table-scroll {
     overflow-x: auto;
@@ -5186,25 +5202,151 @@ details summary span:last-child {
   .dtr-control-btn {
     display: inline-flex !important;
   }
+  .dtr-child-row {
+    display: none;
+  }
+  .dtr-child-row.is-open {
+    display: table-row !important;
+  }
   .price-table-card {
     border-radius: 16px;
     margin: 0 -4px;
+    overflow: hidden;
   }
   .price-table-scroll {
-    overflow-x: auto !important;
+    overflow-x: visible !important;
     -webkit-overflow-scrolling: touch;
     width: 100% !important;
   }
-  .price-table {
-    min-width: 620px !important;
+  .price-table,
+  .tv-4x4-table,
+  .tv-ev-table {
+    min-width: 0 !important;
     width: 100% !important;
+    table-layout: auto !important;
+    border-collapse: collapse !important;
   }
-  .price-table thead th {
+  .price-table thead th,
+  .tv-4x4-table thead th,
+  .tv-ev-table thead th {
+    padding: 12px 14px !important;
+    font-size: 0.82rem !important;
+  }
+  .price-table tbody td,
+  .tv-4x4-table tbody td,
+  .tv-ev-table tbody td {
+    padding: 12px 14px !important;
+    font-size: 0.88rem !important;
+  }
+  .price-table thead th:first-child,
+  .price-table tbody td:first-child,
+  .tv-4x4-table thead th:first-child,
+  .tv-4x4-table tbody td:first-child,
+  .tv-ev-table thead th:first-child,
+  .tv-ev-table tbody td:first-child {
+    width: 100% !important;
+    text-align: left !important;
+  }
+  .price-table thead th:last-child,
+  .price-table tbody td:last-child,
+  .tv-4x4-table thead th:last-child,
+  .tv-4x4-table tbody td:last-child,
+  .tv-ev-table thead th:last-child,
+  .tv-ev-table tbody td:last-child {
+    text-align: right !important;
+    width: 1% !important;
+    white-space: nowrap !important;
+  }
+  .tv-ev-btn-quote {
+    padding: 6px 14px !important;
+    font-size: 0.80rem !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+  }
+  .tv-4x4-table .get-quote-link,
+  .price-table .get-quote-link {
+    font-size: 0.86rem !important;
+    white-space: nowrap !important;
+  }
+  .dtr-parent-row {
+    cursor: pointer !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dtr-cell-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 100%;
+  }
+  .dtr-control-btn {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    border-radius: 50%;
+    background: #2563FF;
+    color: #FFFFFF !important;
+    border: none;
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: 0 2px 6px rgba(37, 99, 255, 0.35);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    user-select: none;
+    pointer-events: auto;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .dtr-parent-row.dtr-expanded .dtr-control-btn,
+  .dtr-control-btn.is-expanded {
+    background: #0F172A !important;
+  }
+  .dtr-child-td {
+    padding: 0 12px 14px 12px !important;
+    border-bottom: 1px solid var(--border, #E2E8F0) !important;
+    background-color: #F8FAFC !important;
+  }
+  .dtr-child-details {
+    background: #FFFFFF;
+    border: 1px solid var(--border, #E2E8F0);
+    border-radius: 14px;
     padding: 12px 14px;
-    font-size: 0.84rem;
+    box-shadow: 0 4px 14px rgba(14, 17, 8, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
-  .price-table td {
-    padding: 13px 14px;
+  .dtr-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-size: 0.86rem;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #F1F5F9;
+    gap: 10px;
+  }
+  .dtr-detail-item:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .dtr-detail-title {
+    font-weight: 700;
+    color: #64748B;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+  }
+  .dtr-detail-title svg {
+    color: #2563FF;
+    flex-shrink: 0;
+  }
+  .dtr-detail-value {
+    font-weight: 700;
+    color: #0F172A;
+    text-align: right;
+    font-size: 0.88rem;
+    word-break: break-word;
   }
   .td-size {
     width: auto !important;
@@ -6771,7 +6913,6 @@ details summary span:last-child {
 /* EV Table Custom Styling */
 .tv-ev-table {
   width: 100%;
-  min-width: 650px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -6926,9 +7067,9 @@ details summary span:last-child {
   padding: 16px 20px !important;
 }
 
-.faq-answer-inner {
+/* .faq-answer-inner {
   padding: 0 20px 16px 20px !important;
-}
+} */
 
 @media (max-width: 640px) {
   .faq-summary,
@@ -6936,8 +7077,1288 @@ details summary span:last-child {
     padding: 14px 16px !important;
     font-size: 0.95rem !important;
   }
-  .faq-answer-inner {
+  /* .faq-answer-inner {
     padding: 0 16px 14px 16px !important;
+  } */
+}
+
+
+/* =============================================================================
+   UAE DIRHAM CURRENCY FONT & SYMBOL SPECIFICATION
+   ============================================================================= */
+@font-face {
+    font-family: UAEDirham;
+    src: url(fonts/UAE-dirham.woff) format("woff"),
+         url(../fonts/UAE-dirham.woff) format("woff"),
+         url(/static/fonts/UAE-dirham.woff) format("woff"),
+         url(fonts/UAE-dirham.ttf) format("truetype"),
+         url(../fonts/UAE-dirham.ttf) format("truetype");
+    font-weight: 400;
+    font-style: normal;
+}
+.currency-dirham {
+    font-family: UAEDirham, sans-serif;
+    position: relative;
+}
+
+
+/* =============================================================================
+   ANTIGRAVITY DESIGN EXPERT: PRODUCT LISTING / CAR TYRES CATALOG
+   Matching exact design reference: ChatGPT Image Sep 14, 2026, 02_44_06 PM.png
+   ============================================================================= */
+
+:root {
+  --tv-blue-brand: #2563EB;
+  --tv-blue-hover: #1D4ED8;
+  --tv-dark-navy: #0F172A;
+  --tv-slate-text: #475569;
+  --tv-slate-muted: #64748B;
+  --tv-border-light: #E2E8F0;
+  --tv-card-bg: #FFFFFF;
+}
+
+/* 1. HERO BANNER */
+.tv-cat-hero {
+  position: relative;
+  background-color: #021a48;
+  background-image: linear-gradient(90deg, #021844 0%, rgba(2, 24, 68, 0.96) 32%, rgba(2, 24, 68, 0.5) 48%, rgba(2, 24, 68, 0.05) 62%, rgba(2, 24, 68, 0) 75%), url('/static/assets/images/products/car_tyres_banner.jpg');
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
+  padding: clamp(48px, 6vw, 76px) 0 clamp(52px, 6.5vw, 84px) 0;
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.tv-cat-hero .wrap {
+  position: relative;
+  z-index: 2;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.tv-cat-hero-content {
+  max-width: 580px;
+}
+
+.tv-cat-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #93C5FD;
+  margin-bottom: 16px;
+}
+
+.tv-cat-breadcrumb a {
+  color: #BFDBFE;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s ease;
+}
+
+.tv-cat-breadcrumb a:hover {
+  color: #ffffff;
+}
+
+.tv-cat-breadcrumb .sep {
+  color: #60A5FA;
+  font-size: 0.75rem;
+}
+
+.tv-cat-breadcrumb .current {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.tv-cat-hero-title {
+  font-size: clamp(2.3rem, 3.8vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  text-shadow: 0 2px 10px rgba(2, 24, 68, 0.5);
+}
+
+.tv-cat-hero-sub {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
+  max-width: 520px;
+  text-shadow: 0 1px 4px rgba(2, 24, 68, 0.4);
+}
+
+/* Floating Script Badge in Sky: "Drive with Confidence" */
+.tv-cat-sky-badge {
+  position: absolute;
+  top: 32px;
+  left: 640px;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Caveat', 'Segoe Script', 'Brush Script MT', cursive, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.6rem, 2.2vw, 2.1rem);
+  line-height: 1.05;
+  color: #ffffff;
+  text-shadow: 0 0 18px rgba(56, 189, 248, 0.9), 0 2px 8px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.tv-cat-sky-badge span:last-child {
+  padding-left: 20px;
+}
+
+@media(max-width: 1120px) {
+  .tv-cat-sky-badge {
+    display: none;
   }
 }
-
+
+/* 2. MAIN CATALOG LAYOUT */
+.tv-catalog-wrap {
+  max-width: 1720px;
+  width: 96%;
+  margin: 0 auto;
+  padding: 32px 16px 72px 16px;
+}
+
+.tv-catalog-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* 3. SIDEBAR FILTERS (Sticky on Desktop, Off-Canvas Drawer on Mobile) */
+.tv-filter-backdrop {
+  display: none;
+}
+
+.tv-filter-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border: 1px solid var(--tv-border-light);
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.03);
+  position: -webkit-sticky;
+  position: sticky;
+  top: 24px;
+  align-self: flex-start;
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+}
+
+.tv-filter-drawer-header {
+  display: none;
+}
+
+.tv-filter-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 20px 16px;
+}
+
+.tv-filter-drawer-footer {
+  display: none;
+}
+
+.tv-mobile-filter-btn {
+  display: none;
+}
+
+.tv-filter-group {
+  border-bottom: 1px solid #F1F5F9;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+
+.tv-filter-group:last-of-type {
+  border-bottom: none;
+  margin-bottom: 24px;
+  padding-bottom: 0;
+}
+
+.tv-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--tv-dark-navy);
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 14px;
+}
+
+.tv-filter-header svg {
+  color: #64748B;
+  transition: transform 0.2s ease;
+}
+
+.tv-filter-header.collapsed svg {
+  transform: rotate(-90deg);
+}
+
+.tv-filter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Inner vertical scroll with fixed max-height for Size & Brand lists */
+.tv-filter-scroll-list,
+#filter-size-list,
+#filter-brand-list {
+  max-height: 220px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+  padding-right: 6px;
+}
+
+.tv-filter-scroll-list::-webkit-scrollbar,
+#filter-size-list::-webkit-scrollbar,
+#filter-brand-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.tv-filter-scroll-list::-webkit-scrollbar-track,
+#filter-size-list::-webkit-scrollbar-track,
+#filter-brand-list::-webkit-scrollbar-track {
+  background: #F1F5F9;
+  border-radius: 4px;
+}
+
+.tv-filter-scroll-list::-webkit-scrollbar-thumb,
+#filter-size-list::-webkit-scrollbar-thumb,
+#filter-brand-list::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+.tv-filter-scroll-list::-webkit-scrollbar-thumb:hover,
+#filter-size-list::-webkit-scrollbar-thumb:hover,
+#filter-brand-list::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+.tv-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #334155;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tv-filter-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid #CBD5E1;
+  accent-color: var(--tv-blue-brand);
+  cursor: pointer;
+}
+
+.tv-filter-count {
+  color: #94A3B8;
+  font-size: 0.82rem;
+}
+
+.tv-search-size-box {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  background: #F8FAFC;
+  margin-bottom: 12px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.tv-search-size-box:focus {
+  border-color: var(--tv-blue-brand);
+  background: #ffffff;
+}
+
+.tv-filter-more-link {
+  color: var(--tv-blue-brand);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 4px;
+  user-select: none;
+}
+
+.tv-filter-more-link:hover {
+  text-decoration: underline;
+}
+
+.tv-price-slider-wrap {
+  padding: 4px 0 0 0;
+}
+
+.tv-price-range-inputs {
+  margin-bottom: 10px;
+}
+
+.tv-range-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #E2E8F0;
+  outline: none;
+  accent-color: var(--tv-blue-brand);
+  cursor: pointer;
+}
+
+.tv-price-range-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748B;
+}
+
+#price-slider-val {
+  color: var(--tv-dark-navy);
+  font-weight: 700;
+}
+
+.tv-btn-clear-filters {
+  width: 100%;
+  padding: 10px 14px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  color: #DC2626;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.tv-btn-clear-filters:hover {
+  background: #FEF2F2;
+  border-color: #FECACA;
+}
+
+/* 4. MAIN PRODUCT CATALOG */
+.tv-catalog-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.tv-catalog-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.tv-topbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.tv-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tv-catalog-count-heading {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--tv-dark-navy);
+  margin: 0;
+}
+
+.tv-catalog-sort {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #64748B;
+}
+
+.tv-sort-select {
+  padding: 8px 14px;
+  border: 1px solid var(--tv-border-light);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--tv-dark-navy);
+  background: #ffffff;
+  cursor: pointer;
+  outline: none;
+}
+
+.tv-sort-select:focus {
+  border-color: var(--tv-blue-brand);
+}
+
+/* 5. PRODUCT CARDS GRID */
+.tv-products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+/* -------------------------------------------------------------
+   RESPONSIVE MEDIA QUERIES: MOBILE FILTER DRAWER & CARD FIXES
+   ------------------------------------------------------------- */
+body.filter-open {
+  overflow: hidden !important;
+  touch-action: none !important;
+}
+
+body.filter-open .mobile-cta,
+body.filter-open .float-wa {
+  display: none !important;
+}
+
+@media (max-width: 1200px) {
+  .tv-products-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .tv-catalog-layout {
+    display: block;
+  }
+
+  /* Mobile Backdrop Overlay */
+  .tv-filter-backdrop {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    z-index: 9998 !important;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.28s ease, visibility 0.28s ease;
+  }
+
+  .tv-filter-backdrop.active {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Filter Sidebar as Mobile Off-Canvas Sliding Drawer */
+  .tv-filter-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 330px !important;
+    max-width: 86vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    background: #ffffff !important;
+    z-index: 9999 !important;
+    border-radius: 0 20px 20px 0 !important;
+    box-shadow: 10px 0 35px rgba(0, 0, 0, 0.28) !important;
+    border: none !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden;
+  }
+
+  .tv-filter-sidebar.open {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+  }
+
+  /* Drawer Header */
+  .tv-filter-drawer-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #E2E8F0;
+    background: #ffffff;
+    flex-shrink: 0;
+  }
+
+  .tv-filter-drawer-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--tv-dark-navy, #0F172A);
+  }
+
+  .tv-filter-drawer-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .tv-btn-drawer-reset {
+    background: none;
+    border: none;
+    color: #DC2626;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+  }
+
+  .tv-btn-drawer-reset:hover {
+    background: #FEF2F2;
+  }
+
+  .tv-btn-drawer-close {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #F1F5F9;
+    border: none;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .tv-btn-drawer-close:hover {
+    background: #E2E8F0;
+    color: #0F172A;
+  }
+
+  /* Scrollable Drawer Body with Smooth Inner Scroll */
+  .tv-filter-drawer-body {
+    flex: 1;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    padding: 20px !important;
+    scrollbar-width: thin;
+  }
+
+  /* Hide Desktop Clear Button in Drawer Body (Header has Reset button) */
+  .tv-btn-clear-desktop {
+    display: none !important;
+  }
+
+  /* Drawer Footer */
+  .tv-filter-drawer-footer {
+    display: block !important;
+    padding: 14px 20px;
+    border-top: 1px solid #E2E8F0;
+    background: #ffffff;
+    flex-shrink: 0;
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.05);
+  }
+
+  .tv-btn-apply-filters {
+    width: 100%;
+    height: 48px;
+    background: var(--tv-blue-brand, #072e87);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(7, 46, 135, 0.25);
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+
+  .tv-btn-apply-filters:hover {
+    background: #008738;
+  }
+
+  .tv-btn-apply-filters:active {
+    transform: scale(0.98);
+  }
+
+  /* Mobile Filter Trigger Button */
+  .tv-mobile-filter-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 16px;
+    background: #ffffff;
+    border: 1.5px solid var(--tv-blue-brand, #072e87);
+    color: var(--tv-blue-brand, #072e87);
+    border-radius: 10px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 8px rgba(7, 46, 135, 0.08);
+  }
+
+  .tv-mobile-filter-btn:hover {
+    background: #EFF6FF;
+  }
+
+  .tv-mobile-filter-btn:active {
+    transform: scale(0.98);
+  }
+
+  .tv-filter-badge {
+    background: #008738;
+    color: #ffffff;
+    font-size: 0.74rem;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 12px;
+    min-width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .tv-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .tv-catalog-wrap {
+    width: 100%;
+    padding: 14px 12px 95px 12px;
+  }
+
+  .tv-catalog-top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .tv-topbar-left {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .tv-catalog-count-heading {
+    font-size: 1.15rem;
+  }
+
+  .tv-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .tv-mobile-filter-btn {
+    flex: 1;
+    height: 42px;
+  }
+
+  .tv-catalog-sort {
+    flex: 1;
+  }
+
+  .tv-sort-label {
+    display: none;
+  }
+
+  .tv-sort-select {
+    width: 100%;
+    height: 42px;
+  }
+
+  /* Single Column Mobile Product Card */
+  .tv-products-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .tv-product-card {
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  }
+
+  .tv-card-top-banner {
+    font-size: 0.82rem;
+    padding: 6px 10px;
+  }
+
+  .tv-card-img-wrap {
+    height: 140px;
+  }
+
+  .tv-product-img {
+    max-height: 135px;
+  }
+
+  .tv-card-body {
+    padding: 12px 14px 10px 14px;
+  }
+
+  .tv-card-brand-size-row {
+    margin-bottom: 6px;
+  }
+
+  .tv-card-size-spec {
+    font-size: 0.98rem;
+  }
+
+  .tv-card-pattern-title {
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+  }
+
+  .tv-card-year-origin-row {
+    font-size: 0.82rem;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+  }
+
+  .tv-card-main-price {
+    font-size: 1.35rem;
+  }
+
+  .tv-card-set-label {
+    font-size: 0.78rem;
+  }
+
+  .tv-qty-select {
+    height: 36px;
+    border-radius: 8px;
+    padding: 0 8px;
+  }
+
+  .tv-btn-card-add {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+
+  .tv-card-installments-strip {
+    padding: 7px 10px;
+    gap: 6px;
+    font-size: 0.72rem;
+  }
+
+  .tv-pagination-wrap {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    margin-top: 24px;
+    padding-top: 16px;
+  }
+}
+
+/* 6. INDIVIDUAL PRODUCT CARD (Exact Match to Reference Design) */
+.tv-product-card {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  min-width: 0;
+}
+
+.tv-product-card:hover {
+  transform: translateY(-3px);
+  border-color: #CBD5E1;
+  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.09);
+  cursor: pointer;
+}
+
+/* SKELETON LOADING SHIMMER ANIMATION */
+@keyframes tvShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.tv-skeleton-box {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: tvShimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.tv-product-card.tv-card-skeleton {
+  pointer-events: none;
+  border-color: #EDF2F7;
+  background: #ffffff;
+  min-height: 380px;
+}
+
+.tv-skeleton-banner {
+  height: 32px;
+  background: #E2E8F0;
+  animation: tvShimmer 1.4s ease-in-out infinite;
+}
+
+.tv-page-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* Top Offer Banner */
+.tv-card-top-banner {
+  background: #072e87;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.86rem;
+  text-align: center;
+  padding: 7px 8px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Card Body */
+.tv-card-body {
+  padding: 10px 14px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  position: relative;
+}
+
+/* Quick View Eye Button */
+.tv-btn-quickview {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #E2E8F0;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748B;
+  cursor: pointer;
+  z-index: 2;
+  transition: all 0.15s ease;
+  padding: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.tv-btn-quickview:hover {
+  border-color: #008738;
+  color: #008738;
+  transform: scale(1.08);
+}
+
+/* Tyre Image */
+.tv-card-img-wrap {
+  height: 145px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 6px 0;
+  overflow: hidden;
+}
+
+.tv-product-img {
+  max-height: 140px;
+  max-width: 100%;
+  object-fit: contain;
+  transition: transform 0.25s ease;
+}
+
+.tv-product-card:hover .tv-product-img {
+  transform: scale(1.04);
+}
+
+/* Sub-badges Row (Warranty + Vehicle Icon) */
+.tv-card-subbadges-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.tv-warranty-badge {
+  background: #F4FBF7;
+  color: #0D7A5F;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.tv-vehicle-silhouette {
+  color: #000000;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Brand Logo + Tyre Size Row */
+.tv-card-brand-size-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tv-card-brand-wrap {
+  display: flex;
+  align-items: center;
+  max-width: 105px;
+  height: 24px;
+}
+
+.tv-card-brand-img {
+  max-height: 24px;
+  max-width: 100px;
+  object-fit: contain;
+  display: block;
+}
+
+.tv-card-brand-fallback {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #0F172A;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tv-card-size-spec {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #000000;
+  text-align: right;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+/* Pattern / Model Name */
+.tv-card-pattern-title {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #000000;
+  margin: 0 0 6px 0;
+  line-height: 1.25;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Year & Country of Origin Row */
+.tv-card-year-origin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #000000;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.tv-card-year {
+  color: #000000;
+}
+
+.tv-card-origin {
+  color: #000000;
+  text-align: right;
+}
+
+/* Price & Action Section */
+.tv-card-price-action-section {
+  margin-top: auto;
+}
+
+.tv-card-fitted-label {
+  font-size: 0.73rem;
+  color: #64748B;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-bottom: 3px;
+}
+
+.tv-card-price-controls-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.tv-card-price-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.tv-card-main-price {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #000000;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.tv-curr-glyph {
+  font-family: UAEDirham, sans-serif;
+  font-weight: 400;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.tv-card-set-label {
+  font-size: 0.72rem;
+  color: #64748B;
+  font-weight: 500;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+.tv-curr-glyph-sub {
+  font-family: UAEDirham, sans-serif;
+  font-weight: 400;
+  font-size: 0.72rem;
+  color: #000000;
+  line-height: 1;
+}
+
+.tv-card-set-label strong {
+  color: #000000;
+  font-weight: 700;
+}
+
+.tv-card-action-col {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.tv-qty-select {
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #111827;
+  background-color: #ffffff;
+  cursor: pointer;
+  outline: none;
+  height: 32px;
+}
+
+.tv-qty-select:focus {
+  border-color: #008738;
+}
+
+.tv-btn-card-add {
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  height: 32px;
+  white-space: nowrap;
+}
+
+.tv-btn-card-add:hover {
+  background: #262626;
+  transform: translateY(-1px);
+}
+
+/* Bottom Installment Strip */
+.tv-card-installments-strip {
+  background: linear-gradient(90deg, #FDF2F8 0%, #FFF7ED 100%);
+  border-top: 1px solid #F1F5F9;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tv-installments-title {
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tv-badge-tabby {
+  background: #2DE8C8;
+  color: #023830;
+  font-weight: 900;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: -0.01em;
+  display: inline-block;
+  line-height: 1.25;
+}
+
+.tv-badge-tamara {
+  background: linear-gradient(135deg, #FFB088 0%, #E395FA 50%, #76A5FF 100%);
+  color: #1E1B4B;
+  font-weight: 900;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: -0.01em;
+  display: inline-block;
+  line-height: 1.25;
+}
+
+/* 7. PAGINATION */
+.tv-pagination-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--tv-border-light);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.tv-pagination-info {
+  font-size: 0.9rem;
+  color: #64748B;
+}
+
+.tv-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tv-page-btn {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--tv-border-light);
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.tv-page-btn:hover {
+  border-color: var(--tv-blue-brand);
+  color: var(--tv-blue-brand);
+}
+
+.tv-page-btn.active {
+  background: var(--tv-blue-brand);
+  border-color: var(--tv-blue-brand);
+  color: #ffffff;
+}
+
+.tv-page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Quick Toast Notification */
+.tv-toast-notify {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #0F172A;
+  color: #ffffff;
+  padding: 14px 22px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  z-index: 9999;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.tv-toast-notify.show {
+  transform: translateY(0);
+  opacity: 1;
+}
