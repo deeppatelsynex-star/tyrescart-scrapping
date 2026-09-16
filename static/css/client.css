@@ -7316,6 +7316,46 @@ details summary span:last-child {
   gap: 10px;
 }
 
+/* Inner vertical scroll with fixed max-height for Size & Brand lists */
+.tv-filter-scroll-list,
+#filter-size-list,
+#filter-brand-list {
+  max-height: 220px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+  padding-right: 6px;
+}
+
+.tv-filter-scroll-list::-webkit-scrollbar,
+#filter-size-list::-webkit-scrollbar,
+#filter-brand-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.tv-filter-scroll-list::-webkit-scrollbar-track,
+#filter-size-list::-webkit-scrollbar-track,
+#filter-brand-list::-webkit-scrollbar-track {
+  background: #F1F5F9;
+  border-radius: 4px;
+}
+
+.tv-filter-scroll-list::-webkit-scrollbar-thumb,
+#filter-size-list::-webkit-scrollbar-thumb,
+#filter-brand-list::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+.tv-filter-scroll-list::-webkit-scrollbar-thumb:hover,
+#filter-size-list::-webkit-scrollbar-thumb:hover,
+#filter-brand-list::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
 .tv-filter-item {
   display: flex;
   align-items: center;
