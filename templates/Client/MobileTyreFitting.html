@@ -280,7 +280,7 @@
   display: grid;
   grid-template-columns: minmax(480px, 580px) 1fr;
   gap: 40px;
-  align-items: flex-start;
+  align-items: center;
   position: relative;
   z-index: 5;
 }
@@ -312,6 +312,14 @@
   margin-bottom: 18px;
 }
 
+.mtf-hero-title-accent {
+  color: #8ecdfb;
+  background: linear-gradient(90deg, #cfe9ff 0%, #8ecdfb 55%, #4fa9f4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .mtf-hero-desc {
   color: rgba(255, 255, 255, 0.92);
   font-size: 1.02rem;
@@ -326,6 +334,10 @@
   gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 36px;
+}
+
+.btn-hero-chevron {
+  flex-shrink: 0;
 }
 
 .btn-hero-wa {
@@ -372,29 +384,34 @@
   box-shadow: 0 14px 28px -4px rgba(0, 0, 0, 0.25);
 }
 
-/* 4 Trust Badges in a single horizontal row */
+/* 4 Trust Badges — always a single horizontal row on desktop */
 .mtf-hero-trust {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 14px 22px;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  gap: 10px;
+  width: 100%;
 }
 
 .mtf-trust-pill {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   color: #ffffff;
-  font-size: 0.84rem;
+  font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: -0.01em;
+  line-height: 1.22;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .mtf-trust-pill-icon {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.14);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -402,85 +419,60 @@
   flex-shrink: 0;
 }
 
-/* Right Column: Floating script callout in sky & vertical glass service panel on far right */
+.mtf-trust-pill-icon svg {
+  width: 58%;
+  height: 58%;
+}
+
+/* Right Column: vertical glass service panel on far right */
 .mtf-hero-right-zone {
   position: relative;
   min-height: 440px;
   width: 100%;
-}
-
-.mtf-hero-sky-callout {
-  position: absolute;
-  top: 18px;
-  left: 14%;
-  color: #ffffff;
-  transform: rotate(-6deg);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  pointer-events: none;
-  z-index: 6;
-  filter: drop-shadow(0 3px 10px rgba(0, 30, 80, 0.45));
-}
-
-.mtf-hero-sky-callout .mtf-script-font {
-  font-size: 2.35rem;
-  line-height: 1.05;
-  text-align: center;
-  color: #ffffff;
-}
-
-.mtf-hero-sky-callout svg {
-  color: #ffffff;
-  margin-top: -2px;
-  transform: scaleX(-1);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  justify-content: flex-end;
 }
 
 /* 5 Services Frosted Glass Card on far right */
 .mtf-hero-services-panel {
-  position: absolute;
-  top: 15px;
-  right: -15px;
-  background: rgb(0 104 255 / 23%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 18px;
-  padding: 6px 16px;
+  position: relative;
+  background: rgba(8, 47, 105, 0.55);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 22px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 16px 36px rgba(0, 20, 60, 0.25);
-  width: 176px;
+  gap: 20px;
+  box-shadow: 0 20px 45px rgba(0, 20, 60, 0.35);
+  width: 210px;
   z-index: 6;
 }
 
 .mtf-service-row {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 10px 2px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  gap: 14px;
   color: #ffffff;
-  font-size: 0.83rem;
+  font-size: 0.92rem;
   font-weight: 700;
+  line-height: 1.22;
   transition: all 0.2s ease;
-}
-
-.mtf-service-row:last-child {
-  border-bottom: none;
 }
 
 .mtf-service-row:hover {
   transform: translateX(3px);
-  color: #002f8b;
+  color: #cfe9ff;
 }
 
 .mtf-service-circle-icon {
-  width: 26px;
-  height: 26px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -760,6 +752,9 @@
   padding: 22px 18px;
   box-shadow: var(--mtf-shadow-card);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .mtf-pricing-card:hover {
@@ -786,6 +781,9 @@
   font-weight: 800;
   margin-bottom: 8px;
   line-height: 1.3;
+  min-height: 2.6em;
+  display: flex;
+  align-items: flex-start;
 }
 
 .mtf-pricing-card-desc {
@@ -793,6 +791,7 @@
   font-size: 0.82rem;
   line-height: 1.55;
   margin: 0;
+  flex: 1;
 }
 
 .btn-pricing-action {
@@ -822,18 +821,20 @@
   overflow: hidden;
   box-shadow: var(--mtf-shadow-card);
   border: 1px solid #dbeafe;
-  background: #ffffff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .mtf-pricing-tyres-img {
   width: 100%;
-  height: auto;
-  max-height: 380px;
-  object-fit: contain;
+  height: 100%;
+  min-height: 380px;
+  max-height: 420px;
+  object-fit: cover;
   display: block;
+  transition: transform 0.5s ease;
+}
+
+.mtf-pricing-photo-card:hover .mtf-pricing-tyres-img {
+  transform: scale(1.02);
 }
 
 .mtf-pricing-script-overlay {
@@ -1481,11 +1482,6 @@
     gap: 16px;
     margin-top: 10px;
   }
-  .mtf-hero-sky-callout {
-    position: static;
-    transform: rotate(-3deg);
-    margin-bottom: 8px;
-  }
   .mtf-hero-services-panel {
     position: static;
     width: 100%;
@@ -1531,9 +1527,18 @@
     font-size: 2rem;
   }
   .mtf-hero-trust {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 16px 14px;
+  }
+  .mtf-trust-pill {
+    flex: none;
+    font-size: 0.78rem;
+  }
+  .mtf-trust-pill-icon {
+    width: 30px;
+    height: 30px;
   }
   .mtf-hero-actions {
     flex-direction: column;
@@ -1580,7 +1585,7 @@
           </div>
 
           <h1 class="mtf-hero-title">
-            Mobile Tyre Fitting in<br>Dubai and Abu Dhabi
+            Mobile Tyre Fitting in<br><span class="mtf-hero-title-accent">Dubai and Abu Dhabi</span>
           </h1>
 
           <p class="mtf-hero-desc">
@@ -1591,10 +1596,12 @@
             <a href="https://wa.me/971505069575?text=Hi%20TyresVision%2C%20I%27d%20like%20to%20book%20mobile%20tyre%20fitting%20at%20my%20location." target="_blank" rel="noopener" class="btn-hero-wa">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.03-1.25-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.78 2.72 4.31 3.81.6.26 1.07.42 1.44.54.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.11-.22-.17-.47-.29z"/></svg>
               <span>WhatsApp for Mobile Fitting</span>
+              <svg class="btn-hero-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
             </a>
             <a href="tel:+971505069575" class="btn-hero-call">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               <span>+971 50 506 9575</span>
+              <svg class="btn-hero-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
             </a>
           </div>
 
@@ -1602,68 +1609,62 @@
           <div class="mtf-hero-trust">
             <div class="mtf-trust-pill">
               <span class="mtf-trust-pill-icon">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </span>
               <span>Trusted & certified technicians</span>
             </div>
             <div class="mtf-trust-pill">
               <span class="mtf-trust-pill-icon">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </span>
               <span>Same-day doorstep service</span>
             </div>
             <div class="mtf-trust-pill">
               <span class="mtf-trust-pill-icon">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
               </span>
               <span>Full Dubai & Abu Dhabi coverage</span>
             </div>
             <div class="mtf-trust-pill">
               <span class="mtf-trust-pill-icon">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
               </span>
               <span>No hidden charges</span>
             </div>
           </div>
         </div>
 
-        <!-- Right Zone: Floating callout in sky & vertical 5-service glass card on far right -->
+        <!-- Right Zone: vertical 5-service glass card on far right -->
         <div class="mtf-hero-right-zone">
-          <!-- Cursive script callout in sky above van -->
-          <div class="mtf-hero-sky-callout">
-            <span class="mtf-script-font">We come<br>to you!</span>
-            <svg width="34" height="28" viewBox="0 0 34 28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4 C14 2, 26 8, 28 22 M22 22 L29 23 L28 16"/></svg>
-          </div>
-
           <!-- Vertical 5-Service Glass Panel on far right -->
           <div class="mtf-hero-services-panel">
             <div class="mtf-service-row">
               <span class="mtf-service-circle-icon">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></svg>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></svg>
               </span>
               <span>Tyre Fitting</span>
             </div>
             <div class="mtf-service-row">
               <span class="mtf-service-circle-icon">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
               </span>
               <span>Balancing</span>
             </div>
             <div class="mtf-service-row">
               <span class="mtf-service-circle-icon">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
               </span>
               <span>Puncture Repair</span>
             </div>
             <div class="mtf-service-row">
               <span class="mtf-service-circle-icon">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>
               </span>
               <span>Tyre Replacement</span>
             </div>
             <div class="mtf-service-row">
               <span class="mtf-service-circle-icon">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
               </span>
               <span>On-Site Support</span>
             </div>
@@ -2300,7 +2301,6 @@ document.addEventListener('DOMContentLoaded', function () {
     gsap.from('.mtf-hero-desc', { opacity: 0, y: 20, duration: 0.8, delay: 0.2, ease: 'power3.out' });
     gsap.from('.mtf-hero-actions', { opacity: 0, y: 15, duration: 0.7, delay: 0.3, ease: 'power3.out' });
     gsap.from('.mtf-hero-trust .mtf-trust-pill', { opacity: 0, y: 12, duration: 0.5, delay: 0.4, stagger: 0.08, ease: 'power2.out' });
-    gsap.from('.mtf-hero-sky-callout', { opacity: 0, y: -10, duration: 0.8, delay: 0.3, ease: 'power2.out', clearProps: 'all' });
     gsap.from('.mtf-hero-services-panel', { opacity: 0, x: 20, duration: 0.7, delay: 0.25, ease: 'power2.out', clearProps: 'all' });
 
     // Stagger reveals when in view
