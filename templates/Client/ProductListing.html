@@ -147,7 +147,7 @@
             </div>
             <div class="tv-price-range-labels">
               <span id="min-price-display">AED {{ (active_min_price or min_price)|int }}</span>
-              <span id="price-slider-val">&le; AED {{ (active_max_price or max_price)|int }}</span>
+              <span id="price-slider-val">AED {{ (active_max_price or max_price)|int }}</span>
             </div>
           </div>
         </div>
@@ -259,9 +259,13 @@
              data-offer="{{ p.offer_banner or '' }}">
           
           <!-- Top Offer Banner -->
+          {% if p.offer_banner %}
           <div class="tv-card-top-banner">
-            {{ p.offer_banner or 'FREE WHEEL ALIGNMENT' }}
+            {{ p.offer_banner }}
           </div>
+          {% else %}
+          <div class="tv-card-top-banner tv-card-top-banner-empty" style="visibility: hidden;">&nbsp;</div>
+          {% endif %}
 
           <div class="tv-card-body">
             <!-- Quick-view Eye Button -->

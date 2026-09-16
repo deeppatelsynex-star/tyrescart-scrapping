@@ -670,10 +670,38 @@ def register_visionadmin_routes(app):
     @login_required_visionadmin
     def visionadmin_cart_price_rules_delete_api(rule_id):
         try:
-            ok = CartPriceRuleService.delete_rule(rule_id)
+            is_hard = request.args.get('hard') in ('1', 'true', 'True') or request.args.get('permanent') in ('1', 'true')
+            if is_hard:
+                ok = CartPriceRuleService.hard_delete_rule(rule_id)
+                msg = 'Cart price rule permanently deleted from database.'
+            else:
+                ok = CartPriceRuleService.delete_rule(rule_id)
+                msg = 'Cart price rule moved to trash.'
             if not ok:
-                return jsonify({'success': False, 'error': 'Rule not found or already deleted.'}), 404
-            return jsonify({'success': True, 'message': 'Cart price rule deleted successfully.'})
+                return jsonify({'success': False, 'error': 'Rule not found.'}), 404
+            return jsonify({'success': True, 'message': msg})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+
+    @app.route('/visionadmin/api/cart-price-rules/<int:rule_id>/hard-delete', methods=['POST', 'DELETE'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_hard_delete_api(rule_id):
+        try:
+            ok = CartPriceRuleService.hard_delete_rule(rule_id)
+            if not ok:
+                return jsonify({'success': False, 'error': 'Rule not found.'}), 404
+            return jsonify({'success': True, 'message': 'Cart price rule permanently deleted from database.'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+
+    @app.route('/visionadmin/api/cart-price-rules/<int:rule_id>/restore', methods=['POST'])
+    @login_required_visionadmin
+    def visionadmin_cart_price_rules_restore_api(rule_id):
+        try:
+            ok = CartPriceRuleService.restore_rule(rule_id)
+            if not ok:
+                return jsonify({'success': False, 'error': 'Rule not found in trash.'}), 404
+            return jsonify({'success': True, 'message': 'Cart price rule restored successfully.'})
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)}), 400
 

@@ -42,12 +42,12 @@ class CartPriceRuleService:
             with conn.cursor() as cur:
                 cur.execute("""
                     SELECT 
-                        COUNT(*) AS total,
-                        SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS active,
-                        SUM(CASE WHEN coupon_type = 'NO_COUPON' AND is_active = 1 THEN 1 ELSE 0 END) AS auto_apply,
-                        SUM(CASE WHEN coupon_type = 'SPECIFIC_COUPON' THEN 1 ELSE 0 END) AS coupon_rules
+                        COUNT(CASE WHEN deleted_at IS NULL THEN 1 END) AS total,
+                        SUM(CASE WHEN is_active = 1 AND deleted_at IS NULL THEN 1 ELSE 0 END) AS active,
+                        SUM(CASE WHEN coupon_type = 'NO_COUPON' AND is_active = 1 AND deleted_at IS NULL THEN 1 ELSE 0 END) AS auto_apply,
+                        SUM(CASE WHEN coupon_type = 'SPECIFIC_COUPON' AND deleted_at IS NULL THEN 1 ELSE 0 END) AS coupon_rules,
+                        SUM(CASE WHEN deleted_at IS NOT NULL THEN 1 ELSE 0 END) AS trash
                     FROM cart_price_rules
-                    WHERE deleted_at IS NULL
                 """)
                 row = cur.fetchone() or {}
                 return {
@@ -55,6 +55,7 @@ class CartPriceRuleService:
                     'active': int(row.get('active') or 0),
                     'auto_apply': int(row.get('auto_apply') or 0),
                     'coupon_rules': int(row.get('coupon_rules') or 0),
+                    'trash': int(row.get('trash') or 0),
                 }
         finally:
             conn.close()
@@ -65,18 +66,15 @@ class CartPriceRuleService:
         conn = db.get_connection()
         try:
             with conn.cursor() as cur:
-                conditions = ["r.deleted_at IS NULL"]
+                if status == 'trash':
+                    conditions = ["r.deleted_at IS NOT NULL"]
+                else:
+                    conditions = ["r.deleted_at IS NULL"]
+                    if status in ('active', '1'):
+                        conditions.append("r.is_active = 1")
+                    elif status in ('inactive', '0'):
+                        conditions.append("r.is_active = 0")
                 params = []
-
-                if search:
-                    conditions.append("(r.name LIKE %s OR r.description LIKE %s OR r.label_default LIKE %s)")
-                    s = f"%{search.strip()}%"
-                    params.extend([s, s, s])
-
-                if status in ('active', '1'):
-                    conditions.append("r.is_active = 1")
-                elif status in ('inactive', '0'):
-                    conditions.append("r.is_active = 0")
 
                 if coupon_type in ('NO_COUPON', 'SPECIFIC_COUPON'):
                     conditions.append("r.coupon_type = %s")
@@ -468,14 +466,66 @@ class CartPriceRuleService:
             conn.close()
 
     @staticmethod
-    def delete_rule(rule_id):
-        """Soft-deletes a cart price rule."""
+    def delete_rule(rule_id, hard=False):
+        """Deletes a cart price rule. If hard=True, permanently removes from DB."""
+        if hard:
+            return CartPriceRuleService.hard_delete_rule(rule_id)
         conn = db.get_connection()
         try:
             with conn.cursor() as cur:
                 cur.execute("""
                     UPDATE cart_price_rules SET deleted_at = NOW(), is_active = 0
                     WHERE id = %s AND deleted_at IS NULL
+                """, (rule_id,))
+                conn.commit()
+                return cur.rowcount > 0
+        finally:
+            conn.close()
+
+    @staticmethod
+    def hard_delete_rule(rule_id):
+        """Permanently hard-deletes a cart price rule and all associated child records from DB."""
+        conn = db.get_connection()
+        try:
+            with conn.cursor() as cur:
+                # 1. Delete coupon usages
+                cur.execute("""
+                    DELETE FROM cart_price_rule_coupon_usages 
+                    WHERE rule_id = %s OR coupon_id IN (
+                        SELECT id FROM cart_price_rule_coupons WHERE cart_price_rule_id = %s
+                    )
+                """, (rule_id, rule_id))
+
+                # 2. Delete coupons
+                cur.execute("DELETE FROM cart_price_rule_coupons WHERE cart_price_rule_id = %s", (rule_id,))
+
+                # 3. Delete customer group mappings
+                cur.execute("DELETE FROM cart_price_rule_customer_groups WHERE cart_price_rule_id = %s", (rule_id,))
+
+                # 4. Delete website mappings
+                cur.execute("DELETE FROM cart_price_rule_websites WHERE cart_price_rule_id = %s", (rule_id,))
+
+                # 5. Delete the rule record itself
+                cur.execute("DELETE FROM cart_price_rules WHERE id = %s", (rule_id,))
+                deleted = cur.rowcount > 0
+
+                conn.commit()
+                return deleted
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+    @staticmethod
+    def restore_rule(rule_id):
+        """Restores a soft-deleted cart price rule from trash."""
+        conn = db.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE cart_price_rules SET deleted_at = NULL
+                    WHERE id = %s AND deleted_at IS NOT NULL
                 """, (rule_id,))
                 conn.commit()
                 return cur.rowcount > 0

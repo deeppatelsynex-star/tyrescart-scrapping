@@ -457,23 +457,18 @@ def _format_product_for_client(p, locale='en'):
     p_dict['rating'] = float(attr.get('rating', 4.5))
 
     # Top Offer Banner (e.g. FREE WHEEL ALIGNMENT / BUY 3 GET 1 FREE / TOP SAVINGS)
-    raw_offer = attr.get('offers') or attr.get('promotion') or attr.get('badge') or ''
-    b_name_lower = (p_dict.get('brand_name') or '').lower()
-    d_name_lower = str(p_dict.get('display_name', '')).lower()
-    if not raw_offer or str(raw_offer).strip().lower() in ('none', '0', '', 'null', 'free wheel alignment'):
-        # Match promotional offers from active rules or featured brands (e.g. MatraX Buy 3 Get 1 Free, Fortune Buy 2 Get 2 Free)
-        if 'matrax' in b_name_lower or 'romero' in d_name_lower:
-            offer_banner = 'BUY 3 GET 1 FREE'
+    raw_offer = (attr.get('offers') or attr.get('promotion') or attr.get('badge') or '').strip()
+    if raw_offer and raw_offer.lower() not in ('none', '0', '', 'null'):
+        offer_banner = raw_offer.upper()
+        if 'BUY 3' in offer_banner:
             p_dict['badge_class'] = 'badge-red'
-        elif 'fortune' in b_name_lower:
-            offer_banner = 'BUY 2 GET 2 FREE'
+        elif 'BUY 2' in offer_banner:
             p_dict['badge_class'] = 'badge-orange'
         else:
-            offer_banner = 'FREE WHEEL ALIGNMENT'
             p_dict['badge_class'] = attr.get('badge_class', 'badge-blue')
     else:
-        offer_banner = str(raw_offer).strip().upper()
-        p_dict['badge_class'] = attr.get('badge_class', 'badge-blue')
+        offer_banner = ''
+        p_dict['badge_class'] = ''
 
     p_dict['offer_banner'] = offer_banner
     p_dict['badge'] = offer_banner
@@ -723,13 +718,14 @@ def _fetch_catalog_products(args, locale='en'):
                 pr_clauses = []
                 for pr in promos:
                     if pr in ('buy_3_get_1_free', 'buy-3-get-1-free', 'buy 3 get 1 free'):
-                        pr_clauses.append("(LOWER(b.name) = 'matrax' OR p.display_name LIKE '%%Romero%%' OR p.attributes_json LIKE '%%BUY 3 GET 1%%')")
-                    elif pr in ('buy_2_get_2_free', 'buy-2-get-2-free', 'buy 2 get 2 free'):
-                        pr_clauses.append("(LOWER(b.name) = 'fortune' OR p.attributes_json LIKE '%%BUY 2 GET 2%%')")
+                        pr_clauses.append("(p.attributes_json LIKE '%%Buy 3 Get 1 Free%%' OR p.attributes_json LIKE '%%BUY 3 GET 1%%')")
                     elif pr in ('free_wheel_alignment', 'free-wheel-alignment', 'free wheel alignment'):
-                        pr_clauses.append("(LOWER(b.name) NOT IN ('matrax', 'fortune') AND p.display_name NOT LIKE '%%Romero%%' AND p.attributes_json NOT LIKE '%%BUY 3 GET 1%%' AND p.attributes_json NOT LIKE '%%BUY 2 GET 2%%' AND p.attributes_json NOT LIKE '%%TOP SAVINGS%%')")
+                        pr_clauses.append("(p.attributes_json LIKE '%%Free Wheel Alignment%%' OR p.attributes_json LIKE '%%FREE WHEEL ALIGNMENT%%')")
                     elif pr in ('top_savings', 'top-savings', 'top savings'):
-                        pr_clauses.append("(p.attributes_json LIKE '%%TOP SAVINGS%%')")
+                        pr_clauses.append("(p.attributes_json LIKE '%%Top Savings%%' OR p.attributes_json LIKE '%%TOP SAVINGS%%')")
+                    else:
+                        pr_clean = pr.replace('_', ' ').replace('-', ' ')
+                        pr_clauses.append(f"(p.attributes_json LIKE '%%{pr_clean}%%')")
                 if pr_clauses:
                     where.append("(" + " OR ".join(pr_clauses) + ")")
 
@@ -855,6 +851,17 @@ def _parse_filter_path(filter_path):
             for pr in m_promo.group(1).split(','):
                 if pr.strip():
                     args.add('promotion', pr.strip())
+            continue
+
+        m_price_range = re.match(r'^price-(\d+(?:\.\d+)?)-(?:to-)?(\d+(?:\.\d+)?)$', seg, re.IGNORECASE)
+        if m_price_range:
+            args.setlistdefault('min_price', []).append(m_price_range.group(1))
+            args.setlistdefault('max_price', []).append(m_price_range.group(2))
+            continue
+
+        m_price_single = re.match(r'^price-(\d+(?:\.\d+)?)$', seg, re.IGNORECASE)
+        if m_price_single:
+            args.setlistdefault('max_price', []).append(m_price_single.group(1))
             continue
 
         m_max_p = re.match(r'^max_price-(\d+(?:\.\d+)?)$', seg, re.IGNORECASE)
@@ -1085,31 +1092,32 @@ def _render_product_listing(locale, filter_path=None):
                 'count': run_flat_cnt
             })
 
-            # 6. Sidebar: Promotions / Special Offers from DB
+            # 6. Sidebar: Promotions / Special Offers directly from DB (only what exists in DB)
             cur.execute("""
                 SELECT 
-                    SUM(CASE WHEN LOWER(b.name) = 'matrax' OR p.display_name LIKE '%Romero%' OR p.attributes_json LIKE '%BUY 3 GET 1%' THEN 1 ELSE 0 END) as b3g1_cnt,
-                    SUM(CASE WHEN LOWER(b.name) = 'fortune' OR p.attributes_json LIKE '%BUY 2 GET 2%' THEN 1 ELSE 0 END) as b2g2_cnt,
-                    SUM(CASE WHEN p.attributes_json LIKE '%TOP SAVINGS%' THEN 1 ELSE 0 END) as top_savings_cnt,
-                    COUNT(p.id) as total_cnt
-                FROM products p
-                LEFT JOIN brands b ON p.brand_id = b.id
-                WHERE p.deleted_at IS NULL AND p.status = 'active'
+                    COALESCE(
+                        NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.offers'))), 'None'),
+                        NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.promotion'))), 'None'),
+                        NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.badge'))), 'None')
+                    ) as promo_name,
+                    COUNT(*) as cnt
+                FROM products
+                WHERE deleted_at IS NULL AND status = 'active'
+                GROUP BY promo_name
+                HAVING promo_name IS NOT NULL AND promo_name != '' AND cnt > 0
+                ORDER BY cnt DESC, promo_name ASC
             """)
-            pr_counts = cur.fetchone() or {}
-            b3g1 = int(pr_counts.get('b3g1_cnt') or 0)
-            b2g2 = int(pr_counts.get('b2g2_cnt') or 0)
-            ts = int(pr_counts.get('top_savings_cnt') or 0)
-            total_p = int(pr_counts.get('total_cnt') or 0)
-            fwa = max(0, total_p - b3g1 - b2g2 - ts)
-
-            filter_promotions = [
-                {'key': 'buy_3_get_1_free', 'label': 'Buy 3 Get 1 Free', 'count': b3g1},
-                {'key': 'buy_2_get_2_free', 'label': 'Buy 2 Get 2 Free', 'count': b2g2},
-                {'key': 'free_wheel_alignment', 'label': 'Free Wheel Alignment', 'count': fwa},
-            ]
-            if ts > 0:
-                filter_promotions.append({'key': 'top_savings', 'label': 'Top Savings', 'count': ts})
+            filter_promotions = []
+            for pr_row in cur.fetchall():
+                p_label = (pr_row.get('promo_name') or '').strip()
+                if not p_label or p_label.lower() in ('none', 'null', '0'):
+                    continue
+                p_key = re.sub(r'[^a-z0-9]+', '_', p_label.lower()).strip('_')
+                filter_promotions.append({
+                    'key': p_key,
+                    'label': p_label,
+                    'count': int(pr_row.get('cnt') or 0)
+                })
 
             # 7. Sidebar: Price Range from DB
             cur.execute("""

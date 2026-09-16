@@ -1071,7 +1071,9 @@ function calculateSetPrice(unitPrice, qty, offerText = '') {
 }
 
 function createProductCardHTML(p) {
-  const offerBanner = escapeHtml(p.offer_banner || 'FREE WHEEL ALIGNMENT');
+  const offerBanner = p.offer_banner 
+    ? `<div class="tv-card-top-banner">${escapeHtml(p.offer_banner)}</div>`
+    : `<div class="tv-card-top-banner tv-card-top-banner-empty" style="visibility: hidden;">&nbsp;</div>`;
   const warrantyText = escapeHtml(p.warranty || '3 Years Warranty');
   const patternTitle = escapeHtml(p.pattern_name || p.display_name || 'Tyre');
   const sizeSpec = escapeHtml(p.full_size_spec || p.tire_size_label || 'Standard Fit');
@@ -1100,9 +1102,7 @@ function createProductCardHTML(p) {
          data-offer="${escapeHtml(p.offer_banner || '')}">
       
       <!-- Top Offer Banner -->
-      <div class="tv-card-top-banner">
-        ${offerBanner}
-      </div>
+      ${offerBanner}
 
       <div class="tv-card-body">
         <!-- Quick-view Eye Button -->
@@ -1287,8 +1287,8 @@ function buildFilterPath(page = 1) {
   const pathParts = currentPath.split('/').filter(Boolean);
   if (pathParts.length > 0 && ['ar', 'en', 'de', 'fr', 'es', 'ru', 'zh'].includes(pathParts[0].toLowerCase())) {
     basePath = '/' + pathParts[0].toLowerCase() + '/tyres';
-  } else if (pathParts.length > 0 && ['car-tyres', 'tyres', 'products'].includes(pathParts[0].toLowerCase())) {
-    basePath = '/' + pathParts[0];
+  } else {
+    basePath = '/tyres';
   }
 
   const segments = [];
@@ -1324,12 +1324,13 @@ function buildFilterPath(page = 1) {
     segments.push('promotion-' + selectedPromotions.map(pr => encodeURIComponent(pr.toLowerCase())).join(','));
   }
 
-  // 6. Price range segments: min_price and max_price
-  if (minPrice && parseFloat(minPrice) > parseFloat(minPriceSlider?.min || 0)) {
-    segments.push('min_price-' + Math.round(parseFloat(minPrice)));
-  }
-  if (maxPrice && parseFloat(maxPrice) < parseFloat(maxPriceSlider?.max || 2000)) {
-    segments.push('max_price-' + Math.round(parseFloat(maxPrice)));
+  // 7. Price range segment: price-418-5668
+  const sliderMin = parseFloat(minPriceSlider?.min || 0);
+  const sliderMax = parseFloat(maxPriceSlider?.max || 2000);
+  const curMin = minPrice !== '' ? parseFloat(minPrice) : sliderMin;
+  const curMax = maxPrice !== '' ? parseFloat(maxPrice) : sliderMax;
+  if (curMin > sliderMin || curMax < sliderMax) {
+    segments.push(`price-${Math.round(curMin)}-${Math.round(curMax)}`);
   }
 
   // 7. Sort segment: sort-price-asc
@@ -1489,7 +1490,7 @@ function updatePriceDisplay(minVal, maxVal) {
   const minLabel = document.getElementById('min-price-display');
   const maxLabel = document.getElementById('price-slider-val');
   if (minLabel) minLabel.textContent = 'AED ' + Math.round(minVal).toLocaleString();
-  if (maxLabel) maxLabel.textContent = '<= AED ' + Math.round(maxVal).toLocaleString();
+  if (maxLabel) maxLabel.textContent = 'AED ' + Math.round(maxVal).toLocaleString();
 }
 
 function onPriceSliderInput(type) {
@@ -1554,7 +1555,7 @@ function clearAllFilters() {
   if (maxSlider) {
     maxSlider.value = maxSlider.max;
     const maxLabel = document.getElementById('price-slider-val');
-    if (maxLabel) maxLabel.textContent = '<= AED ' + parseInt(maxSlider.max).toLocaleString();
+    if (maxLabel) maxLabel.textContent = 'AED ' + parseInt(maxSlider.max).toLocaleString();
   }
   updateSliderTrack();
   const sortSelect = document.getElementById('sort-select');
@@ -1659,15 +1660,11 @@ function updateActiveFilterBadges() {
   const selectedTypes = document.querySelectorAll('input[name="tire_type"]:checked').length;
   const selectedPromotions = document.querySelectorAll('input[name="promotion"]:checked').length;
   
-  let priceActive = 0;
   const minSlider = document.getElementById('min-price-slider');
-  if (minSlider && parseFloat(minSlider.value) > parseFloat(minSlider.min || 0)) {
-    priceActive += 1;
-  }
   const maxSlider = document.getElementById('max-price-slider');
-  if (maxSlider && parseFloat(maxSlider.value) < parseFloat(maxSlider.max || 2000)) {
-    priceActive += 1;
-  }
+  const isPriceActive = (minSlider && parseFloat(minSlider.value) > parseFloat(minSlider.min || 0)) ||
+                        (maxSlider && parseFloat(maxSlider.value) < parseFloat(maxSlider.max || 2000));
+  const priceActive = isPriceActive ? 1 : 0;
   const totalActive = selectedBrands + selectedVehicles + selectedSizes + selectedTypes + selectedPromotions + priceActive;
 
   const btnBadge = document.getElementById('tv-filter-badge');

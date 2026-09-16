@@ -34,6 +34,43 @@
 
     <!-- Actions -->
     <div class="flex items-center gap-3">
+      {% if initial_mode == 'edit' %}
+      <div class="relative" x-data="{ openMenu: false }">
+        <button 
+          type="button" 
+          @click="openMenu = !openMenu"
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs sm:text-sm font-bold shadow-2xs transition cursor-pointer"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span>Delete</span>
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div 
+          x-show="openMenu" 
+          @click.away="openMenu = false" 
+          x-cloak
+          class="absolute left-0 mt-2 w-60 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-30"
+        >
+          <button 
+            type="button" 
+            @click="openMenu = false; deleteThisRule(false)" 
+            class="w-full px-4 py-2.5 text-left text-xs font-bold text-amber-700 hover:bg-amber-50 flex items-center gap-2 cursor-pointer"
+          >
+            <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <span>Move to Trash (Soft Delete)</span>
+          </button>
+          <button 
+            type="button" 
+            @click="openMenu = false; deleteThisRule(true)" 
+            class="w-full px-4 py-2.5 text-left text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer"
+          >
+            <svg class="w-4 h-4 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <span>Hard Delete (Permanent Wipe)</span>
+          </button>
+        </div>
+      </div>
+      {% endif %}
+
       <a 
         href="/visionadmin/marketing/cart-price-rules" 
         class="px-4 py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold shadow-2xs transition cursor-pointer"
@@ -829,6 +866,27 @@ function cartPriceRuleFormApp(mode) {
           this.loadCoupons();
         } else {
           alert(json.error || 'Failed to delete coupon.');
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    },
+
+    async deleteThisRule(isHard) {
+      if (!this.ruleId) return;
+      const confirmText = isHard 
+        ? `Are you sure you want to PERMANENTLY HARD DELETE "${this.form.name || 'this rule'}" from the database? This cannot be undone!`
+        : `Are you sure you want to move "${this.form.name || 'this rule'}" to Trash?`;
+      if (!confirm(confirmText)) return;
+      try {
+        const res = await fetch(`/visionadmin/api/cart-price-rules/${this.ruleId}?hard=${isHard ? '1' : '0'}`, {
+          method: 'DELETE'
+        });
+        const json = await res.json();
+        if (json.success) {
+          window.location.href = '/visionadmin/marketing/cart-price-rules';
+        } else {
+          alert(json.error || 'Failed to delete rule.');
         }
       } catch (err) {
         alert('Error: ' + err.message);
