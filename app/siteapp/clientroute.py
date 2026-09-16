@@ -578,6 +578,24 @@ def _format_product_for_client(p, locale='en'):
     p_dict['tire_size_label'] = base_size
     p_dict['full_size_spec'] = full_size or base_size or 'Standard Fit'
 
+    # Width, Profile, Rim Size breakdown for specs
+    w_val = str(attr.get('width') or '').strip()
+    h_val = str(attr.get('height') or attr.get('profile') or '').strip()
+    r_val = str(attr.get('rim') or '').strip()
+    m_sz = re.search(r'(\d{3})(?:/(\d{2,3}))?\s*(?:R|Z|ZR|r)?(\d{2}[A-Z]?)', base_size)
+    if m_sz:
+        if not w_val:
+            w_val = m_sz.group(1)
+        if not h_val:
+            h_val = m_sz.group(2) or 'None'
+        if not r_val:
+            r_val = f"R{m_sz.group(3)}" if m_sz.group(3) else ''
+
+    p_dict['width'] = f"{w_val} mm" if w_val and not w_val.endswith('mm') else (w_val or '155 mm')
+    p_dict['profile'] = h_val if h_val else 'None'
+    p_dict['rim_size'] = f"R{r_val}" if r_val and not r_val.startswith('R') else (r_val or 'R16')
+    p_dict['load_speed'] = load_speed or '86Q'
+
     # Year (e.g. 2024 / 2025 / 2026)
     yr_val = str(attr.get('year') or attr.get('dot') or '').strip()
     if not yr_val or yr_val.lower() in ('none', 'null', '0'):
@@ -591,6 +609,8 @@ def _format_product_for_client(p, locale='en'):
         origin_val = 'China'
     p_dict['country_of_origin'] = origin_val.title()
 
+    p_dict['warranty'] = str(attr.get('warranty') or '1 Year Warranty').strip()
+    p_dict['full_title'] = f"{p_dict['brand_name']} {p_dict['full_size_spec']} {p_dict['pattern_name']} {yr_val}".strip()
     p_dict['fitted_text'] = attr.get('price_included_text') or 'Fitted Price'
 
     return p_dict
@@ -1092,31 +1112,40 @@ def _render_product_listing(locale, filter_path=None):
                 'count': run_flat_cnt
             })
 
-            # 6. Sidebar: Promotions / Special Offers directly from DB (only what exists in DB)
+            # 6. Sidebar: Promotions / Special Offers directly synced with active cart_price_rules in DB
             cur.execute("""
-                SELECT 
-                    COALESCE(
-                        NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.offers'))), 'None'),
-                        NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.promotion'))), 'None'),
-                        NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.badge'))), 'None')
-                    ) as promo_name,
-                    COUNT(*) as cnt
-                FROM products
-                WHERE deleted_at IS NULL AND status = 'active'
-                GROUP BY promo_name
-                HAVING promo_name IS NOT NULL AND promo_name != '' AND cnt > 0
-                ORDER BY cnt DESC, promo_name ASC
+                SELECT id, name
+                FROM cart_price_rules
+                WHERE is_active = 1
+                  AND deleted_at IS NULL
+                  AND (from_date IS NULL OR from_date <= CURRENT_DATE())
+                  AND (to_date IS NULL OR to_date >= CURRENT_DATE())
+                ORDER BY priority ASC, id ASC
             """)
+            active_rules = cur.fetchall()
             filter_promotions = []
-            for pr_row in cur.fetchall():
-                p_label = (pr_row.get('promo_name') or '').strip()
-                if not p_label or p_label.lower() in ('none', 'null', '0'):
+            for r in active_rules:
+                r_name = (r.get('name') or '').strip()
+                if not r_name:
                     continue
-                p_key = re.sub(r'[^a-z0-9]+', '_', p_label.lower()).strip('_')
+                cur.execute("""
+                    SELECT COUNT(*) as cnt
+                    FROM products
+                    WHERE deleted_at IS NULL AND status = 'active'
+                      AND (
+                        attributes_json LIKE %s
+                        OR JSON_EXTRACT(attributes_json, '$.offers') LIKE %s
+                        OR JSON_EXTRACT(attributes_json, '$.promotion') LIKE %s
+                        OR JSON_EXTRACT(attributes_json, '$.badge') LIKE %s
+                      )
+                """, [f"%{r_name}%", f"%{r_name}%", f"%{r_name}%", f"%{r_name}%"])
+                cnt_row = cur.fetchone()
+                cnt = int(cnt_row['cnt']) if cnt_row else 0
+                p_key = re.sub(r'[^a-z0-9]+', '_', r_name.lower()).strip('_')
                 filter_promotions.append({
                     'key': p_key,
-                    'label': p_label,
-                    'count': int(pr_row.get('cnt') or 0)
+                    'label': r_name,
+                    'count': cnt
                 })
 
             # 7. Sidebar: Price Range from DB
