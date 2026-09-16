@@ -109,10 +109,15 @@ def inject_i18n():
 @app.after_request
 def add_performance_headers(response):
     """Adds caching headers for static assets, enables keep-alive, and injects API version headers."""
-    if request.path.startswith('/static/visionadmin/'):
-        # VisionAdmin's own CSS/JS are actively developed and re-deployed constantly —
-        # a 7-day browser/CDN cache was serving stale visionProductsApp()/theme code
-        # long after a fresh deploy, even though the HTML around it was already fresh.
+    if request.path.startswith('/static/visionadmin/') or request.path in (
+        '/static/css/client.css', '/static/js/client.js', '/static/js/client-page-sections.js'
+    ):
+        # VisionAdmin's own CSS/JS, and the storefront's client.css/client.js/
+        # client-page-sections.js, are actively developed and re-deployed
+        # constantly — a 7-day browser/CDN cache was serving stale code long
+        # after a fresh deploy (query-string cache-busting isn't reliable
+        # against Cloudflare, which can cache each distinct ?v= value forever
+        # rather than treating them as one revalidating resource).
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, private, max-age=0'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'
