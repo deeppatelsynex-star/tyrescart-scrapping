@@ -1274,6 +1274,7 @@ function buildFilterPath(page = 1) {
   const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value.trim());
   const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value.trim());
   const selectedTypes = Array.from(document.querySelectorAll('input[name="tire_type"]:checked')).map(cb => cb.value.trim());
+  const selectedPromotions = Array.from(document.querySelectorAll('input[name="promotion"]:checked')).map(cb => cb.value.trim());
   const minPriceSlider = document.getElementById('min-price-slider');
   const minPrice = minPriceSlider ? minPriceSlider.value : '';
   const maxPriceSlider = document.getElementById('max-price-slider');
@@ -1318,6 +1319,11 @@ function buildFilterPath(page = 1) {
     segments.push('type-' + selectedTypes.map(t => encodeURIComponent(t.toLowerCase())).join(','));
   }
 
+  // 6. Promotion segment: promotion-buy_3_get_1_free
+  if (selectedPromotions.length > 0) {
+    segments.push('promotion-' + selectedPromotions.map(pr => encodeURIComponent(pr.toLowerCase())).join(','));
+  }
+
   // 6. Price range segments: min_price and max_price
   if (minPrice && parseFloat(minPrice) > parseFloat(minPriceSlider?.min || 0)) {
     segments.push('min_price-' + Math.round(parseFloat(minPrice)));
@@ -1348,6 +1354,7 @@ async function fetchProducts(page = 1, scrollUp = true) {
   const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value.trim());
   const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value.trim());
   const selectedTypes = Array.from(document.querySelectorAll('input[name="tire_type"]:checked')).map(cb => cb.value.trim());
+  const selectedPromotions = Array.from(document.querySelectorAll('input[name="promotion"]:checked')).map(cb => cb.value.trim());
   const minPriceSlider = document.getElementById('min-price-slider');
   const minPrice = minPriceSlider ? minPriceSlider.value : '';
   const maxPriceSlider = document.getElementById('max-price-slider');
@@ -1364,6 +1371,7 @@ async function fetchProducts(page = 1, scrollUp = true) {
   selectedVehicles.forEach(v => params.append('vehicle', v));
   selectedSizes.forEach(s => params.append('size', s));
   selectedTypes.forEach(t => params.append('type', t));
+  selectedPromotions.forEach(pr => params.append('promotion', pr));
   if (minPrice && parseFloat(minPrice) > parseFloat(minPriceSlider?.min || 0)) {
     params.set('min_price', minPrice);
   }
@@ -1649,6 +1657,7 @@ function updateActiveFilterBadges() {
   const selectedVehicles = document.querySelectorAll('input[name="vehicle_type"]:checked').length;
   const selectedSizes = document.querySelectorAll('input[name="size"]:checked').length;
   const selectedTypes = document.querySelectorAll('input[name="tire_type"]:checked').length;
+  const selectedPromotions = document.querySelectorAll('input[name="promotion"]:checked').length;
   
   let priceActive = 0;
   const minSlider = document.getElementById('min-price-slider');
@@ -1659,7 +1668,7 @@ function updateActiveFilterBadges() {
   if (maxSlider && parseFloat(maxSlider.value) < parseFloat(maxSlider.max || 2000)) {
     priceActive += 1;
   }
-  const totalActive = selectedBrands + selectedVehicles + selectedSizes + selectedTypes + priceActive;
+  const totalActive = selectedBrands + selectedVehicles + selectedSizes + selectedTypes + selectedPromotions + priceActive;
 
   const btnBadge = document.getElementById('tv-filter-badge');
   const drawerBadge = document.getElementById('tv-drawer-badge');

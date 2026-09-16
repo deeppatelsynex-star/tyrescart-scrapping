@@ -152,6 +152,25 @@
           </div>
         </div>
 
+        <!-- Promotion / Special Offers -->
+        <div class="tv-filter-group">
+          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+            <span>Promotion</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="tv-filter-list" id="filter-promotion-list">
+            {% if filter_promotions|length == 0 %}
+            <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No promotions available</span>
+            {% endif %}
+            {% for pr in filter_promotions %}
+            <label class="tv-filter-item">
+              <input type="checkbox" name="promotion" value="{{ pr.key }}" {% if active_promotions and (pr.key in active_promotions or (pr.key|replace('_', '-')) in active_promotions) %}checked{% endif %} onchange="filterProducts()">
+              <span>{{ pr.label }}</span> <span class="tv-filter-count">({{ "{:,}".format(pr.count) }})</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
         <!-- 5. Tyre Type -->
         <div class="tv-filter-group">
           <div class="tv-filter-header" onclick="toggleFilterGroup(this)">

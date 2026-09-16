@@ -30,7 +30,7 @@ TESTCASES.md
 TEST_FLOW.md
 scrapers/README.md
 templates/Client/*.md
-
+projectzip.zip
 # Python cache & bytecode
 __pycache__/
 *.pyc
