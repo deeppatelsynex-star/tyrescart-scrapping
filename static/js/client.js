@@ -990,4 +990,598 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', window.initTvPageComponents);
 } else {
     window.initTvPageComponents();
-}
+}
+
+/* =============================================================================
+   PRODUCT LISTING CATALOG CLIENT INTERACTIVITY
+   Live filter, size search, price slider, sort, add to cart & dynamic pagination
+   ============================================================================= */
+
+window.PER_PAGE = 16;
+window.currentPage = 1;
+window.totalPages = 1;
+window.totalCount = 0;
+window.isFetching = false;
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function capitalize(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function renderSkeletons(count) {
+  const container = document.getElementById('products-grid-container');
+  if (!container) return;
+  const num = count || window.PER_PAGE || 16;
+  
+  let html = '';
+  for (let i = 0; i < num; i++) {
+    html += `
+      <div class="tv-product-card tv-card-skeleton" aria-hidden="true">
+        <div class="tv-skeleton-banner"></div>
+        <div class="tv-card-body">
+          <div class="tv-skeleton-box" style="height: 135px; margin-bottom: 8px;"></div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <div class="tv-skeleton-box" style="width: 75px; height: 16px;"></div>
+            <div class="tv-skeleton-box" style="width: 25px; height: 16px;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <div class="tv-skeleton-box" style="width: 60px; height: 18px;"></div>
+            <div class="tv-skeleton-box" style="width: 80px; height: 18px;"></div>
+          </div>
+          <div class="tv-skeleton-box" style="width: 70%; height: 18px; margin-bottom: 8px;"></div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <div class="tv-skeleton-box" style="width: 40px; height: 14px;"></div>
+            <div class="tv-skeleton-box" style="width: 50px; height: 14px;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+            <div class="tv-skeleton-box" style="width: 80px; height: 26px;"></div>
+            <div class="tv-skeleton-box" style="width: 85px; height: 32px; border-radius: 8px;"></div>
+          </div>
+        </div>
+        <div class="tv-skeleton-box" style="height: 28px; border-radius: 0;"></div>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+}
+
+function createProductCardHTML(p) {
+  const offerBanner = escapeHtml(p.offer_banner || 'FREE WHEEL ALIGNMENT');
+  const warrantyText = escapeHtml(p.warranty || '3 Years Warranty');
+  const patternTitle = escapeHtml(p.pattern_name || p.display_name || 'Tyre');
+  const sizeSpec = escapeHtml(p.full_size_spec || p.tire_size_label || 'Standard Fit');
+  const yearVal = escapeHtml(p.year || '2024');
+  const originVal = escapeHtml(p.country_of_origin || 'China');
+  const priceVal = typeof p.price === 'number' ? p.price : parseFloat(p.price || 0);
+  const priceFormatted = priceVal.toFixed(2);
+  const setOf4Price = (priceVal * 4).toFixed(2);
+  const brandName = escapeHtml(p.brand_name || '');
+  const brandLogo = p.brand_logo ? `<img src="${p.brand_logo}" alt="${brandName}" class="tv-card-brand-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"><span class="tv-card-brand-fallback" style="display:none;">${brandName}</span>` : `<span class="tv-card-brand-fallback">${brandName}</span>`;
+  const vehicleType = (p.vehicle_type || 'car').toLowerCase();
+  const vehicleSvg = vehicleType === 'suv' 
+    ? `<svg width="28" height="13" viewBox="0 0 40 18" fill="currentColor"><path d="M38.5 12.5c-.3-2-1.5-3.5-3.5-4l-3.5-.8-2.5-5.2C28.2 1.3 27 1 25.5 1H8C6.5 1 5.2 1.9 4.6 3.2L1.5 10C.5 10.7 0 11.8 0 13c0 1.5 1 2.6 2.5 2.8h1.2c.5-2 2.3-3.5 4.5-3.5s4 1.5 4.5 3.5h14.6c.5-2 2.3-3.5 4.5-3.5s4 1.5 4.5 3.5h2.2c.8 0 1.5-.7 1.5-1.5 0-1.1-.6-2-1.5-2.3zM6.8 4.2c.2-.5.7-.9 1.3-.9h17c.8 0 1.5.5 1.8 1.2l2 4.2H5.2l1.6-4.5zm1.4 13.3c-1.4 0-2.5-1.1-2.5-2.5s1.1-2.5 2.5-2.5 2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5zm23.6 0c-1.4 0-2.5-1.1-2.5-2.5s1.1-2.5 2.5-2.5 2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5z"/></svg>`
+    : `<svg width="28" height="13" viewBox="0 0 40 18" fill="currentColor"><path d="M37.5 10.5c-.3-1.8-1.5-3.2-3.8-3.5l-4.2-.6-3.8-3.9C24.8 1.6 23.6 1 22.3 1H10.5C9 1 7.7 1.8 7 3.1L3.8 9.5C1.8 10 0 11.2 0 13.2c0 1.2.9 2.1 2.1 2.2h1.4c.5-1.8 2.2-3.2 4.2-3.2s3.7 1.4 4.2 3.2h16.2c.5-1.8 2.2-3.2 4.2-3.2s3.7 1.4 4.2 3.2h2.2c.8 0 1.5-.7 1.5-1.5 0-1.8-1.1-2.9-2.5-3.3zM9.5 3.5c.3-.6.9-1 1.6-1h10.8c.7 0 1.4.4 1.8.9l3.2 3.3H8.2l1.3-3.2zm-1.8 13c-1.2 0-2.2-1-2.2-2.2s1-2.2 2.2-2.2 2.2 1 2.2 2.2-1 2.2-2.2 2.2zm24.6 0c-1.2 0-2.2-1-2.2-2.2s1-2.2 2.2-2.2 2.2 1 2.2 2.2-1 2.2-2.2 2.2z"/></svg>`;
+
+  const imgPath = p.image_path || '/static/assets/images/no-image-available.svg';
+  const cleanTitle = escapeHtml((brandName + ' ' + patternTitle).trim()).replace(/'/g, "\\'");
+
+  return `
+    <div class="tv-product-card"
+         data-brand="${escapeHtml(p.brand_slug || '')}"
+         data-size="${escapeHtml(p.tire_size_label || '')}"
+         data-vehicle="${escapeHtml(p.vehicle_type || 'car')}"
+         data-type="${escapeHtml(p.season || 'summer')}"
+         data-price="${priceVal}">
+      
+      <!-- Top Offer Banner -->
+      <div class="tv-card-top-banner">
+        ${offerBanner}
+      </div>
+
+      <div class="tv-card-body">
+        <!-- Quick-view Eye Button -->
+        <button class="tv-btn-quickview" onclick="openQuickView(this)" title="Quick view" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+
+        <!-- Centered Tyre Image -->
+        <div class="tv-card-img-wrap">
+          <img src="${imgPath}" 
+               alt="${patternTitle}" 
+               class="tv-product-img" 
+               loading="lazy" 
+               onerror="this.src='/static/assets/images/no-image-available.svg'; this.onerror=null;">
+        </div>
+
+        <!-- Sub-badges Row (Warranty & Vehicle Silhouette) -->
+        <div class="tv-card-subbadges-row">
+          <span class="tv-warranty-badge">${warrantyText}</span>
+          <span class="tv-vehicle-silhouette" title="${capitalize(vehicleType)}">
+            ${vehicleSvg}
+          </span>
+        </div>
+
+        <!-- Brand & Size Row -->
+        <div class="tv-card-brand-size-row">
+          <div class="tv-card-brand-wrap">
+            ${brandLogo}
+          </div>
+          <div class="tv-card-size-spec">${sizeSpec}</div>
+        </div>
+
+        <!-- Pattern / Model Name -->
+        <h3 class="tv-card-pattern-title" title="${patternTitle}">${patternTitle}</h3>
+
+        <!-- Year & Country of Origin -->
+        <div class="tv-card-year-origin-row">
+          <span class="tv-card-year">${yearVal}</span>
+          <span class="tv-card-origin">${originVal}</span>
+        </div>
+
+        <!-- Price & Action Section -->
+        <div class="tv-card-price-action-section">
+          <div class="tv-card-fitted-label">
+            <span>Fitted Price</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </div>
+          <div class="tv-card-price-controls-row">
+            <div class="tv-card-price-col">
+              <div class="tv-card-main-price"><span class="currency-dirham tv-curr-glyph">&#xe900;</span> ${priceFormatted}</div>
+              <div class="tv-card-set-label">Set of 4: <span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> <strong>${setOf4Price}</strong></div>
+            </div>
+            <div class="tv-card-action-col">
+              <select class="tv-qty-select" onchange="updateCardQty(this, ${priceVal})" aria-label="Quantity">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4" selected>4</option>
+              </select>
+              <button type="button" class="tv-btn-card-add" onclick="addToCartWithCard(this, '${cleanTitle}', ${priceVal})">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                <span>Add</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Installment Strip -->
+      <div class="tv-card-installments-strip">
+        <span class="tv-installments-title">Pay In Installments</span>
+        <span class="tv-badge-tabby">tabby</span>
+        <span class="tv-badge-tamara">tamara</span>
+      </div>
+
+    </div>
+  `;
+}
+
+function updateCardQty(select, basePrice) {
+  const card = select.closest('.tv-product-card');
+  if (!card) return;
+  const qty = parseInt(select.value, 10) || 1;
+  const total = (basePrice * qty).toFixed(2);
+  const setLabel = card.querySelector('.tv-card-set-label');
+  if (setLabel) {
+    setLabel.innerHTML = `Set of ${qty}: <span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> <strong>${total}</strong>`;
+  }
+}
+
+function addToCartWithCard(btn, title, basePrice) {
+  const card = btn.closest('.tv-product-card');
+  const select = card ? card.querySelector('.tv-qty-select') : null;
+  const qty = select ? parseInt(select.value, 10) || 1 : 1;
+  const total = (basePrice * qty).toFixed(2);
+  
+  const originalHTML = btn.innerHTML;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>Added</span>';
+  btn.style.background = '#008738';
+  
+  showToast(`Added ${qty}x ${title} (AED ${total}) to fitting cart!`);
+  
+  setTimeout(() => {
+    btn.innerHTML = originalHTML;
+    btn.style.background = '';
+  }, 2000);
+}
+
+function openQuickView(btn) {
+  const card = btn.closest('.tv-product-card');
+  const title = card ? (card.querySelector('.tv-card-pattern-title')?.textContent || 'Tyre Details') : 'Tyre Details';
+  showToast(`Viewing ${title}`);
+}
+
+function renderPaginationControls(totalP, curP) {
+  const controls = document.getElementById('pagination-controls');
+  if (!controls) return;
+
+  if (totalP <= 1) {
+    controls.style.display = 'none';
+    return;
+  }
+  controls.style.display = 'flex';
+
+  let html = '';
+  // Prev button
+  const prevDisabled = curP <= 1 ? 'disabled' : '';
+  html += `<button type="button" class="tv-page-btn" ${prevDisabled} onclick="goToPage(${curP - 1})" aria-label="Previous page">&lsaquo;</button>`;
+
+  // Smart page numbers
+  const pagesToShow = [];
+  if (totalP <= 7) {
+    for (let i = 1; i <= totalP; i++) pagesToShow.push(i);
+  } else {
+    pagesToShow.push(1);
+    if (curP > 3) pagesToShow.push('...');
+    const start = Math.max(2, curP - 1);
+    const end = Math.min(totalP - 1, curP + 1);
+    for (let i = start; i <= end; i++) {
+      if (!pagesToShow.includes(i)) pagesToShow.push(i);
+    }
+    if (curP < totalP - 2) pagesToShow.push('...');
+    if (!pagesToShow.includes(totalP)) pagesToShow.push(totalP);
+  }
+
+  pagesToShow.forEach(p => {
+    if (p === '...') {
+      html += `<span class="tv-page-ellipsis">&hellip;</span>`;
+    } else {
+      const activeCls = p === curP ? ' active' : '';
+      html += `<button type="button" class="tv-page-btn${activeCls}" onclick="goToPage(${p})">${p}</button>`;
+    }
+  });
+
+  // Next button
+  const nextDisabled = curP >= totalP ? 'disabled' : '';
+  html += `<button type="button" class="tv-page-btn" ${nextDisabled} onclick="goToPage(${curP + 1})" aria-label="Next page">&rsaquo;</button>`;
+
+  controls.innerHTML = html;
+}
+
+function buildFilterPath(page = 1) {
+  const selectedBrands = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(cb => cb.value.trim());
+  const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value.trim());
+  const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value.trim());
+  const selectedTypes = Array.from(document.querySelectorAll('input[name="tire_type"]:checked')).map(cb => cb.value.trim());
+  const maxPriceSlider = document.getElementById('max-price-slider');
+  const maxPrice = maxPriceSlider ? maxPriceSlider.value : '';
+  const sortSelect = document.getElementById('sort-select');
+  const sortVal = sortSelect ? sortSelect.value : 'popular';
+
+  let currentPath = window.location.pathname;
+  let basePath = '/tyres';
+  const pathParts = currentPath.split('/').filter(Boolean);
+  if (pathParts.length > 0 && ['ar', 'en', 'de', 'fr', 'es', 'ru', 'zh'].includes(pathParts[0].toLowerCase())) {
+    basePath = '/' + pathParts[0].toLowerCase() + '/tyres';
+  } else if (pathParts.length > 0 && ['car-tyres', 'tyres', 'products'].includes(pathParts[0].toLowerCase())) {
+    basePath = '/' + pathParts[0];
+  }
+
+  const segments = [];
+
+  // 1. Page segment: page-{page}-{per_page} (e.g. page-2-16)
+  if (page > 1) {
+    segments.push(`page-${page}-${window.PER_PAGE || 16}`);
+  }
+
+  // 2. Brand segment: brand-pirelli
+  if (selectedBrands.length > 0) {
+    segments.push('brand-' + selectedBrands.map(b => encodeURIComponent(b.toLowerCase())).join(','));
+  }
+
+  // 3. Size segment: size-225-40-R18
+  if (selectedSizes.length > 0) {
+    const sizeSlugs = selectedSizes.map(s => encodeURIComponent(s.replace(/[\/\s]+/g, '-')));
+    segments.push('size-' + sizeSlugs.join(','));
+  }
+
+  // 4. Vehicle segment: vehicle-car
+  if (selectedVehicles.length > 0) {
+    segments.push('vehicle-' + selectedVehicles.map(v => encodeURIComponent(v.toLowerCase())).join(','));
+  }
+
+  // 5. Tyre Type segment: type-summer
+  if (selectedTypes.length > 0) {
+    segments.push('type-' + selectedTypes.map(t => encodeURIComponent(t.toLowerCase())).join(','));
+  }
+
+  // 6. Max Price segment: max_price-5693
+  if (maxPrice && parseFloat(maxPrice) < parseFloat(maxPriceSlider?.max || 2000)) {
+    segments.push('max_price-' + Math.round(parseFloat(maxPrice)));
+  }
+
+  // 7. Sort segment: sort-price-asc
+  if (sortVal && sortVal !== 'popular') {
+    segments.push('sort-' + encodeURIComponent(sortVal));
+  }
+
+  return segments.length > 0 ? `${basePath}/${segments.join('/')}` : basePath;
+}
+
+async function fetchProducts(page = 1, scrollUp = true) {
+  if (window.isFetching) return;
+  window.isFetching = true;
+
+  const perPage = window.PER_PAGE || 16;
+
+  // 1. Immediately display shimmer skeletons
+  renderSkeletons(perPage);
+
+  // 2. Gather filter parameters
+  const selectedBrands = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(cb => cb.value.trim());
+  const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value.trim());
+  const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value.trim());
+  const selectedTypes = Array.from(document.querySelectorAll('input[name="tire_type"]:checked')).map(cb => cb.value.trim());
+  const maxPriceSlider = document.getElementById('max-price-slider');
+  const maxPrice = maxPriceSlider ? maxPriceSlider.value : '';
+  const sortSelect = document.getElementById('sort-select');
+  const sortVal = sortSelect ? sortSelect.value : 'popular';
+
+  const params = new URLSearchParams();
+  params.set('page', page);
+  params.set('per_page', perPage);
+  if (sortVal && sortVal !== 'popular') params.set('sort', sortVal);
+
+  selectedBrands.forEach(b => params.append('brand', b));
+  selectedVehicles.forEach(v => params.append('vehicle', v));
+  selectedSizes.forEach(s => params.append('size', s));
+  selectedTypes.forEach(t => params.append('type', t));
+  if (maxPrice && parseFloat(maxPrice) < parseFloat(maxPriceSlider?.max || 2000)) {
+    params.set('max_price', maxPrice);
+  }
+
+  // Update browser URL to clean SEO slug format
+  const newPath = buildFilterPath(page);
+  window.history.pushState({ page: page, path: newPath }, '', newPath);
+
+  try {
+    const res = await fetch(`/api/products?${params.toString()}`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) throw new Error('Network error loading products');
+    const data = await res.json();
+
+    window.currentPage = data.page || 1;
+    window.totalPages = data.total_pages || 1;
+    window.totalCount = data.total || 0;
+
+    const container = document.getElementById('products-grid-container');
+    if (!container) return;
+
+    if (!data.products || data.products.length === 0) {
+      container.innerHTML = `
+        <div class="tv-empty-catalog" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: #fff; border-radius: 16px; border: 1px dashed #CBD5E1;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" style="margin: 0 auto 16px; display: block;"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: #0F172A; margin-bottom: 8px;">No Tyres Found Matching Your Criteria</h3>
+          <p style="color: #64748B; font-size: 0.95rem; max-width: 420px; margin: 0 auto 16px;">Try adjusting or clearing your sidebar filters to see more tyre options.</p>
+          <button type="button" class="tv-btn-clear-filters" onclick="clearAllFilters()" style="display: inline-block; width: auto; padding: 8px 20px;">Clear All Filters</button>
+        </div>
+      `;
+    } else {
+      let cardsHtml = '';
+      data.products.forEach(p => {
+        cardsHtml += createProductCardHTML(p);
+      });
+      container.innerHTML = cardsHtml;
+    }
+
+    // Update pagination info text
+    const infoEl = document.getElementById('pagination-info');
+    if (infoEl) {
+      if (window.totalCount === 0) {
+        infoEl.textContent = 'Showing 0 tyres';
+      } else {
+        const startIdx = (window.currentPage - 1) * perPage + 1;
+        const endIdx = Math.min((window.currentPage - 1) * perPage + data.products.length, window.totalCount);
+        infoEl.innerHTML = `Showing ${startIdx}&ndash;${endIdx} of ${window.totalCount.toLocaleString()} tyres`;
+      }
+    }
+
+    // Update catalog count heading
+    const heading = document.getElementById('catalog-count-heading');
+    if (heading) {
+      heading.textContent = `${window.totalCount.toLocaleString()} Car Tyres`;
+    }
+
+    // Update pagination controls
+    renderPaginationControls(window.totalPages, window.currentPage);
+
+    // Smooth scroll to top of catalog
+    if (scrollUp) {
+      const mainCol = document.querySelector('.tv-catalog-main');
+      if (mainCol) {
+        mainCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+  } catch (err) {
+    console.error('Error fetching products:', err);
+    showToast('Failed to load products. Please try again.');
+  } finally {
+    window.isFetching = false;
+  }
+}
+
+function goToPage(page) {
+  if (page < 1 || page > window.totalPages) return;
+  fetchProducts(page, true);
+}
+
+function filterProducts() {
+  fetchProducts(1, true);
+}
+
+function sortProducts(sortBy) {
+  fetchProducts(1, true);
+}
+
+function clearAllFilters() {
+  document.querySelectorAll('.tv-filter-sidebar input[type="checkbox"]').forEach(cb => {
+    cb.checked = false;
+  });
+  const searchBox = document.querySelector('.tv-search-size-box');
+  if (searchBox) {
+    searchBox.value = '';
+    searchFilterSizes('');
+  }
+  const slider = document.getElementById('max-price-slider');
+  if (slider) {
+    slider.value = slider.max;
+    const labelEl = document.getElementById('price-slider-val');
+    if (labelEl) labelEl.textContent = '<= AED ' + parseInt(slider.max).toLocaleString();
+  }
+  const sortSelect = document.getElementById('sort-select');
+  if (sortSelect) {
+    sortSelect.value = 'popular';
+  }
+  fetchProducts(1, true);
+}
+
+function toggleFilterGroup(el) {
+  el.classList.toggle('collapsed');
+  const group = el.closest('.tv-filter-group');
+  if (group) {
+    const isCollapsed = el.classList.contains('collapsed');
+    Array.from(group.children).forEach(child => {
+      if (child !== el) {
+        child.style.display = isCollapsed ? 'none' : '';
+      }
+    });
+  }
+}
+
+function toggleExtraSizes(link) {
+  const extra = document.getElementById('extra-sizes');
+  if (!extra) return;
+  if (extra.style.display === 'none' || !extra.style.display) {
+    extra.style.display = 'flex';
+    link.textContent = 'Show less';
+  } else {
+    extra.style.display = 'none';
+    link.textContent = 'Show more';
+  }
+}
+
+function toggleExtraBrands(link) {
+  const extra = document.getElementById('extra-brands');
+  if (!extra) return;
+  if (extra.style.display === 'none' || !extra.style.display) {
+    extra.style.display = 'flex';
+    link.textContent = 'Show less';
+  } else {
+    extra.style.display = 'none';
+    link.textContent = 'Show more';
+  }
+}
+
+function searchFilterSizes(query) {
+  const q = query.trim().toLowerCase();
+  const items = document.querySelectorAll('#filter-size-list .tv-filter-item');
+  items.forEach(it => {
+    const size = (it.getAttribute('data-size') || '').toLowerCase();
+    if (!q || size.includes(q)) {
+      it.style.display = 'flex';
+    } else {
+      it.style.display = 'none';
+    }
+  });
+}
+
+function updatePriceFilter(val) {
+  const labelEl = document.getElementById('price-slider-val');
+  if (labelEl) {
+    labelEl.textContent = '<= AED ' + parseInt(val).toLocaleString();
+  }
+  filterProducts();
+}
+
+function toggleWishlist(btn) {
+  btn.classList.toggle('active');
+  const isSaved = btn.classList.contains('active');
+  showToast(isSaved ? 'Added to your wishlist!' : 'Removed from wishlist');
+}
+
+function addToCart(btn, title, price) {
+  const originalHTML = btn.innerHTML;
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Added';
+  btn.style.background = '#10B981';
+
+  showToast('Added ' + title + ' (AED ' + price + ') to cart!');
+
+  setTimeout(() => {
+    btn.innerHTML = originalHTML;
+    btn.style.background = '';
+  }, 2200);
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('tv-toast');
+  const msgEl = document.getElementById('tv-toast-msg');
+  if (!toast) return;
+  if (msgEl) msgEl.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2800);
+}
+
+window.addEventListener('popstate', function() {
+  if (document.getElementById('products-grid-container')) {
+    window.location.reload();
+  }
+});
+
+function initProductCatalog(config) {
+  if (config) {
+    if (typeof config.currentPage !== 'undefined') window.currentPage = parseInt(config.currentPage, 10) || 1;
+    if (typeof config.totalPages !== 'undefined') window.totalPages = parseInt(config.totalPages, 10) || 1;
+    if (typeof config.totalCount !== 'undefined') window.totalCount = parseInt(config.totalCount, 10) || 0;
+    if (typeof config.perPage !== 'undefined') window.PER_PAGE = parseInt(config.perPage, 10) || 16;
+  }
+  function initControls() {
+    renderPaginationControls(window.totalPages, window.currentPage);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initControls);
+  } else {
+    initControls();
+  }
+}
+
+// Expose all functions to window for DOM event handlers
+window.escapeHtml = escapeHtml;
+window.capitalize = capitalize;
+window.renderSkeletons = renderSkeletons;
+window.createProductCardHTML = createProductCardHTML;
+window.updateCardQty = updateCardQty;
+window.addToCartWithCard = addToCartWithCard;
+window.openQuickView = openQuickView;
+window.renderPaginationControls = renderPaginationControls;
+window.buildFilterPath = buildFilterPath;
+window.fetchProducts = fetchProducts;
+window.goToPage = goToPage;
+window.filterProducts = filterProducts;
+window.sortProducts = sortProducts;
+window.clearAllFilters = clearAllFilters;
+window.toggleFilterGroup = toggleFilterGroup;
+window.toggleExtraSizes = toggleExtraSizes;
+window.toggleExtraBrands = toggleExtraBrands;
+window.searchFilterSizes = searchFilterSizes;
+window.updatePriceFilter = updatePriceFilter;
+window.toggleWishlist = toggleWishlist;
+window.addToCart = addToCart;
+window.showToast = showToast;
+window.initProductCatalog = initProductCatalog;
