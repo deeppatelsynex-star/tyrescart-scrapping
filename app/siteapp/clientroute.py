@@ -458,13 +458,42 @@ def _format_product_for_client(p, locale='en'):
 
     # Top Offer Banner (e.g. FREE WHEEL ALIGNMENT / BUY 3 GET 1 FREE / TOP SAVINGS)
     raw_offer = attr.get('offers') or attr.get('promotion') or attr.get('badge') or ''
-    if not raw_offer or str(raw_offer).strip().lower() in ('none', '0', '', 'null'):
-        offer_banner = 'FREE WHEEL ALIGNMENT'
+    b_name_lower = (p_dict.get('brand_name') or '').lower()
+    d_name_lower = str(p_dict.get('display_name', '')).lower()
+    if not raw_offer or str(raw_offer).strip().lower() in ('none', '0', '', 'null', 'free wheel alignment'):
+        # Match promotional offers from active rules or featured brands (e.g. MatraX Buy 3 Get 1 Free, Fortune Buy 2 Get 2 Free)
+        if 'matrax' in b_name_lower or 'romero' in d_name_lower:
+            offer_banner = 'BUY 3 GET 1 FREE'
+            p_dict['badge_class'] = 'badge-red'
+        elif 'fortune' in b_name_lower:
+            offer_banner = 'BUY 2 GET 2 FREE'
+            p_dict['badge_class'] = 'badge-orange'
+        else:
+            offer_banner = 'FREE WHEEL ALIGNMENT'
+            p_dict['badge_class'] = attr.get('badge_class', 'badge-blue')
     else:
         offer_banner = str(raw_offer).strip().upper()
+        p_dict['badge_class'] = attr.get('badge_class', 'badge-blue')
+
     p_dict['offer_banner'] = offer_banner
     p_dict['badge'] = offer_banner
-    p_dict['badge_class'] = attr.get('badge_class', 'badge-blue')
+
+    # Calculate Set of 4 Price according to offer rules:
+    # - Buy 2 Get 2 Free: customer pays for 2 (2 * unit_price) = 500.00 if unit is 250.00
+    # - Buy 3 Get 1 Free: customer pays for 3 (3 * unit_price) = 750.00 if unit is 250.00
+    # - Else: customer pays for 4 (4 * unit_price) = 1000.00 if unit is 250.00
+    try:
+        unit_p = float(p_dict.get('price') or 0)
+    except (ValueError, TypeError):
+        unit_p = 0.0
+
+    offer_upper = offer_banner.upper()
+    if 'BUY 2 GET 2' in offer_upper:
+        p_dict['set_of_4_price'] = round(unit_p * 2, 2)
+    elif 'BUY 3 GET 1' in offer_upper:
+        p_dict['set_of_4_price'] = round(unit_p * 3, 2)
+    else:
+        p_dict['set_of_4_price'] = round(unit_p * 4, 2)
 
     # Warranty
     warranty_val = str(attr.get('warranty_period') or attr.get('warranty') or '3 Years Warranty').strip()
@@ -681,7 +710,30 @@ def _fetch_catalog_products(args, locale='en'):
                 except (ValueError, TypeError):
                     pass
 
-            # 6. Search query
+            # 6. Promotion / Special Offers filter
+            raw_promos = args.getlist('promotion') or args.getlist('promotions') or args.getlist('offer') or args.getlist('offers')
+            promos = []
+            for p_entry in raw_promos:
+                for p_part in p_entry.split(','):
+                    pr = p_part.strip().lower()
+                    if pr and pr not in promos:
+                        promos.append(pr)
+
+            if promos:
+                pr_clauses = []
+                for pr in promos:
+                    if pr in ('buy_3_get_1_free', 'buy-3-get-1-free', 'buy 3 get 1 free'):
+                        pr_clauses.append("(LOWER(b.name) = 'matrax' OR p.display_name LIKE '%%Romero%%' OR p.attributes_json LIKE '%%BUY 3 GET 1%%')")
+                    elif pr in ('buy_2_get_2_free', 'buy-2-get-2-free', 'buy 2 get 2 free'):
+                        pr_clauses.append("(LOWER(b.name) = 'fortune' OR p.attributes_json LIKE '%%BUY 2 GET 2%%')")
+                    elif pr in ('free_wheel_alignment', 'free-wheel-alignment', 'free wheel alignment'):
+                        pr_clauses.append("(LOWER(b.name) NOT IN ('matrax', 'fortune') AND p.display_name NOT LIKE '%%Romero%%' AND p.attributes_json NOT LIKE '%%BUY 3 GET 1%%' AND p.attributes_json NOT LIKE '%%BUY 2 GET 2%%' AND p.attributes_json NOT LIKE '%%TOP SAVINGS%%')")
+                    elif pr in ('top_savings', 'top-savings', 'top savings'):
+                        pr_clauses.append("(p.attributes_json LIKE '%%TOP SAVINGS%%')")
+                if pr_clauses:
+                    where.append("(" + " OR ".join(pr_clauses) + ")")
+
+            # 7. Search query
             search = args.get('search') or args.get('q')
             if search and search.strip():
                 s_term = f"%{search.strip()}%"
@@ -798,6 +850,13 @@ def _parse_filter_path(filter_path):
                     args.add('type', t.strip())
             continue
 
+        m_promo = re.match(r'^(?:promotion|promo|offer)-(.+)$', seg, re.IGNORECASE)
+        if m_promo:
+            for pr in m_promo.group(1).split(','):
+                if pr.strip():
+                    args.add('promotion', pr.strip())
+            continue
+
         m_max_p = re.match(r'^max_price-(\d+(?:\.\d+)?)$', seg, re.IGNORECASE)
         if m_max_p:
             args.setlistdefault('max_price', []).append(m_max_p.group(1))
@@ -852,6 +911,11 @@ def _render_product_listing(locale, filter_path=None):
     active_max_price = combined_args.get('max_price')
     active_min_price = combined_args.get('min_price')
     active_sort = combined_args.get('sort') or 'popular'
+    active_promotions = []
+    for pr in (combined_args.getlist('promotion') or combined_args.getlist('promotions') or combined_args.getlist('offer') or combined_args.getlist('offers')):
+        p_clean = pr.lower().strip()
+        if p_clean:
+            active_promotions.extend([p_clean, p_clean.replace('-', '_'), p_clean.replace('_', '-')])
 
     from db import get_connection
     conn = get_connection()
@@ -1021,7 +1085,33 @@ def _render_product_listing(locale, filter_path=None):
                 'count': run_flat_cnt
             })
 
-            # 6. Sidebar: Price Range from DB
+            # 6. Sidebar: Promotions / Special Offers from DB
+            cur.execute("""
+                SELECT 
+                    SUM(CASE WHEN LOWER(b.name) = 'matrax' OR p.display_name LIKE '%Romero%' OR p.attributes_json LIKE '%BUY 3 GET 1%' THEN 1 ELSE 0 END) as b3g1_cnt,
+                    SUM(CASE WHEN LOWER(b.name) = 'fortune' OR p.attributes_json LIKE '%BUY 2 GET 2%' THEN 1 ELSE 0 END) as b2g2_cnt,
+                    SUM(CASE WHEN p.attributes_json LIKE '%TOP SAVINGS%' THEN 1 ELSE 0 END) as top_savings_cnt,
+                    COUNT(p.id) as total_cnt
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE p.deleted_at IS NULL AND p.status = 'active'
+            """)
+            pr_counts = cur.fetchone() or {}
+            b3g1 = int(pr_counts.get('b3g1_cnt') or 0)
+            b2g2 = int(pr_counts.get('b2g2_cnt') or 0)
+            ts = int(pr_counts.get('top_savings_cnt') or 0)
+            total_p = int(pr_counts.get('total_cnt') or 0)
+            fwa = max(0, total_p - b3g1 - b2g2 - ts)
+
+            filter_promotions = [
+                {'key': 'buy_3_get_1_free', 'label': 'Buy 3 Get 1 Free', 'count': b3g1},
+                {'key': 'buy_2_get_2_free', 'label': 'Buy 2 Get 2 Free', 'count': b2g2},
+                {'key': 'free_wheel_alignment', 'label': 'Free Wheel Alignment', 'count': fwa},
+            ]
+            if ts > 0:
+                filter_promotions.append({'key': 'top_savings', 'label': 'Top Savings', 'count': ts})
+
+            # 7. Sidebar: Price Range from DB
             cur.execute("""
                 SELECT MIN(price) as min_p, MAX(price) as max_p
                 FROM products
@@ -1044,12 +1134,14 @@ def _render_product_listing(locale, filter_path=None):
                 filter_sizes=filter_sizes,
                 filter_vehicles=filter_vehicles,
                 filter_tyre_types=filter_tyre_types,
+                filter_promotions=filter_promotions,
                 min_price=min_price,
                 max_price=max_price,
                 active_brands=active_brands,
                 active_vehicles=active_vehicles,
                 active_sizes=active_sizes,
                 active_types=active_types,
+                active_promotions=active_promotions,
                 active_max_price=active_max_price,
                 active_min_price=active_min_price,
                 active_sort=active_sort,

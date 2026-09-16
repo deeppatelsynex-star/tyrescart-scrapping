@@ -30,7 +30,7 @@ TESTCASES.md
 TEST_FLOW.md
 scrapers/README.md
 templates/Client/*.md
-
+projectzip.zip
 # Python cache & bytecode
 __pycache__/
 *.pyc
@@ -47,7 +47,7 @@ tmp/
 backups/
 *.log
 *.xlsx
-
+*scripts
 # Postman collections
 *.postman_collection.json
 *.postman_environment.json

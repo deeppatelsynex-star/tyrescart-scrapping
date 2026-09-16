@@ -1055,6 +1055,21 @@ function renderSkeletons(count) {
   container.innerHTML = html;
 }
 
+function calculateSetPrice(unitPrice, qty, offerText = '') {
+  const p = parseFloat(unitPrice) || 0;
+  const q = parseInt(qty, 10) || 4;
+  const offer = String(offerText || '').toUpperCase();
+  let paidQty = q;
+  if (offer.includes('BUY 2 GET 2')) {
+    // Buy 2 Get 2 Free: for set of 4 (or 2+ tyres), customer pays for 2
+    paidQty = q >= 2 ? 2 : q;
+  } else if (offer.includes('BUY 3 GET 1')) {
+    // Buy 3 Get 1 Free: for set of 3 or set of 4, customer pays for 3
+    paidQty = q >= 3 ? 3 : q;
+  }
+  return (paidQty * p).toFixed(2);
+}
+
 function createProductCardHTML(p) {
   const offerBanner = escapeHtml(p.offer_banner || 'FREE WHEEL ALIGNMENT');
   const warrantyText = escapeHtml(p.warranty || '3 Years Warranty');
@@ -1064,7 +1079,7 @@ function createProductCardHTML(p) {
   const originVal = escapeHtml(p.country_of_origin || 'China');
   const priceVal = typeof p.price === 'number' ? p.price : parseFloat(p.price || 0);
   const priceFormatted = priceVal.toFixed(2);
-  const setOf4Price = (priceVal * 4).toFixed(2);
+  const setOf4Price = calculateSetPrice(priceVal, 4, p.offer_banner || '');
   const brandName = escapeHtml(p.brand_name || '');
   const brandLogo = p.brand_logo ? `<img src="${p.brand_logo}" alt="${brandName}" class="tv-card-brand-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"><span class="tv-card-brand-fallback" style="display:none;">${brandName}</span>` : `<span class="tv-card-brand-fallback">${brandName}</span>`;
   const vehicleType = (p.vehicle_type || 'car').toLowerCase();
@@ -1081,7 +1096,8 @@ function createProductCardHTML(p) {
          data-size="${escapeHtml(p.tire_size_label || '')}"
          data-vehicle="${escapeHtml(p.vehicle_type || 'car')}"
          data-type="${escapeHtml(p.season || 'summer')}"
-         data-price="${priceVal}">
+         data-price="${priceVal}"
+         data-offer="${escapeHtml(p.offer_banner || '')}">
       
       <!-- Top Offer Banner -->
       <div class="tv-card-top-banner">
@@ -1173,7 +1189,8 @@ function updateCardQty(select, basePrice) {
   const card = select.closest('.tv-product-card');
   if (!card) return;
   const qty = parseInt(select.value, 10) || 1;
-  const total = (basePrice * qty).toFixed(2);
+  const offer = card.getAttribute('data-offer') || card.querySelector('.tv-card-top-banner')?.textContent?.trim() || '';
+  const total = calculateSetPrice(basePrice, qty, offer);
   const setLabel = card.querySelector('.tv-card-set-label');
   if (setLabel) {
     setLabel.innerHTML = `Set of ${qty}: <span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> <strong>${total}</strong>`;
@@ -1184,7 +1201,8 @@ function addToCartWithCard(btn, title, basePrice) {
   const card = btn.closest('.tv-product-card');
   const select = card ? card.querySelector('.tv-qty-select') : null;
   const qty = select ? parseInt(select.value, 10) || 1 : 1;
-  const total = (basePrice * qty).toFixed(2);
+  const offer = card ? (card.getAttribute('data-offer') || card.querySelector('.tv-card-top-banner')?.textContent?.trim() || '') : '';
+  const total = calculateSetPrice(basePrice, qty, offer);
   
   const originalHTML = btn.innerHTML;
   btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>Added</span>';
@@ -1256,6 +1274,9 @@ function buildFilterPath(page = 1) {
   const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value.trim());
   const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value.trim());
   const selectedTypes = Array.from(document.querySelectorAll('input[name="tire_type"]:checked')).map(cb => cb.value.trim());
+  const selectedPromotions = Array.from(document.querySelectorAll('input[name="promotion"]:checked')).map(cb => cb.value.trim());
+  const minPriceSlider = document.getElementById('min-price-slider');
+  const minPrice = minPriceSlider ? minPriceSlider.value : '';
   const maxPriceSlider = document.getElementById('max-price-slider');
   const maxPrice = maxPriceSlider ? maxPriceSlider.value : '';
   const sortSelect = document.getElementById('sort-select');
@@ -1298,7 +1319,15 @@ function buildFilterPath(page = 1) {
     segments.push('type-' + selectedTypes.map(t => encodeURIComponent(t.toLowerCase())).join(','));
   }
 
-  // 6. Max Price segment: max_price-5693
+  // 6. Promotion segment: promotion-buy_3_get_1_free
+  if (selectedPromotions.length > 0) {
+    segments.push('promotion-' + selectedPromotions.map(pr => encodeURIComponent(pr.toLowerCase())).join(','));
+  }
+
+  // 6. Price range segments: min_price and max_price
+  if (minPrice && parseFloat(minPrice) > parseFloat(minPriceSlider?.min || 0)) {
+    segments.push('min_price-' + Math.round(parseFloat(minPrice)));
+  }
   if (maxPrice && parseFloat(maxPrice) < parseFloat(maxPriceSlider?.max || 2000)) {
     segments.push('max_price-' + Math.round(parseFloat(maxPrice)));
   }
@@ -1325,6 +1354,9 @@ async function fetchProducts(page = 1, scrollUp = true) {
   const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value.trim());
   const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value.trim());
   const selectedTypes = Array.from(document.querySelectorAll('input[name="tire_type"]:checked')).map(cb => cb.value.trim());
+  const selectedPromotions = Array.from(document.querySelectorAll('input[name="promotion"]:checked')).map(cb => cb.value.trim());
+  const minPriceSlider = document.getElementById('min-price-slider');
+  const minPrice = minPriceSlider ? minPriceSlider.value : '';
   const maxPriceSlider = document.getElementById('max-price-slider');
   const maxPrice = maxPriceSlider ? maxPriceSlider.value : '';
   const sortSelect = document.getElementById('sort-select');
@@ -1339,6 +1371,10 @@ async function fetchProducts(page = 1, scrollUp = true) {
   selectedVehicles.forEach(v => params.append('vehicle', v));
   selectedSizes.forEach(s => params.append('size', s));
   selectedTypes.forEach(t => params.append('type', t));
+  selectedPromotions.forEach(pr => params.append('promotion', pr));
+  if (minPrice && parseFloat(minPrice) > parseFloat(minPriceSlider?.min || 0)) {
+    params.set('min_price', minPrice);
+  }
   if (maxPrice && parseFloat(maxPrice) < parseFloat(maxPriceSlider?.max || 2000)) {
     params.set('max_price', maxPrice);
   }
@@ -1430,6 +1466,75 @@ function sortProducts(sortBy) {
   fetchProducts(1, true);
 }
 
+function updateSliderTrack() {
+  const minSlider = document.getElementById('min-price-slider');
+  const maxSlider = document.getElementById('max-price-slider');
+  const range = document.getElementById('tv-slider-range');
+  if (!minSlider || !maxSlider || !range) return;
+
+  const min = parseFloat(minSlider.min) || 0;
+  const max = parseFloat(minSlider.max) || 2000;
+  const minVal = parseFloat(minSlider.value) || min;
+  const maxVal = parseFloat(maxSlider.value) || max;
+
+  const span = (max - min) || 1;
+  const leftPercent = Math.max(0, Math.min(100, ((minVal - min) / span) * 100));
+  const rightPercent = Math.max(0, Math.min(100, 100 - (((maxVal - min) / span) * 100)));
+
+  range.style.left = leftPercent + '%';
+  range.style.right = rightPercent + '%';
+}
+
+function updatePriceDisplay(minVal, maxVal) {
+  const minLabel = document.getElementById('min-price-display');
+  const maxLabel = document.getElementById('price-slider-val');
+  if (minLabel) minLabel.textContent = 'AED ' + Math.round(minVal).toLocaleString();
+  if (maxLabel) maxLabel.textContent = '<= AED ' + Math.round(maxVal).toLocaleString();
+}
+
+function onPriceSliderInput(type) {
+  const minSlider = document.getElementById('min-price-slider');
+  const maxSlider = document.getElementById('max-price-slider');
+  if (!minSlider || !maxSlider) return;
+
+  let minVal = parseFloat(minSlider.value);
+  let maxVal = parseFloat(maxSlider.value);
+
+  // Keep min from surpassing max
+  if (type === 'min') {
+    if (minVal > maxVal) {
+      minSlider.value = maxVal;
+      minVal = maxVal;
+    }
+    minSlider.style.zIndex = '5';
+    maxSlider.style.zIndex = '4';
+  } else {
+    if (maxVal < minVal) {
+      maxSlider.value = minVal;
+      maxVal = minVal;
+    }
+    maxSlider.style.zIndex = '5';
+    minSlider.style.zIndex = '4';
+  }
+
+  updateSliderTrack();
+  updatePriceDisplay(minVal, maxVal);
+  updateActiveFilterBadges();
+
+  clearTimeout(window._priceFilterTimer);
+  window._priceFilterTimer = setTimeout(() => {
+    filterProducts();
+  }, 250);
+}
+
+function updatePriceFilter(val) {
+  const maxSlider = document.getElementById('max-price-slider');
+  if (maxSlider) {
+    maxSlider.value = val;
+    onPriceSliderInput('max');
+  }
+}
+
 function clearAllFilters() {
   document.querySelectorAll('.tv-filter-sidebar input[type="checkbox"]').forEach(cb => {
     cb.checked = false;
@@ -1439,12 +1544,19 @@ function clearAllFilters() {
     searchBox.value = '';
     searchFilterSizes('');
   }
-  const slider = document.getElementById('max-price-slider');
-  if (slider) {
-    slider.value = slider.max;
-    const labelEl = document.getElementById('price-slider-val');
-    if (labelEl) labelEl.textContent = '<= AED ' + parseInt(slider.max).toLocaleString();
+  const minSlider = document.getElementById('min-price-slider');
+  if (minSlider) {
+    minSlider.value = minSlider.min;
+    const minLabel = document.getElementById('min-price-display');
+    if (minLabel) minLabel.textContent = 'AED ' + parseInt(minSlider.min).toLocaleString();
   }
+  const maxSlider = document.getElementById('max-price-slider');
+  if (maxSlider) {
+    maxSlider.value = maxSlider.max;
+    const maxLabel = document.getElementById('price-slider-val');
+    if (maxLabel) maxLabel.textContent = '<= AED ' + parseInt(maxSlider.max).toLocaleString();
+  }
+  updateSliderTrack();
   const sortSelect = document.getElementById('sort-select');
   if (sortSelect) {
     sortSelect.value = 'popular';
@@ -1466,30 +1578,6 @@ function toggleFilterGroup(el) {
   }
 }
 
-function toggleExtraSizes(link) {
-  const extra = document.getElementById('extra-sizes');
-  if (!extra) return;
-  if (extra.style.display === 'none' || !extra.style.display) {
-    extra.style.display = 'flex';
-    link.textContent = 'Show less';
-  } else {
-    extra.style.display = 'none';
-    link.textContent = 'Show more';
-  }
-}
-
-function toggleExtraBrands(link) {
-  const extra = document.getElementById('extra-brands');
-  if (!extra) return;
-  if (extra.style.display === 'none' || !extra.style.display) {
-    extra.style.display = 'flex';
-    link.textContent = 'Show less';
-  } else {
-    extra.style.display = 'none';
-    link.textContent = 'Show more';
-  }
-}
-
 function searchFilterSizes(query) {
   const q = query.trim().toLowerCase();
   const items = document.querySelectorAll('#filter-size-list .tv-filter-item');
@@ -1501,14 +1589,6 @@ function searchFilterSizes(query) {
       it.style.display = 'none';
     }
   });
-}
-
-function updatePriceFilter(val) {
-  const labelEl = document.getElementById('price-slider-val');
-  if (labelEl) {
-    labelEl.textContent = '<= AED ' + parseInt(val).toLocaleString();
-  }
-  filterProducts();
 }
 
 function toggleWishlist(btn) {
@@ -1577,12 +1657,18 @@ function updateActiveFilterBadges() {
   const selectedVehicles = document.querySelectorAll('input[name="vehicle_type"]:checked').length;
   const selectedSizes = document.querySelectorAll('input[name="size"]:checked').length;
   const selectedTypes = document.querySelectorAll('input[name="tire_type"]:checked').length;
-  const slider = document.getElementById('max-price-slider');
+  const selectedPromotions = document.querySelectorAll('input[name="promotion"]:checked').length;
+  
   let priceActive = 0;
-  if (slider && parseFloat(slider.value) < parseFloat(slider.max || 2000)) {
-    priceActive = 1;
+  const minSlider = document.getElementById('min-price-slider');
+  if (minSlider && parseFloat(minSlider.value) > parseFloat(minSlider.min || 0)) {
+    priceActive += 1;
   }
-  const totalActive = selectedBrands + selectedVehicles + selectedSizes + selectedTypes + priceActive;
+  const maxSlider = document.getElementById('max-price-slider');
+  if (maxSlider && parseFloat(maxSlider.value) < parseFloat(maxSlider.max || 2000)) {
+    priceActive += 1;
+  }
+  const totalActive = selectedBrands + selectedVehicles + selectedSizes + selectedTypes + selectedPromotions + priceActive;
 
   const btnBadge = document.getElementById('tv-filter-badge');
   const drawerBadge = document.getElementById('tv-drawer-badge');
@@ -1597,6 +1683,11 @@ function updateActiveFilterBadges() {
       b.style.display = 'none';
     }
   });
+
+  const resetBtn = document.querySelector('.tv-filter-drawer-reset');
+  if (resetBtn) {
+    resetBtn.style.display = totalActive > 0 ? 'inline-block' : 'none';
+  }
 
   if (applyCount && typeof window.totalCount !== 'undefined') {
     applyCount.textContent = `(${window.totalCount.toLocaleString()})`;
@@ -1625,6 +1716,7 @@ function initProductCatalog(config) {
   function initControls() {
     renderPaginationControls(window.totalPages, window.currentPage);
     updateActiveFilterBadges();
+    updateSliderTrack();
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initControls);
@@ -1638,6 +1730,7 @@ window.escapeHtml = escapeHtml;
 window.capitalize = capitalize;
 window.renderSkeletons = renderSkeletons;
 window.createProductCardHTML = createProductCardHTML;
+window.calculateSetPrice = calculateSetPrice;
 window.updateCardQty = updateCardQty;
 window.addToCartWithCard = addToCartWithCard;
 window.openQuickView = openQuickView;
@@ -1653,6 +1746,9 @@ window.toggleExtraSizes = toggleExtraSizes;
 window.toggleExtraBrands = toggleExtraBrands;
 window.searchFilterSizes = searchFilterSizes;
 window.updatePriceFilter = updatePriceFilter;
+window.onPriceSliderInput = onPriceSliderInput;
+window.updateSliderTrack = updateSliderTrack;
+window.updatePriceDisplay = updatePriceDisplay;
 window.toggleWishlist = toggleWishlist;
 window.addToCart = addToCart;
 window.showToast = showToast;
