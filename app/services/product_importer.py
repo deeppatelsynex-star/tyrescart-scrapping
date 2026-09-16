@@ -53,6 +53,7 @@ ATTRIBUTE_ALIAS_MAP = {
     'cold_cranking_amps': 'cca',
     'warranty': 'warranty_period',
     'short_description': 'short_desc',
+    'product_online': 'status',
 }
 
 
@@ -232,8 +233,13 @@ class ProductImporter:
                         resolved_set_id = set_lookup.get('default') or 2
 
                 # Standard core fields
-                status_raw = str(row.get('status') or '1').strip().lower()
-                status = 'active' if status_raw in ('1', 'active', 'true', 'yes') else 'inactive'
+                # Check 'product_online' first (Magento standard: 1=active, 2=inactive), then fallback to 'status'
+                prod_online_raw = str(row.get('product_online') if row.get('product_online') is not None else '').strip()
+                if prod_online_raw:
+                    status = 'inactive' if prod_online_raw.lower() in ('2', '0', 'inactive', 'disabled', 'false', 'no') else 'active'
+                else:
+                    status_raw = str(row.get('status') or '1').strip().lower()
+                    status = 'inactive' if status_raw in ('2', '0', 'inactive', 'disabled', 'false', 'no') else 'active'
                 visibility = (row.get('visibility') or 'Catalog, Search').strip()
                 base_image = (row.get('base_image') or row.get('image_path') or row.get('image') or '').strip()
                 small_image = (row.get('small_image') or base_image).strip()

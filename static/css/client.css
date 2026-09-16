@@ -7380,7 +7380,8 @@ details summary span:last-child {
   font-size: 0.82rem;
 }
 
-.tv-search-size-box {
+.tv-search-size-box,
+.tv-search-filter-box {
   width: 100%;
   padding: 8px 12px;
   font-size: 0.85rem;
@@ -7392,7 +7393,8 @@ details summary span:last-child {
   transition: border-color 0.2s ease;
 }
 
-.tv-search-size-box:focus {
+.tv-search-size-box:focus,
+.tv-search-filter-box:focus {
   border-color: var(--tv-blue-brand);
   background: #ffffff;
 }

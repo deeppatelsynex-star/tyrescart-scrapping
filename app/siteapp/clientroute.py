@@ -684,7 +684,88 @@ def _fetch_catalog_products(args, locale='en'):
                 where.append("(" + " OR ".join(s_clauses) + ")")
                 params.extend(s_params)
 
-            # 4. Tyre Types / Seasons
+            # 4. Pattern filter
+            raw_patterns = args.getlist('pattern') or args.getlist('patterns')
+            patterns = []
+            for p_entry in raw_patterns:
+                for p_part in p_entry.split(','):
+                    pp = p_part.strip()
+                    if pp and pp not in patterns:
+                        patterns.append(pp)
+
+            if patterns:
+                p_ph = ', '.join(['%s'] * len(patterns))
+                where.append(f"(p.tire_pattern IN ({p_ph}) OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.pattern')) IN ({p_ph}))")
+                params.extend(patterns)
+                params.extend(patterns)
+
+            # 5. OEM Tyres filter
+            raw_oems = args.getlist('oem') or args.getlist('oem_tyres') or args.getlist('oems')
+            oems = []
+            for o_entry in raw_oems:
+                for o_part in o_entry.split(','):
+                    op = o_part.strip()
+                    if op and op not in oems:
+                        oems.append(op)
+
+            if oems:
+                oem_clauses = []
+                for o in oems:
+                    oem_clauses.append("(p.oem_brand LIKE %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.oem_tyres')) LIKE %s)")
+                    params.append(f"%{o}%")
+                    params.append(f"%{o}%")
+                where.append("(" + " OR ".join(oem_clauses) + ")")
+
+            # 6. Warranty Period filter
+            raw_warranties = args.getlist('warranty') or args.getlist('warranty_period') or args.getlist('warranties')
+            warranties = []
+            for w_entry in raw_warranties:
+                for w_part in w_entry.split(','):
+                    wp = w_part.strip()
+                    if wp and wp not in warranties:
+                        warranties.append(wp)
+
+            if warranties:
+                w_clauses = []
+                for w in warranties:
+                    w_clauses.append("(JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty')) LIKE %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty_period')) LIKE %s)")
+                    params.append(f"%{w}%")
+                    params.append(f"%{w}%")
+                where.append("(" + " OR ".join(w_clauses) + ")")
+
+            # 7. Year filter
+            raw_years = args.getlist('year') or args.getlist('years')
+            years = []
+            for y_entry in raw_years:
+                for y_part in y_entry.split(','):
+                    yp = y_part.strip()
+                    if yp and yp not in years:
+                        years.append(yp)
+
+            if years:
+                y_ph = ', '.join(['%s'] * len(years))
+                where.append(f"(CAST(p.year AS CHAR) IN ({y_ph}) OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.year')) IN ({y_ph}))")
+                params.extend(years)
+                params.extend(years)
+
+            # 8. Origin / Country filter
+            raw_origins = args.getlist('origin') or args.getlist('country') or args.getlist('origins')
+            origins = []
+            for o_entry in raw_origins:
+                for o_part in o_entry.split(','):
+                    op = o_part.strip()
+                    if op and op not in origins:
+                        origins.append(op)
+
+            if origins:
+                org_ph = ', '.join(['%s'] * len(origins))
+                where.append(f"(LOWER(p.country_of_origin) IN ({org_ph}) OR LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.origin'))) IN ({org_ph}) OR LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.country'))) IN ({org_ph}))")
+                origins_lower = [o.lower() for o in origins]
+                params.extend(origins_lower)
+                params.extend(origins_lower)
+                params.extend(origins_lower)
+
+            # 9. Tyre Types / Seasons
             raw_types = args.getlist('type') or args.getlist('tire_type') or args.getlist('types')
             types = []
             for t_entry in raw_types:
@@ -845,6 +926,41 @@ def _parse_filter_path(filter_path):
                     args.add('brand', b.strip())
             continue
 
+        m_pattern = re.match(r'^pattern-(.+)$', seg, re.IGNORECASE)
+        if m_pattern:
+            for p in m_pattern.group(1).split(','):
+                if p.strip():
+                    args.add('pattern', p.strip())
+            continue
+
+        m_oem = re.match(r'^(?:oem|oem_tyres)-(.+)$', seg, re.IGNORECASE)
+        if m_oem:
+            for o in m_oem.group(1).split(','):
+                if o.strip():
+                    args.add('oem', o.strip())
+            continue
+
+        m_warranty = re.match(r'^(?:warranty|warranty_period)-(.+)$', seg, re.IGNORECASE)
+        if m_warranty:
+            for w in m_warranty.group(1).split(','):
+                if w.strip():
+                    args.add('warranty', w.strip())
+            continue
+
+        m_year = re.match(r'^year-(\d{4}(?:,\d{4})*)$', seg, re.IGNORECASE)
+        if m_year:
+            for y in m_year.group(1).split(','):
+                if y.strip():
+                    args.add('year', y.strip())
+            continue
+
+        m_origin = re.match(r'^(?:origin|country)-(.+)$', seg, re.IGNORECASE)
+        if m_origin:
+            for org in m_origin.group(1).split(','):
+                if org.strip():
+                    args.add('origin', org.strip())
+            continue
+
         m_size = re.match(r'^size-(.+)$', seg, re.IGNORECASE)
         if m_size:
             for s in m_size.group(1).split(','):
@@ -929,6 +1045,11 @@ def _render_product_listing(locale, filter_path=None):
     total_pages = catalog_data['total_pages']
 
     active_brands = [b.lower() for b in (combined_args.getlist('brand') or combined_args.getlist('brands'))]
+    active_patterns = [p.strip() for p in (combined_args.getlist('pattern') or combined_args.getlist('patterns'))]
+    active_oem_tyres = [o.strip() for o in (combined_args.getlist('oem') or combined_args.getlist('oem_tyres') or combined_args.getlist('oems'))]
+    active_warranties = [w.strip() for w in (combined_args.getlist('warranty') or combined_args.getlist('warranty_period') or combined_args.getlist('warranties'))]
+    active_years = [str(y).strip() for y in (combined_args.getlist('year') or combined_args.getlist('years'))]
+    active_origins = [org.strip() for org in (combined_args.getlist('origin') or combined_args.getlist('country') or combined_args.getlist('origins'))]
     active_vehicles = [v.lower() for v in (combined_args.getlist('vehicle') or combined_args.getlist('vehicle_type'))]
     active_sizes = []
     for s in (combined_args.getlist('size') or combined_args.getlist('sizes')):
@@ -1002,6 +1123,81 @@ def _render_product_listing(locale, filter_path=None):
                 if sz and sz not in seen_sizes:
                     seen_sizes.add(sz)
                     filter_sizes.append({'size': sz, 'count': r['cnt']})
+
+            # 4. Sidebar: Patterns from DB
+            cur.execute("""
+                SELECT ptrn as pattern, COUNT(*) as cnt
+                FROM (
+                    SELECT COALESCE(NULLIF(TRIM(tire_pattern), ''), NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.pattern'))), '')) as ptrn
+                    FROM products
+                    WHERE deleted_at IS NULL AND status = 'active'
+                ) t
+                WHERE ptrn IS NOT NULL AND ptrn != '' AND ptrn != 'None'
+                GROUP BY ptrn
+                ORDER BY cnt DESC, ptrn ASC
+            """)
+            filter_patterns = [{'pattern': r['pattern'], 'count': r['cnt']} for r in cur.fetchall()]
+
+            # 5. Sidebar: OEM Tyres from DB
+            cur.execute("""
+                SELECT oem, COUNT(*) as cnt
+                FROM (
+                    SELECT COALESCE(NULLIF(TRIM(oem_brand), ''), NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.oem_tyres'))), '')) as oem
+                    FROM products
+                    WHERE deleted_at IS NULL AND status = 'active'
+                ) t
+                WHERE oem IS NOT NULL AND oem != '' AND oem != 'None' AND oem != '0'
+                GROUP BY oem
+                ORDER BY cnt DESC, oem ASC
+            """)
+            filter_oem_tyres = [{'oem': r['oem'], 'count': r['cnt']} for r in cur.fetchall()]
+
+            # 6. Sidebar: Warranty Period from DB
+            cur.execute("""
+                SELECT war as warranty, COUNT(*) as cnt
+                FROM (
+                    SELECT CASE 
+                        WHEN COALESCE(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.warranty')), JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.warranty_period')), warranty_months) IN ('12', 12) THEN '1 Year Warranty'
+                        ELSE COALESCE(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.warranty')), JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.warranty_period')), CONCAT(warranty_months, ' Months Warranty'))
+                    END as war
+                    FROM products
+                    WHERE deleted_at IS NULL AND status = 'active'
+                ) t
+                WHERE war IS NOT NULL AND war != '' AND war != 'None'
+                GROUP BY war
+                ORDER BY cnt DESC
+            """)
+            filter_warranties = [{'warranty': r['warranty'], 'count': r['cnt']} for r in cur.fetchall()]
+
+            # 7. Sidebar: Year from DB
+            cur.execute("""
+                SELECT yr as year, COUNT(*) as cnt
+                FROM (
+                    SELECT COALESCE(NULLIF(TRIM(year), ''), NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.year'))), '')) as yr
+                    FROM products
+                    WHERE deleted_at IS NULL AND status = 'active'
+                ) t
+                WHERE yr IS NOT NULL AND yr != '' AND yr != 'None' AND yr != '0'
+                GROUP BY yr
+                ORDER BY yr DESC
+            """)
+            filter_years = [{'year': r['year'], 'count': r['cnt']} for r in cur.fetchall()]
+
+            # 8. Sidebar: Origin from DB
+            cur.execute("""
+                SELECT org as origin, COUNT(*) as cnt
+                FROM (
+                    SELECT COALESCE(NULLIF(TRIM(country_of_origin), ''),
+                                    NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.origin'))), ''),
+                                    NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.country'))), '')) as org
+                    FROM products
+                    WHERE deleted_at IS NULL AND status = 'active'
+                ) t
+                WHERE org IS NOT NULL AND org != '' AND org != 'None'
+                GROUP BY org
+                ORDER BY cnt DESC, org ASC
+            """)
+            filter_origins = [{'origin': r['origin'], 'count': r['cnt']} for r in cur.fetchall()]
 
             # 4. Sidebar: Vehicle Types from DB
             cur.execute("""
@@ -1168,6 +1364,11 @@ def _render_product_listing(locale, filter_path=None):
                 per_page=per_page,
                 total_pages=total_pages,
                 filter_brands=filter_brands,
+                filter_patterns=filter_patterns,
+                filter_oem_tyres=filter_oem_tyres,
+                filter_warranties=filter_warranties,
+                filter_years=filter_years,
+                filter_origins=filter_origins,
                 filter_sizes=filter_sizes,
                 filter_vehicles=filter_vehicles,
                 filter_tyre_types=filter_tyre_types,
@@ -1175,6 +1376,11 @@ def _render_product_listing(locale, filter_path=None):
                 min_price=min_price,
                 max_price=max_price,
                 active_brands=active_brands,
+                active_patterns=active_patterns,
+                active_oem_tyres=active_oem_tyres,
+                active_warranties=active_warranties,
+                active_years=active_years,
+                active_origins=active_origins,
                 active_vehicles=active_vehicles,
                 active_sizes=active_sizes,
                 active_types=active_types,

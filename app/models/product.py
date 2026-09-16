@@ -187,9 +187,9 @@ class Product:
         if not v:
             return default
         v_clean = str(v).strip().lower()
-        if v_clean in ('active', 'enabled', '1', 'true'):
+        if v_clean in ('active', 'enabled', '1', 'true', 'yes'):
             return 'active'
-        if v_clean in ('inactive', 'disabled', '0', 'false'):
+        if v_clean in ('inactive', 'disabled', '0', 'false', '2', 'no'):
             return 'inactive'
         return default
 
@@ -575,7 +575,8 @@ class Product:
                 is_featured = 1 if data.get('is_featured') else 0
                 is_new = 1 if data.get('is_new') else 0
                 sort_order = cls._safe_int(data.get('sort_order'), 0)
-                status = cls._safe_status(data.get('status'), 'active')
+                status_raw = data.get('product_online') if data.get('product_online') is not None else data.get('status')
+                status = cls._safe_status(status_raw, 'active')
                 visibility = cls._safe_visibility(data.get('visibility'), 'visible')
                 pay_later_eligible = 1 if data.get('pay_later_eligible', True) else 0
 
@@ -831,9 +832,10 @@ class Product:
                     fields.append("stock_status = %s")
                     params.append(cls._safe_stock_status(data['stock_status']))
 
-                if 'status' in data:
+                if 'status' in data or 'product_online' in data:
+                    st_val = data.get('product_online') if data.get('product_online') is not None else data.get('status')
                     fields.append("status = %s")
-                    params.append(cls._safe_status(data['status']))
+                    params.append(cls._safe_status(st_val))
 
                 if 'visibility' in data:
                     fields.append("visibility = %s")
