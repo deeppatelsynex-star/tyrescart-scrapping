@@ -116,18 +116,37 @@
           </div>
         </div>
 
-        <!-- 4. Price Range -->
+        <!-- Price Range (Dual Range Slider) -->
         <div class="tv-filter-group">
           <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
             <span>Price Range</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <div class="tv-price-slider-wrap">
-            <div class="tv-price-range-inputs">
-              <input type="range" class="tv-range-slider" min="{{ min_price }}" max="{{ max_price }}" step="25" value="{{ active_max_price or max_price }}" id="max-price-slider" oninput="updatePriceFilter(this.value)">
+            <div class="tv-dual-slider-wrap">
+              <div class="tv-slider-track"></div>
+              <div class="tv-slider-range" id="tv-slider-range"></div>
+              <input type="range" 
+                     class="tv-dual-range-input tv-dual-range-min" 
+                     min="{{ min_price }}" 
+                     max="{{ max_price }}" 
+                     step="10" 
+                     value="{{ active_min_price or min_price }}" 
+                     id="min-price-slider" 
+                     aria-label="Minimum Price"
+                     oninput="onPriceSliderInput('min')">
+              <input type="range" 
+                     class="tv-dual-range-input tv-dual-range-max" 
+                     min="{{ min_price }}" 
+                     max="{{ max_price }}" 
+                     step="10" 
+                     value="{{ active_max_price or max_price }}" 
+                     id="max-price-slider" 
+                     aria-label="Maximum Price"
+                     oninput="onPriceSliderInput('max')">
             </div>
             <div class="tv-price-range-labels">
-              <span>AED {{ min_price }}</span>
+              <span id="min-price-display">AED {{ (active_min_price or min_price)|int }}</span>
               <span id="price-slider-val">&le; AED {{ (active_max_price or max_price)|int }}</span>
             </div>
           </div>
@@ -217,7 +236,8 @@
              data-type="{{ p.tire_type or 'summer' }}"
              data-price="{{ p.price|float }}"
              data-rating="{{ p.rating|float }}"
-             data-order="{{ p.sort_order or loop.index }}">
+             data-order="{{ p.sort_order or loop.index }}"
+             data-offer="{{ p.offer_banner or '' }}">
           
           <!-- Top Offer Banner -->
           <div class="tv-card-top-banner">
@@ -285,7 +305,7 @@
               <div class="tv-card-price-controls-row">
                 <div class="tv-card-price-col">
                   <div class="tv-card-main-price"><span class="currency-dirham tv-curr-glyph">&#xe900;</span> {{ "%.2f"|format(p.price) }}</div>
-                  <div class="tv-card-set-label">Set of 4: <span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> <strong>{{ "%.2f"|format(p.price * 4) }}</strong></div>
+                  <div class="tv-card-set-label">Set of 4: <span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> <strong>{{ "%.2f"|format(p.set_of_4_price or (p.price * 4)) }}</strong></div>
                 </div>
                 <div class="tv-card-action-col">
                   <select class="tv-qty-select" onchange="updateCardQty(this, {{ p.price }})" aria-label="Quantity">

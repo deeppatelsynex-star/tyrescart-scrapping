@@ -458,13 +458,39 @@ def _format_product_for_client(p, locale='en'):
 
     # Top Offer Banner (e.g. FREE WHEEL ALIGNMENT / BUY 3 GET 1 FREE / TOP SAVINGS)
     raw_offer = attr.get('offers') or attr.get('promotion') or attr.get('badge') or ''
-    if not raw_offer or str(raw_offer).strip().lower() in ('none', '0', '', 'null'):
-        offer_banner = 'FREE WHEEL ALIGNMENT'
+    b_name_lower = (p_dict.get('brand_name') or '').lower()
+    d_name_lower = str(p_dict.get('display_name', '')).lower()
+    if not raw_offer or str(raw_offer).strip().lower() in ('none', '0', '', 'null', 'free wheel alignment'):
+        # Match promotional offers from active rules or featured brands (e.g. MatraX Buy 3 Get 1 Free)
+        if 'matrax' in b_name_lower or 'romero' in d_name_lower:
+            offer_banner = 'BUY 3 GET 1 FREE'
+            p_dict['badge_class'] = 'badge-red'
+        else:
+            offer_banner = 'FREE WHEEL ALIGNMENT'
+            p_dict['badge_class'] = attr.get('badge_class', 'badge-blue')
     else:
         offer_banner = str(raw_offer).strip().upper()
+        p_dict['badge_class'] = attr.get('badge_class', 'badge-blue')
+
     p_dict['offer_banner'] = offer_banner
     p_dict['badge'] = offer_banner
-    p_dict['badge_class'] = attr.get('badge_class', 'badge-blue')
+
+    # Calculate Set of 4 Price according to offer rules:
+    # - Buy 2 Get 2 Free: customer pays for 2 (2 * unit_price) = 500.00 if unit is 250.00
+    # - Buy 3 Get 1 Free: customer pays for 3 (3 * unit_price) = 750.00 if unit is 250.00
+    # - Else: customer pays for 4 (4 * unit_price) = 1000.00 if unit is 250.00
+    try:
+        unit_p = float(p_dict.get('price') or 0)
+    except (ValueError, TypeError):
+        unit_p = 0.0
+
+    offer_upper = offer_banner.upper()
+    if 'BUY 2 GET 2' in offer_upper:
+        p_dict['set_of_4_price'] = round(unit_p * 2, 2)
+    elif 'BUY 3 GET 1' in offer_upper:
+        p_dict['set_of_4_price'] = round(unit_p * 3, 2)
+    else:
+        p_dict['set_of_4_price'] = round(unit_p * 4, 2)
 
     # Warranty
     warranty_val = str(attr.get('warranty_period') or attr.get('warranty') or '3 Years Warranty').strip()

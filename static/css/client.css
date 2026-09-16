@@ -7412,34 +7412,114 @@ details summary span:last-child {
 }
 
 .tv-price-slider-wrap {
-  padding: 4px 0 0 0;
+  padding: 8px 0 0 0;
 }
 
-.tv-price-range-inputs {
-  margin-bottom: 10px;
-}
-
-.tv-range-slider {
+.tv-dual-slider-wrap {
+  position: relative;
   width: 100%;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.tv-slider-track {
+  position: absolute;
+  left: 0;
+  right: 0;
   height: 6px;
+  background-color: #E2E8F0;
   border-radius: 3px;
-  background: #E2E8F0;
+  z-index: 1;
+}
+
+.tv-slider-range {
+  position: absolute;
+  height: 6px;
+  background-color: var(--tv-blue-brand, #1D63ED);
+  border-radius: 3px;
+  z-index: 2;
+  left: 0%;
+  right: 0%;
+}
+
+.tv-dual-range-input {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin: 0;
+  padding: 0;
   outline: none;
-  accent-color: var(--tv-blue-brand);
+  z-index: 3;
+}
+
+/* WebKit Thumbs (Chrome, Safari, Edge) */
+.tv-dual-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--tv-blue-brand, #1D63ED);
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
   cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.tv-dual-range-input::-webkit-slider-thumb:hover,
+.tv-dual-range-input::-webkit-slider-thumb:active {
+  transform: scale(1.18);
+  box-shadow: 0 2px 8px rgba(29, 99, 237, 0.45);
+}
+
+/* Firefox Thumbs */
+.tv-dual-range-input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--tv-blue-brand, #1D63ED);
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.tv-dual-range-input::-moz-range-thumb:hover,
+.tv-dual-range-input::-moz-range-thumb:active {
+  transform: scale(1.18);
+  box-shadow: 0 2px 8px rgba(29, 99, 237, 0.45);
+}
+
+.tv-dual-range-input::-moz-range-track {
+  background: transparent;
+  border: none;
 }
 
 .tv-price-range-labels {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #64748B;
 }
 
+#min-price-display,
 #price-slider-val {
-  color: var(--tv-dark-navy);
+  color: var(--tv-dark-navy, #0F172A);
   font-weight: 700;
 }
 
