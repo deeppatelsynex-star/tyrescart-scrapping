@@ -6130,7 +6130,7 @@ details summary span:last-child {
 .tv-4x4-hero {
   position: relative;
   background-color: #0f4cc4;
-  background-image: url('/static/assets/images/4x4/hero_banner_clean.jpg');
+  background-image: url('/static/assets/images/4x4/hero_banner_clean.jpg?v=2');
   background-size: cover;
   background-position: center right;
   background-repeat: no-repeat;
@@ -6153,7 +6153,7 @@ details summary span:last-child {
 
 @media(max-width: 991px) {
   .tv-4x4-hero {
-    background-image: linear-gradient(135deg, rgba(8, 22, 58, 0.88) 0%, rgba(15, 76, 196, 0.82) 100%), url('/static/assets/images/4x4/hero_banner_clean.jpg');
+    background-image: linear-gradient(135deg, rgba(8, 22, 58, 0.88) 0%, rgba(15, 76, 196, 0.82) 100%), url('/static/assets/images/4x4/hero_banner_clean.jpg?v=2');
     background-position: 70% center;
   }
   .tv-4x4-hero-grid {
@@ -6164,7 +6164,7 @@ details summary span:last-child {
 
 @media(max-width: 768px) {
   .tv-4x4-hero {
-    background-image: linear-gradient(180deg, rgba(7, 18, 48, 0.92) 0%, rgba(10, 32, 84, 0.88) 100%), url('/static/assets/images/4x4/hero_banner_clean.jpg');
+    background-image: linear-gradient(180deg, rgba(7, 18, 48, 0.92) 0%, rgba(10, 32, 84, 0.88) 100%), url('/static/assets/images/4x4/hero_banner_clean.jpg?v=2');
   }
 }
 
