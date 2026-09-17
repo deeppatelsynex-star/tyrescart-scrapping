@@ -6611,48 +6611,75 @@ details summary span:last-child {
 
 /* 5. Bottom 4x4 CTA Banner */
 .tv-4x4-bottom-cta {
+  position: relative;
   background-color: #08245b;
-  background-image: linear-gradient(rgba(8, 36, 91, 0.85), rgba(8, 36, 91, 0.85)), url('/static/assets/images/4x4/cta_banner_clean.jpg');
+  background-image: linear-gradient(90deg, #08245b 0%, rgba(8, 36, 91, 0.98) 32%, rgba(8, 36, 91, 0.5) 46%, rgba(8, 36, 91, 0.05) 58%, rgba(8, 36, 91, 0) 70%), url('/static/assets/images/4x4/cta_banner_clean.jpg');
   background-repeat: no-repeat;
-  background-position: center center;
+  background-position: center right;
   background-size: cover;
   padding: clamp(56px, 7vw, 84px) 0;
   color: #ffffff;
+  overflow: hidden;
+}
+
+.tv-4x4-bottom-cta .wrap {
   position: relative;
+  z-index: 2;
+}
+
+/* Mobile: the left-to-right fade leaves the right side of the image too
+   light for white text once content stacks full-width, so switch to a
+   uniform dark overlay across the whole banner. */
+@media (max-width: 768px) {
+  .tv-4x4-bottom-cta {
+    background-image: linear-gradient(rgba(8, 36, 91, 0.85), rgba(8, 36, 91, 0.85)), url('/static/assets/images/4x4/cta_banner_clean.jpg');
+    background-position: center;
+  }
+
+  .tv-4x4-bottom-grid {
+    max-width: 100%;
+  }
 }
 
 .tv-4x4-bottom-grid {
-  display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
-  gap: clamp(28px, 4vw, 54px);
-  align-items: center;
-}
-
-@media(max-width: 900px) {
-  .tv-4x4-bottom-grid {
-    grid-template-columns: 1fr;
-  }
+  display: flex;
+  flex-direction: column;
+  max-width: 560px;
 }
 
 .tv-4x4-bottom-badges-list {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .tv-4x4-bottom-badge-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.94rem;
+  gap: 10px;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.96);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .tv-4x4-bottom-badge-item svg {
   flex-shrink: 0;
-  color: #ffffff;
+  color: #38BDF8;
+}
+
+/* Desktop: force a clean 2x2 grid instead of the flex-wrap leaving an
+   orphaned 4th badge alone on its own row (3+1). Mobile keeps the
+   flex-wrap layout above, unchanged. */
+@media (min-width: 769px) {
+  .tv-4x4-bottom-badges-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 28px;
+  }
 }
 
 /* 6. 4x4 Load Rating & Price Blocks */
