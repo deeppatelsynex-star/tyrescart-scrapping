@@ -243,9 +243,9 @@
           <div class="tv-catalog-sort">
             <label for="sort-select" class="tv-sort-label">Sort by:</label>
             <select id="sort-select" class="tv-sort-select" onchange="sortProducts(this.value)">
-              <option value="popular" {% if active_sort == 'popular' %}selected{% endif %}>Most Popular</option>
-              <option value="price-asc" {% if active_sort == 'price-asc' %}selected{% endif %}>Price: Low to High</option>
+              <option value="price-asc" {% if active_sort == 'price-asc' or not active_sort %}selected{% endif %}>Price: Low to High</option>
               <option value="price-desc" {% if active_sort == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
+              <option value="popular" {% if active_sort == 'popular' %}selected{% endif %}>Most Popular</option>
               <option value="rating" {% if active_sort == 'rating' %}selected{% endif %}>Customer Rating</option>
               <option value="newest" {% if active_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
             </select>
@@ -299,13 +299,23 @@
           {% endif %}
 
           <div class="tv-card-body">
-            <!-- Quick-view Eye Button -->
+            <!-- Quick-view Eye Button (Top Left) -->
             <button class="tv-btn-quickview" onclick="openQuickView(this)" title="Quick view" type="button">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
               </svg>
             </button>
+
+            <!-- Brand Logo / Image (Top Right) -->
+            <div class="tv-card-top-brand" title="{{ p.brand_name }}">
+              {% if p.brand_logo %}
+              <img src="{{ p.brand_logo }}" alt="{{ p.brand_name }}" class="tv-card-brand-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+              <span class="tv-card-brand-fallback" style="display:none;">{{ p.brand_name }}</span>
+              {% else %}
+              <span class="tv-card-brand-fallback">{{ p.brand_name }}</span>
+              {% endif %}
+            </div>
 
             <!-- Centered Tyre Image -->
             <div class="tv-card-img-wrap tv-img-loading">
@@ -329,16 +339,8 @@
               </span>
             </div>
 
-            <!-- Brand Logo & Tyre Size Row -->
-            <div class="tv-card-brand-size-row">
-              <div class="tv-card-brand-wrap">
-                {% if p.brand_logo %}
-                <img src="{{ p.brand_logo }}" alt="{{ p.brand_name }}" class="tv-card-brand-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-                <span class="tv-card-brand-fallback" style="display:none;">{{ p.brand_name }}</span>
-                {% else %}
-                <span class="tv-card-brand-fallback">{{ p.brand_name }}</span>
-                {% endif %}
-              </div>
+            <!-- Tyre Size Spec Row -->
+            <div class="tv-card-size-row">
               <div class="tv-card-size-spec">{{ p.full_size_spec }}</div>
             </div>
 

@@ -695,11 +695,10 @@ def _fetch_catalog_products(args, locale='en'):
 
             if patterns:
                 p_ph = ', '.join(['%s'] * len(patterns))
-                where.append(f"(p.tire_pattern IN ({p_ph}) OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.pattern')) IN ({p_ph}))")
-                params.extend(patterns)
+                where.append(f"p.tire_pattern IN ({p_ph})")
                 params.extend(patterns)
 
-            # 5. OEM Tyres filter
+            # 5. OEM Tyres filter (uses idx_products_active_oem)
             raw_oems = args.getlist('oem') or args.getlist('oem_tyres') or args.getlist('oems')
             oems = []
             for o_entry in raw_oems:
@@ -709,12 +708,11 @@ def _fetch_catalog_products(args, locale='en'):
                         oems.append(op)
 
             if oems:
-                oem_clauses = []
-                for o in oems:
-                    oem_clauses.append("(p.oem_brand LIKE %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.oem_tyres')) LIKE %s)")
-                    params.append(f"%{o}%")
-                    params.append(f"%{o}%")
-                where.append("(" + " OR ".join(oem_clauses) + ")")
+                oem_ph = ', '.join(['%s'] * len(oems))
+                oem_like_clauses = " OR ".join(["p.oem_brand LIKE %s" for _ in oems])
+                where.append(f"(p.oem_brand IN ({oem_ph}) OR {oem_like_clauses})")
+                params.extend(oems)
+                params.extend([f"%{o}%" for o in oems])
 
             # 6. Warranty Period filter
             raw_warranties = args.getlist('warranty') or args.getlist('warranty_period') or args.getlist('warranties')
@@ -728,12 +726,15 @@ def _fetch_catalog_products(args, locale='en'):
             if warranties:
                 w_clauses = []
                 for w in warranties:
-                    w_clauses.append("(JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty')) LIKE %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty_period')) LIKE %s)")
-                    params.append(f"%{w}%")
-                    params.append(f"%{w}%")
+                    if '1 year' in w.lower():
+                        w_clauses.append("(p.warranty_months = 12 OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty')) LIKE %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty_period')) LIKE %s)")
+                        params.extend([f"%{w}%", f"%{w}%"])
+                    else:
+                        w_clauses.append("(JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty')) LIKE %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty_period')) LIKE %s)")
+                        params.extend([f"%{w}%", f"%{w}%"])
                 where.append("(" + " OR ".join(w_clauses) + ")")
 
-            # 7. Year filter
+            # 7. Year filter (uses idx_products_year)
             raw_years = args.getlist('year') or args.getlist('years')
             years = []
             for y_entry in raw_years:
@@ -744,11 +745,10 @@ def _fetch_catalog_products(args, locale='en'):
 
             if years:
                 y_ph = ', '.join(['%s'] * len(years))
-                where.append(f"(CAST(p.year AS CHAR) IN ({y_ph}) OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.year')) IN ({y_ph}))")
-                params.extend(years)
+                where.append(f"p.year IN ({y_ph})")
                 params.extend(years)
 
-            # 8. Origin / Country filter
+            # 8. Origin / Country filter (uses idx_products_active_origin)
             raw_origins = args.getlist('origin') or args.getlist('country') or args.getlist('origins')
             origins = []
             for o_entry in raw_origins:
@@ -759,10 +759,8 @@ def _fetch_catalog_products(args, locale='en'):
 
             if origins:
                 org_ph = ', '.join(['%s'] * len(origins))
-                where.append(f"(LOWER(p.country_of_origin) IN ({org_ph}) OR LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.origin'))) IN ({org_ph}) OR LOWER(JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.country'))) IN ({org_ph}))")
+                where.append(f"LOWER(p.country_of_origin) IN ({org_ph})")
                 origins_lower = [o.lower() for o in origins]
-                params.extend(origins_lower)
-                params.extend(origins_lower)
                 params.extend(origins_lower)
 
             # 9. Tyre Types / Seasons
@@ -830,12 +828,18 @@ def _fetch_catalog_products(args, locale='en'):
                 if pr_clauses:
                     where.append("(" + " OR ".join(pr_clauses) + ")")
 
-            # 7. Search query
+            # 7. Search query (leveraging FULLTEXT index idx_products_fulltext_search)
             search = args.get('search') or args.get('q')
             if search and search.strip():
-                s_term = f"%{search.strip()}%"
-                where.append("(p.sku LIKE %s OR p.display_name LIKE %s OR p.tire_size_label LIKE %s)")
-                params.extend([s_term, s_term, s_term])
+                s_clean = search.strip()
+                # Use FULLTEXT matching for terms >= 3 characters
+                if len(s_clean) >= 3 and not any(c in s_clean for c in ('%', '_', '*', '+', '-', '<', '>', '~', '(', ')', '"', '@')):
+                    where.append("(MATCH(p.display_name, p.sku, p.item_code) AGAINST(%s IN BOOLEAN MODE) OR p.tire_size_label LIKE %s)")
+                    params.extend([f"+{s_clean}*", f"%{s_clean}%"])
+                else:
+                    s_term = f"%{s_clean}%"
+                    where.append("(p.sku LIKE %s OR p.display_name LIKE %s OR p.tire_size_label LIKE %s)")
+                    params.extend([s_term, s_term, s_term])
 
             where_sql = " AND ".join(where)
 
@@ -849,8 +853,8 @@ def _fetch_catalog_products(args, locale='en'):
             c_row = cur.fetchone()
             total_count = c_row['total'] if c_row else 0
 
-            # Sorting
-            sort_by = args.get('sort') or args.get('sort_by') or 'popular'
+            # Sorting (Default: price-asc Low to High per user requirement)
+            sort_by = args.get('sort') or args.get('sort_by') or 'price-asc'
             if sort_by == 'price-asc':
                 order_sql = "ORDER BY p.price ASC, p.id ASC"
             elif sort_by == 'price-desc':
@@ -859,8 +863,10 @@ def _fetch_catalog_products(args, locale='en'):
                 order_sql = "ORDER BY p.id DESC"
             elif sort_by == 'rating':
                 order_sql = "ORDER BY p.sort_order ASC, p.id ASC"
-            else:
+            elif sort_by == 'popular':
                 order_sql = "ORDER BY p.sort_order ASC, p.id ASC"
+            else:
+                order_sql = "ORDER BY p.price ASC, p.id ASC"
 
             # Pagination (default 16 for 4 rows of 4 cards on desktop)
             try:
@@ -1058,7 +1064,7 @@ def _render_product_listing(locale, filter_path=None):
     active_types = [t.lower() for t in (combined_args.getlist('type') or combined_args.getlist('tire_type'))]
     active_max_price = combined_args.get('max_price')
     active_min_price = combined_args.get('min_price')
-    active_sort = combined_args.get('sort') or 'popular'
+    active_sort = combined_args.get('sort') or 'price-asc'
     active_promotions = []
     for pr in (combined_args.getlist('promotion') or combined_args.getlist('promotions') or combined_args.getlist('offer') or combined_args.getlist('offers')):
         p_clean = pr.lower().strip()
@@ -1124,31 +1130,25 @@ def _render_product_listing(locale, filter_path=None):
                     seen_sizes.add(sz)
                     filter_sizes.append({'size': sz, 'count': r['cnt']})
 
-            # 4. Sidebar: Patterns from DB
+            # 4. Sidebar: Patterns from DB (using direct index idx_products_active_pattern)
             cur.execute("""
-                SELECT ptrn as pattern, COUNT(*) as cnt
-                FROM (
-                    SELECT COALESCE(NULLIF(TRIM(tire_pattern), ''), NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.pattern'))), '')) as ptrn
-                    FROM products
-                    WHERE deleted_at IS NULL AND status = 'active'
-                ) t
-                WHERE ptrn IS NOT NULL AND ptrn != '' AND ptrn != 'None'
-                GROUP BY ptrn
-                ORDER BY cnt DESC, ptrn ASC
+                SELECT tire_pattern as pattern, COUNT(*) as cnt
+                FROM products
+                WHERE deleted_at IS NULL AND status = 'active'
+                  AND tire_pattern IS NOT NULL AND tire_pattern != '' AND tire_pattern != 'None'
+                GROUP BY tire_pattern
+                ORDER BY cnt DESC, tire_pattern ASC
             """)
             filter_patterns = [{'pattern': r['pattern'], 'count': r['cnt']} for r in cur.fetchall()]
 
-            # 5. Sidebar: OEM Tyres from DB
+            # 5. Sidebar: OEM Tyres from DB (using direct index idx_products_active_oem)
             cur.execute("""
-                SELECT oem, COUNT(*) as cnt
-                FROM (
-                    SELECT COALESCE(NULLIF(TRIM(oem_brand), ''), NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.oem_tyres'))), '')) as oem
-                    FROM products
-                    WHERE deleted_at IS NULL AND status = 'active'
-                ) t
-                WHERE oem IS NOT NULL AND oem != '' AND oem != 'None' AND oem != '0'
-                GROUP BY oem
-                ORDER BY cnt DESC, oem ASC
+                SELECT oem_brand as oem, COUNT(*) as cnt
+                FROM products
+                WHERE deleted_at IS NULL AND status = 'active'
+                  AND oem_brand IS NOT NULL AND oem_brand != '' AND oem_brand != 'None' AND oem_brand != '0'
+                GROUP BY oem_brand
+                ORDER BY cnt DESC, oem_brand ASC
             """)
             filter_oem_tyres = [{'oem': r['oem'], 'count': r['cnt']} for r in cur.fetchall()]
 
@@ -1157,7 +1157,7 @@ def _render_product_listing(locale, filter_path=None):
                 SELECT war as warranty, COUNT(*) as cnt
                 FROM (
                     SELECT CASE 
-                        WHEN COALESCE(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.warranty')), JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.warranty_period')), warranty_months) IN ('12', 12) THEN '1 Year Warranty'
+                        WHEN warranty_months IN ('12', 12) OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.warranty')), JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.warranty_period'))) IN ('12', '1 Year Warranty') THEN '1 Year Warranty'
                         ELSE COALESCE(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.warranty')), JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.warranty_period')), CONCAT(warranty_months, ' Months Warranty'))
                     END as war
                     FROM products
@@ -1169,33 +1169,25 @@ def _render_product_listing(locale, filter_path=None):
             """)
             filter_warranties = [{'warranty': r['warranty'], 'count': r['cnt']} for r in cur.fetchall()]
 
-            # 7. Sidebar: Year from DB
+            # 7. Sidebar: Year from DB (using direct index idx_products_year)
             cur.execute("""
-                SELECT yr as year, COUNT(*) as cnt
-                FROM (
-                    SELECT COALESCE(NULLIF(TRIM(year), ''), NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.year'))), '')) as yr
-                    FROM products
-                    WHERE deleted_at IS NULL AND status = 'active'
-                ) t
-                WHERE yr IS NOT NULL AND yr != '' AND yr != 'None' AND yr != '0'
-                GROUP BY yr
-                ORDER BY yr DESC
+                SELECT year, COUNT(*) as cnt
+                FROM products
+                WHERE deleted_at IS NULL AND status = 'active'
+                  AND year IS NOT NULL AND year != '0000'
+                GROUP BY year
+                ORDER BY year DESC
             """)
             filter_years = [{'year': r['year'], 'count': r['cnt']} for r in cur.fetchall()]
 
-            # 8. Sidebar: Origin from DB
+            # 8. Sidebar: Origin from DB (using direct index idx_products_active_origin)
             cur.execute("""
-                SELECT org as origin, COUNT(*) as cnt
-                FROM (
-                    SELECT COALESCE(NULLIF(TRIM(country_of_origin), ''),
-                                    NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.origin'))), ''),
-                                    NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(attributes_json, '$.country'))), '')) as org
-                    FROM products
-                    WHERE deleted_at IS NULL AND status = 'active'
-                ) t
-                WHERE org IS NOT NULL AND org != '' AND org != 'None'
-                GROUP BY org
-                ORDER BY cnt DESC, org ASC
+                SELECT country_of_origin as origin, COUNT(*) as cnt
+                FROM products
+                WHERE deleted_at IS NULL AND status = 'active'
+                  AND country_of_origin IS NOT NULL AND country_of_origin != '' AND country_of_origin != 'None'
+                GROUP BY country_of_origin
+                ORDER BY cnt DESC, country_of_origin ASC
             """)
             filter_origins = [{'origin': r['origin'], 'count': r['cnt']} for r in cur.fetchall()]
 
@@ -1405,27 +1397,36 @@ def api_products():
     return jsonify(data)
 
 
-@site_bp.route('/car-tyres')
-@site_bp.route('/tyres')
-@site_bp.route('/products')
+@site_bp.route('/car-tyres', strict_slashes=False)
+@site_bp.route('/car-tyres/', strict_slashes=False)
+@site_bp.route('/tyres', strict_slashes=False)
+@site_bp.route('/tyres/', strict_slashes=False)
+@site_bp.route('/products', strict_slashes=False)
+@site_bp.route('/products/', strict_slashes=False)
 def car_tyres_listing():
     """Client storefront Car Tyres / Product Listing catalog."""
     locale = _get_locale()
     return _render_product_listing(locale)
 
 
-@site_bp.route('/car-tyres/<path:filter_path>')
-@site_bp.route('/tyres/<path:filter_path>')
-@site_bp.route('/products/<path:filter_path>')
+@site_bp.route('/car-tyres/<path:filter_path>', strict_slashes=False)
+@site_bp.route('/tyres/<path:filter_path>', strict_slashes=False)
+@site_bp.route('/products/<path:filter_path>', strict_slashes=False)
 def car_tyres_listing_slug(filter_path):
     """Client storefront Car Tyres / Product Listing catalog with URL slug filters."""
+    clean_path = (filter_path or '').strip('/')
+    if not clean_path:
+        return redirect('/tyres', code=301)
     locale = _get_locale()
-    return _render_product_listing(locale, filter_path=filter_path)
+    return _render_product_listing(locale, filter_path=clean_path)
 
 
-@site_bp.route('/<string(length=2):lang_code>/car-tyres')
-@site_bp.route('/<string(length=2):lang_code>/tyres')
-@site_bp.route('/<string(length=2):lang_code>/products')
+@site_bp.route('/<string(length=2):lang_code>/car-tyres', strict_slashes=False)
+@site_bp.route('/<string(length=2):lang_code>/car-tyres/', strict_slashes=False)
+@site_bp.route('/<string(length=2):lang_code>/tyres', strict_slashes=False)
+@site_bp.route('/<string(length=2):lang_code>/tyres/', strict_slashes=False)
+@site_bp.route('/<string(length=2):lang_code>/products', strict_slashes=False)
+@site_bp.route('/<string(length=2):lang_code>/products/', strict_slashes=False)
 def car_tyres_listing_locale(lang_code):
     """Client storefront Car Tyres / Product Listing catalog with dynamic locale."""
     code = lang_code.lower()
@@ -1433,14 +1434,17 @@ def car_tyres_listing_locale(lang_code):
     return _render_product_listing(code)
 
 
-@site_bp.route('/<string(length=2):lang_code>/car-tyres/<path:filter_path>')
-@site_bp.route('/<string(length=2):lang_code>/tyres/<path:filter_path>')
-@site_bp.route('/<string(length=2):lang_code>/products/<path:filter_path>')
+@site_bp.route('/<string(length=2):lang_code>/car-tyres/<path:filter_path>', strict_slashes=False)
+@site_bp.route('/<string(length=2):lang_code>/tyres/<path:filter_path>', strict_slashes=False)
+@site_bp.route('/<string(length=2):lang_code>/products/<path:filter_path>', strict_slashes=False)
 def car_tyres_listing_locale_slug(lang_code, filter_path):
     """Client storefront Car Tyres / Product Listing catalog with dynamic locale and URL slug filters."""
     code = lang_code.lower()
     session['site_locale'] = code
-    return _render_product_listing(code, filter_path=filter_path)
+    clean_path = (filter_path or '').strip('/')
+    if not clean_path:
+        return redirect(f'/{code}/tyres', code=301)
+    return _render_product_listing(code, filter_path=clean_path)
 
 
 @site_bp.route('/<string(length=2):lang_code>/page/<slug>')

@@ -8238,7 +8238,60 @@ body.filter-open .float-wa {
   align-items: center;
 }
 
-/* Brand Logo + Tyre Size Row */
+/* Top Right Brand Logo in Product Card */
+.tv-card-top-brand {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  max-width: 90px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  z-index: 2;
+}
+
+.tv-card-top-brand .tv-card-brand-img {
+  max-height: 22px;
+  max-width: 85px;
+  object-fit: contain;
+  display: block;
+}
+
+.tv-card-top-brand .tv-card-brand-fallback {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #0F172A;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  max-width: 85px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Dedicated Tyre Size Row */
+.tv-card-size-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 4px;
+}
+
+.tv-card-size-spec {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #000000;
+  text-align: left;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+/* Brand Logo + Tyre Size Row (Legacy fallback) */
 .tv-card-brand-size-row {
   display: flex;
   align-items: center;
@@ -8267,15 +8320,6 @@ body.filter-open .float-wa {
   color: #0F172A;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-}
-
-.tv-card-size-spec {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #000000;
-  text-align: right;
-  white-space: nowrap;
-  letter-spacing: -0.01em;
 }
 
 /* Pattern / Model Name */
@@ -9199,6 +9243,13 @@ body.tv-modal-active {
   margin-bottom: 16px;
 }
 
+@media (max-width: 1200px) {
+  .tv-qv-spec-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+}
+
 @media (max-width: 720px) {
   .tv-qv-spec-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -9591,11 +9642,280 @@ body.tv-modal-active {
   margin: 0;
 }
 
-@media (max-width: 768px) {
+/* ============================================================
+   Quick View Modal Responsive Overhaul (Mobile, Tablet, Desktop)
+   ============================================================ */
+@media (max-width: 1024px) {
   .tv-qv-modal-card {
-    padding: 20px 16px 28px 16px;
+    padding: 22px 24px 32px 24px;
+  }
+  .tv-qv-main-grid {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tv-qv-modal-overlay {
+    align-items: flex-end;
+  }
+  .tv-qv-modal-container {
+    max-height: 92vh;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-top-width: 4px;
+  }
+  .tv-qv-modal-card {
+    padding: 14px 14px 28px 14px;
+    max-height: calc(92vh - 6px);
+  }
+  .tv-qv-modal-header {
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    position: sticky;
+    top: -14px;
+    background: #ffffff;
+    z-index: 20;
+    margin-top: -4px;
+    padding-top: 4px;
+  }
+  .tv-qv-modal-title {
+    font-size: 1.22rem;
+  }
+  .tv-qv-title-bar {
+    width: 22px;
+    height: 3px;
+  }
+  .tv-qv-modal-close {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Left Showcase Card on Mobile */
+  .tv-qv-img-showcase-card {
+    min-height: 220px;
+    padding: 10px 12px;
+    border-radius: 16px;
+  }
+  .tv-qv-stage {
+    min-height: 160px;
+  }
+  .tv-qv-radial-glow {
+    width: 160px;
+    height: 160px;
+  }
+  .tv-qv-img {
+    max-height: 155px;
+  }
+  .tv-qv-stock-badge {
+    font-size: 10.5px;
+    padding: 3px 9px;
+  }
+
+  /* Subfeatures under tyre card (2x2 grid on mobile) */
+  .tv-qv-subfeatures-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .tv-qv-subfeat-item {
+    padding: 6px 8px;
+    gap: 6px;
+    border-radius: 10px;
+  }
+  .tv-qv-subfeat-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+  .tv-qv-subfeat-text {
+    font-size: 10.5px;
+  }
+
+  /* Right column meta & titles */
+  .tv-qv-meta-top {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .tv-qv-brand-logo {
+    max-height: 22px;
+    max-width: 110px;
+  }
+  .tv-qv-actions-top {
+    gap: 12px;
+  }
+  .tv-qv-action-btn {
+    font-size: 12px;
   }
   .tv-qv-product-title {
-    font-size: 1.35rem;
+    font-size: 1.18rem;
+    margin-bottom: 4px;
+    line-height: 1.25;
+  }
+  .tv-qv-product-subtitle {
+    font-size: 12px;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  /* Spec Grid (2 columns on mobile) */
+  .tv-qv-spec-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .tv-qv-spec-card {
+    padding: 7px 8px;
+    gap: 7px;
+    border-radius: 10px;
+  }
+  .tv-glyph-blue {
+    width: 30px;
+    height: 30px;
+  }
+  .tv-glyph-blue svg {
+    width: 14px;
+    height: 14px;
+  }
+  .tv-qv-spec-key {
+    font-size: 9px;
+  }
+  .tv-qv-spec-val {
+    font-size: 11.5px;
+  }
+
+  /* Price & CTA Box on mobile */
+  .tv-qv-price-cta-box {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 14px;
+    gap: 12px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+  .tv-qv-price-info {
+    width: 100%;
+  }
+  .tv-qv-main-cost {
+    font-size: 1.45rem;
+  }
+  .tv-qv-curr-name {
+    font-size: 1.1rem;
+  }
+  .tv-qv-sets-line {
+    font-size: 11px;
+    gap: 6px;
+  }
+
+  .tv-qv-cta-group {
+    width: 100%;
+    min-width: 0;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .tv-qv-cta-top-row {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+  .tv-qv-stepper {
+    height: 38px;
+    flex-shrink: 0;
+  }
+  .tv-qv-step-btn {
+    width: 28px;
+    font-size: 15px;
+  }
+  .tv-qv-step-val {
+    width: 28px;
+    font-size: 13px;
+  }
+  .tv-qv-add-cart-btn {
+    flex: 1;
+    height: 38px;
+    font-size: 12.5px;
+    padding: 0 12px;
+  }
+  .tv-qv-contact-outline-btn {
+    width: 100%;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  /* Trust Strip on mobile */
+  .tv-qv-trust-strip {
+    grid-template-columns: 1fr !important;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .tv-qv-trust-col {
+    gap: 8px;
+  }
+  .tv-qv-trust-icon-wrap {
+    width: 28px;
+    height: 28px;
+  }
+  .tv-qv-trust-icon-wrap svg {
+    width: 14px;
+    height: 14px;
+  }
+  .tv-qv-trust-info strong {
+    font-size: 11.5px;
+  }
+  .tv-qv-trust-info p {
+    font-size: 10.5px;
+  }
+
+  /* Bottom Tabs on mobile */
+  .tv-qv-tabs-container {
+    padding-top: 10px;
+  }
+  .tv-qv-tabs-nav {
+    gap: 16px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .tv-qv-tab {
+    font-size: 12px;
+    padding: 4px 2px 8px 2px;
+  }
+  .tv-qv-tab-content {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .tv-qv-meta-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .tv-qv-actions-top {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .tv-qv-spec-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 5px;
+  }
+  .tv-qv-spec-card {
+    padding: 6px 6px;
+    gap: 6px;
+  }
+  .tv-glyph-blue {
+    width: 26px;
+    height: 26px;
+  }
+  .tv-glyph-blue svg {
+    width: 12px;
+    height: 12px;
+  }
+  .tv-qv-spec-key {
+    font-size: 8.5px;
+  }
+  .tv-qv-spec-val {
+    font-size: 10.5px;
   }
 }
