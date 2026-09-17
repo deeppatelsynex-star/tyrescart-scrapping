@@ -62,6 +62,7 @@ test-results/
 *.postman_environment.json
 
 seed_dynamic_attributes_data.sql
+<<<<<<< HEAD
 seed_product_attribute_values.sql
 
 # Runtime-uploaded content (product/brand/page images) — deployed directly
@@ -69,3 +70,6 @@ seed_product_attribute_values.sql
 
 static/uploads/brands.zip
 SCALING_AND_SEARCH_RECOMMENDATION.md
+=======
+seed_product_attribute_values.sql
+>>>>>>> dev
