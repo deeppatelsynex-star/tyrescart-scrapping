@@ -47,27 +47,24 @@
     
     <!-- LEFT SIDEBAR FILTERS (Sticky Desktop & Off-Canvas Mobile Drawer) -->
     <aside class="tv-filter-sidebar" id="tv-filter-sidebar" aria-label="Product Filters">
-      <!-- Mobile Drawer Header -->
-      <div class="tv-filter-drawer-header">
-        <div class="tv-filter-drawer-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="4" y1="21" x2="4" y2="14"></line>
-            <line x1="4" y1="10" x2="4" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12" y2="3"></line>
-            <line x1="20" y1="21" x2="20" y2="16"></line>
-            <line x1="20" y1="12" x2="20" y2="3"></line>
-            <line x1="1" y1="14" x2="7" y2="14"></line>
-            <line x1="9" y1="8" x2="15" y2="8"></line>
-            <line x1="17" y1="16" x2="23" y2="16"></line>
+      <!-- Sidebar Top Header (Matching Reference Design) -->
+      <div class="tv-filter-card-header">
+        <div class="tv-filter-header-left">
+          <svg class="tv-filter-funnel-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
           </svg>
-          <span>Filters</span>
+          <span class="tv-filter-header-title">Filters</span>
           <span class="tv-filter-badge" id="tv-drawer-badge" style="display:none;">0</span>
         </div>
-        <div class="tv-filter-drawer-actions">
-          <button type="button" class="tv-btn-drawer-reset" onclick="clearAllFilters()">Reset</button>
+        <div class="tv-filter-header-right">
+          <button type="button" class="tv-btn-clear-all" onclick="clearAllFilters()" aria-label="Clear all filters">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+            </svg>
+            <span>Clear All</span>
+          </button>
           <button type="button" class="tv-btn-drawer-close" onclick="closeMobileFilter()" aria-label="Close filters">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -84,99 +81,149 @@
           {% endfor %}
         </div>
 
-        <!-- 1. Brand -->
+        <!-- 1. Warranty Period -->
         <div class="tv-filter-group">
           <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
-            <span>Brand</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <div class="tv-filter-header-title">
+              <svg class="tv-filter-group-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span>Warranty Period</span>
+            </div>
+            <svg class="tv-filter-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
           </div>
-          <input type="text" class="tv-search-filter-box" placeholder="Search brand..." oninput="searchFilterList(this, '#filter-brand-list')">
+          <div class="tv-filter-list" id="filter-warranty-list">
+            {% if filter_warranties|length == 0 %}
+            <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No warranty options available</span>
+            {% endif %}
+            {% for w in filter_warranties %}
+            <label class="tv-filter-item" data-filter-name="{{ w.warranty }}">
+              <span class="tv-filter-item-left">
+                <input type="checkbox" name="warranty" value="{{ w.warranty }}" {% if active_warranties and (w.warranty in active_warranties or (w.warranty|lower) in active_warranties) %}checked{% endif %} onchange="filterProducts()">
+                <span>{{ w.warranty }}</span>
+              </span>
+              <span class="tv-filter-count">{{ "{:,}".format(w.count) }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- 2. Year -->
+        <div class="tv-filter-group">
+          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+            <div class="tv-filter-header-title">
+              <svg class="tv-filter-group-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>Year</span>
+            </div>
+            <svg class="tv-filter-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          </div>
+          <div class="tv-filter-list" id="filter-year-list">
+            {% if filter_years|length == 0 %}
+            <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No years available</span>
+            {% endif %}
+            {% for y in filter_years %}
+            <label class="tv-filter-item" data-filter-name="{{ y.year }}">
+              <span class="tv-filter-item-left">
+                <input type="checkbox" name="year" value="{{ y.year }}" {% if active_years and (y.year|string in active_years) %}checked{% endif %} onchange="filterProducts()">
+                <span>{{ y.year }}</span>
+              </span>
+              <span class="tv-filter-count">{{ "{:,}".format(y.count) }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- 3. Brand -->
+        <div class="tv-filter-group">
+          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+            <div class="tv-filter-header-title">
+              <svg class="tv-filter-group-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
+              <span>Brand</span>
+            </div>
+            <svg class="tv-filter-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          </div>
+          <input type="text" class="tv-search-filter-box" placeholder="Search Brand..." oninput="searchFilterList(this, '#filter-brand-list')">
           <div class="tv-filter-list tv-filter-scroll-list" id="filter-brand-list">
             {% if filter_brands|length == 0 %}
             <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No brands available</span>
             {% endif %}
             {% for b in filter_brands %}
             <label class="tv-filter-item" data-filter-name="{{ b.name }}">
-              <input type="checkbox" name="brand" value="{{ b.slug }}" {% if active_brands and (b.slug in active_brands or (b.name|lower) in active_brands) %}checked{% endif %} onchange="filterProducts()">
-              <span>{{ b.name }}</span> <span class="tv-filter-count">({{ b.count }})</span>
+              <span class="tv-filter-item-left">
+                <input type="checkbox" name="brand" value="{{ b.slug }}" {% if active_brands and (b.slug in active_brands or (b.name|lower) in active_brands) %}checked{% endif %} onchange="filterProducts()">
+                <span>{{ b.name }}</span>
+              </span>
+              <span class="tv-filter-count">{{ "{:,}".format(b.count) }}</span>
             </label>
             {% endfor %}
           </div>
         </div>
 
-        <!-- 2. Pattern -->
+        <!-- 4. Pattern -->
         <div class="tv-filter-group">
           <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
-            <span>Pattern</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <div class="tv-filter-header-title">
+              <svg class="tv-filter-group-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="12" y1="2" x2="12" y2="4"></line>
+                <line x1="12" y1="20" x2="12" y2="22"></line>
+                <line x1="20" y1="12" x2="22" y2="12"></line>
+                <line x1="2" y1="12" x2="4" y2="12"></line>
+              </svg>
+              <span>Pattern</span>
+            </div>
+            <svg class="tv-filter-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
           </div>
-          <input type="text" class="tv-search-filter-box" placeholder="Search pattern..." oninput="searchFilterList(this, '#filter-pattern-list')">
+          <input type="text" class="tv-search-filter-box" placeholder="Search Pattern..." oninput="searchFilterList(this, '#filter-pattern-list')">
           <div class="tv-filter-list tv-filter-scroll-list" id="filter-pattern-list">
             {% if filter_patterns|length == 0 %}
             <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No patterns available</span>
             {% endif %}
             {% for p in filter_patterns %}
             <label class="tv-filter-item" data-filter-name="{{ p.pattern }}">
-              <input type="checkbox" name="pattern" value="{{ p.pattern }}" {% if active_patterns and (p.pattern in active_patterns or (p.pattern|lower) in active_patterns) %}checked{% endif %} onchange="filterProducts()">
-              <span>{{ p.pattern }}</span> <span class="tv-filter-count">({{ p.count }})</span>
+              <span class="tv-filter-item-left">
+                <input type="checkbox" name="pattern" value="{{ p.pattern }}" {% if active_patterns and (p.pattern in active_patterns or (p.pattern|lower) in active_patterns or (p.pattern|lower|replace(' ', '-')) in active_patterns or (p.pattern|lower|replace('-', ' ')) in active_patterns) %}checked{% endif %} onchange="filterProducts()">
+                <span>{{ p.pattern }}</span>
+              </span>
+              <span class="tv-filter-count">{{ "{:,}".format(p.count) }}</span>
             </label>
             {% endfor %}
           </div>
         </div>
 
-        <!-- 3. OEM Tyres -->
+        <!-- 5. OEM Tyres -->
         <div class="tv-filter-group">
           <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
-            <span>OEM Tyres</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <div class="tv-filter-header-title">
+              <svg class="tv-filter-group-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="7"></circle>
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+              </svg>
+              <span>OEM Tyres</span>
+            </div>
+            <svg class="tv-filter-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
           </div>
-          <input type="text" class="tv-search-filter-box" placeholder="Search OEM tyres..." oninput="searchFilterList(this, '#filter-oem-list')">
+          <input type="text" class="tv-search-filter-box" placeholder="Search OEM Tyres..." oninput="searchFilterList(this, '#filter-oem-list')">
           <div class="tv-filter-list tv-filter-scroll-list" id="filter-oem-list">
             {% if filter_oem_tyres|length == 0 %}
             <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No OEM tyres available</span>
             {% endif %}
             {% for o in filter_oem_tyres %}
             <label class="tv-filter-item" data-filter-name="{{ o.oem }}">
-              <input type="checkbox" name="oem" value="{{ o.oem }}" {% if active_oem_tyres and (o.oem in active_oem_tyres or (o.oem|lower) in active_oem_tyres) %}checked{% endif %} onchange="filterProducts()">
-              <span>{{ o.oem }}</span> <span class="tv-filter-count">({{ o.count }})</span>
-            </label>
-            {% endfor %}
-          </div>
-        </div>
-
-        <!-- 4. Warranty Period -->
-        <div class="tv-filter-group">
-          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
-            <span>Warranty Period</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="tv-filter-list tv-filter-scroll-list" id="filter-warranty-list">
-            {% if filter_warranties|length == 0 %}
-            <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No warranty options available</span>
-            {% endif %}
-            {% for w in filter_warranties %}
-            <label class="tv-filter-item" data-filter-name="{{ w.warranty }}">
-              <input type="checkbox" name="warranty" value="{{ w.warranty }}" {% if active_warranties and (w.warranty in active_warranties or (w.warranty|lower) in active_warranties) %}checked{% endif %} onchange="filterProducts()">
-              <span>{{ w.warranty }}</span> <span class="tv-filter-count">({{ w.count }})</span>
-            </label>
-            {% endfor %}
-          </div>
-        </div>
-
-        <!-- 5. Year -->
-        <div class="tv-filter-group">
-          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
-            <span>Year</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="tv-filter-list tv-filter-scroll-list" id="filter-year-list">
-            {% if filter_years|length == 0 %}
-            <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No years available</span>
-            {% endif %}
-            {% for y in filter_years %}
-            <label class="tv-filter-item" data-filter-name="{{ y.year }}">
-              <input type="checkbox" name="year" value="{{ y.year }}" {% if active_years and (y.year|string in active_years) %}checked{% endif %} onchange="filterProducts()">
-              <span>{{ y.year }}</span> <span class="tv-filter-count">({{ y.count }})</span>
+              <span class="tv-filter-item-left">
+                <input type="checkbox" name="oem" value="{{ o.oem }}" {% if active_oem_tyres and (o.oem in active_oem_tyres or (o.oem|lower) in active_oem_tyres or (o.oem|lower|replace(' ', '-')) in active_oem_tyres or (o.oem|lower|replace('-', ' ')) in active_oem_tyres) %}checked{% endif %} onchange="filterProducts()">
+                <span>{{ o.oem }}</span>
+              </span>
+              <span class="tv-filter-count">{{ "{:,}".format(o.count) }}</span>
             </label>
             {% endfor %}
           </div>
@@ -185,25 +232,63 @@
         <!-- 6. Origin -->
         <div class="tv-filter-group">
           <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
-            <span>Origin</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <div class="tv-filter-header-title">
+              <svg class="tv-filter-group-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+              <span>Origin</span>
+            </div>
+            <svg class="tv-filter-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
           </div>
-          <input type="text" class="tv-search-filter-box" placeholder="Search origin..." oninput="searchFilterList(this, '#filter-origin-list')">
+          <input type="text" class="tv-search-filter-box" placeholder="Search Origin..." oninput="searchFilterList(this, '#filter-origin-list')">
           <div class="tv-filter-list tv-filter-scroll-list" id="filter-origin-list">
             {% if filter_origins|length == 0 %}
             <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No origins available</span>
             {% endif %}
             {% for org in filter_origins %}
             <label class="tv-filter-item" data-filter-name="{{ org.origin }}">
-              <input type="checkbox" name="origin" value="{{ org.origin }}" {% if active_origins and (org.origin in active_origins or (org.origin|lower) in active_origins) %}checked{% endif %} onchange="filterProducts()">
-              <span>{{ org.origin }}</span> <span class="tv-filter-count">({{ org.count }})</span>
+              <span class="tv-filter-item-left">
+                <input type="checkbox" name="origin" value="{{ org.origin }}" {% if active_origins and (org.origin in active_origins or (org.origin|lower) in active_origins or (org.origin|lower|replace(' ', '-')) in active_origins or (org.origin|lower|replace('-', ' ')) in active_origins) %}checked{% endif %} onchange="filterProducts()">
+                <span>{{ org.origin }}</span>
+              </span>
+              <span class="tv-filter-count">{{ "{:,}".format(org.count) }}</span>
             </label>
             {% endfor %}
           </div>
         </div>
 
-        <!-- Clear all filters button (desktop view) -->
-        <button type="button" class="tv-btn-clear-filters tv-btn-clear-desktop" onclick="clearAllFilters()">Clear all filters</button>
+        <!-- 7. Promotion -->
+        <div class="tv-filter-group">
+          <div class="tv-filter-header" onclick="toggleFilterGroup(this)">
+            <div class="tv-filter-header-title">
+              <svg class="tv-filter-group-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 12 20 22 4 22 4 12"></polyline>
+                <rect x="2" y="7" width="20" height="5"></rect>
+                <line x1="12" y1="22" x2="12" y2="7"></line>
+                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
+                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+              </svg>
+              <span>Promotion</span>
+            </div>
+            <svg class="tv-filter-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          </div>
+          <div class="tv-filter-list" id="filter-promotion-list">
+            {% if filter_promotions|length == 0 %}
+            <span style="font-size: 0.85rem; color: #94A3B8; padding: 4px 0;">No promotions available</span>
+            {% endif %}
+            {% for pr in filter_promotions %}
+            <label class="tv-filter-item" data-filter-name="{{ pr.label }}">
+              <span class="tv-filter-item-left">
+                <input type="checkbox" name="promotion" value="{{ pr.key }}" {% if active_promotions and (pr.key in active_promotions or (pr.key|replace('_', '-')) in active_promotions) %}checked{% endif %} onchange="filterProducts()">
+                <span>{{ pr.label }}</span>
+              </span>
+              <span class="tv-filter-count">{{ "{:,}".format(pr.count) }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
       </div>
 
       <!-- Mobile Drawer Footer with Apply Button -->
@@ -241,14 +326,108 @@
           </button>
 
           <div class="tv-catalog-sort">
-            <label for="sort-select" class="tv-sort-label">Sort by:</label>
-            <select id="sort-select" class="tv-sort-select" onchange="sortProducts(this.value)">
+            <span class="tv-sort-label">Sort by:</span>
+            <!-- Hidden native select retained for backward compatibility & programmatic readers -->
+            <select id="sort-select" class="tv-sort-select-hidden" style="display: none;" onchange="sortProducts(this.value)">
               <option value="price-asc" {% if active_sort == 'price-asc' or not active_sort %}selected{% endif %}>Price: Low to High</option>
               <option value="price-desc" {% if active_sort == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
               <option value="popular" {% if active_sort == 'popular' %}selected{% endif %}>Most Popular</option>
               <option value="rating" {% if active_sort == 'rating' %}selected{% endif %}>Customer Rating</option>
               <option value="newest" {% if active_sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
             </select>
+
+            <!-- Custom Animated Antigravity Sort Dropdown -->
+            <div class="tv-custom-sort" id="tv-custom-sort">
+              <button type="button" class="tv-sort-trigger" id="tv-sort-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Sort products">
+                <svg class="tv-sort-trigger-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7 20V4m0 0L3 8m4-4 4 4"/>
+                  <path d="M17 4v16m0 0 4-4m-4 4-4-4"/>
+                </svg>
+                <span class="tv-sort-trigger-text" id="tv-sort-trigger-text">
+                  {% if active_sort == 'price-desc' %}Price: High to Low
+                  {% elif active_sort == 'popular' %}Most Popular
+                  {% elif active_sort == 'rating' %}Customer Rating
+                  {% elif active_sort == 'newest' %}Newest Arrivals
+                  {% else %}Price: Low to High{% endif %}
+                </span>
+                <span class="tv-sort-trigger-divider" aria-hidden="true"></span>
+                <svg class="tv-sort-trigger-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+
+              <div class="tv-sort-menu" id="tv-sort-menu" role="listbox" aria-label="Sort by">
+                <div class="tv-sort-item {% if active_sort == 'price-asc' or not active_sort %}is-active{% endif %}" data-value="price-asc" role="option" tabindex="0">
+                  <span class="tv-sort-indicator-bar" aria-hidden="true"></span>
+                  <svg class="tv-sort-item-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <polyline points="6 10 12 4 18 10"></polyline>
+                    <polyline points="6 16 12 10 18 16"></polyline>
+                  </svg>
+                  <span class="tv-sort-item-label">Price: Low to High</span>
+                  <span class="tv-sort-check-badge" aria-hidden="true">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </span>
+                </div>
+
+                <div class="tv-sort-item {% if active_sort == 'price-desc' %}is-active{% endif %}" data-value="price-desc" role="option" tabindex="0">
+                  <span class="tv-sort-indicator-bar" aria-hidden="true"></span>
+                  <svg class="tv-sort-item-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="4" x2="12" y2="20"></line>
+                    <polyline points="6 14 12 20 18 14"></polyline>
+                    <polyline points="6 8 12 14 18 8"></polyline>
+                  </svg>
+                  <span class="tv-sort-item-label">Price: High to Low</span>
+                  <span class="tv-sort-check-badge" aria-hidden="true">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </span>
+                </div>
+
+                <div class="tv-sort-item {% if active_sort == 'popular' %}is-active{% endif %}" data-value="popular" role="option" tabindex="0">
+                  <span class="tv-sort-indicator-bar" aria-hidden="true"></span>
+                  <svg class="tv-sort-item-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/>
+                  </svg>
+                  <span class="tv-sort-item-label">Most Popular</span>
+                  <span class="tv-sort-check-badge" aria-hidden="true">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </span>
+                </div>
+
+                <div class="tv-sort-item {% if active_sort == 'rating' %}is-active{% endif %}" data-value="rating" role="option" tabindex="0">
+                  <span class="tv-sort-indicator-bar" aria-hidden="true"></span>
+                  <svg class="tv-sort-item-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  <span class="tv-sort-item-label">Customer Rating</span>
+                  <span class="tv-sort-check-badge" aria-hidden="true">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </span>
+                </div>
+
+                <div class="tv-sort-item {% if active_sort == 'newest' %}is-active{% endif %}" data-value="newest" role="option" tabindex="0">
+                  <span class="tv-sort-indicator-bar" aria-hidden="true"></span>
+                  <svg class="tv-sort-item-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span class="tv-sort-item-label">Newest Arrivals</span>
+                  <span class="tv-sort-check-badge" aria-hidden="true">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -294,8 +473,6 @@
           <div class="tv-card-top-banner">
             {{ p.offer_banner }}
           </div>
-          {% else %}
-          <div class="tv-card-top-banner tv-card-top-banner-empty" style="visibility: hidden;">&nbsp;</div>
           {% endif %}
 
           <div class="tv-card-body">
@@ -339,13 +516,11 @@
               </span>
             </div>
 
-            <!-- Tyre Size Spec Row -->
-            <div class="tv-card-size-row">
+            <!-- Size (Left) & Pattern (Right) Side-by-Side Row -->
+            <div class="tv-card-size-pattern-row">
               <div class="tv-card-size-spec">{{ p.full_size_spec }}</div>
+              <h3 class="tv-card-pattern-title" title="{{ p.pattern_name or p.display_name }}">{{ p.pattern_name or p.display_name }}</h3>
             </div>
-
-            <!-- Pattern / Model Name -->
-            <h3 class="tv-card-pattern-title" title="{{ p.pattern_name or p.display_name }}">{{ p.pattern_name or p.display_name }}</h3>
 
             <!-- Year & Country of Origin Row -->
             <div class="tv-card-year-origin-row">
@@ -372,6 +547,10 @@
                     <option value="2">2</option>
                     <option value="3">3</option>
                     <option value="4" selected>4</option>
+                    <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
                   </select>
                   <button type="button" class="tv-btn-card-add" onclick="addToCartWithCard(this, '{{ p.brand_name }} {{ p.pattern_name or p.display_name }}', {{ p.price }})">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>

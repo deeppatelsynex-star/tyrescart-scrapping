@@ -1047,13 +1047,11 @@ function renderSkeletons(count) {
             <div class="tv-skeleton-box" style="width: 28px; height: 14px; border-radius: 4px;"></div>
           </div>
 
-          <!-- Tyre Size Spec Row -->
-          <div style="margin-bottom: 8px;">
-            <div class="tv-skeleton-box" style="width: 110px; height: 18px; border-radius: 6px;"></div>
+          <!-- Size (Left) & Pattern (Right) Side-by-Side Row Placeholder -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div class="tv-skeleton-box" style="width: 95px; height: 18px; border-radius: 6px;"></div>
+            <div class="tv-skeleton-box" style="width: 80px; height: 18px; border-radius: 6px;"></div>
           </div>
-
-          <!-- Pattern Title / Model Name Row -->
-          <div class="tv-skeleton-box" style="width: 72%; height: 18px; border-radius: 6px; margin-bottom: 10px;"></div>
 
           <!-- Year & Origin Row -->
           <div style="display: flex; gap: 8px; margin-bottom: 14px;">
@@ -1095,12 +1093,18 @@ function calculateSetPrice(unitPrice, qty, offerText = '') {
   const q = parseInt(qty, 10) || 4;
   const offer = String(offerText || '').toUpperCase();
   let paidQty = q;
-  if (offer.includes('BUY 2 GET 2')) {
-    // Buy 2 Get 2 Free: for set of 4 (or 2+ tyres), customer pays for 2
-    paidQty = q >= 2 ? 2 : q;
-  } else if (offer.includes('BUY 3 GET 1')) {
-    // Buy 3 Get 1 Free: for set of 3 or set of 4, customer pays for 3
-    paidQty = q >= 3 ? 3 : q;
+  // if (offer.includes('BUY 2 GET 2')) {
+  //   const fullSets2 = Math.floor(q / 4);
+  //   const remainder2 = q % 4;
+  //   paidQty = (fullSets2 * 2) + (remainder2 >= 2 ? 2 : remainder2);
+  // } 
+  if (offer.includes('BUY 3 GET 1')) {
+    // Buy 3 Get 1 Free: for set of 3 or set of 4, customer pays for 3.
+    // Handles up to 8 product qty (and beyond):
+    // q=1->1, q=2->2, q=3->3, q=4->3, q=5->4, q=6->5, q=7->6, q=8->6
+    const fullSets = Math.floor(q / 4);
+    const remainder = q % 4;
+    paidQty = (fullSets * 3) + (remainder >= 3 ? 3 : remainder);
   }
   return (paidQty * p).toFixed(2);
 }
@@ -1193,13 +1197,11 @@ function createProductCardHTML(p) {
           </span>
         </div>
 
-        <!-- Tyre Size Spec Row -->
-        <div class="tv-card-size-row">
+        <!-- Size (Left) & Pattern (Right) Side-by-Side Row -->
+        <div class="tv-card-size-pattern-row">
           <div class="tv-card-size-spec">${sizeSpec}</div>
+          <h3 class="tv-card-pattern-title" title="${patternTitle}">${patternTitle}</h3>
         </div>
-
-        <!-- Pattern / Model Name -->
-        <h3 class="tv-card-pattern-title" title="${patternTitle}">${patternTitle}</h3>
 
         <!-- Year & Country of Origin -->
         <div class="tv-card-year-origin-row">
@@ -1226,6 +1228,10 @@ function createProductCardHTML(p) {
                 <option value="2">2</option>
                 <option value="3">3</option>
                 <option value="4" selected>4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
               </select>
               <button type="button" class="tv-btn-card-add" onclick="addToCartWithCard(this, '${cleanTitle}', ${priceVal})">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
@@ -1608,53 +1614,53 @@ function buildFilterPath(page = 1) {
 
   // 2. Brand segment: brand-pirelli
   if (selectedBrands.length > 0) {
-    segments.push('brand-' + selectedBrands.map(b => encodeURIComponent(b.toLowerCase())).join(','));
+    segments.push('brand-' + selectedBrands.map(b => encodeURIComponent(b.toLowerCase().replace(/[\s_]+/g, '-'))).join(','));
   }
 
-  // 3. Pattern segment: pattern-atrezzo
+  // 3. Pattern segment: pattern-energy-xm2-plus
   if (selectedPatterns.length > 0) {
-    segments.push('pattern-' + selectedPatterns.map(p => encodeURIComponent(p)).join(','));
+    segments.push('pattern-' + selectedPatterns.map(p => encodeURIComponent(p.toLowerCase().replace(/[\s_]+/g, '-'))).join(','));
   }
 
-  // 4. OEM Tyres segment: oem-bmw
+  // 4. OEM Tyres segment: oem-mercedes-benz
   if (selectedOems.length > 0) {
-    segments.push('oem-' + selectedOems.map(o => encodeURIComponent(o)).join(','));
+    segments.push('oem-' + selectedOems.map(o => encodeURIComponent(o.toLowerCase().replace(/[\s_]+/g, '-'))).join(','));
   }
 
-  // 5. Warranty segment: warranty-1-year
+  // 5. Warranty segment: warranty-1-year-warranty
   if (selectedWarranties.length > 0) {
-    segments.push('warranty-' + selectedWarranties.map(w => encodeURIComponent(w)).join(','));
+    segments.push('warranty-' + selectedWarranties.map(w => encodeURIComponent(w.toLowerCase().replace(/[\s_]+/g, '-'))).join(','));
   }
 
-  // 6. Year segment: year-2024
+  // 6. Year segment: year-2026
   if (selectedYears.length > 0) {
-    segments.push('year-' + selectedYears.map(y => encodeURIComponent(y)).join(','));
+    segments.push('year-' + selectedYears.map(y => encodeURIComponent(y.toLowerCase())).join(','));
   }
 
-  // 7. Origin segment: origin-thailand
+  // 7. Origin segment: origin-china
   if (selectedOrigins.length > 0) {
-    segments.push('origin-' + selectedOrigins.map(org => encodeURIComponent(org)).join(','));
+    segments.push('origin-' + selectedOrigins.map(org => encodeURIComponent(org.toLowerCase().replace(/[\s_]+/g, '-'))).join(','));
   }
 
-  // 8. Size segment: size-225-40-R18
+  // 8. Size segment: size-225-40-r18
   if (selectedSizes.length > 0) {
-    const sizeSlugs = selectedSizes.map(s => encodeURIComponent(s.replace(/[\/\s]+/g, '-')));
+    const sizeSlugs = selectedSizes.map(s => encodeURIComponent(s.toLowerCase().replace(/[\/\s_]+/g, '-')));
     segments.push('size-' + sizeSlugs.join(','));
   }
 
   // 9. Vehicle segment: vehicle-car
   if (selectedVehicles.length > 0) {
-    segments.push('vehicle-' + selectedVehicles.map(v => encodeURIComponent(v.toLowerCase())).join(','));
+    segments.push('vehicle-' + selectedVehicles.map(v => encodeURIComponent(v.toLowerCase().replace(/[\s_]+/g, '-'))).join(','));
   }
 
   // 10. Tyre Type segment: type-summer
   if (selectedTypes.length > 0) {
-    segments.push('type-' + selectedTypes.map(t => encodeURIComponent(t.toLowerCase())).join(','));
+    segments.push('type-' + selectedTypes.map(t => encodeURIComponent(t.toLowerCase().replace(/[\s_]+/g, '-'))).join(','));
   }
 
-  // 11. Promotion segment: promotion-buy_3_get_1_free
+  // 11. Promotion segment: promotion-buy-3-get-1-free
   if (selectedPromotions.length > 0) {
-    segments.push('promotion-' + selectedPromotions.map(pr => encodeURIComponent(pr.toLowerCase())).join(','));
+    segments.push('promotion-' + selectedPromotions.map(pr => encodeURIComponent(pr.toLowerCase().replace(/[\s_]+/g, '-'))).join(','));
   }
 
   // 12. Price range segment: price-418-5668
@@ -1668,7 +1674,7 @@ function buildFilterPath(page = 1) {
 
   // 13. Sort segment (Default: price-asc)
   if (sortVal && sortVal !== 'price-asc') {
-    segments.push('sort-' + encodeURIComponent(sortVal));
+    segments.push('sort-' + encodeURIComponent(sortVal.toLowerCase()));
   }
 
   return segments.length > 0 ? `${basePath}/${segments.join('/')}` : basePath;
@@ -1789,6 +1795,16 @@ async function fetchProducts(page = 1, scrollUp = true) {
     renderPaginationControls(window.totalPages, window.currentPage);
     updateActiveFilterBadges();
 
+    // Update dynamic sidebar facet counts
+    if (data.facets) {
+      updateSidebarFacetCounts(data.facets);
+    }
+
+    const applyCountEl = document.getElementById('tv-apply-count');
+    if (applyCountEl) {
+      applyCountEl.textContent = `(${window.totalCount.toLocaleString()})`;
+    }
+
     // Smooth scroll to top of catalog
     if (scrollUp) {
       const mainCol = document.querySelector('.tv-catalog-main');
@@ -1811,6 +1827,62 @@ async function fetchProducts(page = 1, scrollUp = true) {
   }
 }
 
+function updateSidebarFacetCounts(facets) {
+  if (!facets) return;
+
+  function updateGroupItems(inputName, facetMap, isCaseInsensitive, keyTransform) {
+    if (!facetMap) return;
+    document.querySelectorAll(`input[name="${inputName}"]`).forEach(cb => {
+      let val = cb.value.trim();
+      if (keyTransform) val = keyTransform(val);
+      if (isCaseInsensitive) val = val.toLowerCase();
+
+      let count = facetMap[val];
+      if (count === undefined && isCaseInsensitive) {
+        const matchKey = Object.keys(facetMap).find(k => k.toLowerCase() === val.toLowerCase());
+        if (matchKey !== undefined) count = facetMap[matchKey];
+      }
+      if (count === undefined) count = 0;
+
+      const item = cb.closest('.tv-filter-item');
+      if (item) {
+        const countSpan = item.querySelector('.tv-filter-count');
+        if (countSpan) {
+          countSpan.textContent = count.toLocaleString();
+        }
+        if (count === 0 && !cb.checked) {
+          item.classList.add('tv-filter-empty');
+        } else {
+          item.classList.remove('tv-filter-empty');
+        }
+      }
+    });
+  }
+
+  // 1. Warranty
+  updateGroupItems('warranty', facets.warranties, false);
+
+  // 2. Year
+  updateGroupItems('year', facets.years, false);
+
+  // 3. Brand
+  updateGroupItems('brand', facets.brands, true);
+
+  // 4. Pattern
+  updateGroupItems('pattern', facets.patterns, false);
+
+  // 5. OEM Tyres
+  updateGroupItems('oem', facets.oems, false);
+
+  // 6. Origin
+  updateGroupItems('origin', facets.origins, true);
+
+  // 7. Promotion
+  updateGroupItems('promotion', facets.promotions, true, val => val.replace(/-/g, '_'));
+}
+
+window.updateSidebarFacetCounts = updateSidebarFacetCounts;
+
 function goToPage(page) {
   if (page < 1 || page > window.totalPages) return;
   fetchProducts(page, true);
@@ -1822,7 +1894,105 @@ function filterProducts() {
 }
 
 function sortProducts(sortBy) {
+  if (window.syncCustomSortUI && sortBy) {
+    window.syncCustomSortUI(sortBy);
+  }
   fetchProducts(1, true);
+}
+
+function initCustomSortDropdown() {
+  const customSort = document.getElementById('tv-custom-sort');
+  const trigger = document.getElementById('tv-sort-trigger');
+  const menu = document.getElementById('tv-sort-menu');
+  const nativeSelect = document.getElementById('sort-select');
+  const triggerText = document.getElementById('tv-sort-trigger-text');
+  if (!customSort || !trigger || !menu) return;
+
+  const sortLabels = {
+    'price-asc': 'Price: Low to High',
+    'price-desc': 'Price: High to Low',
+    'popular': 'Most Popular',
+    'rating': 'Customer Rating',
+    'newest': 'Newest Arrivals'
+  };
+
+  function openDropdown() {
+    customSort.classList.add('is-open');
+    trigger.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeDropdown() {
+    customSort.classList.remove('is-open');
+    trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  trigger.onclick = function(e) {
+    e.stopPropagation();
+    if (customSort.classList.contains('is-open')) {
+      closeDropdown();
+    } else {
+      openDropdown();
+    }
+  };
+
+  menu.querySelectorAll('.tv-sort-item').forEach(item => {
+    item.onclick = function(e) {
+      e.stopPropagation();
+      const val = item.getAttribute('data-value');
+      selectSortOption(val);
+      closeDropdown();
+      sortProducts(val);
+    };
+
+    item.onkeydown = function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const val = item.getAttribute('data-value');
+        selectSortOption(val);
+        closeDropdown();
+        sortProducts(val);
+      }
+    };
+  });
+
+  function selectSortOption(val) {
+    if (!val) return;
+    if (nativeSelect) {
+      nativeSelect.value = val;
+    }
+    if (triggerText && sortLabels[val]) {
+      triggerText.textContent = sortLabels[val];
+    }
+    menu.querySelectorAll('.tv-sort-item').forEach(el => {
+      if (el.getAttribute('data-value') === val) {
+        el.classList.add('is-active');
+      } else {
+        el.classList.remove('is-active');
+      }
+    });
+  }
+
+  window.syncCustomSortUI = selectSortOption;
+
+  // Initialize selected state from native select value
+  if (nativeSelect && nativeSelect.value) {
+    selectSortOption(nativeSelect.value);
+  }
+
+  // Close when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!customSort.contains(e.target)) {
+      closeDropdown();
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && customSort.classList.contains('is-open')) {
+      closeDropdown();
+      trigger.focus();
+    }
+  });
 }
 
 function updateSliderTrack() {
@@ -1926,6 +2096,9 @@ function clearAllFilters() {
   const sortSelect = document.getElementById('sort-select');
   if (sortSelect) {
     sortSelect.value = 'price-asc';
+  }
+  if (window.syncCustomSortUI) {
+    window.syncCustomSortUI('price-asc');
   }
   updateActiveFilterBadges();
   fetchProducts(1, true);
@@ -2099,6 +2272,7 @@ function initProductCatalog(config) {
     renderPaginationControls(window.totalPages, window.currentPage);
     updateActiveFilterBadges();
     updateSliderTrack();
+    initCustomSortDropdown();
 
     // Immediately resolve shimmer loading state for any already-cached images
     document.querySelectorAll('.tv-card-img-wrap img').forEach(img => {
@@ -2268,4 +2442,6 @@ window.openMobileFilter = openMobileFilter;
 window.closeMobileFilter = closeMobileFilter;
 window.applyMobileFilter = applyMobileFilter;
 window.updateActiveFilterBadges = updateActiveFilterBadges;
-window.initProductCatalog = initProductCatalog;
+window.initProductCatalog = initProductCatalog;
+window.initCustomSortDropdown = initCustomSortDropdown;
+window.syncCustomSortUI = typeof syncCustomSortUI !== 'undefined' ? syncCustomSortUI : null;

@@ -622,8 +622,21 @@ def _fetch_catalog_products(args, locale='en'):
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            where = ["p.deleted_at IS NULL", "p.status = 'active'"]
-            params = []
+            # Build filter clauses mapped by dimension for multi-select disjunctive facet calculation
+            clauses = {
+                'brand': ([], []),
+                'vehicle': ([], []),
+                'size': ([], []),
+                'pattern': ([], []),
+                'oem': ([], []),
+                'warranty': ([], []),
+                'year': ([], []),
+                'origin': ([], []),
+                'type': ([], []),
+                'price': ([], []),
+                'promo': ([], []),
+                'search': ([], [])
+            }
 
             # 1. Brands filter (supports ?brand=pirelli,michelin or ?brand=pirelli&brand=michelin)
             raw_brands = args.getlist('brand') or args.getlist('brands')
@@ -636,9 +649,9 @@ def _fetch_catalog_products(args, locale='en'):
 
             if brands:
                 b_placeholders = ', '.join(['%s'] * len(brands))
-                where.append(f"(LOWER(b.slug) IN ({b_placeholders}) OR LOWER(b.name) IN ({b_placeholders}))")
-                params.extend(brands)
-                params.extend(brands)
+                clauses['brand'][0].append(f"(LOWER(b.slug) IN ({b_placeholders}) OR LOWER(b.name) IN ({b_placeholders}))")
+                clauses['brand'][1].extend(brands)
+                clauses['brand'][1].extend(brands)
 
             # 2. Vehicle Types filter
             raw_vehicles = args.getlist('vehicle') or args.getlist('vehicle_type') or args.getlist('vehicles')
@@ -661,8 +674,8 @@ def _fetch_catalog_products(args, locale='en'):
                     else:
                         v_terms.append(v)
                 v_placeholders = ', '.join(['%s'] * len(v_terms))
-                where.append(f"LOWER(p.vehicle_type) IN ({v_placeholders})")
-                params.extend(v_terms)
+                clauses['vehicle'][0].append(f"LOWER(p.vehicle_type) IN ({v_placeholders})")
+                clauses['vehicle'][1].extend(v_terms)
 
             # 3. Sizes filter
             raw_sizes = args.getlist('size') or args.getlist('sizes')
@@ -681,8 +694,8 @@ def _fetch_catalog_products(args, locale='en'):
                     sz_hyphen = sz_clean.replace('/', '-').replace(' ', '-')
                     s_clauses.append("(p.tire_size_label = %s OR REPLACE(REPLACE(p.tire_size_label, '/', '-'), ' ', '-') = %s)")
                     s_params.extend([sz_clean, sz_hyphen])
-                where.append("(" + " OR ".join(s_clauses) + ")")
-                params.extend(s_params)
+                clauses['size'][0].append("(" + " OR ".join(s_clauses) + ")")
+                clauses['size'][1].extend(s_params)
 
             # 4. Pattern filter
             raw_patterns = args.getlist('pattern') or args.getlist('patterns')
@@ -694,9 +707,16 @@ def _fetch_catalog_products(args, locale='en'):
                         patterns.append(pp)
 
             if patterns:
-                p_ph = ', '.join(['%s'] * len(patterns))
-                where.append(f"p.tire_pattern IN ({p_ph})")
-                params.extend(patterns)
+                pat_clauses = []
+                pat_params = []
+                for p in patterns:
+                    p_c = p.strip().lower()
+                    p_space = p_c.replace('-', ' ')
+                    p_hyphen = p_c.replace(' ', '-')
+                    pat_clauses.append("(LOWER(p.tire_pattern) = %s OR LOWER(p.tire_pattern) = %s OR LOWER(p.tire_pattern) LIKE %s OR REPLACE(LOWER(p.tire_pattern), ' ', '-') = %s)")
+                    pat_params.extend([p_c, p_space, f"%{p_space}%", p_hyphen])
+                clauses['pattern'][0].append("(" + " OR ".join(pat_clauses) + ")")
+                clauses['pattern'][1].extend(pat_params)
 
             # 5. OEM Tyres filter (uses idx_products_active_oem)
             raw_oems = args.getlist('oem') or args.getlist('oem_tyres') or args.getlist('oems')
@@ -708,11 +728,16 @@ def _fetch_catalog_products(args, locale='en'):
                         oems.append(op)
 
             if oems:
-                oem_ph = ', '.join(['%s'] * len(oems))
-                oem_like_clauses = " OR ".join(["p.oem_brand LIKE %s" for _ in oems])
-                where.append(f"(p.oem_brand IN ({oem_ph}) OR {oem_like_clauses})")
-                params.extend(oems)
-                params.extend([f"%{o}%" for o in oems])
+                oem_clauses = []
+                oem_params = []
+                for o in oems:
+                    o_c = o.strip().lower()
+                    o_space = o_c.replace('-', ' ')
+                    o_hyphen = o_c.replace(' ', '-')
+                    oem_clauses.append("(LOWER(p.oem_brand) = %s OR LOWER(p.oem_brand) = %s OR LOWER(p.oem_brand) LIKE %s OR REPLACE(LOWER(p.oem_brand), ' ', '-') = %s)")
+                    oem_params.extend([o_c, o_space, f"%{o_c}%", o_hyphen])
+                clauses['oem'][0].append("(" + " OR ".join(oem_clauses) + ")")
+                clauses['oem'][1].extend(oem_params)
 
             # 6. Warranty Period filter
             raw_warranties = args.getlist('warranty') or args.getlist('warranty_period') or args.getlist('warranties')
@@ -725,14 +750,22 @@ def _fetch_catalog_products(args, locale='en'):
 
             if warranties:
                 w_clauses = []
+                w_params = []
                 for w in warranties:
                     if '1 year' in w.lower():
                         w_clauses.append("(p.warranty_months = 12 OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty')) LIKE %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty_period')) LIKE %s)")
-                        params.extend([f"%{w}%", f"%{w}%"])
+                        w_params.extend([f"%{w}%", f"%{w}%"])
+                    elif '3 year' in w.lower():
+                        w_clauses.append("(p.warranty_months = 36 OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty')) LIKE %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty_period')) LIKE %s)")
+                        w_params.extend([f"%{w}%", f"%{w}%"])
+                    elif '5 year' in w.lower():
+                        w_clauses.append("(p.warranty_months = 60 OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty')) LIKE %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty_period')) LIKE %s)")
+                        w_params.extend([f"%{w}%", f"%{w}%"])
                     else:
                         w_clauses.append("(JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty')) LIKE %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.warranty_period')) LIKE %s)")
-                        params.extend([f"%{w}%", f"%{w}%"])
-                where.append("(" + " OR ".join(w_clauses) + ")")
+                        w_params.extend([f"%{w}%", f"%{w}%"])
+                clauses['warranty'][0].append("(" + " OR ".join(w_clauses) + ")")
+                clauses['warranty'][1].extend(w_params)
 
             # 7. Year filter (uses idx_products_year)
             raw_years = args.getlist('year') or args.getlist('years')
@@ -745,8 +778,8 @@ def _fetch_catalog_products(args, locale='en'):
 
             if years:
                 y_ph = ', '.join(['%s'] * len(years))
-                where.append(f"p.year IN ({y_ph})")
-                params.extend(years)
+                clauses['year'][0].append(f"p.year IN ({y_ph})")
+                clauses['year'][1].extend(years)
 
             # 8. Origin / Country filter (uses idx_products_active_origin)
             raw_origins = args.getlist('origin') or args.getlist('country') or args.getlist('origins')
@@ -758,10 +791,16 @@ def _fetch_catalog_products(args, locale='en'):
                         origins.append(op)
 
             if origins:
-                org_ph = ', '.join(['%s'] * len(origins))
-                where.append(f"LOWER(p.country_of_origin) IN ({org_ph})")
-                origins_lower = [o.lower() for o in origins]
-                params.extend(origins_lower)
+                org_clauses = []
+                org_params = []
+                for o in origins:
+                    o_c = o.strip().lower()
+                    o_space = o_c.replace('-', ' ')
+                    o_hyphen = o_c.replace(' ', '-')
+                    org_clauses.append("(LOWER(p.country_of_origin) = %s OR LOWER(p.country_of_origin) = %s OR LOWER(p.country_of_origin) LIKE %s)")
+                    org_params.extend([o_c, o_space, f"%{o_c}%"])
+                clauses['origin'][0].append("(" + " OR ".join(org_clauses) + ")")
+                clauses['origin'][1].extend(org_params)
 
             # 9. Tyre Types / Seasons
             raw_types = args.getlist('type') or args.getlist('tire_type') or args.getlist('types')
@@ -783,28 +822,28 @@ def _fetch_catalog_products(args, locale='en'):
                 if t_terms:
                     t_placeholders = ', '.join(['%s'] * len(t_terms))
                     t_clauses.append(f"LOWER(p.tire_type) IN ({t_placeholders})")
-                    params.extend(t_terms)
+                    clauses['type'][1].extend(t_terms)
                 if t_clauses:
-                    where.append("(" + " OR ".join(t_clauses) + ")")
+                    clauses['type'][0].append("(" + " OR ".join(t_clauses) + ")")
 
-            # 5. Price filter
+            # 10. Price filter
             max_price = args.get('max_price')
             if max_price:
                 try:
-                    where.append("p.price <= %s")
-                    params.append(float(max_price))
+                    clauses['price'][0].append("p.price <= %s")
+                    clauses['price'][1].append(float(max_price))
                 except (ValueError, TypeError):
                     pass
 
             min_price = args.get('min_price')
             if min_price:
                 try:
-                    where.append("p.price >= %s")
-                    params.append(float(min_price))
+                    clauses['price'][0].append("p.price >= %s")
+                    clauses['price'][1].append(float(min_price))
                 except (ValueError, TypeError):
                     pass
 
-            # 6. Promotion / Special Offers filter
+            # 11. Promotion / Special Offers filter
             raw_promos = args.getlist('promotion') or args.getlist('promotions') or args.getlist('offer') or args.getlist('offers')
             promos = []
             for p_entry in raw_promos:
@@ -826,22 +865,27 @@ def _fetch_catalog_products(args, locale='en'):
                         pr_clean = pr.replace('_', ' ').replace('-', ' ')
                         pr_clauses.append(f"(p.attributes_json LIKE '%%{pr_clean}%%')")
                 if pr_clauses:
-                    where.append("(" + " OR ".join(pr_clauses) + ")")
+                    clauses['promo'][0].append("(" + " OR ".join(pr_clauses) + ")")
 
-            # 7. Search query (leveraging FULLTEXT index idx_products_fulltext_search)
+            # 12. Search query (leveraging FULLTEXT index idx_products_fulltext_search)
             search = args.get('search') or args.get('q')
             if search and search.strip():
                 s_clean = search.strip()
-                # Use FULLTEXT matching for terms >= 3 characters
                 if len(s_clean) >= 3 and not any(c in s_clean for c in ('%', '_', '*', '+', '-', '<', '>', '~', '(', ')', '"', '@')):
-                    where.append("(MATCH(p.display_name, p.sku, p.item_code) AGAINST(%s IN BOOLEAN MODE) OR p.tire_size_label LIKE %s)")
-                    params.extend([f"+{s_clean}*", f"%{s_clean}%"])
+                    clauses['search'][0].append("(MATCH(p.display_name, p.sku, p.item_code) AGAINST(%s IN BOOLEAN MODE) OR p.tire_size_label LIKE %s)")
+                    clauses['search'][1].extend([f"+{s_clean}*", f"%{s_clean}%"])
                 else:
                     s_term = f"%{s_clean}%"
-                    where.append("(p.sku LIKE %s OR p.display_name LIKE %s OR p.tire_size_label LIKE %s)")
-                    params.extend([s_term, s_term, s_term])
+                    clauses['search'][0].append("(p.sku LIKE %s OR p.display_name LIKE %s OR p.tire_size_label LIKE %s)")
+                    clauses['search'][1].extend([s_term, s_term, s_term])
 
-            where_sql = " AND ".join(where)
+            # Build combined WHERE clause for the primary catalog query
+            all_where = ["p.deleted_at IS NULL", "p.status = 'active'"]
+            all_params = []
+            for k, (c_list, p_list) in clauses.items():
+                all_where.extend(c_list)
+                all_params.extend(p_list)
+            where_sql = " AND ".join(all_where)
 
             # Total matching count
             cur.execute(f"""
@@ -849,7 +893,7 @@ def _fetch_catalog_products(args, locale='en'):
                 FROM products p
                 LEFT JOIN brands b ON p.brand_id = b.id
                 WHERE {where_sql}
-            """, params)
+            """, all_params)
             c_row = cur.fetchone()
             total_count = c_row['total'] if c_row else 0
 
@@ -884,7 +928,7 @@ def _fetch_catalog_products(args, locale='en'):
                 page = total_pages
             offset = (page - 1) * per_page
 
-            fetch_params = list(params) + [per_page, offset]
+            fetch_params = list(all_params) + [per_page, offset]
             cur.execute(f"""
                 SELECT p.*, b.name as brand_name, b.slug as brand_slug, b.logo as brand_logo
                 FROM products p
@@ -896,12 +940,139 @@ def _fetch_catalog_products(args, locale='en'):
             raw_products = cur.fetchall()
 
             products = [_format_product_for_client(p, locale) for p in raw_products]
+
+            # Dynamic Facets Calculation (disjunctive multi-select counts)
+            def get_where_except(exclude_key):
+                w = ["p.deleted_at IS NULL", "p.status = 'active'"]
+                pm = []
+                for k, (c_list, p_list) in clauses.items():
+                    if k == exclude_key:
+                        continue
+                    w.extend(c_list)
+                    pm.extend(p_list)
+                return " AND ".join(w), pm
+
+            facets = {
+                'warranties': {},
+                'years': {},
+                'brands': {},
+                'patterns': {},
+                'oems': {},
+                'origins': {},
+                'promotions': {}
+            }
+
+            # 1. Warranty facet
+            w_where, w_params = get_where_except('warranty')
+            cur.execute(f"""
+                SELECT 
+                    CASE 
+                        WHEN p.warranty_months IN (12, '12') THEN '1 Year Warranty'
+                        WHEN p.warranty_months IN (36, '36') THEN '3 Years Warranty'
+                        WHEN p.warranty_months IN (60, '60') THEN '5 Years Warranty'
+                        ELSE CONCAT(p.warranty_months, ' Months Warranty')
+                    END as war,
+                    COUNT(*) as cnt
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE {w_where}
+                GROUP BY war
+            """, w_params)
+            for r in cur.fetchall():
+                if r.get('war'):
+                    facets['warranties'][r['war']] = int(r['cnt'])
+
+            # 2. Year facet
+            y_where, y_params = get_where_except('year')
+            cur.execute(f"""
+                SELECT p.year, COUNT(*) as cnt
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE {y_where} AND p.year IS NOT NULL AND p.year != '0000'
+                GROUP BY p.year
+            """, y_params)
+            for r in cur.fetchall():
+                if r.get('year'):
+                    facets['years'][str(r['year'])] = int(r['cnt'])
+
+            # 3. Brand facet
+            b_where, b_params = get_where_except('brand')
+            cur.execute(f"""
+                SELECT b.slug, b.name, COUNT(p.id) as cnt
+                FROM brands b
+                JOIN products p ON p.brand_id = b.id
+                WHERE {b_where}
+                GROUP BY b.id, b.slug, b.name
+            """, b_params)
+            for r in cur.fetchall():
+                c = int(r['cnt'])
+                if r.get('slug'):
+                    facets['brands'][r['slug'].lower()] = c
+                if r.get('name'):
+                    facets['brands'][r['name'].lower()] = c
+
+            # 4. Pattern facet
+            pat_where, pat_params = get_where_except('pattern')
+            cur.execute(f"""
+                SELECT p.tire_pattern as pattern, COUNT(*) as cnt
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE {pat_where} AND p.tire_pattern IS NOT NULL AND p.tire_pattern != '' AND p.tire_pattern != 'None'
+                GROUP BY p.tire_pattern
+            """, pat_params)
+            for r in cur.fetchall():
+                if r.get('pattern'):
+                    facets['patterns'][r['pattern']] = int(r['cnt'])
+
+            # 5. OEM Tyres facet
+            oem_where, oem_params = get_where_except('oem')
+            cur.execute(f"""
+                SELECT p.oem_brand as oem, COUNT(*) as cnt
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE {oem_where} AND p.oem_brand IS NOT NULL AND p.oem_brand != '' AND p.oem_brand != 'None' AND p.oem_brand != '0'
+                GROUP BY p.oem_brand
+            """, oem_params)
+            for r in cur.fetchall():
+                if r.get('oem'):
+                    facets['oems'][r['oem']] = int(r['cnt'])
+
+            # 6. Origin facet
+            org_where, org_params = get_where_except('origin')
+            cur.execute(f"""
+                SELECT LOWER(p.country_of_origin) as origin, COUNT(*) as cnt
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE {org_where} AND p.country_of_origin IS NOT NULL AND p.country_of_origin != '' AND p.country_of_origin != 'None'
+                GROUP BY LOWER(p.country_of_origin)
+            """, org_params)
+            for r in cur.fetchall():
+                if r.get('origin'):
+                    facets['origins'][r['origin']] = int(r['cnt'])
+
+            # 7. Promotions facet
+            pr_where, pr_params = get_where_except('promo')
+            cur.execute(f"""
+                SELECT 
+                    SUM(CASE WHEN p.attributes_json LIKE '%%Buy 3 Get 1 Free%%' OR p.attributes_json LIKE '%%BUY 3 GET 1%%' THEN 1 ELSE 0 END) as buy_3_get_1_free,
+                    SUM(CASE WHEN p.attributes_json LIKE '%%Free Wheel Alignment%%' OR p.attributes_json LIKE '%%FREE WHEEL ALIGNMENT%%' THEN 1 ELSE 0 END) as free_wheel_alignment
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE {pr_where}
+            """, pr_params)
+            pr_row = cur.fetchone() or {}
+            facets['promotions'] = {
+                'buy_3_get_1_free': int(pr_row.get('buy_3_get_1_free') or 0),
+                'free_wheel_alignment': int(pr_row.get('free_wheel_alignment') or 0)
+            }
+
             return {
                 'products': products,
                 'total': total_count,
                 'page': page,
                 'per_page': per_page,
-                'total_pages': total_pages
+                'total_pages': total_pages,
+                'facets': facets
             }
     finally:
         conn.close()
@@ -1049,6 +1220,7 @@ def _render_product_listing(locale, filter_path=None):
     current_page = catalog_data['page']
     per_page = catalog_data['per_page']
     total_pages = catalog_data['total_pages']
+    facets = catalog_data.get('facets', {})
 
     active_brands = [b.lower() for b in (combined_args.getlist('brand') or combined_args.getlist('brands'))]
     active_patterns = [p.strip() for p in (combined_args.getlist('pattern') or combined_args.getlist('patterns'))]
@@ -1089,12 +1261,13 @@ def _render_product_listing(locale, filter_path=None):
             for b in cur.fetchall():
                 b_slug = b.get('slug') or (b.get('name') or '').lower().replace(' ', '')
                 b_logo = b.get('logo') or f"/static/assets/images/brands/{b_slug}.svg"
+                b_cnt = facets.get('brands', {}).get(b_slug, b.get('cnt', 0)) if facets else b.get('cnt', 0)
                 filter_brands.append({
                     'id': b['id'],
                     'name': b['name'],
                     'slug': b_slug,
                     'logo': b_logo,
-                    'count': b.get('cnt', 0)
+                    'count': b_cnt
                 })
 
             # 3. Sidebar: Tyre Sizes from DB (from active products + attribute_options)
@@ -1139,7 +1312,10 @@ def _render_product_listing(locale, filter_path=None):
                 GROUP BY tire_pattern
                 ORDER BY cnt DESC, tire_pattern ASC
             """)
-            filter_patterns = [{'pattern': r['pattern'], 'count': r['cnt']} for r in cur.fetchall()]
+            filter_patterns = [{
+                'pattern': r['pattern'],
+                'count': facets.get('patterns', {}).get(r['pattern'], r['cnt']) if facets else r['cnt']
+            } for r in cur.fetchall()]
 
             # 5. Sidebar: OEM Tyres from DB (using direct index idx_products_active_oem)
             cur.execute("""
@@ -1150,7 +1326,10 @@ def _render_product_listing(locale, filter_path=None):
                 GROUP BY oem_brand
                 ORDER BY cnt DESC, oem_brand ASC
             """)
-            filter_oem_tyres = [{'oem': r['oem'], 'count': r['cnt']} for r in cur.fetchall()]
+            filter_oem_tyres = [{
+                'oem': r['oem'],
+                'count': facets.get('oems', {}).get(r['oem'], r['cnt']) if facets else r['cnt']
+            } for r in cur.fetchall()]
 
             # 6. Sidebar: Warranty Period from DB
             cur.execute("""
@@ -1167,7 +1346,10 @@ def _render_product_listing(locale, filter_path=None):
                 GROUP BY war
                 ORDER BY cnt DESC
             """)
-            filter_warranties = [{'warranty': r['warranty'], 'count': r['cnt']} for r in cur.fetchall()]
+            filter_warranties = [{
+                'warranty': r['warranty'],
+                'count': facets.get('warranties', {}).get(r['warranty'], r['cnt']) if facets else r['cnt']
+            } for r in cur.fetchall()]
 
             # 7. Sidebar: Year from DB (using direct index idx_products_year)
             cur.execute("""
@@ -1178,7 +1360,10 @@ def _render_product_listing(locale, filter_path=None):
                 GROUP BY year
                 ORDER BY year DESC
             """)
-            filter_years = [{'year': r['year'], 'count': r['cnt']} for r in cur.fetchall()]
+            filter_years = [{
+                'year': r['year'],
+                'count': facets.get('years', {}).get(str(r['year']), r['cnt']) if facets else r['cnt']
+            } for r in cur.fetchall()]
 
             # 8. Sidebar: Origin from DB (using direct index idx_products_active_origin)
             cur.execute("""
@@ -1189,7 +1374,10 @@ def _render_product_listing(locale, filter_path=None):
                 GROUP BY country_of_origin
                 ORDER BY cnt DESC, country_of_origin ASC
             """)
-            filter_origins = [{'origin': r['origin'], 'count': r['cnt']} for r in cur.fetchall()]
+            filter_origins = [{
+                'origin': r['origin'],
+                'count': facets.get('origins', {}).get((r['origin'] or '').lower(), r['cnt']) if facets else r['cnt']
+            } for r in cur.fetchall()]
 
             # 4. Sidebar: Vehicle Types from DB
             cur.execute("""
@@ -1330,10 +1518,11 @@ def _render_product_listing(locale, filter_path=None):
                 cnt_row = cur.fetchone()
                 cnt = int(cnt_row['cnt']) if cnt_row else 0
                 p_key = re.sub(r'[^a-z0-9]+', '_', r_name.lower()).strip('_')
+                p_cnt = facets.get('promotions', {}).get(p_key, cnt) if facets else cnt
                 filter_promotions.append({
                     'key': p_key,
                     'label': r_name,
-                    'count': cnt
+                    'count': p_cnt
                 })
 
             # 7. Sidebar: Price Range from DB
@@ -1417,6 +1606,11 @@ def car_tyres_listing_slug(filter_path):
     clean_path = (filter_path or '').strip('/')
     if not clean_path:
         return redirect('/tyres', code=301)
+    # If URL contains uppercase characters (e.g. /tyres/oem-Mercedes-Benz), 301 redirect to lowercase slug
+    if clean_path != clean_path.lower():
+        prefix = '/car-tyres' if request.path.startswith('/car-tyres') else ('/products' if request.path.startswith('/products') else '/tyres')
+        query_str = f"?{request.query_string.decode('utf-8')}" if request.query_string else ""
+        return redirect(f"{prefix}/{clean_path.lower()}{query_str}", code=301)
     locale = _get_locale()
     return _render_product_listing(locale, filter_path=clean_path)
 
@@ -1444,6 +1638,11 @@ def car_tyres_listing_locale_slug(lang_code, filter_path):
     clean_path = (filter_path or '').strip('/')
     if not clean_path:
         return redirect(f'/{code}/tyres', code=301)
+    # If URL contains uppercase characters, 301 redirect to lowercase slug
+    if clean_path != clean_path.lower():
+        prefix = f'/{code}/car-tyres' if f'/{code}/car-tyres' in request.path else (f'/{code}/products' if f'/{code}/products' in request.path else f'/{code}/tyres')
+        query_str = f"?{request.query_string.decode('utf-8')}" if request.query_string else ""
+        return redirect(f"{prefix}/{clean_path.lower()}{query_str}", code=301)
     return _render_product_listing(code, filter_path=clean_path)
 
 
