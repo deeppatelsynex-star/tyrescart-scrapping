@@ -1567,8 +1567,13 @@ function renderPaginationControls(totalP, curP) {
 
 function buildFilterPath(page = 1) {
   const selectedBrands = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(cb => cb.value.trim());
-  const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value.trim());
+  const selectedPatterns = Array.from(document.querySelectorAll('input[name="pattern"]:checked')).map(cb => cb.value.trim());
+  const selectedOems = Array.from(document.querySelectorAll('input[name="oem"]:checked')).map(cb => cb.value.trim());
+  const selectedWarranties = Array.from(document.querySelectorAll('input[name="warranty"]:checked')).map(cb => cb.value.trim());
+  const selectedYears = Array.from(document.querySelectorAll('input[name="year"]:checked')).map(cb => cb.value.trim());
+  const selectedOrigins = Array.from(document.querySelectorAll('input[name="origin"]:checked')).map(cb => cb.value.trim());
   const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value.trim());
+  const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value.trim());
   const selectedTypes = Array.from(document.querySelectorAll('input[name="tire_type"]:checked')).map(cb => cb.value.trim());
   const selectedPromotions = Array.from(document.querySelectorAll('input[name="promotion"]:checked')).map(cb => cb.value.trim());
   const minPriceSlider = document.getElementById('min-price-slider');
@@ -1599,28 +1604,53 @@ function buildFilterPath(page = 1) {
     segments.push('brand-' + selectedBrands.map(b => encodeURIComponent(b.toLowerCase())).join(','));
   }
 
-  // 3. Size segment: size-225-40-R18
+  // 3. Pattern segment: pattern-atrezzo
+  if (selectedPatterns.length > 0) {
+    segments.push('pattern-' + selectedPatterns.map(p => encodeURIComponent(p)).join(','));
+  }
+
+  // 4. OEM Tyres segment: oem-bmw
+  if (selectedOems.length > 0) {
+    segments.push('oem-' + selectedOems.map(o => encodeURIComponent(o)).join(','));
+  }
+
+  // 5. Warranty segment: warranty-1-year
+  if (selectedWarranties.length > 0) {
+    segments.push('warranty-' + selectedWarranties.map(w => encodeURIComponent(w)).join(','));
+  }
+
+  // 6. Year segment: year-2024
+  if (selectedYears.length > 0) {
+    segments.push('year-' + selectedYears.map(y => encodeURIComponent(y)).join(','));
+  }
+
+  // 7. Origin segment: origin-thailand
+  if (selectedOrigins.length > 0) {
+    segments.push('origin-' + selectedOrigins.map(org => encodeURIComponent(org)).join(','));
+  }
+
+  // 8. Size segment: size-225-40-R18
   if (selectedSizes.length > 0) {
     const sizeSlugs = selectedSizes.map(s => encodeURIComponent(s.replace(/[\/\s]+/g, '-')));
     segments.push('size-' + sizeSlugs.join(','));
   }
 
-  // 4. Vehicle segment: vehicle-car
+  // 9. Vehicle segment: vehicle-car
   if (selectedVehicles.length > 0) {
     segments.push('vehicle-' + selectedVehicles.map(v => encodeURIComponent(v.toLowerCase())).join(','));
   }
 
-  // 5. Tyre Type segment: type-summer
+  // 10. Tyre Type segment: type-summer
   if (selectedTypes.length > 0) {
     segments.push('type-' + selectedTypes.map(t => encodeURIComponent(t.toLowerCase())).join(','));
   }
 
-  // 6. Promotion segment: promotion-buy_3_get_1_free
+  // 11. Promotion segment: promotion-buy_3_get_1_free
   if (selectedPromotions.length > 0) {
     segments.push('promotion-' + selectedPromotions.map(pr => encodeURIComponent(pr.toLowerCase())).join(','));
   }
 
-  // 7. Price range segment: price-418-5668
+  // 12. Price range segment: price-418-5668
   const sliderMin = parseFloat(minPriceSlider?.min || 0);
   const sliderMax = parseFloat(maxPriceSlider?.max || 2000);
   const curMin = minPrice !== '' ? parseFloat(minPrice) : sliderMin;
@@ -1629,7 +1659,7 @@ function buildFilterPath(page = 1) {
     segments.push(`price-${Math.round(curMin)}-${Math.round(curMax)}`);
   }
 
-  // 7. Sort segment: sort-price-asc
+  // 13. Sort segment: sort-price-asc
   if (sortVal && sortVal !== 'popular') {
     segments.push('sort-' + encodeURIComponent(sortVal));
   }
@@ -1656,8 +1686,13 @@ async function fetchProducts(page = 1, scrollUp = true) {
 
   // 2. Gather filter parameters
   const selectedBrands = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(cb => cb.value.trim());
-  const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value.trim());
+  const selectedPatterns = Array.from(document.querySelectorAll('input[name="pattern"]:checked')).map(cb => cb.value.trim());
+  const selectedOems = Array.from(document.querySelectorAll('input[name="oem"]:checked')).map(cb => cb.value.trim());
+  const selectedWarranties = Array.from(document.querySelectorAll('input[name="warranty"]:checked')).map(cb => cb.value.trim());
+  const selectedYears = Array.from(document.querySelectorAll('input[name="year"]:checked')).map(cb => cb.value.trim());
+  const selectedOrigins = Array.from(document.querySelectorAll('input[name="origin"]:checked')).map(cb => cb.value.trim());
   const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value.trim());
+  const selectedVehicles = Array.from(document.querySelectorAll('input[name="vehicle_type"]:checked')).map(cb => cb.value.trim());
   const selectedTypes = Array.from(document.querySelectorAll('input[name="tire_type"]:checked')).map(cb => cb.value.trim());
   const selectedPromotions = Array.from(document.querySelectorAll('input[name="promotion"]:checked')).map(cb => cb.value.trim());
   const minPriceSlider = document.getElementById('min-price-slider');
@@ -1673,8 +1708,13 @@ async function fetchProducts(page = 1, scrollUp = true) {
   if (sortVal && sortVal !== 'popular') params.set('sort', sortVal);
 
   selectedBrands.forEach(b => params.append('brand', b));
-  selectedVehicles.forEach(v => params.append('vehicle', v));
+  selectedPatterns.forEach(p => params.append('pattern', p));
+  selectedOems.forEach(o => params.append('oem', o));
+  selectedWarranties.forEach(w => params.append('warranty', w));
+  selectedYears.forEach(y => params.append('year', y));
+  selectedOrigins.forEach(org => params.append('origin', org));
   selectedSizes.forEach(s => params.append('size', s));
+  selectedVehicles.forEach(v => params.append('vehicle', v));
   selectedTypes.forEach(t => params.append('type', t));
   selectedPromotions.forEach(pr => params.append('promotion', pr));
   if (minPrice && parseFloat(minPrice) > parseFloat(minPriceSlider?.min || 0)) {
@@ -1851,11 +1891,18 @@ function clearAllFilters() {
   document.querySelectorAll('.tv-filter-sidebar input[type="checkbox"]').forEach(cb => {
     cb.checked = false;
   });
-  const searchBox = document.querySelector('.tv-search-size-box');
-  if (searchBox) {
-    searchBox.value = '';
-    searchFilterSizes('');
+  const hiddenSizeBox = document.getElementById('hidden-size-filters');
+  if (hiddenSizeBox) {
+    hiddenSizeBox.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.checked = false;
+    });
   }
+  document.querySelectorAll('.tv-search-filter-box, .tv-search-size-box').forEach(sb => {
+    sb.value = '';
+  });
+  document.querySelectorAll('.tv-filter-list .tv-filter-item').forEach(it => {
+    it.style.display = 'flex';
+  });
   const minSlider = document.getElementById('min-price-slider');
   if (minSlider) {
     minSlider.value = minSlider.min;
@@ -1877,17 +1924,19 @@ function clearAllFilters() {
   fetchProducts(1, true);
 }
 
-function toggleFilterGroup(el) {
-  el.classList.toggle('collapsed');
-  const group = el.closest('.tv-filter-group');
-  if (group) {
-    const isCollapsed = el.classList.contains('collapsed');
-    Array.from(group.children).forEach(child => {
-      if (child !== el) {
-        child.style.display = isCollapsed ? 'none' : '';
-      }
-    });
-  }
+function searchFilterList(inputEl, listSelector) {
+  const q = (inputEl.value || '').trim().toLowerCase();
+  const container = document.querySelector(listSelector);
+  if (!container) return;
+  const items = container.querySelectorAll('.tv-filter-item');
+  items.forEach(it => {
+    const text = (it.getAttribute('data-filter-name') || it.innerText || '').toLowerCase();
+    if (!q || text.includes(q)) {
+      it.style.display = 'flex';
+    } else {
+      it.style.display = 'none';
+    }
+  });
 }
 
 function searchFilterSizes(query) {
@@ -1901,6 +1950,19 @@ function searchFilterSizes(query) {
       it.style.display = 'none';
     }
   });
+}
+
+function toggleFilterGroup(el) {
+  el.classList.toggle('collapsed');
+  const group = el.closest('.tv-filter-group');
+  if (group) {
+    const isCollapsed = el.classList.contains('collapsed');
+    Array.from(group.children).forEach(child => {
+      if (child !== el) {
+        child.style.display = isCollapsed ? 'none' : '';
+      }
+    });
+  }
 }
 
 function toggleWishlist(btn) {
@@ -1966,8 +2028,13 @@ function applyMobileFilter() {
 
 function updateActiveFilterBadges() {
   const selectedBrands = document.querySelectorAll('input[name="brand"]:checked').length;
-  const selectedVehicles = document.querySelectorAll('input[name="vehicle_type"]:checked').length;
+  const selectedPatterns = document.querySelectorAll('input[name="pattern"]:checked').length;
+  const selectedOems = document.querySelectorAll('input[name="oem"]:checked').length;
+  const selectedWarranties = document.querySelectorAll('input[name="warranty"]:checked').length;
+  const selectedYears = document.querySelectorAll('input[name="year"]:checked').length;
+  const selectedOrigins = document.querySelectorAll('input[name="origin"]:checked').length;
   const selectedSizes = document.querySelectorAll('input[name="size"]:checked').length;
+  const selectedVehicles = document.querySelectorAll('input[name="vehicle_type"]:checked').length;
   const selectedTypes = document.querySelectorAll('input[name="tire_type"]:checked').length;
   const selectedPromotions = document.querySelectorAll('input[name="promotion"]:checked').length;
   
@@ -1976,7 +2043,7 @@ function updateActiveFilterBadges() {
   const isPriceActive = (minSlider && parseFloat(minSlider.value) > parseFloat(minSlider.min || 0)) ||
                         (maxSlider && parseFloat(maxSlider.value) < parseFloat(maxSlider.max || 2000));
   const priceActive = isPriceActive ? 1 : 0;
-  const totalActive = selectedBrands + selectedVehicles + selectedSizes + selectedTypes + selectedPromotions + priceActive;
+  const totalActive = selectedBrands + selectedPatterns + selectedOems + selectedWarranties + selectedYears + selectedOrigins + selectedSizes + selectedVehicles + selectedTypes + selectedPromotions + priceActive;
 
   const btnBadge = document.getElementById('tv-filter-badge');
   const drawerBadge = document.getElementById('tv-drawer-badge');
@@ -1992,7 +2059,7 @@ function updateActiveFilterBadges() {
     }
   });
 
-  const resetBtn = document.querySelector('.tv-filter-drawer-reset');
+  const resetBtn = document.querySelector('.tv-btn-drawer-reset');
   if (resetBtn) {
     resetBtn.style.display = totalActive > 0 ? 'inline-block' : 'none';
   }
@@ -2181,9 +2248,8 @@ window.filterProducts = filterProducts;
 window.sortProducts = sortProducts;
 window.clearAllFilters = clearAllFilters;
 window.toggleFilterGroup = toggleFilterGroup;
-window.toggleExtraSizes = toggleExtraSizes;
-window.toggleExtraBrands = toggleExtraBrands;
 window.searchFilterSizes = searchFilterSizes;
+window.searchFilterList = searchFilterList;
 window.updatePriceFilter = updatePriceFilter;
 window.onPriceSliderInput = onPriceSliderInput;
 window.updateSliderTrack = updateSliderTrack;
