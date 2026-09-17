@@ -1031,7 +1031,13 @@ function renderSkeletons(count) {
         <div class="tv-skeleton-banner"></div>
 
         <!-- 2. Card Body Placeholder -->
-        <div class="tv-skeleton-body">
+        <div class="tv-skeleton-body" style="position: relative;">
+          <!-- Top Row: Eye button placeholder left, brand logo right -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div class="tv-skeleton-box" style="width: 28px; height: 28px; border-radius: 50%;"></div>
+            <div class="tv-skeleton-box" style="width: 68px; height: 20px; border-radius: 6px;"></div>
+          </div>
+
           <!-- Tyre Image Placeholder -->
           <div class="tv-skeleton-box tv-skeleton-img"></div>
           
@@ -1041,10 +1047,9 @@ function renderSkeletons(count) {
             <div class="tv-skeleton-box" style="width: 28px; height: 14px; border-radius: 4px;"></div>
           </div>
 
-          <!-- Brand Logo & Size Spec Row -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <div class="tv-skeleton-box" style="width: 60px; height: 18px; border-radius: 6px;"></div>
-            <div class="tv-skeleton-box" style="width: 85px; height: 16px; border-radius: 6px;"></div>
+          <!-- Tyre Size Spec Row -->
+          <div style="margin-bottom: 8px;">
+            <div class="tv-skeleton-box" style="width: 110px; height: 18px; border-radius: 6px;"></div>
           </div>
 
           <!-- Pattern Title / Model Name Row -->
@@ -1157,13 +1162,18 @@ function createProductCardHTML(p) {
       ${offerBanner}
 
       <div class="tv-card-body">
-        <!-- Quick-view Eye Button -->
+        <!-- Quick-view Eye Button (Top Left) -->
         <button class="tv-btn-quickview" onclick="openQuickView(this)" title="Quick view" type="button">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z"></path>
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
         </button>
+
+        <!-- Brand Logo / Image (Top Right) -->
+        <div class="tv-card-top-brand" title="${brandName}">
+          ${brandLogo}
+        </div>
 
         <!-- Centered Tyre Image -->
         <div class="tv-card-img-wrap tv-img-loading">
@@ -1183,11 +1193,8 @@ function createProductCardHTML(p) {
           </span>
         </div>
 
-        <!-- Brand & Size Row -->
-        <div class="tv-card-brand-size-row">
-          <div class="tv-card-brand-wrap">
-            ${brandLogo}
-          </div>
+        <!-- Tyre Size Spec Row -->
+        <div class="tv-card-size-row">
           <div class="tv-card-size-spec">${sizeSpec}</div>
         </div>
 
@@ -1659,8 +1666,8 @@ function buildFilterPath(page = 1) {
     segments.push(`price-${Math.round(curMin)}-${Math.round(curMax)}`);
   }
 
-  // 13. Sort segment: sort-price-asc
-  if (sortVal && sortVal !== 'popular') {
+  // 13. Sort segment (Default: price-asc)
+  if (sortVal && sortVal !== 'price-asc') {
     segments.push('sort-' + encodeURIComponent(sortVal));
   }
 
@@ -1700,12 +1707,12 @@ async function fetchProducts(page = 1, scrollUp = true) {
   const maxPriceSlider = document.getElementById('max-price-slider');
   const maxPrice = maxPriceSlider ? maxPriceSlider.value : '';
   const sortSelect = document.getElementById('sort-select');
-  const sortVal = sortSelect ? sortSelect.value : 'popular';
+  const sortVal = sortSelect ? sortSelect.value : 'price-asc';
 
   const params = new URLSearchParams();
   params.set('page', page);
   params.set('per_page', perPage);
-  if (sortVal && sortVal !== 'popular') params.set('sort', sortVal);
+  if (sortVal && sortVal !== 'price-asc') params.set('sort', sortVal);
 
   selectedBrands.forEach(b => params.append('brand', b));
   selectedPatterns.forEach(p => params.append('pattern', p));
@@ -1918,7 +1925,7 @@ function clearAllFilters() {
   updateSliderTrack();
   const sortSelect = document.getElementById('sort-select');
   if (sortSelect) {
-    sortSelect.value = 'popular';
+    sortSelect.value = 'price-asc';
   }
   updateActiveFilterBadges();
   fetchProducts(1, true);

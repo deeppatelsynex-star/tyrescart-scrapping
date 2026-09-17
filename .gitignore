@@ -48,9 +48,6 @@ backups/
 *.log
 *.xlsx
 *.csv
-*.png
-*.jpg
-*.jpeg
 *scripts
 test_*.py
 test*.py
@@ -69,4 +66,6 @@ seed_product_attribute_values.sql
 
 # Runtime-uploaded content (product/brand/page images) — deployed directly
 # to each server's own static/uploads/, never through git.
-static/uploads/
+
+static/uploads/brands.zip
+SCALING_AND_SEARCH_RECOMMENDATION.md

@@ -16,7 +16,7 @@ for _p in reversed([_app_dir, _root_dir, _scraperapp_dir, _visionadmin_dir, _sit
 
 from datetime import timedelta
 
-from flask import Flask, jsonify, render_template, request, session, send_from_directory, g
+from flask import Flask, jsonify, render_template, request, session, send_from_directory, g, redirect
 
 from scraperapp.tcsadmin import register_tcsadmin_routes
 from visionadmin import register_visionadmin_routes
@@ -177,8 +177,20 @@ def serve_tyrescart_image(filename):
 
 @app.errorhandler(404)
 def handle_404_error(e):
-    """Gracefully handles unwanted page or API requests by serving custom 404 or image fallback."""
-    clean_path = request.path.lower().split('?')[0]
+    """Gracefully handles unwanted page or API requests by serving custom 404, trailing-slash redirect, or image fallback."""
+    raw_path = request.path
+    if raw_path.endswith('/') and len(raw_path) > 1:
+        clean_slash_path = raw_path.rstrip('/')
+        try:
+            adapter = app.url_map.bind(request.host, script_root=app.config.get('APPLICATION_ROOT', '') or '')
+            adapter.match(clean_slash_path, method=request.method)
+            qs = request.query_string.decode('utf-8')
+            target = clean_slash_path + (f"?{qs}" if qs else "")
+            return redirect(target, code=301)
+        except Exception:
+            pass
+
+    clean_path = raw_path.lower().split('?')[0]
     if any(clean_path.endswith(ext) for ext in ('.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.ico')):
         placeholder_dir = os.path.join(app.static_folder, 'assets', 'images')
         return send_from_directory(placeholder_dir, 'no-image-available.svg')
