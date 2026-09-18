@@ -1261,7 +1261,7 @@ def _render_product_listing(locale, filter_path=None):
             for b in cur.fetchall():
                 b_slug = b.get('slug') or (b.get('name') or '').lower().replace(' ', '')
                 b_logo = b.get('logo') or f"/static/assets/images/brands/{b_slug}.svg"
-                b_cnt = facets.get('brands', {}).get(b_slug, b.get('cnt', 0)) if facets else b.get('cnt', 0)
+                b_cnt = facets.get('brands', {}).get(b_slug, 0) if facets else b.get('cnt', 0)
                 filter_brands.append({
                     'id': b['id'],
                     'name': b['name'],
@@ -1314,7 +1314,7 @@ def _render_product_listing(locale, filter_path=None):
             """)
             filter_patterns = [{
                 'pattern': r['pattern'],
-                'count': facets.get('patterns', {}).get(r['pattern'], r['cnt']) if facets else r['cnt']
+                'count': facets.get('patterns', {}).get(r['pattern'], 0) if facets else r['cnt']
             } for r in cur.fetchall()]
 
             # 5. Sidebar: OEM Tyres from DB (using direct index idx_products_active_oem)
@@ -1328,7 +1328,7 @@ def _render_product_listing(locale, filter_path=None):
             """)
             filter_oem_tyres = [{
                 'oem': r['oem'],
-                'count': facets.get('oems', {}).get(r['oem'], r['cnt']) if facets else r['cnt']
+                'count': facets.get('oems', {}).get(r['oem'], 0) if facets else r['cnt']
             } for r in cur.fetchall()]
 
             # 6. Sidebar: Warranty Period from DB
@@ -1348,7 +1348,7 @@ def _render_product_listing(locale, filter_path=None):
             """)
             filter_warranties = [{
                 'warranty': r['warranty'],
-                'count': facets.get('warranties', {}).get(r['warranty'], r['cnt']) if facets else r['cnt']
+                'count': facets.get('warranties', {}).get(r['warranty'], 0) if facets else r['cnt']
             } for r in cur.fetchall()]
 
             # 7. Sidebar: Year from DB (using direct index idx_products_year)
@@ -1362,7 +1362,7 @@ def _render_product_listing(locale, filter_path=None):
             """)
             filter_years = [{
                 'year': r['year'],
-                'count': facets.get('years', {}).get(str(r['year']), r['cnt']) if facets else r['cnt']
+                'count': facets.get('years', {}).get(str(r['year']), 0) if facets else r['cnt']
             } for r in cur.fetchall()]
 
             # 8. Sidebar: Origin from DB (using direct index idx_products_active_origin)
@@ -1376,7 +1376,7 @@ def _render_product_listing(locale, filter_path=None):
             """)
             filter_origins = [{
                 'origin': r['origin'],
-                'count': facets.get('origins', {}).get((r['origin'] or '').lower(), r['cnt']) if facets else r['cnt']
+                'count': facets.get('origins', {}).get((r['origin'] or '').lower(), 0) if facets else r['cnt']
             } for r in cur.fetchall()]
 
             # 4. Sidebar: Vehicle Types from DB
@@ -1518,7 +1518,7 @@ def _render_product_listing(locale, filter_path=None):
                 cnt_row = cur.fetchone()
                 cnt = int(cnt_row['cnt']) if cnt_row else 0
                 p_key = re.sub(r'[^a-z0-9]+', '_', r_name.lower()).strip('_')
-                p_cnt = facets.get('promotions', {}).get(p_key, cnt) if facets else cnt
+                p_cnt = facets.get('promotions', {}).get(p_key, 0) if facets else cnt
                 filter_promotions.append({
                     'key': p_key,
                     'label': r_name,

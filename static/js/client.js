@@ -1089,15 +1089,16 @@ function renderSkeletons(count) {
 }
 
 function calculateSetPrice(unitPrice, qty, offerText = '') {
-  const p = parseFloat(unitPrice) || 0;
-  const q = parseInt(qty, 10) || 4;
+  let p = 0;
+  if (typeof unitPrice === 'number') {
+    p = unitPrice;
+  } else if (unitPrice) {
+    p = parseFloat(String(unitPrice).replace(/[^0-9.]/g, '')) || 0;
+  }
+  const q = parseInt(qty, 10) || 1;
   const offer = String(offerText || '').toUpperCase();
   let paidQty = q;
-  // if (offer.includes('BUY 2 GET 2')) {
-  //   const fullSets2 = Math.floor(q / 4);
-  //   const remainder2 = q % 4;
-  //   paidQty = (fullSets2 * 2) + (remainder2 >= 2 ? 2 : remainder2);
-  // } 
+
   if (offer.includes('BUY 3 GET 1')) {
     // Buy 3 Get 1 Free: for set of 3 or set of 4, customer pays for 3.
     // Handles up to 8 product qty (and beyond):
@@ -1105,7 +1106,18 @@ function calculateSetPrice(unitPrice, qty, offerText = '') {
     const fullSets = Math.floor(q / 4);
     const remainder = q % 4;
     paidQty = (fullSets * 3) + (remainder >= 3 ? 3 : remainder);
+  } else if (offer.includes('BUY 2 GET 2')) {
+    // Buy 2 Get 2 Free: customer pays for 2 in every 4 tyres
+    // q=1->1, q=2->2, q=3->2, q=4->2, q=5->3, q=6->4, q=7->4, q=8->4
+    const fullSets = Math.floor(q / 4);
+    const remainder = q % 4;
+    paidQty = (fullSets * 2) + Math.min(remainder, 2);
+  } else {
+    // Without offer / Standard: customer pays for all tyres (1 to 8)
+    // q=1->1, q=2->2, q=3->3, q=4->4, q=5->5, q=6->6, q=7->7, q=8->8
+    paidQty = q;
   }
+
   return (paidQty * p).toFixed(2);
 }
 
@@ -1158,7 +1170,7 @@ function createProductCardHTML(p) {
          data-vehicle="${escapeHtml(p.vehicle_type || 'car')}"
          data-type="${escapeHtml(p.season || 'summer')}"
          data-price="${priceVal}"
-         data-price-set2="${(priceVal * 2).toFixed(2)}"
+         data-price-set2="${calculateSetPrice(priceVal, 2, p.offer_banner || '')}"
          data-price-set4="${setOf4Price}"
          data-offer="${escapeHtml(p.offer_banner || '')}">
       
@@ -1257,8 +1269,15 @@ function updateCardQty(select, basePrice) {
   const card = select.closest('.tv-product-card');
   if (!card) return;
   const qty = parseInt(select.value, 10) || 1;
+  let p = basePrice;
+  if (p === undefined || p === null || isNaN(p)) {
+    const rawPrice = card.getAttribute('data-price') || card.querySelector('.tv-card-main-price')?.textContent || '0';
+    p = parseFloat(String(rawPrice).replace(/[^0-9.]/g, '')) || 0;
+  } else {
+    p = parseFloat(String(p).replace(/[^0-9.]/g, '')) || 0;
+  }
   const offer = card.getAttribute('data-offer') || card.querySelector('.tv-card-top-banner')?.textContent?.trim() || '';
-  const total = calculateSetPrice(basePrice, qty, offer);
+  const total = calculateSetPrice(p, qty, offer);
   const setLabel = card.querySelector('.tv-card-set-label');
   if (setLabel) {
     setLabel.innerHTML = `Set of ${qty}: <span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> <strong>${total}</strong>`;
@@ -1269,8 +1288,15 @@ function addToCartWithCard(btn, title, basePrice) {
   const card = btn.closest('.tv-product-card');
   const select = card ? card.querySelector('.tv-qty-select') : null;
   const qty = select ? parseInt(select.value, 10) || 1 : 1;
+  let p = basePrice;
+  if (p === undefined || p === null || isNaN(p)) {
+    const rawPrice = card ? (card.getAttribute('data-price') || card.querySelector('.tv-card-main-price')?.textContent || '0') : '0';
+    p = parseFloat(String(rawPrice).replace(/[^0-9.]/g, '')) || 0;
+  } else {
+    p = parseFloat(String(p).replace(/[^0-9.]/g, '')) || 0;
+  }
   const offer = card ? (card.getAttribute('data-offer') || card.querySelector('.tv-card-top-banner')?.textContent?.trim() || '') : '';
-  const total = calculateSetPrice(basePrice, qty, offer);
+  const total = calculateSetPrice(p, qty, offer);
   
   const originalHTML = btn.innerHTML;
   btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>Added</span>';
@@ -1433,6 +1459,12 @@ function updateQuickViewPrices() {
 
   const priceEl = document.getElementById('tv-qv-price');
   if (priceEl) priceEl.textContent = p.toFixed(2);
+
+  const totalEl = document.getElementById('tv-qv-total-price');
+  if (totalEl) totalEl.textContent = `AED ${total}`;
+
+  const qtyLabelEl = document.getElementById('tv-qv-selected-qty-label');
+  if (qtyLabelEl) qtyLabelEl.textContent = q;
 
   const set2El = document.getElementById('tv-qv-set2');
   if (set2El) set2El.textContent = `AED ${set2Total}`;
@@ -1737,9 +1769,22 @@ async function fetchProducts(page = 1, scrollUp = true) {
     params.set('max_price', maxPrice);
   }
 
-  // Update browser URL to clean SEO slug format
-  const newPath = buildFilterPath(page);
-  window.history.pushState({ page: page, path: newPath }, '', newPath);
+  // Keep browser URL clean at /tyres/ without showing filter slugs in the address bar
+  let cleanBasePath = '/tyres/';
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  if (pathParts.length > 0 && ['ar', 'en', 'de', 'fr', 'es', 'ru', 'zh'].includes(pathParts[0].toLowerCase())) {
+    cleanBasePath = '/' + pathParts[0].toLowerCase() + '/tyres/';
+  } else if (window.location.pathname.startsWith('/car-tyres')) {
+    cleanBasePath = '/car-tyres/';
+  } else if (window.location.pathname.startsWith('/products')) {
+    cleanBasePath = '/products/';
+  } else {
+    cleanBasePath = '/tyres/';
+  }
+
+  if (window.location.pathname !== cleanBasePath || window.location.search) {
+    window.history.replaceState({ page: page, base: cleanBasePath }, '', cleanBasePath);
+  }
 
   try {
     const res = await fetch(`/api/products?${params.toString()}`, {
@@ -1832,13 +1877,15 @@ function updateSidebarFacetCounts(facets) {
 
   function updateGroupItems(inputName, facetMap, isCaseInsensitive, keyTransform) {
     if (!facetMap) return;
-    document.querySelectorAll(`input[name="${inputName}"]`).forEach(cb => {
+    const inputs = document.querySelectorAll(`input[name="${inputName}"]`);
+    let groupVisibleCount = 0;
+    inputs.forEach(cb => {
       let val = cb.value.trim();
       if (keyTransform) val = keyTransform(val);
       if (isCaseInsensitive) val = val.toLowerCase();
 
       let count = facetMap[val];
-      if (count === undefined && isCaseInsensitive) {
+      if (count === undefined) {
         const matchKey = Object.keys(facetMap).find(k => k.toLowerCase() === val.toLowerCase());
         if (matchKey !== undefined) count = facetMap[matchKey];
       }
@@ -1852,11 +1899,25 @@ function updateSidebarFacetCounts(facets) {
         }
         if (count === 0 && !cb.checked) {
           item.classList.add('tv-filter-empty');
+          item.style.display = 'none';
         } else {
           item.classList.remove('tv-filter-empty');
+          item.style.display = '';
+          groupVisibleCount++;
         }
       }
     });
+
+    if (inputs.length > 0) {
+      const groupEl = inputs[0].closest('.tv-filter-group');
+      if (groupEl) {
+        if (groupVisibleCount === 0) {
+          groupEl.classList.add('tv-group-empty');
+        } else {
+          groupEl.classList.remove('tv-group-empty');
+        }
+      }
+    }
   }
 
   // 1. Warranty
@@ -1881,7 +1942,39 @@ function updateSidebarFacetCounts(facets) {
   updateGroupItems('promotion', facets.promotions, true, val => val.replace(/-/g, '_'));
 }
 
+function refreshFilterVisibility() {
+  document.querySelectorAll('.tv-filter-group').forEach(group => {
+    let groupVisibleCount = 0;
+    const items = group.querySelectorAll('.tv-filter-item');
+    items.forEach(item => {
+      const cb = item.querySelector('input[type="checkbox"]');
+      const countSpan = item.querySelector('.tv-filter-count');
+      let count = 0;
+      if (countSpan) {
+        count = parseInt(countSpan.textContent.replace(/,/g, '').trim(), 10) || 0;
+      }
+      if (count === 0 && (!cb || !cb.checked)) {
+        item.classList.add('tv-filter-empty');
+        item.style.display = 'none';
+      } else {
+        item.classList.remove('tv-filter-empty');
+        item.style.display = '';
+        groupVisibleCount++;
+      }
+    });
+
+    if (items.length > 0) {
+      if (groupVisibleCount === 0) {
+        group.classList.add('tv-group-empty');
+      } else {
+        group.classList.remove('tv-group-empty');
+      }
+    }
+  });
+}
+
 window.updateSidebarFacetCounts = updateSidebarFacetCounts;
+window.refreshFilterVisibility = refreshFilterVisibility;
 
 function goToPage(page) {
   if (page < 1 || page > window.totalPages) return;
@@ -2078,7 +2171,11 @@ function clearAllFilters() {
     sb.value = '';
   });
   document.querySelectorAll('.tv-filter-list .tv-filter-item').forEach(it => {
-    it.style.display = 'flex';
+    it.style.display = '';
+    it.classList.remove('tv-filter-empty');
+  });
+  document.querySelectorAll('.tv-filter-group').forEach(grp => {
+    grp.classList.remove('tv-group-empty');
   });
   const minSlider = document.getElementById('min-price-slider');
   if (minSlider) {
@@ -2110,9 +2207,15 @@ function searchFilterList(inputEl, listSelector) {
   if (!container) return;
   const items = container.querySelectorAll('.tv-filter-item');
   items.forEach(it => {
+    const cb = it.querySelector('input[type="checkbox"]');
+    const isChecked = cb ? cb.checked : false;
+    if (it.classList.contains('tv-filter-empty') && !isChecked) {
+      it.style.display = 'none';
+      return;
+    }
     const text = (it.getAttribute('data-filter-name') || it.innerText || '').toLowerCase();
     if (!q || text.includes(q)) {
-      it.style.display = 'flex';
+      it.style.display = '';
     } else {
       it.style.display = 'none';
     }
@@ -2123,9 +2226,15 @@ function searchFilterSizes(query) {
   const q = query.trim().toLowerCase();
   const items = document.querySelectorAll('#filter-size-list .tv-filter-item');
   items.forEach(it => {
+    const cb = it.querySelector('input[type="checkbox"]');
+    const isChecked = cb ? cb.checked : false;
+    if (it.classList.contains('tv-filter-empty') && !isChecked) {
+      it.style.display = 'none';
+      return;
+    }
     const size = (it.getAttribute('data-size') || '').toLowerCase();
     if (!q || size.includes(q)) {
-      it.style.display = 'flex';
+      it.style.display = '';
     } else {
       it.style.display = 'none';
     }
@@ -2273,6 +2382,7 @@ function initProductCatalog(config) {
     updateActiveFilterBadges();
     updateSliderTrack();
     initCustomSortDropdown();
+    refreshFilterVisibility();
 
     // Immediately resolve shimmer loading state for any already-cached images
     document.querySelectorAll('.tv-card-img-wrap img').forEach(img => {

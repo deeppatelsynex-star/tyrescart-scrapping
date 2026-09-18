@@ -59,6 +59,63 @@ ATTRIBUTE_ALIAS_MAP = {
 
 class ProductImporter:
     @classmethod
+    def validate_csv_headers(cls, csv_headers: list, attr_map: dict = None, product_columns: set = None) -> tuple:
+        """
+        Compares CSV headers with DB attributes and table columns.
+        Returns: (matched_headers, missing_attributes, extra_headers)
+        """
+        if attr_map is None or product_columns is None:
+            conn = get_connection()
+            if attr_map is None:
+                attr_map = {}
+            if product_columns is None:
+                product_columns = set()
+            try:
+                with conn.cursor() as cur:
+                    if not attr_map:
+                        cur.execute("SELECT id, code, name, type FROM attributes WHERE deleted_at IS NULL")
+                        for a in cur.fetchall():
+                            attr_map[a['code'].strip().lower()] = a
+                    if not product_columns:
+                        cur.execute("DESCRIBE products")
+                        product_columns = {r['Field'].strip().lower() for r in cur.fetchall()}
+            finally:
+                conn.close()
+
+        system_recognized_cols = {
+            'sku', 'attribute_set_code', 'product_type', 'categories', 'product_websites',
+            'name', 'description', 'short_description', 'product_online', 'tax_class_name',
+            'visibility', 'price', 'special_price', 'special_price_from_date', 'special_price_to_date',
+            'url_key', 'meta_title', 'meta_keywords', 'meta_description', 'base_image',
+            'small_image', 'thumbnail_image', 'swatch_image', 'qty', 'stock_qty', 'stock_status',
+            'weight', 'parts_category', 'tyres_category', 'price_included_text', 'price_included',
+            'item_code', 'display_name', 'year', 'cost', 'cost_price', 'status'
+        }
+
+        matched_headers = []
+        extra_headers = []
+        for h in csv_headers:
+            hl = str(h).strip().lower()
+            if not hl:
+                continue
+            if (hl in attr_map or 
+                hl in product_columns or 
+                hl in system_recognized_cols or 
+                hl in ATTRIBUTE_ALIAS_MAP or 
+                ATTRIBUTE_ALIAS_MAP.get(hl) in attr_map or 
+                ATTRIBUTE_ALIAS_MAP.get(hl) in product_columns):
+                matched_headers.append(h)
+            else:
+                extra_headers.append(h)
+
+        missing_attributes = [
+            a_code for a_code in attr_map
+            if a_code not in [str(h).strip().lower() for h in csv_headers] and
+               a_code not in [ATTRIBUTE_ALIAS_MAP.get(str(h).strip().lower(), '') for h in csv_headers]
+        ]
+        return matched_headers, missing_attributes, extra_headers
+
+    @classmethod
     def import_csv(cls, file_content, user_id: int = 1) -> dict:
         """
         Imports products of ANY type (Batteries, Wheels, Tyres, etc.) from CSV.
@@ -113,6 +170,10 @@ class ProductImporter:
                 for a in cur.fetchall():
                     c_code = a['code'].strip().lower()
                     attr_map[c_code] = a
+
+                # Cache product table columns
+                cur.execute("DESCRIBE products")
+                product_columns = {r['Field'].strip().lower() for r in cur.fetchall()}
         finally:
             conn.close()
 
@@ -136,6 +197,12 @@ class ProductImporter:
         rows = list(reader)
         if not rows:
             return {'success': False, 'error': 'CSV is empty.', 'imported': 0}
+
+        # Step 3.5: Inspect CSV headers vs attributes & product columns
+        csv_headers = [str(h).strip() for h in (reader.fieldnames or []) if h and str(h).strip()]
+        matched_headers, missing_attributes, extra_headers = cls.validate_csv_headers(
+            csv_headers, attr_map=attr_map, product_columns=product_columns
+        )
 
         distinct_brands = set()
         for r in rows:
@@ -341,8 +408,21 @@ class ProductImporter:
                 tabby_raw = str(dynamic_attrs.get('tabby_payment') or '').strip().lower()
                 pay_later_eligible = 1 if tabby_raw in ('yes', '1', 'true') else 0
 
-                parts_cat = (dynamic_attrs.get('parts_category') or row.get('attribute_set_code') or 'Tyres').strip()
-                tyres_cat = dynamic_attrs.get('tyres_category')
+                parts_cat = (dynamic_attrs.get('parts_category') or row.get('parts_category') or row.get('attribute_set_code') or 'Tyres').strip()
+                raw_tc = dynamic_attrs.get('tyres_category') or row.get('tyres_category')
+                tyres_cat = None
+                if raw_tc and str(raw_tc).strip():
+                    s_tc = str(raw_tc).strip()
+                    tc_l = s_tc.lower()
+                    if tc_l == 'budget':
+                        tyres_cat = 'Budget'
+                    elif tc_l == 'quality':
+                        tyres_cat = 'Quality'
+                    elif tc_l == 'premium':
+                        tyres_cat = 'Premium'
+                    else:
+                        tyres_cat = s_tc
+                dynamic_attrs['tyres_category'] = tyres_cat or ''
                 year_val = dynamic_attrs.get('year')
                 price_included = (dynamic_attrs.get('price_included_text') or dynamic_attrs.get('price_included') or 'Fitted Price').strip()
 
@@ -410,11 +490,20 @@ class ProductImporter:
             except Exception as ex:
                 errors.append(f"Row {idx} ({row.get('sku')}): {str(ex)}")
 
+        warning_msg = None
+        if extra_headers:
+            warning_msg = f"Found {len(extra_headers)} column(s) in the CSV that do not match any existing product attribute: {', '.join(extra_headers)}. Please create these attributes in Attribute Manager if needed. All matched attributes were imported successfully."
+
         return {
             'success': True,
             'total_rows': len(rows),
             'imported': imported,
             'updated': updated,
+            'matched_attributes': matched_headers,
+            'extra_attributes': extra_headers,
+            'missing_attributes': missing_attributes,
             'category_result': cat_result,
-            'errors': errors
+            'warning': warning_msg,
+            'errors': errors,
+            'message': f"Successfully processed {len(rows)} products ({imported} imported, {updated} updated)." + (f" Note: {len(extra_headers)} unrecognized column(s) detected ({', '.join(extra_headers[:3])}{'...' if len(extra_headers) > 3 else ''})." if extra_headers else "")
         }
