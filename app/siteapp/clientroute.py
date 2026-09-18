@@ -485,10 +485,13 @@ def _format_product_for_client(p, locale='en'):
     offer_upper = offer_banner.upper()
     if 'BUY 2 GET 2' in offer_upper:
         p_dict['set_of_4_price'] = round(unit_p * 2, 2)
+        p_dict['set_of_8_price'] = round(unit_p * 4, 2)
     elif 'BUY 3 GET 1' in offer_upper:
         p_dict['set_of_4_price'] = round(unit_p * 3, 2)
+        p_dict['set_of_8_price'] = round(unit_p * 6, 2)
     else:
         p_dict['set_of_4_price'] = round(unit_p * 4, 2)
+        p_dict['set_of_8_price'] = round(unit_p * 8, 2)
 
     # Warranty
     warranty_val = str(attr.get('warranty_period') or attr.get('warranty') or '3 Years Warranty').strip()
@@ -528,7 +531,8 @@ def _format_product_for_client(p, locale='en'):
     price_val = float(p_dict.get('price') or 0)
     p_dict['price'] = price_val
     p_dict['price_formatted'] = f"{price_val:.2f}"
-    p_dict['price_set_of_4'] = f"{price_val * 4:.2f}"
+    p_dict['price_set_of_4'] = f"{p_dict.get('set_of_4_price', price_val * 4):.2f}"
+    p_dict['price_set_of_8'] = f"{p_dict.get('set_of_8_price', price_val * 8):.2f}"
     p_dict['list_price'] = float(p_dict['list_price']) if p_dict.get('list_price') else None
 
     # Ensure display_name is readable
@@ -1586,6 +1590,295 @@ def api_products():
     return jsonify(data)
 
 
+# ============================================================================
+# PRODUCT DETAIL PAGE (PDP) RENDERER & ROUTES
+# ============================================================================
+def _render_product_detail(slug_or_id, locale=None):
+    """Render dynamic Product Detail Page matching 100% of reference design."""
+    locale = (locale or _get_locale()).lower()
+    import db
+    conn = db.get_connection()
+    try:
+        with conn.cursor() as cur:
+            is_digit_id = str(slug_or_id).isdigit()
+            clean_s = str(slug_or_id).lower().strip()
+            cur.execute("""
+                SELECT p.*, b.name as brand_name, b.slug as brand_slug, b.logo as brand_logo
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE (p.slug = %s OR p.sku = %s OR p.id = %s OR p.slug LIKE %s)
+                  AND p.deleted_at IS NULL
+                ORDER BY (p.slug = %s) DESC, p.id ASC
+                LIMIT 1
+            """, [clean_s, clean_s, int(slug_or_id) if is_digit_id else -1, f"{clean_s}%", clean_s])
+            p_row = cur.fetchone()
+            if not p_row:
+                abort(404)
+
+            # Extract specs from attributes_json
+            raw_attrs = {}
+            if p_row.get('attributes_json'):
+                try:
+                    raw_attrs = json.loads(p_row['attributes_json']) if isinstance(p_row['attributes_json'], str) else p_row['attributes_json']
+                except Exception:
+                    raw_attrs = {}
+
+            # Parse size specs from tire_size_label or attributes
+            size_label = p_row.get('tire_size_label') or ''
+            m_size = re.search(r'(\d+)[/\s](\d+)\s*(?:R|r)?(\d+)', size_label)
+            width_val = raw_attrs.get('width') or (m_size.group(1) if m_size else '165')
+            profile_val = raw_attrs.get('profile') or (m_size.group(2) if m_size else '65')
+            rim_val = raw_attrs.get('rim') or (f"R{m_size.group(3)}" if m_size else 'R14')
+            if not str(rim_val).upper().startswith('R'):
+                rim_val = f"R{rim_val}"
+
+            load_speed = raw_attrs.get('load_speed') or f"{p_row.get('tire_load_index') or '79'}{p_row.get('tire_speed_rating') or 'T'}"
+            brand_name = p_row.get('brand_name') or 'Michelin'
+            pattern_name = p_row.get('tire_pattern') or 'Energy XM2 Plus'
+            price_f = float(p_row.get('price') or 121.0)
+
+            # Short desc and full description
+            short_desc = ""
+            if p_row.get('short_desc'):
+                try:
+                    sd = json.loads(p_row['short_desc']) if isinstance(p_row['short_desc'], str) else p_row['short_desc']
+                    short_desc = sd.get(locale) or sd.get('en') or str(p_row['short_desc'])
+                except Exception:
+                    short_desc = str(p_row['short_desc'])
+            if not short_desc or short_desc.strip() in ('{}', 'None', ''):
+                short_desc = f"The {brand_name} {pattern_name} is designed for a safer and smoother drive with outstanding wet braking, long-lasting performance and excellent fuel efficiency. Ideal for everyday driving."
+
+            desc = ""
+            if p_row.get('description'):
+                try:
+                    d = json.loads(p_row['description']) if isinstance(p_row['description'], str) else p_row['description']
+                    desc = d.get(locale) or d.get('en') or str(p_row['description'])
+                except Exception:
+                    desc = str(p_row['description'])
+            if not desc or desc.strip() in ('{}', 'None', ''):
+                desc = f"The {brand_name} {pattern_name} {size_label} {load_speed} delivers a balanced combination of safety, longevity and fuel efficiency. With advanced rubber compound and optimized tread design, it provides excellent grip on both wet and dry roads, ensuring a comfortable and secure driving experience. Ideal for everyday driving."
+
+            # Image
+            img_path = p_row.get('image_path') or '/static/uploads/products/michelin_energy_xm2_wheel.jpg'
+            if not img_path.startswith('/'):
+                img_path = '/' + img_path.replace('\\', '/')
+
+            brand_logo = p_row.get('brand_logo') or '/static/uploads/brands/brand_884b41a82943de82_1789467748.png'
+            if not brand_logo.startswith('/'):
+                brand_logo = '/' + brand_logo.replace('\\', '/')
+
+            # Warranty
+            w_months = p_row.get('warranty_months') or 12
+            warranty_str = f"{w_months // 12} Year" if w_months >= 12 and w_months % 12 == 0 else f"{w_months} Months"
+
+            # Vehicle type label
+            v_type = (p_row.get('vehicle_type') or 'car').lower()
+            vehicle_type_label = "Car Tyre" if v_type in ('car', 'passenger', '') else v_type.capitalize() + " Tyre"
+
+            # Season
+            t_type = (p_row.get('tire_type') or 'summer').lower()
+            season_label = "Summer" if 'summer' in t_type else ("All Season" if 'all' in t_type else "Winter")
+
+            # Offer banner and promotions
+            raw_offer = (raw_attrs.get('offers') or raw_attrs.get('promotion') or raw_attrs.get('badge') or p_row.get('offer_banner') or '').strip()
+            offer_banner = raw_offer.upper() if raw_offer and raw_offer.lower() not in ('none', '0', '', 'null') else ''
+
+            if 'BUY 3 GET 1' in offer_banner:
+                price_set4 = round(price_f * 3, 2)
+            elif 'BUY 2 GET 2' in offer_banner:
+                price_set4 = round(price_f * 2, 2)
+            else:
+                price_set4 = round(price_f * 4, 2)
+
+            product = {
+                'id': p_row['id'],
+                'slug': p_row['slug'],
+                'sku': p_row['sku'],
+                'title': p_row.get('display_name') or f"{brand_name} {size_label} {load_speed}",
+                'brand_name': brand_name,
+                'brand_logo': brand_logo,
+                'pattern_name': pattern_name,
+                'offer_banner': offer_banner,
+                'has_offer': bool(offer_banner),
+                'price': price_f,
+                'price_formatted': f"{price_f:,.2f}",
+                'price_set2': round(price_f * 2, 2),
+                'price_set2_formatted': f"{price_f * 2:,.2f}",
+                'price_set4': price_set4,
+                'price_set4_formatted': f"{price_set4:,.2f}",
+                'price_set4_regular_formatted': f"{price_f * 4:,.2f}",
+                'image_path': img_path,
+                'in_stock': p_row.get('stock_status') == 'in_stock',
+                'short_desc': short_desc,
+                'description': desc,
+                'width': width_val if 'mm' in str(width_val) else f"{width_val} mm",
+                'profile': profile_val,
+                'rim_size': rim_val,
+                'load_speed': load_speed,
+                'type': vehicle_type_label,
+                'season': season_label,
+                'year': p_row.get('year') or 2024,
+                'country': p_row.get('country_of_origin') or 'France',
+                'run_flat': 'Yes' if p_row.get('run_flat') == 1 else 'No',
+                'warranty': warranty_str,
+                'tire_size_label': size_label or f"{width_val}/{profile_val} {rim_val}"
+            }
+
+            # Related products: SAME SIZE, DIFFERENT BRANDS (per requirement)
+            target_size = size_label.strip() if size_label else f"{width_val}/{profile_val} {rim_val}"
+            current_brand_id = p_row.get('brand_id')
+
+            cur.execute("""
+                SELECT p.*, b.name as brand_name, b.slug as brand_slug, b.logo as brand_logo
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE p.deleted_at IS NULL AND p.status = 'active'
+                  AND p.id != %s
+                  AND p.tire_size_label = %s
+                  AND (p.brand_id != %s OR %s IS NULL)
+                ORDER BY p.price ASC
+            """, [p_row['id'], target_size, current_brand_id, current_brand_id])
+            same_size_rows = cur.fetchall()
+
+            rel_rows = []
+            seen_brands = set()
+            if current_brand_id:
+                seen_brands.add(current_brand_id)
+            if brand_name:
+                seen_brands.add(brand_name.lower().strip())
+
+            for r in same_size_rows:
+                b_key = (r.get('brand_name') or '').lower().strip()
+                if b_key and b_key not in seen_brands:
+                    seen_brands.add(b_key)
+                    rel_rows.append(r)
+                if len(rel_rows) >= 4:
+                    break
+
+            # Fallback 1: If fewer than 4, same rim size from different brands
+            if len(rel_rows) < 4 and rim_val:
+                cur.execute("""
+                    SELECT p.*, b.name as brand_name, b.slug as brand_slug, b.logo as brand_logo
+                    FROM products p
+                    LEFT JOIN brands b ON p.brand_id = b.id
+                    WHERE p.deleted_at IS NULL AND p.status = 'active'
+                      AND p.id != %s
+                      AND p.tire_size_label LIKE %s
+                      AND (p.brand_id != %s OR %s IS NULL)
+                    ORDER BY p.price ASC
+                """, [p_row['id'], f"%{rim_val}%", current_brand_id, current_brand_id])
+                for r in cur.fetchall():
+                    b_key = (r.get('brand_name') or '').lower().strip()
+                    if b_key and b_key not in seen_brands:
+                        seen_brands.add(b_key)
+                        rel_rows.append(r)
+                    if len(rel_rows) >= 4:
+                        break
+
+            # Fallback 2: Any active products from different brands
+            if len(rel_rows) < 4:
+                cur.execute("""
+                    SELECT p.*, b.name as brand_name, b.slug as brand_slug, b.logo as brand_logo
+                    FROM products p
+                    LEFT JOIN brands b ON p.brand_id = b.id
+                    WHERE p.deleted_at IS NULL AND p.status = 'active'
+                      AND p.id != %s
+                      AND (p.brand_id != %s OR %s IS NULL)
+                    ORDER BY p.price ASC
+                    LIMIT 20
+                """, [p_row['id'], current_brand_id, current_brand_id])
+                for r in cur.fetchall():
+                    b_key = (r.get('brand_name') or '').lower().strip()
+                    if b_key and b_key not in seen_brands:
+                        seen_brands.add(b_key)
+                        rel_rows.append(r)
+                    if len(rel_rows) >= 4:
+                        break
+
+            related_products = []
+            for r in rel_rows:
+                r_price = float(r.get('price') or 143.0)
+                r_img = r.get('image_path') or '/static/uploads/products/michelin_energy_xm2_wheel.jpg'
+                if not r_img.startswith('/'):
+                    r_img = '/' + r_img.replace('\\', '/')
+                r_logo = r.get('brand_logo') or ''
+                if r_logo and not r_logo.startswith('/'):
+                    r_logo = '/' + r_logo.replace('\\', '/')
+
+                r_w_months = r.get('warranty_months') or 12
+                r_w_str = f"{r_w_months // 12} Year Warranty" if r_w_months >= 12 else f"{r_w_months} Months Warranty"
+
+                # Related product offer
+                r_raw_attrs = {}
+                if r.get('attributes_json'):
+                    try:
+                        r_raw_attrs = json.loads(r['attributes_json']) if isinstance(r['attributes_json'], str) else r['attributes_json']
+                    except Exception:
+                        r_raw_attrs = {}
+                r_offer = (r_raw_attrs.get('offers') or r_raw_attrs.get('promotion') or r_raw_attrs.get('badge') or r.get('offer_banner') or '').strip()
+                r_offer_upper = r_offer.upper() if r_offer and r_offer.lower() not in ('none', '0', '', 'null') else ''
+                if 'BUY 3 GET 1' in r_offer_upper:
+                    r_set4 = round(r_price * 3, 2)
+                elif 'BUY 2 GET 2' in r_offer_upper:
+                    r_set4 = round(r_price * 2, 2)
+                else:
+                    r_set4 = round(r_price * 4, 2)
+
+                related_products.append({
+                    'id': r['id'],
+                    'slug': r['slug'],
+                    'sku': r['sku'],
+                    'brand_name': r.get('brand_name') or '',
+                    'brand_logo': r_logo,
+                    'title': r.get('display_name') or '',
+                    'pattern_name': r.get('tire_pattern') or '',
+                    'size': r.get('tire_size_label') or target_size,
+                    'year': r.get('year') or 2024,
+                    'country': r.get('country_of_origin') or 'France',
+                    'warranty': r_w_str,
+                    'image_path': r_img,
+                    'offer_banner': r_offer_upper,
+                    'has_offer': bool(r_offer_upper),
+                    'price': r_price,
+                    'price_formatted': f"{r_price:,.2f}",
+                    'price_set2_formatted': f"{r_price * 2:,.2f}",
+                    'price_set4_formatted': f"{r_set4:,.2f}"
+                })
+
+            resp = make_response(render_template(
+                'Client/ProductDetail.html',
+                product=product,
+                related_products=related_products,
+                locale=locale
+            ))
+            resp.set_cookie('site_locale', locale, max_age=31536000, path='/')
+            return resp
+    finally:
+        conn.close()
+
+
+# Dedicated Product Detail Routes
+@site_bp.route('/product/<slug>', strict_slashes=False)
+@site_bp.route('/product/<slug>/', strict_slashes=False)
+@site_bp.route('/tyres/product/<slug>', strict_slashes=False)
+@site_bp.route('/tyres/product/<slug>/', strict_slashes=False)
+def product_detail(slug):
+    """Client storefront Product Detail page."""
+    locale = _get_locale()
+    return _render_product_detail(slug, locale)
+
+
+@site_bp.route('/<string(length=2):lang_code>/product/<slug>', strict_slashes=False)
+@site_bp.route('/<string(length=2):lang_code>/product/<slug>/', strict_slashes=False)
+@site_bp.route('/<string(length=2):lang_code>/tyres/product/<slug>', strict_slashes=False)
+@site_bp.route('/<string(length=2):lang_code>/tyres/product/<slug>/', strict_slashes=False)
+def product_detail_locale(lang_code, slug):
+    """Client storefront Product Detail page with dynamic locale."""
+    code = lang_code.lower()
+    session['site_locale'] = code
+    return _render_product_detail(slug, code)
+
+
 @site_bp.route('/car-tyres', strict_slashes=False)
 @site_bp.route('/car-tyres/', strict_slashes=False)
 @site_bp.route('/tyres', strict_slashes=False)
@@ -1606,6 +1899,19 @@ def car_tyres_listing_slug(filter_path):
     clean_path = (filter_path or '').strip('/')
     if not clean_path:
         return redirect('/tyres', code=301)
+
+    # Check if slug matches a product directly
+    import db
+    conn = db.get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM products WHERE slug = %s AND deleted_at IS NULL LIMIT 1", [clean_path])
+            if cur.fetchone():
+                locale = _get_locale()
+                return _render_product_detail(clean_path, locale)
+    finally:
+        conn.close()
+
     # If URL contains uppercase characters (e.g. /tyres/oem-Mercedes-Benz), 301 redirect to lowercase slug
     if clean_path != clean_path.lower():
         prefix = '/car-tyres' if request.path.startswith('/car-tyres') else ('/products' if request.path.startswith('/products') else '/tyres')
@@ -1638,6 +1944,18 @@ def car_tyres_listing_locale_slug(lang_code, filter_path):
     clean_path = (filter_path or '').strip('/')
     if not clean_path:
         return redirect(f'/{code}/tyres', code=301)
+
+    # Check if slug matches a product directly
+    import db
+    conn = db.get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM products WHERE slug = %s AND deleted_at IS NULL LIMIT 1", [clean_path])
+            if cur.fetchone():
+                return _render_product_detail(clean_path, code)
+    finally:
+        conn.close()
+
     # If URL contains uppercase characters, 301 redirect to lowercase slug
     if clean_path != clean_path.lower():
         prefix = f'/{code}/car-tyres' if f'/{code}/car-tyres' in request.path else (f'/{code}/products' if f'/{code}/products' in request.path else f'/{code}/tyres')
@@ -1672,6 +1990,24 @@ def page_detail_locale(lang_code, slug):
     blog = Blog.find_by_slug(slug)
     if blog:
         return _render_blog_detail(slug, code)
+
+    # Check if slug is a product
+    import db
+    conn = db.get_connection()
+    try:
+        with conn.cursor() as cur:
+            clean_s = slug.lower().strip()
+            cur.execute("""
+                SELECT slug FROM products 
+                WHERE (slug = %s OR slug LIKE %s OR sku = %s) AND deleted_at IS NULL 
+                ORDER BY (slug = %s) DESC, id ASC LIMIT 1
+            """, [clean_s, f"{clean_s}%", clean_s, clean_s])
+            p_match = cur.fetchone()
+            if p_match:
+                return _render_product_detail(p_match['slug'], code)
+    finally:
+        conn.close()
+
     abort(404)
 
 
@@ -1695,4 +2031,22 @@ def page_detail(slug):
     blog = Blog.find_by_slug(slug)
     if blog:
         return redirect(f'/blog/{slug}')
+
+    # Check if slug is a product
+    import db
+    conn = db.get_connection()
+    try:
+        with conn.cursor() as cur:
+            clean_s = slug.lower().strip()
+            cur.execute("""
+                SELECT slug FROM products 
+                WHERE (slug = %s OR slug LIKE %s OR sku = %s) AND deleted_at IS NULL 
+                ORDER BY (slug = %s) DESC, id ASC LIMIT 1
+            """, [clean_s, f"{clean_s}%", clean_s, clean_s])
+            p_match = cur.fetchone()
+            if p_match:
+                return _render_product_detail(p_match['slug'], locale)
+    finally:
+        conn.close()
+
     abort(404)

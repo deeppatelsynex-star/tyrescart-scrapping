@@ -1122,10 +1122,19 @@ function calculateSetPrice(unitPrice, qty, offerText = '') {
 }
 
 function createProductCardHTML(p) {
-  const offerBanner = p.offer_banner 
-    ? `<div class="tv-card-top-banner">${escapeHtml(p.offer_banner)}</div>`
-    : `<div class="tv-card-top-banner tv-card-top-banner-empty" style="visibility: hidden;">&nbsp;</div>`;
-  const warrantyText = escapeHtml(p.warranty || '3 Years Warranty');
+  const hasOffer = Boolean(p.offer_banner && String(p.offer_banner).trim());
+  let offerBannerHTML = '';
+  if (hasOffer) {
+    const isArrival = String(p.offer_banner).toUpperCase().includes('ARRIVAL');
+    const bannerClass = isArrival ? 'tv-banner-green' : 'tv-banner-blue';
+    offerBannerHTML = `
+      <div class="tv-card-top-banner ${bannerClass}">
+        <span class="tv-offer-title">${escapeHtml(p.offer_banner)}</span>
+        <span class="tv-offer-sub">LIMITED TIME OFFER</span>
+      </div>`;
+  }
+
+  const warrantyText = escapeHtml(p.warranty || '1 Year Warranty');
   const patternTitle = escapeHtml(p.pattern_name || p.display_name || 'Tyre');
   const sizeSpec = escapeHtml(p.full_size_spec || p.tire_size_label || 'Standard Fit');
   const yearVal = escapeHtml(p.year || '2024');
@@ -1135,10 +1144,6 @@ function createProductCardHTML(p) {
   const setOf4Price = calculateSetPrice(priceVal, 4, p.offer_banner || '');
   const brandName = escapeHtml(p.brand_name || '');
   const brandLogo = p.brand_logo ? `<img src="${p.brand_logo}" alt="${brandName}" class="tv-card-brand-img" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"><span class="tv-card-brand-fallback" style="display:none;">${brandName}</span>` : `<span class="tv-card-brand-fallback">${brandName}</span>`;
-  const vehicleType = (p.vehicle_type || 'car').toLowerCase();
-  const vehicleSvg = vehicleType === 'suv' 
-    ? `<svg width="28" height="13" viewBox="0 0 40 18" fill="currentColor"><path d="M38.5 12.5c-.3-2-1.5-3.5-3.5-4l-3.5-.8-2.5-5.2C28.2 1.3 27 1 25.5 1H8C6.5 1 5.2 1.9 4.6 3.2L1.5 10C.5 10.7 0 11.8 0 13c0 1.5 1 2.6 2.5 2.8h1.2c.5-2 2.3-3.5 4.5-3.5s4 1.5 4.5 3.5h14.6c.5-2 2.3-3.5 4.5-3.5s4 1.5 4.5 3.5h2.2c.8 0 1.5-.7 1.5-1.5 0-1.1-.6-2-1.5-2.3zM6.8 4.2c.2-.5.7-.9 1.3-.9h17c.8 0 1.5.5 1.8 1.2l2 4.2H5.2l1.6-4.5zm1.4 13.3c-1.4 0-2.5-1.1-2.5-2.5s1.1-2.5 2.5-2.5 2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5zm23.6 0c-1.4 0-2.5-1.1-2.5-2.5s1.1-2.5 2.5-2.5 2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5z"/></svg>`
-    : `<svg width="28" height="13" viewBox="0 0 40 18" fill="currentColor"><path d="M37.5 10.5c-.3-1.8-1.5-3.2-3.8-3.5l-4.2-.6-3.8-3.9C24.8 1.6 23.6 1 22.3 1H10.5C9 1 7.7 1.8 7 3.1L3.8 9.5C1.8 10 0 11.2 0 13.2c0 1.2.9 2.1 2.1 2.2h1.4c.5-1.8 2.2-3.2 4.2-3.2s3.7 1.4 4.2 3.2h16.2c.5-1.8 2.2-3.2 4.2-3.2s3.7 1.4 4.2 3.2h2.2c.8 0 1.5-.7 1.5-1.5 0-1.8-1.1-2.9-2.5-3.3zM9.5 3.5c.3-.6.9-1 1.6-1h10.8c.7 0 1.4.4 1.8.9l3.2 3.3H8.2l1.3-3.2zm-1.8 13c-1.2 0-2.2-1-2.2-2.2s1-2.2 2.2-2.2 2.2 1 2.2 2.2-1 2.2-2.2 2.2zm24.6 0c-1.2 0-2.2-1-2.2-2.2s1-2.2 2.2-2.2 2.2 1 2.2 2.2-1 2.2-2.2 2.2z"/></svg>`;
 
   const imgPath = p.image_path || '/static/assets/images/no-image-available.svg';
   const cleanTitle = escapeHtml((brandName + ' ' + patternTitle).trim()).replace(/'/g, "\\'");
@@ -1149,8 +1154,12 @@ function createProductCardHTML(p) {
   const loadSpeedVal = escapeHtml(p.load_speed || '86Q');
   const skuVal = escapeHtml(p.sku || ('TCKL-' + (p.id || '12726')));
 
+  const slugVal = escapeHtml(p.slug || '');
+
   return `
-    <div class="tv-product-card"
+    <div class="tv-product-card ${hasOffer ? 'has-offer' : ''}"
+         data-slug="${slugVal}"
+         onclick="handleProductCardClick(event, '${slugVal}')"
          data-brand="${escapeHtml(p.brand_slug || '')}"
          data-brand-name="${brandName}"
          data-brand-logo="${escapeHtml(p.brand_logo || '')}"
@@ -1174,91 +1183,123 @@ function createProductCardHTML(p) {
          data-price-set4="${setOf4Price}"
          data-offer="${escapeHtml(p.offer_banner || '')}">
       
-      <!-- Top Offer Banner -->
-      ${offerBanner}
+      <!-- 1. Top Offer Banner (Only when offer exists) -->
+      ${offerBannerHTML}
 
-      <div class="tv-card-body">
-        <!-- Quick-view Eye Button (Top Left) -->
-        <button class="tv-btn-quickview" onclick="openQuickView(this)" title="Quick view" type="button">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-          </svg>
-        </button>
+      <!-- 2. Main Card Body (Two Columns Split) -->
+      <div class="tv-card-main-split">
+        <!-- Left Column: Quickview Eye + Tyre Image -->
+        <div class="tv-card-left-col">
+          <!-- Quick-view Eye Button (Top Left) -->
+          <button class="tv-btn-quickview" onclick="openQuickView(this)" title="Quick view" type="button" aria-label="Quick view">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
 
-        <!-- Brand Logo / Image (Top Right) -->
-        <div class="tv-card-top-brand" title="${brandName}">
-          ${brandLogo}
+          <!-- Centered Tyre Image Link -->
+          <a href="/${slugVal}" class="tv-card-img-link" aria-label="${patternTitle}">
+            <div class="tv-card-tyre-box tv-img-loading">
+              <img src="${imgPath}" 
+                   alt="${patternTitle}" 
+                   class="tv-product-img" 
+                   loading="lazy" 
+                   onload="this.parentElement.classList.remove('tv-img-loading')"
+                   onerror="this.src='/static/assets/images/no-image-available.svg'; this.parentElement.classList.remove('tv-img-loading'); this.onerror=null;">
+            </div>
+          </a>
         </div>
 
-        <!-- Centered Tyre Image -->
-        <div class="tv-card-img-wrap tv-img-loading">
-          <img src="${imgPath}" 
-               alt="${patternTitle}" 
-               class="tv-product-img" 
-               loading="lazy" 
-               onload="this.parentElement.classList.remove('tv-img-loading')"
-               onerror="this.src='/static/assets/images/no-image-available.svg'; this.parentElement.classList.remove('tv-img-loading'); this.onerror=null;">
-        </div>
-
-        <!-- Sub-badges Row (Warranty & Vehicle Silhouette) -->
-        <div class="tv-card-subbadges-row">
-          <span class="tv-warranty-badge">${warrantyText}</span>
-          <span class="tv-vehicle-silhouette" title="${capitalize(vehicleType)}">
-            ${vehicleSvg}
-          </span>
-        </div>
-
-        <!-- Size (Left) & Pattern (Right) Side-by-Side Row -->
-        <div class="tv-card-size-pattern-row">
-          <div class="tv-card-size-spec">${sizeSpec}</div>
-          <h3 class="tv-card-pattern-title" title="${patternTitle}">${patternTitle}</h3>
-        </div>
-
-        <!-- Year & Country of Origin -->
-        <div class="tv-card-year-origin-row">
-          <span class="tv-card-year">${yearVal}</span>
-          <span class="tv-card-origin">${originVal}</span>
-        </div>
-
-        <!-- Price & Action Section -->
-        <div class="tv-card-price-action-section">
-          <div class="tv-card-fitted-label" onclick="openFittedPriceModal(event)" role="button" tabindex="0" title="Click to view what is included in Fitted Price">
-            <span>Fitted Price</span>
-            <button type="button" class="tv-fitted-info-btn" onclick="openFittedPriceModal(event)" aria-label="Fitted Price details" title="View fitted price details">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            </button>
+        <!-- Right Column: Details & Pricing -->
+        <div class="tv-card-right-col">
+          <!-- Brand Logo Top Right -->
+          <div class="tv-card-brand-wrap" title="${brandName}">
+            ${brandLogo}
           </div>
-          <div class="tv-card-price-controls-row">
-            <div class="tv-card-price-col">
-              <div class="tv-card-main-price"><span class="currency-dirham tv-curr-glyph">&#xe900;</span> ${priceFormatted}</div>
-              <div class="tv-card-set-label">Set of 4: <span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> <strong>${setOf4Price}</strong></div>
-            </div>
-            <div class="tv-card-action-col">
-              <select class="tv-qty-select" onchange="updateCardQty(this, ${priceVal})" aria-label="Quantity">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4" selected>4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-              </select>
-              <button type="button" class="tv-btn-card-add" onclick="addToCartWithCard(this, '${cleanTitle}', ${priceVal})">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                <span>Add</span>
-              </button>
-            </div>
+
+          <!-- Pattern Title Link -->
+          <a href="/${slugVal}" class="tv-card-pattern-link" title="${patternTitle}">
+            <h3 class="tv-card-pattern">
+              ${patternTitle}
+            </h3>
+          </a>
+
+          <!-- Size Spec with (i) Icon -->
+          <div class="tv-card-size-row">
+            <span class="tv-card-spec-text">${sizeSpec}</span>
+            <span class="tv-spec-info-btn" title="Tyre specification details">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0066cc" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </span>
+          </div>
+
+          <!-- Meta: Year & Country -->
+          <div class="tv-card-meta-row">
+            <span class="tv-meta-item tv-meta-year">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="3"></circle>
+                <line x1="12" y1="2" x2="12" y2="5"></line>
+                <line x1="12" y1="19" x2="12" y2="22"></line>
+              </svg>
+              <span>${yearVal}</span>
+            </span>
+            <span class="tv-meta-item tv-meta-country">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+              <span>${originVal}</span>
+            </span>
+          </div>
+
+          <!-- Price Note -->
+          <div class="tv-card-price-note" onclick="openFittedPriceModal(event)" role="button" tabindex="0">
+            Price incl. Replacement
+          </div>
+
+          <!-- Row 1: Main Unit Price (Dirham Icon Font) -->
+          <div class="tv-card-unit-price-wrap">
+            <span class="currency-dirham tv-curr-glyph">&#xe900;</span>
+            <strong class="tv-card-price-num">${priceFormatted}</strong>
+            <span class="tv-card-per-tyre">/ tyre</span>
+          </div>
+
+          <!-- Row 2: Dynamic Set Price (Changes on Qty select) -->
+          <div class="tv-card-set-row tv-card-set4-wrap tv-card-dynamic-set-wrap">
+            Set of 4: <span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> <strong>${setOf4Price}</strong>
           </div>
         </div>
       </div>
 
-      <!-- Bottom Installment Strip -->
-      <div class="tv-card-installments-strip">
-        <span class="tv-installments-title">Pay In Installments</span>
-        <span class="tv-badge-tabby">tabby</span>
-        <span class="tv-badge-tamara">tamara</span>
+      <!-- 3. Bottom Action Bar -->
+      <div class="tv-card-bottom-bar">
+        <span class="tv-warranty-pill">${warrantyText}</span>
+
+        <select class="tv-qty-select" onchange="updateCardQty(this, ${priceVal})" aria-label="Quantity">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+        </select>
+
+        <button type="button" class="tv-btn-card-add" onclick="addToCartWithCard(this, '${cleanTitle}', ${priceVal})">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span>Add to Cart</span>
+        </button>
       </div>
 
     </div>
@@ -1271,16 +1312,17 @@ function updateCardQty(select, basePrice) {
   const qty = parseInt(select.value, 10) || 1;
   let p = basePrice;
   if (p === undefined || p === null || isNaN(p)) {
-    const rawPrice = card.getAttribute('data-price') || card.querySelector('.tv-card-main-price')?.textContent || '0';
+    const rawPrice = card.getAttribute('data-price') || card.querySelector('.tv-card-price-num')?.textContent || '0';
     p = parseFloat(String(rawPrice).replace(/[^0-9.]/g, '')) || 0;
   } else {
     p = parseFloat(String(p).replace(/[^0-9.]/g, '')) || 0;
   }
-  const offer = card.getAttribute('data-offer') || card.querySelector('.tv-card-top-banner')?.textContent?.trim() || '';
+  const offer = card.getAttribute('data-offer') || card.querySelector('.tv-offer-title')?.textContent?.trim() || '';
   const total = calculateSetPrice(p, qty, offer);
-  const setLabel = card.querySelector('.tv-card-set-label');
-  if (setLabel) {
-    setLabel.innerHTML = `Set of ${qty}: <span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> <strong>${total}</strong>`;
+  const setWrap = card.querySelector('.tv-card-dynamic-set-wrap') || card.querySelector('.tv-card-set4-wrap');
+  if (setWrap) {
+    const label = qty === 1 ? 'Set of 1' : `Set of ${qty}`;
+    setWrap.innerHTML = `${label}: <span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> <strong>${total}</strong>`;
   }
 }
 
@@ -1302,12 +1344,20 @@ function addToCartWithCard(btn, title, basePrice) {
   btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>Added</span>';
   btn.style.background = '#008738';
   
-  showToast(`Added ${qty}x ${title} (AED ${total}) to fitting cart!`);
+  showToast(`Added ${qty}x ${title} to fitting cart!`);
   
   setTimeout(() => {
     btn.innerHTML = originalHTML;
     btn.style.background = '';
   }, 2000);
+}
+
+function handleProductCardClick(e, slug) {
+  if (!slug) return;
+  if (e.target.closest('button, select, input, a, .tv-btn-quickview, .tv-btn-card-add, .tv-card-price-note, .tv-spec-info-btn, .tv-fitted-info-btn')) {
+    return;
+  }
+  window.location.href = '/' + encodeURIComponent(slug).replace(/%2F/g, '/');
 }
 
 let currentQuickViewProduct = null;
@@ -1461,16 +1511,16 @@ function updateQuickViewPrices() {
   if (priceEl) priceEl.textContent = p.toFixed(2);
 
   const totalEl = document.getElementById('tv-qv-total-price');
-  if (totalEl) totalEl.textContent = `AED ${total}`;
+  if (totalEl) totalEl.innerHTML = `<span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> ${total}`;
 
   const qtyLabelEl = document.getElementById('tv-qv-selected-qty-label');
   if (qtyLabelEl) qtyLabelEl.textContent = q;
 
   const set2El = document.getElementById('tv-qv-set2');
-  if (set2El) set2El.textContent = `AED ${set2Total}`;
+  if (set2El) set2El.innerHTML = `<span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> ${set2Total}`;
 
   const set4El = document.getElementById('tv-qv-set4');
-  if (set4El) set4El.textContent = `AED ${set4Total}`;
+  if (set4El) set4El.innerHTML = `<span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> ${set4Total}`;
 }
 
 function stepQuickViewQty(delta) {
@@ -1492,7 +1542,7 @@ function addQuickViewToCart(btn) {
   btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Added';
   btn.style.background = '#008738';
 
-  showToast(`Added ${currentQuickViewQty}x ${fullTitle} (AED ${total}) to cart!`);
+  showToast(`Added ${currentQuickViewQty}x ${fullTitle} to cart!`);
 
   setTimeout(() => {
     btn.innerHTML = origHTML;
@@ -2110,8 +2160,8 @@ function updateSliderTrack() {
 function updatePriceDisplay(minVal, maxVal) {
   const minLabel = document.getElementById('min-price-display');
   const maxLabel = document.getElementById('price-slider-val');
-  if (minLabel) minLabel.textContent = 'AED ' + Math.round(minVal).toLocaleString();
-  if (maxLabel) maxLabel.textContent = 'AED ' + Math.round(maxVal).toLocaleString();
+  if (minLabel) minLabel.innerHTML = '<span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> ' + Math.round(minVal).toLocaleString();
+  if (maxLabel) maxLabel.innerHTML = '<span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> ' + Math.round(maxVal).toLocaleString();
 }
 
 function onPriceSliderInput(type) {
@@ -2181,13 +2231,13 @@ function clearAllFilters() {
   if (minSlider) {
     minSlider.value = minSlider.min;
     const minLabel = document.getElementById('min-price-display');
-    if (minLabel) minLabel.textContent = 'AED ' + parseInt(minSlider.min).toLocaleString();
+    if (minLabel) minLabel.innerHTML = '<span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> ' + parseInt(minSlider.min).toLocaleString();
   }
   const maxSlider = document.getElementById('max-price-slider');
   if (maxSlider) {
     maxSlider.value = maxSlider.max;
     const maxLabel = document.getElementById('price-slider-val');
-    if (maxLabel) maxLabel.textContent = 'AED ' + parseInt(maxSlider.max).toLocaleString();
+    if (maxLabel) maxLabel.innerHTML = '<span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> ' + parseInt(maxSlider.max).toLocaleString();
   }
   updateSliderTrack();
   const sortSelect = document.getElementById('sort-select');
@@ -2242,13 +2292,16 @@ function searchFilterSizes(query) {
 }
 
 function toggleFilterGroup(el) {
-  el.classList.toggle('collapsed');
   const group = el.closest('.tv-filter-group');
+  const isCurrentlyCollapsed = el.classList.contains('collapsed') || (group && group.classList.contains('is-collapsed'));
+  const willCollapse = !isCurrentlyCollapsed;
+
+  el.classList.toggle('collapsed', willCollapse);
   if (group) {
-    const isCollapsed = el.classList.contains('collapsed');
+    group.classList.toggle('is-collapsed', willCollapse);
     Array.from(group.children).forEach(child => {
       if (child !== el) {
-        child.style.display = isCollapsed ? 'none' : '';
+        child.style.display = willCollapse ? 'none' : '';
       }
     });
   }
@@ -2518,6 +2571,7 @@ window.createProductCardHTML = createProductCardHTML;
 window.calculateSetPrice = calculateSetPrice;
 window.updateCardQty = updateCardQty;
 window.addToCartWithCard = addToCartWithCard;
+window.handleProductCardClick = handleProductCardClick;
 window.openQuickView = openQuickView;
 window.closeQuickView = closeQuickView;
 window.handleQuickViewBackdrop = handleQuickViewBackdrop;
@@ -2555,3 +2609,251 @@ window.updateActiveFilterBadges = updateActiveFilterBadges;
 window.initProductCatalog = initProductCatalog;
 window.initCustomSortDropdown = initCustomSortDropdown;
 window.syncCustomSortUI = typeof syncCustomSortUI !== 'undefined' ? syncCustomSortUI : null;
+
+// ============================================================================
+// PRODUCT DETAIL PAGE (PDP) INTERACTIVITY
+// ============================================================================
+function updatePdpPricing(qty) {
+  var unitPrice = (typeof window.pdpProductPrice === 'number' && !isNaN(window.pdpProductPrice))
+    ? window.pdpProductPrice
+    : 121.0;
+  var offer = window.pdpProductOffer || '';
+
+  // 1. Calculate regular and offer totals
+  var regularTotal = unitPrice * qty;
+  var offerTotal = (typeof calculateSetPrice === 'function')
+    ? parseFloat(calculateSetPrice(unitPrice, qty, offer))
+    : regularTotal;
+  var savings = Math.max(0, regularTotal - offerTotal);
+
+  // 2. Update price in dynamic "Add to Cart" button
+  var btnPriceVal = document.getElementById('pdp-btn-price');
+  if (btnPriceVal) {
+    btnPriceVal.textContent = offerTotal.toFixed(2);
+  }
+
+  // 3. Update price in "Buy Now" button
+  var buyPriceVal = document.getElementById('pdp-buy-price');
+  if (buyPriceVal) {
+    buyPriceVal.textContent = offerTotal.toFixed(2);
+  }
+
+  // 4. Strikethrough regular price & meta row in button if offer discount active
+  var metaRow = document.getElementById('pdp-btn-meta-row');
+  if (metaRow) {
+    metaRow.style.display = (savings > 0.01) ? 'flex' : 'none';
+  }
+
+  var strikeEl = document.getElementById('pdp-btn-strike');
+  if (strikeEl) {
+    if (savings > 0.01) {
+      strikeEl.innerHTML = `<span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> ${regularTotal.toFixed(2)}`;
+      strikeEl.style.display = 'inline-flex';
+    } else {
+      strikeEl.style.display = 'none';
+    }
+  }
+
+  // 5. Savings tag pill in button
+  var savePill = document.getElementById('pdp-btn-save-pill');
+  if (savePill) {
+    if (savings > 0.01) {
+      savePill.innerHTML = `SAVE <span class="currency-dirham tv-curr-glyph-sub" style="font-size:9px;">&#xe900;</span> ${savings.toFixed(2)}`;
+      savePill.style.display = 'inline-flex';
+    } else {
+      savePill.style.display = 'none';
+    }
+  }
+
+  // 6. Sync active state on Price Tier Cards (Single = 1, Set of 2 = 2, Set of 4 = 4)
+  var tierCards = document.querySelectorAll('.tv-pdp-tier-card');
+  tierCards.forEach(function(card) {
+    var cardQty = parseInt(card.getAttribute('data-qty'), 10);
+    if (cardQty === qty) {
+      card.classList.add('is-active');
+    } else {
+      card.classList.remove('is-active');
+    }
+  });
+}
+
+function stepPdpQty(delta) {
+  var input = document.getElementById('pdp-qty-input');
+  if (!input) return;
+  var currentVal = parseInt(input.value, 10) || 1;
+  var newVal = Math.max(1, Math.min(20, currentVal + delta));
+  input.value = newVal;
+  updatePdpPricing(newVal);
+}
+
+function selectFitment(axle) {
+  var frontWheel = document.getElementById('car-wheel-front');
+  var rearWheel = document.getElementById('car-wheel-rear');
+  var frontLabel = document.getElementById('label-fitment-front');
+  var rearLabel = document.getElementById('label-fitment-rear');
+  
+  if (axle === 'rear') {
+    if (rearWheel) {
+      rearWheel.classList.add('is-selected');
+      var glow = rearWheel.querySelector('.tv-wheel-glow');
+      if (glow) glow.style.display = 'block';
+    }
+    if (frontWheel) {
+      frontWheel.classList.remove('is-selected');
+      var fGlow = frontWheel.querySelector('.tv-wheel-glow');
+      if (fGlow) fGlow.style.display = 'none';
+    }
+    if (rearLabel) rearLabel.classList.add('is-active');
+    if (frontLabel) frontLabel.classList.remove('is-active');
+  } else {
+    if (frontWheel) {
+      frontWheel.classList.add('is-selected');
+      var glow2 = frontWheel.querySelector('.tv-wheel-glow');
+      if (glow2) glow2.style.display = 'block';
+    }
+    if (rearWheel) {
+      rearWheel.classList.remove('is-selected');
+      var rGlow = rearWheel.querySelector('.tv-wheel-glow');
+      if (rGlow) rGlow.style.display = 'none';
+    }
+    if (frontLabel) frontLabel.classList.add('is-active');
+    if (rearLabel) rearLabel.classList.remove('is-active');
+  }
+}
+
+function switchPdpTab(tabId, btn) {
+  var tabs = ['desc', 'specs', 'features', 'install', 'faqs'];
+  tabs.forEach(function(t) {
+    var el = document.getElementById('tab-' + t);
+    if (el) {
+      el.style.display = (t === tabId) ? 'block' : 'none';
+      if (t === tabId) {
+        el.classList.add('is-active');
+      } else {
+        el.classList.remove('is-active');
+      }
+    }
+  });
+
+  var navBtns = document.querySelectorAll('.tv-tab-btn');
+  navBtns.forEach(function(b) {
+    b.classList.remove('is-active');
+    b.setAttribute('aria-selected', 'false');
+  });
+
+  if (btn) {
+    btn.classList.add('is-active');
+    btn.setAttribute('aria-selected', 'true');
+  }
+}
+
+function addToCartPDP(productId, title, price) {
+  var input = document.getElementById('pdp-qty-input');
+  var qty = input ? (parseInt(input.value, 10) || 1) : 1;
+  var unitPrice = (typeof window.pdpProductPrice === 'number') ? window.pdpProductPrice : price;
+  var offer = window.pdpProductOffer || '';
+  var total = (typeof calculateSetPrice === 'function')
+    ? calculateSetPrice(unitPrice, qty, offer)
+    : (unitPrice * qty).toFixed(2);
+  
+  var btn = document.getElementById('pdp-add-to-cart-btn');
+  if (btn) {
+    btn.classList.add('tv-btn-pulse');
+    setTimeout(function() { btn.classList.remove('tv-btn-pulse'); }, 500);
+  }
+
+  if (typeof addToCart === 'function') {
+    addToCart(productId, title, price, qty);
+  } else if (typeof showToast === 'function') {
+    showToast('Added ' + qty + ' \u00d7 ' + title + ' to cart!', 'success');
+  }
+
+  // Update badge
+  var badge = document.getElementById('header-cart-badge');
+  if (badge) {
+    var curCount = parseInt(badge.textContent, 10) || 0;
+    badge.textContent = curCount + qty;
+  }
+}
+
+function buyNowPDP(productId, title, price) {
+  addToCartPDP(productId, title, price);
+  if (typeof showToast === 'function') {
+    showToast('Proceeding to checkout with ' + title, 'info');
+  }
+}
+
+function toggleRelHeart(btn) {
+  if (!btn) return;
+  btn.classList.toggle('is-loved');
+  if (btn.classList.contains('is-loved')) {
+    if (typeof showToast === 'function') showToast('Added to wishlist!', 'success');
+  } else {
+    if (typeof showToast === 'function') showToast('Removed from wishlist.', 'info');
+  }
+}
+
+function addRelToCart(btn, title, price) {
+  var card = btn ? btn.closest('.tv-rel-card') : null;
+  var qtySelect = card ? card.querySelector('.tv-rel-qty-select') : null;
+  var qty = qtySelect ? (parseInt(qtySelect.value, 10) || 1) : 1;
+  
+  if (typeof showToast === 'function') {
+    showToast('Added ' + qty + ' \u00d7 ' + title + ' to cart!', 'success');
+  }
+  
+  var badge = document.getElementById('header-cart-badge');
+  if (badge) {
+    var curCount = parseInt(badge.textContent, 10) || 0;
+    badge.textContent = curCount + qty;
+  }
+}
+
+function scrollRelated(direction) {
+  var container = document.getElementById('related-products-carousel');
+  if (!container) return;
+  var scrollAmount = 300 * direction;
+  container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+}
+
+function showCartModal(e) {
+  if (e) e.preventDefault();
+  if (typeof showToast === 'function') {
+    showToast('Shopping cart: 0 items', 'info');
+  }
+}
+
+// Bind PDP methods to window
+window.updatePdpPricing = updatePdpPricing;
+window.stepPdpQty = stepPdpQty;
+window.selectFitment = selectFitment;
+window.switchPdpTab = switchPdpTab;
+window.addToCartPDP = addToCartPDP;
+window.buyNowPDP = buyNowPDP;
+window.toggleRelHeart = toggleRelHeart;
+window.addRelToCart = addRelToCart;
+window.scrollRelated = scrollRelated;
+window.showCartModal = showCartModal;
+
+// Initialize PDP pricing and sync tier card click listeners
+document.addEventListener('DOMContentLoaded', function() {
+  var tierCards = document.querySelectorAll('.tv-pdp-tier-card');
+  tierCards.forEach(function(c) {
+    c.addEventListener('click', function() {
+      var q = parseInt(this.getAttribute('data-qty'), 10) || 1;
+      var input = document.getElementById('pdp-qty-input');
+      if (input) {
+        input.value = q;
+      }
+      updatePdpPricing(q);
+    });
+  });
+
+  // Initial pricing sync
+  var input = document.getElementById('pdp-qty-input');
+  if (input) {
+    var initialQty = parseInt(input.value, 10) || 4;
+    updatePdpPricing(initialQty);
+  }
+});
+
