@@ -11,6 +11,10 @@ from decimal import Decimal
 from db import get_connection
 from services.attribute_service import AttributeService
 from i18n import localize_value
+try:
+    from services.es_service import es_service
+except Exception:
+    es_service = None
 
 
 class Product:
@@ -207,6 +211,17 @@ class Product:
             if k in d:
                 d[k] = cls._parse_json_field(d[k])
 
+        # Ensure tyres_category and parts_category are synced with attributes_json
+        if not d.get('tyres_category') and isinstance(d.get('attributes_json'), dict):
+            d['tyres_category'] = d['attributes_json'].get('tyres_category')
+        if not d.get('parts_category') and isinstance(d.get('attributes_json'), dict):
+            d['parts_category'] = d['attributes_json'].get('parts_category')
+        if isinstance(d.get('attributes_json'), dict):
+            if d.get('tyres_category') and not d['attributes_json'].get('tyres_category'):
+                d['attributes_json']['tyres_category'] = d['tyres_category']
+            if d.get('parts_category') and not d['attributes_json'].get('parts_category'):
+                d['attributes_json']['parts_category'] = d['parts_category']
+
         # Resolve display name string
         if isinstance(d.get('name'), dict):
             d['display_name'] = get_translated_value(d['name'], loc)
@@ -306,7 +321,12 @@ class Product:
     def paginate(cls, page: int = 1, per_page: int = 25, search: str = None,
                  brand_id: int = None, category_id: int = None, status: str = None,
                  stock_status: str = None, vehicle_type: str = None, attribute_set_id: int = None,
-                 is_trash: bool = False, sort_by: str = 'created_at', sort_dir: str = 'DESC'):
+                 is_trash: bool = False, sort_by: str = 'created_at', sort_dir: str = 'DESC',
+                 tyres_category: str = None, parts_category: str = None,
+                 run_flat = None, ev_rated = None,
+                 rim_size: str = None, speed_rating: str = None,
+                 country_of_origin: str = None, year = None,
+                 attr_code: str = None, attr_value: str = None):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
@@ -346,6 +366,83 @@ class Product:
                 if vehicle_type:
                     where_clauses.append("p.vehicle_type = %s")
                     params.append(vehicle_type)
+
+                if tyres_category:
+                    tc_val = str(tyres_category).strip()
+                    where_clauses.append("(p.tyres_category = %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.tyres_category')) = %s)")
+                    params.extend([tc_val, tc_val])
+
+                if parts_category:
+                    pc_val = str(parts_category).strip()
+                    where_clauses.append("(p.parts_category = %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.parts_category')) = %s)")
+                    params.extend([pc_val, pc_val])
+
+                if run_flat is not None and str(run_flat).strip() != '':
+                    rf_val = 1 if str(run_flat).strip().lower() in ('1', 'true', 'yes') else 0
+                    where_clauses.append("p.run_flat = %s")
+                    params.append(rf_val)
+
+                if ev_rated is not None and str(ev_rated).strip() != '':
+                    ev_val = 1 if str(ev_rated).strip().lower() in ('1', 'true', 'yes') else 0
+                    where_clauses.append("p.ev_rated = %s")
+                    params.append(ev_val)
+
+                if rim_size:
+                    clean_rim = str(rim_size).strip().upper().replace('R', '').replace('"', '')
+                    where_clauses.append("""
+                        (p.tire_size_label LIKE %s 
+                         OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.rim')) = %s 
+                         OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.rim_size')) = %s)
+                    """)
+                    params.extend([f"%R{clean_rim}%", clean_rim, clean_rim])
+
+                if speed_rating:
+                    sr = str(speed_rating).strip().upper()
+                    where_clauses.append("""
+                        (p.tire_speed_rating = %s 
+                         OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.tire_speed_rating')) = %s 
+                         OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.speed_rating')) = %s)
+                    """)
+                    params.extend([sr, sr, sr])
+
+                if country_of_origin:
+                    co = str(country_of_origin).strip()
+                    where_clauses.append("""
+                        (p.country_of_origin = %s 
+                         OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.country')) = %s 
+                         OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.country_of_origin')) = %s)
+                    """)
+                    params.extend([co, co, co])
+
+                if year:
+                    try:
+                        y_int = int(str(year).strip())
+                        where_clauses.append("(p.year = %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, '$.year')) = %s)")
+                        params.extend([y_int, str(y_int)])
+                    except (ValueError, TypeError):
+                        pass
+
+                if attr_code and attr_value is not None and str(attr_value).strip() != '':
+                    c_code = re.sub(r'[^a-zA-Z0-9_]', '', str(attr_code).strip())
+                    c_val = str(attr_value).strip()
+                    if c_code:
+                        direct_cols = {'sku', 'display_name', 'tire_size_label', 'tire_speed_rating', 'tire_load_index', 
+                                       'tire_type', 'tire_pattern', 'vehicle_type', 'country_of_origin', 'parts_category', 
+                                       'tyres_category', 'year', 'item_code'}
+                        if c_code in direct_cols:
+                            where_clauses.append(f"(p.{c_code} = %s OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, %s)) = %s)")
+                            params.extend([c_val, f"$.{c_code}", c_val])
+                        else:
+                            where_clauses.append("""
+                                (JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, %s)) = %s
+                                 OR JSON_UNQUOTE(JSON_EXTRACT(p.attributes_json, %s)) LIKE %s
+                                 OR EXISTS (
+                                     SELECT 1 FROM product_attribute_values pav
+                                     JOIN attributes a ON a.id = pav.attribute_id
+                                     WHERE pav.product_id = p.id AND a.code = %s AND (pav.value_text = %s OR pav.value_number = %s)
+                                 ))
+                            """)
+                            params.extend([f"$.{c_code}", c_val, f"$.{c_code}", f"%{c_val}%", c_code, c_val, c_val])
 
                 where_sql = " AND ".join(where_clauses)
                 if where_sql:
@@ -598,9 +695,10 @@ class Product:
                     tire_size_label = str(dyn_attrs['tire_size_label']).strip()
 
                 website_id = cls._safe_int(data.get('website_id'), 1)
-                item_code = (data.get('item_code') or '').strip() or None
-                parts_category = (data.get('parts_category') or '').strip() or None
-                tyres_category = (data.get('tyres_category') or '').strip() or None
+                item_code = (data.get('item_code') or dyn_attrs.get('item_code') or '').strip() or None
+                parts_category = (data.get('parts_category') or dyn_attrs.get('parts_category') or '').strip() or None
+                raw_tc = data.get('tyres_category') or dyn_attrs.get('tyres_category')
+                tyres_category = (str(raw_tc).strip()) if raw_tc else None
                 if tyres_category:
                     tc_l = tyres_category.lower()
                     if tc_l == 'budget':
@@ -609,10 +707,8 @@ class Product:
                         tyres_category = 'Quality'
                     elif tc_l == 'premium':
                         tyres_category = 'Premium'
-                    else:
-                        tyres_category = None
 
-                raw_year = data.get('year')
+                raw_year = data.get('year') or dyn_attrs.get('year')
                 year = None
                 if raw_year:
                     try:
@@ -747,6 +843,12 @@ class Product:
                                 pass
                 conn.commit()
 
+                if es_service:
+                    try:
+                        es_service.index_single_product(new_id)
+                    except Exception:
+                        pass
+
                 return new_id
         finally:
             conn.close()
@@ -877,17 +979,37 @@ class Product:
                         fields.append(f"{fk_col} = %s")
                         params.append(val)
 
-                for str_col in ['image_path', 'image_alt', 'small_image', 'small_image_alt', 'canonical_url', 'item_code', 'parts_category']:
+                dyn_attrs = data.get('dynamic_attributes') or data.get('attributes_json')
+                if isinstance(dyn_attrs, str):
+                    try:
+                        dyn_attrs = json.loads(dyn_attrs)
+                    except Exception:
+                        dyn_attrs = {}
+                elif not isinstance(dyn_attrs, dict):
+                    dyn_attrs = None
+
+                for str_col in ['image_path', 'image_alt', 'small_image', 'small_image_alt', 'canonical_url']:
                     if str_col in data:
                         fields.append(f"{str_col} = %s")
                         params.append((str(data[str_col]).strip()) if data[str_col] else None)
+
+                if 'item_code' in data or (dyn_attrs and 'item_code' in dyn_attrs):
+                    val = data.get('item_code') if 'item_code' in data else dyn_attrs.get('item_code')
+                    fields.append("item_code = %s")
+                    params.append((str(val).strip()) if val else None)
+
+                if 'parts_category' in data or (dyn_attrs and 'parts_category' in dyn_attrs):
+                    val = data.get('parts_category') if 'parts_category' in data else dyn_attrs.get('parts_category')
+                    fields.append("parts_category = %s")
+                    params.append((str(val).strip()) if val else None)
 
                 if 'website_id' in data:
                     fields.append("website_id = %s")
                     params.append(cls._safe_int(data['website_id'], 1))
 
-                if 'tyres_category' in data:
-                    tc = (str(data['tyres_category']).strip()) if data['tyres_category'] else None
+                if 'tyres_category' in data or (dyn_attrs and 'tyres_category' in dyn_attrs):
+                    raw_tc = data.get('tyres_category') if 'tyres_category' in data else dyn_attrs.get('tyres_category')
+                    tc = (str(raw_tc).strip()) if raw_tc else None
                     if tc:
                         tc_l = tc.lower()
                         if tc_l == 'budget':
@@ -896,13 +1018,11 @@ class Product:
                             tc = 'Quality'
                         elif tc_l == 'premium':
                             tc = 'Premium'
-                        else:
-                            tc = None
                     fields.append("tyres_category = %s")
                     params.append(tc)
 
-                if 'year' in data:
-                    raw_y = data['year']
+                if 'year' in data or (dyn_attrs and 'year' in dyn_attrs):
+                    raw_y = data.get('year') if 'year' in data else dyn_attrs.get('year')
                     y_val = None
                     if raw_y:
                         try:
@@ -979,19 +1099,12 @@ class Product:
                     fields.append("attribute_set_id = %s")
                     params.append(cls._safe_int(data['attribute_set_id'], 1))
 
-                dyn_attrs = None
                 if 'dynamic_attributes' in data or 'attributes_json' in data:
-                    dyn_attrs = data.get('dynamic_attributes') or data.get('attributes_json') or {}
-                    if isinstance(dyn_attrs, str):
-                        try:
-                            dyn_attrs = json.loads(dyn_attrs)
-                        except Exception:
-                            dyn_attrs = {}
                     fields.append("attributes_json = %s")
-                    params.append(json.dumps(dyn_attrs))
+                    params.append(json.dumps(dyn_attrs or {}))
 
                     # Sync tyre_size_label from dynamic attributes if present
-                    if dyn_attrs.get('tire_size_label') and 'tire_size_label' not in data:
+                    if dyn_attrs and dyn_attrs.get('tire_size_label') and 'tire_size_label' not in data:
                         fields.append("tire_size_label = %s")
                         params.append(str(dyn_attrs['tire_size_label']).strip())
 
@@ -1073,6 +1186,12 @@ class Product:
                             pass
                 conn.commit()
 
+                if es_service:
+                    try:
+                        es_service.index_single_product(product_id)
+                    except Exception:
+                        pass
+
                 return True
         finally:
             conn.close()
@@ -1089,7 +1208,13 @@ class Product:
                     WHERE id = %s AND deleted_at IS NULL
                 """, (now, user_id, product_id))
                 conn.commit()
-                return cursor.rowcount > 0
+                deleted = cursor.rowcount > 0
+                if deleted and es_service:
+                    try:
+                        es_service.delete_single_product(product_id)
+                    except Exception:
+                        pass
+                return deleted
         finally:
             conn.close()
 
@@ -1105,7 +1230,13 @@ class Product:
                     WHERE id = %s AND deleted_at IS NOT NULL
                 """, (now, user_id, product_id))
                 conn.commit()
-                return cursor.rowcount > 0
+                restored = cursor.rowcount > 0
+                if restored and es_service:
+                    try:
+                        es_service.index_single_product(product_id)
+                    except Exception:
+                        pass
+                return restored
         finally:
             conn.close()
 
@@ -1116,7 +1247,13 @@ class Product:
             with conn.cursor() as cursor:
                 cursor.execute("DELETE FROM products WHERE id = %s", (product_id,))
                 conn.commit()
-                return cursor.rowcount > 0
+                purged = cursor.rowcount > 0
+                if purged and es_service:
+                    try:
+                        es_service.delete_single_product(product_id)
+                    except Exception:
+                        pass
+                return purged
         finally:
             conn.close()
 
@@ -1148,6 +1285,17 @@ class Product:
                     sql = f"UPDATE products SET status = 'inactive', updated_at = %s WHERE id IN ({placeholders})"
                     cursor.execute(sql, [now] + ids)
                 conn.commit()
-                return cursor.rowcount
+                affected = cursor.rowcount
+                if es_service and ids:
+                    try:
+                        if action in ('delete', 'inactive'):
+                            for pid in ids:
+                                es_service.delete_single_product(int(pid))
+                        else:
+                            for pid in ids:
+                                es_service.index_single_product(int(pid))
+                    except Exception:
+                        pass
+                return affected
         finally:
             conn.close()

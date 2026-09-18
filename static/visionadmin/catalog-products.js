@@ -224,8 +224,19 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
       category_id: '',
       vehicle_type: '',
       stock_status: '',
-      attribute_set_id: ''
+      attribute_set_id: '',
+      tyres_category: '',
+      parts_category: '',
+      run_flat: '',
+      ev_rated: '',
+      rim_size: '',
+      speed_rating: '',
+      country_of_origin: '',
+      year: '',
+      attr_code: '',
+      attr_value: ''
     },
+    filterAttributesList: [],
 
     formDragAttr: null,
     formDragFromGroupId: null,
@@ -281,7 +292,7 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
     },
 
     async initData() {
-      await Promise.all([this.fetchBrands(), this.fetchCategories(), this.fetchAttributeSets(), this.fetchWebsites()]);
+      await Promise.all([this.fetchBrands(), this.fetchCategories(), this.fetchAttributeSets(), this.fetchWebsites(), this.fetchFilterAttributes()]);
       await this.fetchProducts();
 
       // Listen to filter search debounce
@@ -403,6 +414,35 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         }
       } catch (err) {
         console.error('Error fetching websites:', err);
+      }
+    },
+
+    async fetchFilterAttributes() {
+      try {
+        const res = await fetch('/visionadmin/api/attributes');
+        const data = await res.json();
+        const rawAttrs = data.attributes || data.items || (Array.isArray(data) ? data : []);
+        this.filterAttributesList = rawAttrs.map(a => {
+          let nameStr = a.code;
+          if (typeof a.name === 'object' && a.name !== null) {
+            nameStr = a.name.en || a.name.ar || a.code;
+          } else if (typeof a.name === 'string') {
+            try {
+              const p = JSON.parse(a.name);
+              nameStr = p.en || p.ar || a.name;
+            } catch(e) {
+              nameStr = a.name;
+            }
+          }
+          return {
+            id: a.id,
+            code: a.code,
+            name: nameStr,
+            type: a.type
+          };
+        });
+      } catch (err) {
+        console.error('Error fetching filter attributes:', err);
       }
     },
 
@@ -633,6 +673,19 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         if (this.filters.stock_status) params.append('stock_status', this.filters.stock_status);
         if (this.filters.attribute_set_id) params.append('attribute_set_id', this.filters.attribute_set_id);
 
+        if (this.filters.tyres_category) params.append('tyres_category', this.filters.tyres_category);
+        if (this.filters.parts_category) params.append('parts_category', this.filters.parts_category);
+        if (this.filters.run_flat) params.append('run_flat', this.filters.run_flat);
+        if (this.filters.ev_rated) params.append('ev_rated', this.filters.ev_rated);
+        if (this.filters.rim_size) params.append('rim_size', this.filters.rim_size);
+        if (this.filters.speed_rating) params.append('speed_rating', this.filters.speed_rating);
+        if (this.filters.country_of_origin) params.append('country_of_origin', this.filters.country_of_origin);
+        if (this.filters.year) params.append('year', this.filters.year);
+        if (this.filters.attr_code && this.filters.attr_value) {
+          params.append('attr_code', this.filters.attr_code);
+          params.append('attr_value', this.filters.attr_value);
+        }
+
         if (this.currentTab === 'trash') {
           params.append('trash', '1');
         } else if (this.currentTab === 'out_of_stock') {
@@ -671,7 +724,17 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         category_id: '',
         vehicle_type: '',
         stock_status: '',
-        attribute_set_id: ''
+        attribute_set_id: '',
+        tyres_category: '',
+        parts_category: '',
+        run_flat: '',
+        ev_rated: '',
+        rim_size: '',
+        speed_rating: '',
+        country_of_origin: '',
+        year: '',
+        attr_code: '',
+        attr_value: ''
       };
       this.currentPage = 1;
       this.fetchProducts();
@@ -1195,13 +1258,17 @@ window.visionProductsApp = function visionProductsApp(initialView = '', initialP
         const data = await res.json();
         this.csvResult = data;
         if (data.success) {
-          this.showToast(data.message || `Successfully imported ${data.imported} products!`, 'success');
+          if (data.extra_attributes && data.extra_attributes.length > 0) {
+            this.showToast(`Imported ${data.imported || 0} products. Notice: ${data.extra_attributes.length} unrecognized attribute(s) found.`, 'success');
+          } else {
+            this.showToast(data.message || `Successfully imported ${data.imported} products!`, 'success');
+            setTimeout(() => {
+              this.csvModalOpen = false;
+            }, 2000);
+          }
           this.fetchProducts();
           this.fetchBrands();
           this.fetchCategories();
-          setTimeout(() => {
-            this.csvModalOpen = false;
-          }, 1800);
         } else {
           this.showToast(data.error || 'Failed to import CSV.', 'error');
         }

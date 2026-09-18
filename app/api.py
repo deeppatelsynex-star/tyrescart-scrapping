@@ -4583,8 +4583,12 @@ def register_visionadmin_api_routes(app):
                 'imported': res.get('imported', 0),
                 'updated': res.get('updated', 0),
                 'total_rows': res.get('total_rows', 0),
+                'matched_attributes': res.get('matched_attributes', []),
+                'extra_attributes': res.get('extra_attributes', []),
+                'missing_attributes': res.get('missing_attributes', []),
+                'warning': res.get('warning'),
                 'errors': res.get('errors', []),
-                'message': f"Successfully imported {res.get('imported', 0)} products (updated {res.get('updated', 0)})!"
+                'message': res.get('message') or f"Successfully processed {res.get('total_rows', 0)} products ({res.get('imported', 0)} imported, {res.get('updated', 0)} updated)!"
             })
         except Exception as e:
             app.logger.exception(f"Error importing CSV: {e}")
@@ -4612,6 +4616,18 @@ def register_visionadmin_api_routes(app):
         sort_by = request.args.get('sort_by', 'created_at')
         sort_dir = request.args.get('sort_dir', 'DESC')
 
+        # Extended attribute filters
+        tyres_category = request.args.get('tyres_category')
+        parts_category = request.args.get('parts_category')
+        run_flat = request.args.get('run_flat')
+        ev_rated = request.args.get('ev_rated')
+        rim_size = request.args.get('rim_size')
+        speed_rating = request.args.get('speed_rating')
+        country_of_origin = request.args.get('country_of_origin')
+        year = request.args.get('year')
+        attr_code = request.args.get('attr_code')
+        attr_value = request.args.get('attr_value')
+
         bid = int(brand_id) if brand_id and str(brand_id).isdigit() else None
         cid = int(category_id) if category_id and str(category_id).isdigit() else None
         asid = int(attribute_set_id) if attribute_set_id and str(attribute_set_id).isdigit() else None
@@ -4628,7 +4644,17 @@ def register_visionadmin_api_routes(app):
             attribute_set_id=asid,
             is_trash=is_trash,
             sort_by=sort_by,
-            sort_dir=sort_dir
+            sort_dir=sort_dir,
+            tyres_category=tyres_category if tyres_category else None,
+            parts_category=parts_category if parts_category else None,
+            run_flat=run_flat if run_flat not in (None, '') else None,
+            ev_rated=ev_rated if ev_rated not in (None, '') else None,
+            rim_size=rim_size if rim_size else None,
+            speed_rating=speed_rating if speed_rating else None,
+            country_of_origin=country_of_origin if country_of_origin else None,
+            year=year if year else None,
+            attr_code=attr_code if attr_code else None,
+            attr_value=attr_value if attr_value not in (None, '') else None
         )
         counts = Product.get_counts()
         result['counts'] = counts
@@ -4796,6 +4822,34 @@ def register_visionadmin_api_routes(app):
         )
 
         return jsonify({'success': True, 'affected': affected, 'message': f'Bulk {action} applied to {affected} products.'})
+
+    # =========================================================================
+    # ELASTICSEARCH ACTIVE PRODUCTS API
+    # =========================================================================
+    @app.route('/visionadmin/api/elasticsearch/status', methods=['GET'])
+    @app.route('/visionadmin/api/v1/elasticsearch/status', methods=['GET'])
+    def visionadmin_api_elasticsearch_status():
+        try:
+            from services.es_service import es_service
+            status = es_service.check_connection()
+            return jsonify({'success': True, 'data': status})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/visionadmin/api/elasticsearch/reindex', methods=['POST'])
+    @app.route('/visionadmin/api/v1/elasticsearch/reindex', methods=['POST'])
+    def visionadmin_api_elasticsearch_reindex():
+        try:
+            from services.es_service import es_service
+            data = request.get_json(silent=True) or {}
+            recreate = bool(data.get('recreate', False))
+            batch_size = int(data.get('batch_size', 500))
+
+            res = es_service.index_all_active_products(batch_size=batch_size, recreate=recreate)
+            status_code = 200 if res.get('success') else 500
+            return jsonify(res), status_code
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
 
 
 def register_client_api_routes(app):
@@ -5352,6 +5406,42 @@ def register_client_api_routes(app):
     def api_catalog_facets():
         """Returns pre-computed aggregated facet counts for filter sidebar."""
         return api_catalog_search()
+
+    # =========================================================================
+    # ELASTICSEARCH PRODUCTS SEARCH API
+    # =========================================================================
+    @app.route('/api/es/products', methods=['GET'])
+    @app.route('/api/v1/es/products', methods=['GET'])
+    def client_api_es_products():
+        try:
+            from services.es_service import es_service
+            q = request.args.get('q', '').strip()
+            page = int(request.args.get('page', 1))
+            per_page = min(int(request.args.get('per_page', 25)), 100)
+            sort_by = request.args.get('sort_by', 'created_at')
+            sort_dir = request.args.get('sort_dir', 'desc')
+
+            filters = {}
+            for field in ['brand_id', 'brand_name', 'brand_slug', 'category_id', 'tyres_category',
+                          'parts_category', 'vehicle_type', 'rim_size', 'speed_rating',
+                          'country_of_origin', 'year', 'tire_pattern', 'oem_brand',
+                          'run_flat', 'ev_rated', 'min_price', 'max_price']:
+                val = request.args.get(field)
+                if val is not None and val != '':
+                    filters[field] = val
+
+            res = es_service.search_products(
+                query=q,
+                filters=filters,
+                sort_by=sort_by,
+                sort_dir=sort_dir,
+                page=page,
+                per_page=per_page
+            )
+            status_code = 200 if res.get('success') else 503
+            return jsonify(res), status_code
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
 
 
 def register_api_routes(app):
