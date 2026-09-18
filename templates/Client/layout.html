@@ -560,6 +560,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
      <a href="#top"><img src="tyresvision-logo.svg" alt="TyresVision" height="40"></a>
      ============================================================ -->
 
+{% block site_header %}
 <header>
   <nav class="nav" aria-label="Main">
     <a class="logo" href="/" aria-label="TyresVision home">
@@ -598,6 +599,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </nav>
 </header>
+{% endblock %}
 
 <main id="main">
 {% block content %}{% endblock %}
@@ -648,6 +650,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </div>
 
 <!-- ================= FOOTER ================= -->
+{% block site_footer %}
 <footer>
   <div class="wrap">
     <div class="f-grid">
@@ -711,6 +714,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </div>
 </footer>
+{% endblock %}
 
 <div class="mobile-cta" role="group" aria-label="Contact TyresVision">
   <a class="btn btn-call" href="tel:+971505069575">

@@ -1,0 +1,731 @@
+{% extends 'Client/layout.html' %}
+
+{% block title %}{{ product.title }} | Buy Online at TyresVision UAE{% endblock %}
+
+{% block meta_description %}{{ product.title }} {{ product.pattern_name }} in stock with free delivery, warranty and mobile fitting across UAE. Buy single tyre, set of 2 or set of 4 at best prices.{% endblock %}
+
+{% block canonical_url %}https://www.tyresvision.com/{{ product.slug }}{% endblock %}
+
+{% block extra_head %}
+<!-- Google Fonts for Drive with Confidence script -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+  window.pdpProductPrice = {{ product.price }};
+  window.pdpProductOffer = "{{ product.offer_banner|default('', true)|escape }}";
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="tv-pdp-page-wrapper">
+
+  <!-- 1. HERO BANNER -->
+  <section class="tv-pdp-hero">
+    <div class="tv-pdp-hero-bg-art" aria-hidden="true">
+      <img src="/static/assets/images/pdp_hero_banner.jpg" alt="Drive with Confidence" class="tv-pdp-hero-img" onerror="this.style.display='none';">
+    </div>
+
+    <div class="tv-pdp-container tv-pdp-hero-content-wrap">
+      <div class="tv-pdp-hero-left">
+        <div class="tv-pdp-hero-kicker">PREMIUM TYRES FOR A BETTER TOMORROW</div>
+        <h1 class="tv-pdp-hero-title">{{ product.title }}</h1>
+        <p class="tv-pdp-hero-sub">Safety, performance and durability for every journey.</p>
+      </div>
+
+      <!-- Drive with Confidence Script Overlay on Wheel -->
+      <div class="tv-pdp-hero-script" aria-hidden="true">
+        Drive<br>with Confidence
+      </div>
+
+      <!-- Floating 3-Item Trust Pill -->
+      <div class="tv-pdp-hero-trust-pill">
+        <div class="tv-hero-pill-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="3" width="15" height="13"></rect>
+            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+            <circle cx="18.5" cy="18.5" r="2.5"></circle>
+          </svg>
+          <div class="tv-pill-text">
+            <span class="tv-pill-title">Free Delivery</span>
+            <span class="tv-pill-desc">On all orders</span>
+          </div>
+        </div>
+
+        <div class="tv-hero-pill-divider"></div>
+
+        <div class="tv-hero-pill-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <div class="tv-pill-text">
+            <span class="tv-pill-title">Expert Support</span>
+            <span class="tv-pill-desc">We're here to help</span>
+          </div>
+        </div>
+
+        <div class="tv-hero-pill-divider"></div>
+
+        <div class="tv-hero-pill-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <polyline points="9 12 11 14 15 10"></polyline>
+          </svg>
+          <div class="tv-pill-text">
+            <span class="tv-pill-title">100% Genuine</span>
+            <span class="tv-pill-desc">Original products</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. BREADCRUMBS -->
+  <div class="tv-pdp-breadcrumb-bar">
+    <div class="tv-pdp-container">
+      <nav class="tv-pdp-breadcrumb" aria-label="Breadcrumb">
+        <a href="/" class="tv-bc-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Home</span>
+        </a>
+        <span class="tv-bc-sep">&rsaquo;</span>
+        <a href="/tyres" class="tv-bc-item">Tyres</a>
+        <span class="tv-bc-sep">&rsaquo;</span>
+        <a href="/tyres/brand-{{ product.brand_name|lower }}" class="tv-bc-item">{{ product.brand_name }}</a>
+        <span class="tv-bc-sep">&rsaquo;</span>
+        <span class="tv-bc-current">{{ product.title }}</span>
+      </nav>
+    </div>
+  </div>
+
+  <!-- 3. MAIN PRODUCT GRID (LEFT DETAILS + RIGHT BUY BOX) -->
+  <section class="tv-pdp-main-section">
+    <div class="tv-pdp-container tv-pdp-layout-grid">
+      
+      <!-- LEFT PRODUCT SHOWCASE & DETAILS COLUMN -->
+      <div class="tv-pdp-left-col">
+        
+        <!-- IMAGE SHOWCASE STAGE CARD -->
+        <div class="tv-pdp-showcase-card">
+          <!-- Top Row: Brand Logo + Unique Stock Badge -->
+          <div class="tv-pdp-showcase-top">
+            <div class="tv-pdp-img-brand-wrap" title="{{ product.brand_name }}">
+              {% if product.brand_logo %}
+              <img src="{{ product.brand_logo }}" alt="{{ product.brand_name }}" class="tv-pdp-brand-logo-img">
+              {% else %}
+              <span class="tv-pdp-brand-fallback">{{ product.brand_name }}</span>
+              {% endif %}
+            </div>
+
+            <!-- Unique In Stock Badge with Live Pulsing Radar Beacon -->
+            <div class="tv-pdp-stock-badge-unique" title="100% In Stock & Verified at UAE Central Hub">
+              <span class="tv-stock-beacon">
+                <span class="tv-beacon-ring"></span>
+                <span class="tv-beacon-dot"></span>
+              </span>
+              <span class="tv-stock-text">In Stock</span>
+              <span class="tv-stock-spark">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              </span>
+            </div>
+          </div>
+
+          <!-- Centered Crisp 3D Tyre On Wheel Visual -->
+          <div class="tv-pdp-tyre-3d-stage">
+            <img src="{{ product.image_path }}" 
+                 alt="{{ product.title }}" 
+                 class="tv-pdp-main-tyre-img tv-pdp-tyre-3d"
+                 id="pdp-main-image"
+                 onerror="this.src='/static/uploads/products/michelin_energy_xm2_wheel.jpg'">
+          </div>
+
+          <!-- Floating Tech Trust Badges Row -->
+          <div class="tv-pdp-showcase-badges">
+            <span class="tv-pdp-badge-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span>{{ product.warranty }}{% if 'warranty' not in product.warranty|lower %} Warranty{% endif %}</span>
+            </span>
+            <span class="tv-pdp-badge-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg>
+              <span>100% Genuine Quality</span>
+            </span>
+            <span class="tv-pdp-badge-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <span>3PMSF Certified</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- 8 SPECIFICATION PILL CARDS -->
+        <div class="tv-pdp-spec-section-wrap">
+          <h3 class="tv-pdp-spec-title">Key Specifications</h3>
+          <div class="tv-pdp-spec-grid tv-pdp-spec-grid-v2">
+            <!-- 1. Width -->
+            <div class="tv-pdp-spec-card">
+              <div class="tv-pdp-spec-icon-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h12M6 9v6M18 9v6"></path></svg>
+              </div>
+              <div class="tv-pdp-spec-meta">
+                <span class="tv-pdp-spec-key">Width</span>
+                <strong class="tv-pdp-spec-val">{{ product.width }}</strong>
+              </div>
+            </div>
+
+            <!-- 2. Profile -->
+            <div class="tv-pdp-spec-card">
+              <div class="tv-pdp-spec-icon-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="3" x2="12" y2="21"></line></svg>
+              </div>
+              <div class="tv-pdp-spec-meta">
+                <span class="tv-pdp-spec-key">Profile</span>
+                <strong class="tv-pdp-spec-val">{{ product.profile }}</strong>
+              </div>
+            </div>
+
+            <!-- 3. Rim Size -->
+            <div class="tv-pdp-spec-card">
+              <div class="tv-pdp-spec-icon-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle></svg>
+              </div>
+              <div class="tv-pdp-spec-meta">
+                <span class="tv-pdp-spec-key">Rim Size</span>
+                <strong class="tv-pdp-spec-val">{{ product.rim_size }}</strong>
+              </div>
+            </div>
+
+            <!-- 4. Load / Speed -->
+            <div class="tv-pdp-spec-card">
+              <div class="tv-pdp-spec-icon-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+              <div class="tv-pdp-spec-meta">
+                <span class="tv-pdp-spec-key">Load / Speed</span>
+                <strong class="tv-pdp-spec-val">{{ product.load_speed }}</strong>
+              </div>
+            </div>
+
+            <!-- 5. Type -->
+            <div class="tv-pdp-spec-card">
+              <div class="tv-pdp-spec-icon-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><circle cx="17" cy="17" r="2"></circle></svg>
+              </div>
+              <div class="tv-pdp-spec-meta">
+                <span class="tv-pdp-spec-key">Vehicle Type</span>
+                <strong class="tv-pdp-spec-val">{{ product.type }}</strong>
+              </div>
+            </div>
+
+            <!-- 6. Season -->
+            <div class="tv-pdp-spec-card">
+              <div class="tv-pdp-spec-icon-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+              </div>
+              <div class="tv-pdp-spec-meta">
+                <span class="tv-pdp-spec-key">Season</span>
+                <strong class="tv-pdp-spec-val">{{ product.season }}</strong>
+              </div>
+            </div>
+
+            <!-- 7. Year -->
+            <div class="tv-pdp-spec-card">
+              <div class="tv-pdp-spec-icon-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              </div>
+              <div class="tv-pdp-spec-meta">
+                <span class="tv-pdp-spec-key">Year of Prod.</span>
+                <strong class="tv-pdp-spec-val">{{ product.year }}</strong>
+              </div>
+            </div>
+
+            <!-- 8. Country -->
+            <div class="tv-pdp-spec-card">
+              <div class="tv-pdp-spec-icon-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+              </div>
+              <div class="tv-pdp-spec-meta">
+                <span class="tv-pdp-spec-key">Origin</span>
+                <strong class="tv-pdp-spec-val">{{ product.country }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABS SECTION -->
+        <div class="tv-pdp-tabs-section">
+          <!-- Nav Tabs -->
+          <div class="tv-pdp-tabs-nav" role="tablist">
+            <button type="button" class="tv-tab-btn is-active" onclick="switchPdpTab('desc', this)" role="tab" aria-selected="true">
+              Description
+            </button>
+            <button type="button" class="tv-tab-btn" onclick="switchPdpTab('specs', this)" role="tab" aria-selected="false">
+              Specifications
+            </button>
+            <button type="button" class="tv-tab-btn" onclick="switchPdpTab('features', this)" role="tab" aria-selected="false">
+              Features
+            </button>
+            <button type="button" class="tv-tab-btn" onclick="switchPdpTab('install', this)" role="tab" aria-selected="false">
+              Installation
+            </button>
+            <button type="button" class="tv-tab-btn" onclick="switchPdpTab('faqs', this)" role="tab" aria-selected="false">
+              FAQs
+            </button>
+          </div>
+
+          <!-- Tab Content Box -->
+          <div class="tv-pdp-tab-panel">
+            <!-- 1. Description Panel (Active by default) -->
+            <div id="tab-desc" class="tv-tab-pane is-active">
+              <div class="tv-tab-split-layout">
+                <div class="tv-tab-copy-left">
+                  <h3 class="tv-tab-heading">{{ product.brand_name }} {{ product.pattern_name }}</h3>
+                  <p class="tv-tab-paragraph">{{ product.description }}</p>
+                </div>
+
+                <div class="tv-tab-highlight-card">
+                  <div class="tv-highlight-brand-wrap">
+                    {% if product.brand_logo %}
+                    <img src="{{ product.brand_logo }}" alt="{{ product.brand_name }}" class="tv-highlight-brand-logo">
+                    {% else %}
+                    <strong class="tv-highlight-brand-text">{{ product.brand_name }}</strong>
+                    {% endif %}
+                  </div>
+
+                  <ul class="tv-highlight-list">
+                    <li class="tv-highlight-bullet">
+                      <span class="tv-check-icon-circle">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      </span>
+                      <span>Maximum Wet &amp; Dry Safety</span>
+                    </li>
+                    <li class="tv-highlight-bullet">
+                      <span class="tv-check-icon-circle">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      </span>
+                      <span>Extended Tread Life</span>
+                    </li>
+                    <li class="tv-highlight-bullet">
+                      <span class="tv-check-icon-circle">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      </span>
+                      <span>Optimized Fuel Efficiency</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Specifications Panel -->
+            <div id="tab-specs" class="tv-tab-pane" style="display:none;">
+              <h3 class="tv-tab-heading">Detailed Technical Specifications</h3>
+              <div class="tv-specs-table-wrap">
+                <table class="tv-specs-table">
+                  <tbody>
+                    <tr><th>Brand</th><td>{{ product.brand_name }}</td><th>Pattern</th><td>{{ product.pattern_name }}</td></tr>
+                    <tr><th>Tyre Size</th><td>{{ product.tire_size_label }}</td><th>Load &amp; Speed Rating</th><td>{{ product.load_speed }}</td></tr>
+                    <tr><th>Width</th><td>{{ product.width }}</td><th>Aspect Ratio / Profile</th><td>{{ product.profile }}</td></tr>
+                    <tr><th>Rim Diameter</th><td>{{ product.rim_size }}</td><th>Vehicle Type</th><td>{{ product.type }}</td></tr>
+                    <tr><th>Country of Origin</th><td>{{ product.country }}</td><th>Manufacturing Year</th><td>{{ product.year }}</td></tr>
+                    <tr><th>Season</th><td>{{ product.season }}</td><th>Run Flat Technology</th><td>{{ product.run_flat }}</td></tr>
+                    <tr><th>Warranty Period</th><td>{{ product.warranty }}{% if 'warranty' not in product.warranty|lower %} Warranty{% endif %}</td><th>Stock Availability</th><td>{{ 'In Stock (Immediate Dispatch)' if product.in_stock else 'On Demand' }}</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 3. Features Panel -->
+            <div id="tab-features" class="tv-tab-pane" style="display:none;">
+              <h3 class="tv-tab-heading">Key Engineering Features</h3>
+              <div class="tv-features-cards-grid">
+                <div class="tv-feature-box">
+                  <div class="tv-feature-icon">🛡️</div>
+                  <h4>Micro-Adaptive Rubber Compound</h4>
+                  <p>Advanced full-silica formulation adapts seamlessly to road surface micro-irregularities, maximizing contact area and grip under aggressive braking.</p>
+                </div>
+                <div class="tv-feature-box">
+                  <div class="tv-feature-icon">⚡</div>
+                  <h4>Optimized Tread Block Geometry</h4>
+                  <p>Specially engineered alternating shoulder blocks prevent irregular pattern wear, ensuring whisper-quiet acoustic comfort and long lifespan.</p>
+                </div>
+                <div class="tv-feature-box">
+                  <div class="tv-feature-icon">🌧️</div>
+                  <h4>Rapid Water Evacuation Grooves</h4>
+                  <p>Deep longitudinal circumferential channels quickly disperse standing water, dramatically reducing aquaplaning risk in sudden downpours.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Installation Panel -->
+            <div id="tab-install" class="tv-tab-pane" style="display:none;">
+              <h3 class="tv-tab-heading">Free Fitting &amp; Installation Options</h3>
+              <p class="tv-tab-paragraph">Every order with TyresVision includes complimentary certified fitting, electronic wheel balancing, new standard rubber valves, and disposal of your old tyres.</p>
+              <div class="tv-install-options-grid">
+                <div class="tv-install-card">
+                  <h4>🚐 Mobile Fitting at Home or Office</h4>
+                  <p>Our fully equipped mobile service vans come to your doorstep across Dubai, Abu Dhabi, Sharjah, and Ajman. Book your preferred 2-hour arrival window.</p>
+                </div>
+                <div class="tv-install-card">
+                  <h4>🏢 Certified Fitting Centres</h4>
+                  <p>Over 80+ partner garages and tyre fitment centres across all 7 Emirates. Drive in and have your tyres professionally mounted within 30 minutes.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. FAQs Panel -->
+            <div id="tab-faqs" class="tv-tab-pane" style="display:none;">
+              <h3 class="tv-tab-heading">Frequently Asked Questions</h3>
+              <div class="tv-faqs-accordion">
+                <details class="tv-faq-item" open>
+                  <summary class="tv-faq-question">What is included in the tyre price?</summary>
+                  <div class="tv-faq-answer">All tyre prices on TyresVision include free doorstep mobile van fitting or centre installation, computerized wheel balancing, new valves, and environmental disposal of old tyres. No hidden fees.</div>
+                </details>
+                <details class="tv-faq-item">
+                  <summary class="tv-faq-question">Are the tyres date-fresh and genuine?</summary>
+                  <div class="tv-faq-answer">Yes, 100% of our inventory consists of genuine, brand-authorized tyres with official manufacturer date stamps (DOT {{ product.year }}) backed by official warranties.</div>
+                </details>
+                <details class="tv-faq-item">
+                  <summary class="tv-faq-question">Can I pay in 4 interest-free installments?</summary>
+                  <div class="tv-faq-answer">Yes, we support Tabby and Tamara allowing you to split your purchase into 4 equal monthly payments with zero interest and zero added fees.</div>
+                </details>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT STICKY BUY HUB COLUMN -->
+      <div class="tv-pdp-right-col">
+        <div class="tv-pdp-buy-card">
+          
+          <!-- Brand Eyebrow & Main Title -->
+          <div class="tv-pdp-header-block">
+            <span class="tv-pdp-brand-eyebrow">{{ product.brand_name|upper }}</span>
+            <h2 class="tv-pdp-main-title">{{ product.title }}</h2>
+            <div class="tv-pdp-sub-strip">
+              <span class="tv-pdp-pattern-pill">{{ product.pattern_name }}</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Promotional Offer Alert (If Offer is Active) -->
+          {% if product.has_offer %}
+          <div class="tv-pdp-offer-alert">
+            <div class="tv-pdp-offer-headline">{{ product.offer_banner }}</div>
+            {% if 'BUY 3' in product.offer_banner or 'BUY 2' in product.offer_banner %}
+            <div class="tv-pdp-offer-sub">
+              {% if 'BUY 3' in product.offer_banner %}
+              Buy a set of 4 tyres and pay for only 3 tyres &mdash; 1 tyre is completely FREE!
+              {% elif 'BUY 2' in product.offer_banner %}
+              Buy 4 tyres and pay for only 2 tyres!
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <!-- Unit Price Row -->
+          <div class="tv-pdp-unit-price-box">
+            <div class="tv-pdp-unit-price-line">
+              <span class="currency-dirham tv-curr-glyph">&#xe900;</span>
+              <strong class="tv-pdp-unit-price-num">{{ product.price_formatted }}</strong>
+              <span class="tv-pdp-unit-per">/ tyre</span>
+            </div>
+            <div class="tv-pdp-price-fitted-note" onclick="openFittedPriceModal(event)" role="button" tabindex="0">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>Price incl. Mobile Fitting, Balancing &amp; Disposal</span>
+            </div>
+          </div>
+
+          <!-- Quantity Stepper -->
+          <div class="tv-pdp-qty-section">
+            <span class="tv-pdp-qty-label">Quantity</span>
+            <div class="tv-pdp-qty-row">
+              <div class="tv-pdp-stepper">
+                <button type="button" class="tv-step-btn" onclick="stepPdpQty(-1)" aria-label="Decrease quantity">&minus;</button>
+                <input type="number" id="pdp-qty-input" class="tv-step-input" value="4" min="1" max="20" readonly>
+                <button type="button" class="tv-step-btn" onclick="stepPdpQty(1)" aria-label="Increase quantity">&plus;</button>
+              </div>
+
+              <div class="tv-pdp-qty-recommendation">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="12" r="4"></circle>
+                  <line x1="12" y1="2" x2="12" y2="4"></line>
+                  <line x1="12" y1="20" x2="12" y2="22"></line>
+                </svg>
+                <span>Set of 4 tyres recommended</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ACTION BUTTONS: DYNAMIC PRICE & LIVE OFFER INSIDE "ADD TO CART" BUTTON -->
+          <div class="tv-pdp-actions-stack">
+            <!-- DYNAMIC ADD TO CART BUTTON -->
+            <button type="button" id="pdp-add-to-cart-btn" class="tv-pdp-btn-add-cart" onclick="addToCartPDP('{{ product.id }}', '{{ product.title|escape }}', {{ product.price }})">
+              <div class="tv-pdp-btn-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                <span>Add to Cart</span>
+              </div>
+              <div class="tv-pdp-btn-right">
+                <div class="tv-pdp-btn-meta-row" id="pdp-btn-meta-row" style="{% if not (product.has_offer and 'BUY' in product.offer_banner) %}display:none;{% endif %}">
+                  <!-- Strikethrough regular price if offer savings active -->
+                  <span id="pdp-btn-strike" class="tv-pdp-btn-strike">
+                    <span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> {{ product.price_set4_regular_formatted }}
+                  </span>
+                  <!-- Real-Time Savings Pill -->
+                  <span id="pdp-btn-save-pill" class="tv-pdp-btn-save-pill">
+                    SAVE <span class="currency-dirham tv-curr-glyph-sub" style="font-size:9px;">&#xe900;</span> {{ product.price_formatted }}
+                  </span>
+                </div>
+                <!-- Dynamic Live Price -->
+                <span class="tv-pdp-btn-price-wrap">
+                  <span class="currency-dirham tv-curr-glyph-btn">&#xe900;</span>
+                  <span id="pdp-btn-price">{{ product.price_set4_formatted }}</span>
+                </span>
+              </div>
+            </button>
+
+            <!-- BUY NOW BUTTON -->
+            <button type="button" id="pdp-buy-now-btn" class="tv-pdp-btn-buy-now" onclick="buyNowPDP('{{ product.id }}', '{{ product.title|escape }}', {{ product.price }})">
+              <div class="tv-pdp-btn-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                </svg>
+                <span>Buy Now</span>
+              </div>
+              <div class="tv-pdp-btn-right">
+                <span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span>
+                <span id="pdp-buy-price">{{ product.price_set4_formatted }}</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Payment Badges Strip -->
+          <div class="tv-pdp-payment-strip">
+            <span class="tv-pay-pill tv-pay-tabby">tabby</span>
+            <span class="tv-pay-pill tv-pay-tamara">tamara</span>
+            <span class="tv-pay-pill tv-pay-visa">VISA</span>
+            <span class="tv-pay-pill tv-pay-mc">
+              <svg width="24" height="15" viewBox="0 0 36 24" fill="none">
+                <circle cx="13" cy="12" r="10" fill="#EB001B"/>
+                <circle cx="23" cy="12" r="10" fill="#F79E1B" fill-opacity="0.85"/>
+              </svg>
+            </span>
+            <span class="tv-pay-pill tv-pay-apple">
+              <svg width="13" height="15" viewBox="0 0 170 170" fill="currentColor">
+                <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.74 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.67-7.81-11.96-14.34-6.19-9.57-11.04-20.48-14.54-32.74-3.5-12.26-5.26-23.77-5.26-34.52 0-14.13 3.63-25.96 10.89-35.48 7.26-9.52 16.48-14.34 27.66-14.46 4.91 0 10.36 1.34 16.36 4.02 6 2.68 9.97 4.09 11.91 4.23 1.83-.14 6.02-1.61 12.56-4.41 6.54-2.8 12.18-4.08 16.92-3.84 13.04.63 23.36 5.51 30.97 14.65-11.45 6.94-17.06 16.45-16.84 28.53.22 9.57 3.91 17.58 11.08 24.03 7.17 6.45 15.65 10.05 25.44 10.8-2.17 6.74-4.89 13.37-8.15 19.89zM119.22 33.09c0-7.05 2.58-13.8 7.74-20.24 5.16-6.44 11.64-10.65 19.44-12.63.87 2.06 1.31 4.13 1.31 6.22 0 7.16-2.72 14.02-8.15 20.57-5.43 6.55-12.19 10.68-20.28 12.4-0.04-2.12-.06-4.22-.06-6.32z"/>
+              </svg>
+              <span>Pay</span>
+            </span>
+          </div>
+
+          <!-- Quick Trust Perks List -->
+          <div class="tv-pdp-perks-list">
+            <div class="tv-perk-item">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Complimentary Doorstep Mobile Fitting</span>
+            </div>
+            <div class="tv-perk-item">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>1 Year Manufacturer Warranty Included</span>
+            </div>
+            <div class="tv-perk-item">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>100% Brand-New Factory Fresh Inventory</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 4. TRUST BAR (4 PILLARS) -->
+  <section class="tv-pdp-trust-section">
+    <div class="tv-pdp-container">
+      <div class="tv-pdp-trust-bar">
+        <!-- 1. Free Delivery -->
+        <div class="tv-trust-item">
+          <div class="tv-trust-icon-box">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+          </div>
+          <div class="tv-trust-text">
+            <h4 class="tv-trust-heading">Free Delivery</h4>
+            <span class="tv-trust-desc">On all orders</span>
+          </div>
+        </div>
+
+        <div class="tv-trust-v-divider"></div>
+
+        <!-- 2. Free Wheel Alignment -->
+        <div class="tv-trust-item">
+          <div class="tv-trust-icon-box">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+            </svg>
+          </div>
+          <div class="tv-trust-text">
+            <h4 class="tv-trust-heading">Free Wheel Alignment</h4>
+            <span class="tv-trust-desc">With purchase</span>
+          </div>
+        </div>
+
+        <div class="tv-trust-v-divider"></div>
+
+        <!-- 3. 1 Year Warranty -->
+        <div class="tv-trust-item">
+          <div class="tv-trust-icon-box">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+          </div>
+          <div class="tv-trust-text">
+            <h4 class="tv-trust-heading">1 Year Warranty</h4>
+            <span class="tv-trust-desc">Manufacturer warranty</span>
+          </div>
+        </div>
+
+        <div class="tv-trust-v-divider"></div>
+
+        <!-- 4. 100% Authentic -->
+        <div class="tv-trust-item">
+          <div class="tv-trust-icon-box">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0066FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="7"></circle>
+              <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+            </svg>
+          </div>
+          <div class="tv-trust-text">
+            <h4 class="tv-trust-heading">100% Authentic</h4>
+            <span class="tv-trust-desc">Genuine products</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. RELATED PRODUCTS SECTION: SAME SIZE FROM DIFFERENT BRANDS -->
+  <section class="tv-pdp-related-section">
+    <div class="tv-pdp-container">
+      
+      <div class="tv-pdp-related-head">
+        <div class="tv-pdp-rel-headings">
+          <h2 class="tv-pdp-related-title">Same Size from Other Brands ({{ product.tire_size_label }})</h2>
+          <p class="tv-pdp-related-sub">Looking for {{ product.tire_size_label }}? Compare alternative tyre options from top brands in stock.</p>
+        </div>
+        <div class="tv-pdp-related-actions">
+          <a href="/tyres" class="tv-pdp-view-all">View All Tyres &rarr;</a>
+          <div class="tv-pdp-carousel-nav">
+            <button type="button" class="tv-pdp-nav-arrow" onclick="scrollRelated(-1)" aria-label="Previous tyres">&lsaquo;</button>
+            <button type="button" class="tv-pdp-nav-arrow" onclick="scrollRelated(1)" aria-label="Next tyres">&rsaquo;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 DISTINCT SAME-SIZE BRAND PRODUCT CARDS -->
+      <div class="tv-pdp-related-grid" id="related-products-carousel">
+        {% for rp in related_products %}
+        <div class="tv-rel-card">
+          <!-- Top Row: Offer Badge & Brand Logo -->
+          <div class="tv-rel-card-top">
+            {% if rp.has_offer %}
+            <span class="tv-rel-offer-pill">{{ rp.offer_banner }}</span>
+            {% else %}
+            <span class="tv-rel-warranty-badge">{{ rp.warranty }}</span>
+            {% endif %}
+
+            <div class="tv-rel-brand-wrap">
+              {% if rp.brand_logo %}
+              <img src="{{ rp.brand_logo }}" alt="{{ rp.brand_name }}" class="tv-rel-brand-img">
+              {% else %}
+              <span class="tv-rel-brand-fallback">{{ rp.brand_name }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Centered Tyre Image (Uncropped) -->
+          <a href="/{{ rp.slug }}" class="tv-rel-img-link">
+            <img src="{{ rp.image_path }}" 
+                 alt="{{ rp.title }}" 
+                 class="tv-rel-tyre-img"
+                 loading="lazy"
+                 onerror="this.src='/static/uploads/products/michelin_energy_xm2_wheel.jpg'">
+          </a>
+
+          {% if rp.has_offer %}
+          <div class="tv-rel-warranty-badge">
+            {{ rp.warranty }}
+          </div>
+          {% endif %}
+
+          <!-- Product Titles -->
+          <a href="/{{ rp.slug }}" class="tv-rel-title-link">
+            <h3 class="tv-rel-title">{{ rp.title }}</h3>
+          </a>
+          <div class="tv-rel-pattern">{{ rp.pattern_name }}</div>
+          <div class="tv-rel-meta">{{ rp.size }} &bull; {{ rp.year }} &bull; {{ rp.country }}</div>
+
+          <!-- 3 Price Columns (Single / Set of 2 / Set of 4) -->
+          <div class="tv-rel-price-columns">
+            <div class="tv-rel-price-col">
+              <span class="tv-rel-price-lbl">Single</span>
+              <strong class="tv-rel-price-val"><span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> {{ rp.price_formatted }}</strong>
+            </div>
+
+            <div class="tv-rel-price-col">
+              <span class="tv-rel-price-lbl">Set of 2</span>
+              <strong class="tv-rel-price-val"><span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> {{ rp.price_set2_formatted }}</strong>
+              <span class="tv-rel-price-each"><span class="currency-dirham tv-curr-glyph-sub" style="font-size: 10px;">&#xe900;</span> {{ rp.price_formatted }} each</span>
+            </div>
+
+            <div class="tv-rel-price-col">
+              <span class="tv-rel-price-lbl">Set of 4</span>
+              <strong class="tv-rel-price-val"><span class="currency-dirham tv-curr-glyph-sub">&#xe900;</span> {{ rp.price_set4_formatted }}</strong>
+              <span class="tv-rel-price-each"><span class="currency-dirham tv-curr-glyph-sub" style="font-size: 10px;">&#xe900;</span> {{ rp.price_formatted }} each</span>
+            </div>
+          </div>
+
+          <!-- Bottom Action Row: Qty Select (Default 4) + Add to Cart -->
+          <div class="tv-rel-card-actions">
+            <select class="tv-rel-qty-select" aria-label="Select quantity">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4" selected>4</option>
+            </select>
+
+            <button type="button" class="tv-rel-btn-add" onclick="addRelToCart(this, '{{ rp.title|escape }}', {{ rp.price }})">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              <span>Add to Cart</span>
+            </button>
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </section>
+
+</div>
+{% endblock %}
