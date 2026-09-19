@@ -7823,21 +7823,21 @@ details summary span:last-child {
   display: inline-block;
 }
 
-/* Trigger Button: Rounded card with bright blue border */
+/* Trigger Button: Rounded card with bright blue border matching reference image */
 .tv-sort-trigger {
   display: inline-flex;
   align-items: center;
   gap: 10px;
   padding: 8px 14px;
   background: #ffffff;
-  border: 1.8px solid #2563eb;
-  border-radius: 8px;
+  border: 2px solid #0066ff;
+  border-radius: 12px;
   font-size: 0.92rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #0f172a;
   cursor: pointer;
   outline: none;
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 102, 255, 0.08);
   transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
               background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -7846,11 +7846,13 @@ details summary span:last-child {
 
 .tv-sort-trigger:hover {
   background-color: #f8fafc;
-  border-color: #1d4ed8;
+  border-color: #0052cc;
 }
 
-.tv-sort-trigger:focus-visible {
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+.tv-sort-trigger:focus-visible,
+.tv-custom-sort.is-open .tv-sort-trigger {
+  border-color: #0066ff;
+  box-shadow: 0 0 0 3.5px rgba(0, 102, 255, 0.18);
 }
 
 .tv-sort-trigger-icon {
@@ -7866,14 +7868,15 @@ details summary span:last-child {
 .tv-sort-trigger-divider {
   display: inline-block;
   width: 1px;
-  height: 16px;
+  height: 20px;
   background-color: #e2e8f0;
-  margin: 0 2px;
+  margin: 0 4px;
 }
 
 .tv-sort-trigger-chevron {
   flex-shrink: 0;
-  color: #1e293b;
+  color: #0066ff;
+  stroke: #0066ff;
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -7881,28 +7884,26 @@ details summary span:last-child {
   transform: rotate(180deg);
 }
 
-/* Floating Glassmorphism Menu Panel */
+/* Floating Menu Panel */
 .tv-sort-menu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 6px);
   right: 0;
   min-width: 250px;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
-  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.1),
-              0 8px 12px -6px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12),
+              0 8px 10px -6px rgba(0, 0, 0, 0.06);
   padding: 6px;
   z-index: 150;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-8px) scale(0.97);
+  transform: translateY(-6px) scale(0.98);
   transform-origin: top right;
-  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              visibility 0.2s;
+  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.18s;
   pointer-events: none;
 }
 
@@ -7922,55 +7923,31 @@ details summary span:last-child {
   padding: 10px 14px 10px 16px;
   border-radius: 8px;
   font-size: 0.92rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #334155;
   cursor: pointer;
   user-select: none;
   transition: background-color 0.15s ease, color 0.15s ease;
   overflow: hidden;
   outline: none;
+  margin-bottom: 2px;
 }
 
 .tv-sort-item:hover,
 .tv-sort-item:focus-visible {
-  background-color: #f8fafc;
+  background-color: #f1f5f9;
   color: #0f172a;
 }
 
-/* Active Item State */
+/* Active Item State: Solid Blue matching Reference Image */
 .tv-sort-item.is-active {
-  background-color: #eff6ff;
-  color: #0f172a;
+  background-color: #0066ff !important;
+  color: #ffffff !important;
   font-weight: 700;
 }
 
-/* Vertical Blue Left Indicator Bar */
-.tv-sort-indicator-bar {
-  display: none;
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 22px;
-  background: #2563eb;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-}
-
-.tv-sort-item.is-active .tv-sort-indicator-bar {
-  display: block;
-}
-
-/* Item Icons */
-.tv-sort-item-icon {
-  flex-shrink: 0;
-  color: #334155;
-  transition: color 0.15s ease;
-}
-
 .tv-sort-item.is-active .tv-sort-item-icon {
-  color: #2563eb;
+  color: #ffffff !important;
 }
 
 .tv-sort-item-label {
@@ -7979,22 +7956,172 @@ details summary span:last-child {
   letter-spacing: -0.01em;
 }
 
-/* Circular Blue Checkmark Badge */
+/* White Checkmark */
 .tv-sort-check-badge {
   display: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #2563eb;
   align-items: center;
   justify-content: center;
   margin-left: auto;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+  color: #ffffff;
 }
 
 .tv-sort-item.is-active .tv-sort-check-badge {
   display: flex;
+}
+
+/* ==========================================================================
+   UNIVERSAL CLIENT DROPDOWN (Exact match to Reference Image)
+   ========================================================================== */
+.tv-custom-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.tv-hidden-native-select {
+  position: absolute !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.tv-dropdown-trigger {
+  width: 100%;
+  height: 48px;
+  background: #ffffff;
+  border: 2px solid #0066ff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px 0 14px;
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.tv-dropdown-trigger:hover {
+  border-color: #0052cc;
+}
+
+.tv-custom-dropdown.is-open .tv-dropdown-trigger,
+.tv-dropdown-trigger:focus-visible {
+  border-color: #0066ff;
+  box-shadow: 0 0 0 3.5px rgba(0, 102, 255, 0.18);
+}
+
+.tv-dropdown-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.tv-dropdown-divider {
+  display: inline-block;
+  width: 1px;
+  height: 22px;
+  background-color: #e2e8f0;
+  margin-left: auto;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.tv-dropdown-chevron {
+  flex-shrink: 0;
+  color: #0066ff;
+  stroke: #0066ff;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tv-custom-dropdown.is-open .tv-dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+/* Floating Popover */
+.tv-dropdown-popover {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 100%;
+  min-width: 90px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12),
+              0 8px 10px -6px rgba(0, 0, 0, 0.06);
+  padding: 6px;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px) scale(0.98);
+  transform-origin: top center;
+  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.18s;
+  pointer-events: none;
+  max-height: 320px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.tv-custom-dropdown.is-open .tv-dropdown-popover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* Option Items */
+.tv-dropdown-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 2px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.tv-dropdown-opt:last-child {
+  margin-bottom: 0;
+}
+
+.tv-dropdown-opt:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Selected State: Solid Blue with White Checkmark */
+.tv-dropdown-opt.is-selected {
+  background-color: #0066ff !important;
+  color: #ffffff !important;
+}
+
+.tv-opt-check {
+  display: none;
+  flex-shrink: 0;
+  stroke: #ffffff;
+  color: #ffffff;
+}
+
+.tv-dropdown-opt.is-selected .tv-opt-check {
+  display: block;
 }
 
 /* 5. PRODUCT CARDS GRID */
@@ -8886,23 +9013,25 @@ body.filter-open .float-wa {
 
 /* Quantity Select */
 .tv-qty-select {
-  border: 1px solid #cbd5e1;
-  border-radius: 5px;
+  border: 1.8px solid #0066ff;
+  border-radius: 8px;
   background-color: #ffffff;
   color: #0f172a;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 800;
   height: 28px;
-  width: 35px;
-  padding: 0 2px;
+  width: 40px;
+  padding: 0 4px;
   text-align: center;
   cursor: pointer;
   outline: none;
   flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .tv-qty-select:focus {
-  border-color: #0066cc;
+  border-color: #0066ff;
+  box-shadow: 0 0 0 2.5px rgba(0, 102, 255, 0.2);
 }
 
 /* Add to Cart Button */

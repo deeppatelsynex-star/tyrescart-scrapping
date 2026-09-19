@@ -1130,7 +1130,6 @@ function createProductCardHTML(p) {
     offerBannerHTML = `
       <div class="tv-card-top-banner ${bannerClass}">
         <span class="tv-offer-title">${escapeHtml(p.offer_banner)}</span>
-        <span class="tv-offer-sub">LIMITED TIME OFFER</span>
       </div>`;
   }
 
@@ -2856,4 +2855,141 @@ document.addEventListener('DOMContentLoaded', function() {
     updatePdpPricing(initialQty);
   }
 });
+
+/**
+ * Universal Client Dropdown Initializer
+ * Transforms any select with .tv-custom-select or initializes custom dropdowns
+ * matching the user reference image (bright blue border, divider, chevron, solid blue active with white checkmark)
+ */
+function initClientCustomDropdowns() {
+  document.querySelectorAll('select.tv-custom-select').forEach(function(select) {
+    if (select.parentElement.classList.contains('tv-custom-dropdown')) return;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'tv-custom-dropdown';
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(select);
+    select.classList.add('tv-hidden-native-select');
+
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'tv-dropdown-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+
+    var valSpan = document.createElement('span');
+    valSpan.className = 'tv-dropdown-val';
+    var selectedOpt = select.options[select.selectedIndex] || select.options[0];
+    valSpan.textContent = selectedOpt ? selectedOpt.text : '';
+
+    var divider = document.createElement('span');
+    divider.className = 'tv-dropdown-divider';
+
+    var chevronSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    chevronSvg.setAttribute('class', 'tv-dropdown-chevron');
+    chevronSvg.setAttribute('width', '14');
+    chevronSvg.setAttribute('height', '14');
+    chevronSvg.setAttribute('viewBox', '0 0 24 24');
+    chevronSvg.setAttribute('fill', 'none');
+    chevronSvg.setAttribute('stroke', '#0066ff');
+    chevronSvg.setAttribute('stroke-width', '2.6');
+    chevronSvg.setAttribute('stroke-linecap', 'round');
+    chevronSvg.setAttribute('stroke-linejoin', 'round');
+    var polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    polyline.setAttribute('points', '6 9 12 15 18 9');
+    chevronSvg.appendChild(polyline);
+
+    trigger.appendChild(valSpan);
+    trigger.appendChild(divider);
+    trigger.appendChild(chevronSvg);
+    wrap.appendChild(trigger);
+
+    var popover = document.createElement('div');
+    popover.className = 'tv-dropdown-popover';
+    popover.setAttribute('role', 'listbox');
+
+    Array.from(select.options).forEach(function(opt) {
+      var optDiv = document.createElement('div');
+      optDiv.className = 'tv-dropdown-opt' + (opt.selected ? ' is-selected' : '');
+      optDiv.setAttribute('data-value', opt.value);
+      optDiv.setAttribute('role', 'option');
+
+      var label = document.createElement('span');
+      label.className = 'tv-opt-label';
+      label.textContent = opt.text;
+
+      var checkSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      checkSvg.setAttribute('class', 'tv-opt-check');
+      checkSvg.setAttribute('width', '15');
+      checkSvg.setAttribute('height', '15');
+      checkSvg.setAttribute('viewBox', '0 0 24 24');
+      checkSvg.setAttribute('fill', 'none');
+      checkSvg.setAttribute('stroke', '#ffffff');
+      checkSvg.setAttribute('stroke-width', '3');
+      checkSvg.setAttribute('stroke-linecap', 'round');
+      checkSvg.setAttribute('stroke-linejoin', 'round');
+      var checkPoly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      checkPoly.setAttribute('points', '20 6 9 17 4 12');
+      checkSvg.appendChild(checkPoly);
+
+      optDiv.appendChild(label);
+      optDiv.appendChild(checkSvg);
+
+      optDiv.addEventListener('click', function(e) {
+        e.stopPropagation();
+        select.value = opt.value;
+        valSpan.textContent = opt.text;
+        popover.querySelectorAll('.tv-dropdown-opt').forEach(function(o) { o.classList.remove('is-selected'); });
+        optDiv.classList.add('is-selected');
+        wrap.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+
+      popover.appendChild(optDiv);
+    });
+
+    wrap.appendChild(popover);
+
+    trigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var isOpen = wrap.classList.contains('is-open');
+      document.querySelectorAll('.tv-custom-dropdown.is-open').forEach(function(d) {
+        if (d !== wrap) d.classList.remove('is-open');
+      });
+      if (isOpen) {
+        wrap.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+      } else {
+        wrap.classList.add('is-open');
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    select.addEventListener('change', function() {
+      var curVal = select.value;
+      var curOpt = select.options[select.selectedIndex];
+      if (curOpt) valSpan.textContent = curOpt.text;
+      popover.querySelectorAll('.tv-dropdown-opt').forEach(function(o) {
+        if (o.getAttribute('data-value') === curVal) {
+          o.classList.add('is-selected');
+        } else {
+          o.classList.remove('is-selected');
+        }
+      });
+    });
+  });
+}
+
+document.addEventListener('click', function() {
+  document.querySelectorAll('.tv-custom-dropdown.is-open').forEach(function(d) {
+    d.classList.remove('is-open');
+    var tr = d.querySelector('.tv-dropdown-trigger');
+    if (tr) tr.setAttribute('aria-expanded', 'false');
+  });
+});
+
+window.initClientCustomDropdowns = initClientCustomDropdowns;
+document.addEventListener('DOMContentLoaded', initClientCustomDropdowns);
+
 
