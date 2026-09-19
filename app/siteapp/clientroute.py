@@ -1652,11 +1652,16 @@ def _render_product_detail(slug_or_id, locale=None):
             if p_row.get('description'):
                 try:
                     d = json.loads(p_row['description']) if isinstance(p_row['description'], str) else p_row['description']
-                    desc = d.get(locale) or d.get('en') or str(p_row['description'])
+                    if isinstance(d, dict):
+                        desc = d.get(locale) or d.get('en') or next(iter(d.values()), '')
+                    else:
+                        desc = str(d)
                 except Exception:
                     desc = str(p_row['description'])
             if not desc or desc.strip() in ('{}', 'None', ''):
-                desc = f"The {brand_name} {pattern_name} {size_label} {load_speed} delivers a balanced combination of safety, longevity and fuel efficiency. With advanced rubber compound and optimized tread design, it provides excellent grip on both wet and dry roads, ensuring a comfortable and secure driving experience. Ideal for everyday driving."
+                desc = raw_attrs.get('description') or raw_attrs.get('short_description') or ''
+            if not desc or desc.strip() in ('{}', 'None', ''):
+                desc = short_desc
 
             # Image
             img_path = p_row.get('image_path') or '/static/uploads/products/michelin_energy_xm2_wheel.jpg'
@@ -1682,10 +1687,12 @@ def _render_product_detail(slug_or_id, locale=None):
             # Offer banner and promotions
             raw_offer = (raw_attrs.get('offers') or raw_attrs.get('promotion') or raw_attrs.get('badge') or p_row.get('offer_banner') or '').strip()
             offer_banner = raw_offer.upper() if raw_offer and raw_offer.lower() not in ('none', '0', '', 'null') else ''
+            if not offer_banner:
+                offer_banner = 'BUY 3 GET 1 FREE'
 
-            if 'BUY 3 GET 1' in offer_banner:
+            if 'BUY 3' in offer_banner:
                 price_set4 = round(price_f * 3, 2)
-            elif 'BUY 2 GET 2' in offer_banner:
+            elif 'BUY 2' in offer_banner:
                 price_set4 = round(price_f * 2, 2)
             else:
                 price_set4 = round(price_f * 4, 2)
@@ -1721,7 +1728,8 @@ def _render_product_detail(slug_or_id, locale=None):
                 'country': p_row.get('country_of_origin') or 'France',
                 'run_flat': 'Yes' if p_row.get('run_flat') == 1 else 'No',
                 'warranty': warranty_str,
-                'tire_size_label': size_label or f"{width_val}/{profile_val} {rim_val}"
+                'tire_size_label': size_label or f"{width_val}/{profile_val} {rim_val}",
+                'faqs': raw_attrs.get('faqs') if isinstance(raw_attrs.get('faqs'), list) else ([] if not raw_attrs.get('faqs') else [raw_attrs.get('faqs')])
             }
 
             # Related products: SAME SIZE, DIFFERENT BRANDS (per requirement)
@@ -1752,11 +1760,11 @@ def _render_product_detail(slug_or_id, locale=None):
                 if b_key and b_key not in seen_brands:
                     seen_brands.add(b_key)
                     rel_rows.append(r)
-                if len(rel_rows) >= 4:
+                if len(rel_rows) >= 10:
                     break
 
-            # Fallback 1: If fewer than 4, same rim size from different brands
-            if len(rel_rows) < 4 and rim_val:
+            # Fallback 1: If fewer than 10, same rim size from different brands
+            if len(rel_rows) < 10 and rim_val:
                 cur.execute("""
                     SELECT p.*, b.name as brand_name, b.slug as brand_slug, b.logo as brand_logo
                     FROM products p
@@ -1772,11 +1780,11 @@ def _render_product_detail(slug_or_id, locale=None):
                     if b_key and b_key not in seen_brands:
                         seen_brands.add(b_key)
                         rel_rows.append(r)
-                    if len(rel_rows) >= 4:
+                    if len(rel_rows) >= 10:
                         break
 
             # Fallback 2: Any active products from different brands
-            if len(rel_rows) < 4:
+            if len(rel_rows) < 10:
                 cur.execute("""
                     SELECT p.*, b.name as brand_name, b.slug as brand_slug, b.logo as brand_logo
                     FROM products p
@@ -1792,7 +1800,7 @@ def _render_product_detail(slug_or_id, locale=None):
                     if b_key and b_key not in seen_brands:
                         seen_brands.add(b_key)
                         rel_rows.append(r)
-                    if len(rel_rows) >= 4:
+                    if len(rel_rows) >= 10:
                         break
 
             related_products = []
